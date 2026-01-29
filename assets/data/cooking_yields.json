@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    { "id": "pollo_pechuga", "state": "cocido", "yield": 0.75, "notes": "SMAE v1 pechuga sin piel" },
+    { "id": "arroz_blanco", "state": "cocido", "yield": 2.7, "notes": "Relación crudo->cocido" },
+    { "id": "aceite_vegetal", "state": "listo", "yield": 1.0, "notes": "Sin cambio por cocción" }
+  ]
+}

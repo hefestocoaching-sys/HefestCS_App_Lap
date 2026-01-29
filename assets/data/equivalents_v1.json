@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "equivalents": [
+    {
+      "id": "vegetales",
+      "group": "vegetales",
+      "subgroup": "general",
+      "perEquivalent": { "kcal": 25, "protein_g": 2, "fat_g": 0, "carb_g": 4 },
+      "baseGramsRaw": 100
+    },
+    {
+      "id": "frutas",
+      "group": "frutas",
+      "subgroup": "general",
+      "perEquivalent": { "kcal": 60, "protein_g": 0, "fat_g": 0, "carb_g": 15 },
+      "baseGramsRaw": 100
+    },
+    {
+      "id": "cereales_sin_grasa",
+      "group": "cereales_tuberculos",
+      "subgroup": "sin_grasa",
+      "perEquivalent": { "kcal": 70, "protein_g": 2, "fat_g": 0, "carb_g": 15 },
+      "baseGramsRaw": 30
+    },
+    {
+      "id": "cereales_con_grasa",
+      "group": "cereales_tuberculos",
+      "subgroup": "con_grasa",
+      "perEquivalent": { "kcal": 115, "protein_g": 2, "fat_g": 5, "carb_g": 15 },
+      "baseGramsRaw": 30
+    },
+    {
+      "id": "leguminosas",
+      "group": "leguminosas",
+      "subgroup": "general",
+      "perEquivalent": { "kcal": 120, "protein_g": 8, "fat_g": 1, "carb_g": 20 },
+      "baseGramsRaw": 30
+    },
+    {
+      "id": "aoa_muy_bajo",
+      "group": "aoa",
+      "subgroup": "muy_bajo",
+      "perEquivalent": { "kcal": 40, "protein_g": 7, "fat_g": 1, "carb_g": 0 },
+      "baseGramsRaw": 30
+    },
+    {
+      "id": "aoa_bajo",
+      "group": "aoa",
+      "subgroup": "bajo",
+      "perEquivalent": { "kcal": 55, "protein_g": 7, "fat_g": 3, "carb_g": 0 },
+      "baseGramsRaw": 30
+    },
+    {
+      "id": "aoa_moderado",
+      "group": "aoa",
+      "subgroup": "moderado",
+      "perEquivalent": { "kcal": 75, "protein_g": 7, "fat_g": 5, "carb_g": 0 },
+      "baseGramsRaw": 30
+    },
+    {
+      "id": "aoa_alto",
+      "group": "aoa",
+      "subgroup": "alto",
+      "perEquivalent": { "kcal": 100, "protein_g": 7, "fat_g": 8, "carb_g": 0 },
+      "baseGramsRaw": 30
+    },
+    {
+      "id": "leche_descremada",
+      "group": "leches",
+      "subgroup": "descremada",
+      "perEquivalent": { "kcal": 95, "protein_g": 9, "fat_g": 2, "carb_g": 12 },
+      "baseGramsRaw": 240
+    },
+    {
+      "id": "leche_semidescremada",
+      "group": "leches",
+      "subgroup": "semidescremada",
+      "perEquivalent": { "kcal": 110, "protein_g": 9, "fat_g": 4, "carb_g": 12 },
+      "baseGramsRaw": 240
+    },
+    {
+      "id": "leche_entera",
+      "group": "leches",
+      "subgroup": "entera",
+      "perEquivalent": { "kcal": 150, "protein_g": 8, "fat_g": 8, "carb_g": 12 },
+      "baseGramsRaw": 240
+    },
+    {
+      "id": "grasas_sin_proteina",
+      "group": "grasas",
+      "subgroup": "sin_proteina",
+      "perEquivalent": { "kcal": 45, "protein_g": 0, "fat_g": 5, "carb_g": 0 },
+      "baseGramsRaw": 5
+    },
+    {
+      "id": "grasas_con_proteina",
+      "group": "grasas",
+      "subgroup": "con_proteina",
+      "perEquivalent": { "kcal": 70, "protein_g": 3, "fat_g": 5, "carb_g": 3 },
+      "baseGramsRaw": 10
+    },
+    {
+      "id": "azucares_sin_grasa",
+      "group": "azucares",
+      "subgroup": "sin_grasa",
+      "perEquivalent": { "kcal": 40, "protein_g": 0, "fat_g": 0, "carb_g": 10 },
+      "baseGramsRaw": 10
+    },
+    {
+      "id": "azucares_con_grasa",
+      "group": "azucares",
+      "subgroup": "con_grasa",
+      "perEquivalent": { "kcal": 85, "protein_g": 0, "fat_g": 5, "carb_g": 10 },
+      "baseGramsRaw": 10
+    },
+    {
+      "id": "libres_energia",
+      "group": "libres",
+      "subgroup": "energia",
+      "perEquivalent": { "kcal": 0, "protein_g": 0, "fat_g": 0, "carb_g": 0 },
+      "baseGramsRaw": 0
+    },
+    {
+      "id": "alcohol",
+      "group": "alcohol",
+      "subgroup": "general",
+      "perEquivalent": { "kcal": 140, "protein_g": 0, "fat_g": 0, "carb_g": 0 },
+      "baseGramsRaw": 20
+    }
+  ]
+}

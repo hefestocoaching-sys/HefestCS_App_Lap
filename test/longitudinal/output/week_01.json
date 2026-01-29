@@ -1,0 +1,3986 @@
+{
+  "weekNumber": 1,
+  "generatedAt": "2026-01-08T02:38:07.724145Z",
+  "blocked": true,
+  "errorMessage": "Día W1-D2 con menos de 4 ejercicios (count=3). Catálogo insuficiente o distribución inválida.",
+  "feedbackInput": null,
+  "plan": null,
+  "decisions": [
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "profile_validation",
+      "description": "Perfil válido: 4 días/semana, 60 min/sesión",
+      "severity": "info",
+      "context": {},
+      "action": null
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "goal_analysis",
+      "description": "Objetivo global: hypertrophy",
+      "severity": "info",
+      "context": {
+        "goal": "hypertrophy",
+        "focus": "no especificado"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "muscle_priorities",
+      "description": "Prioridades definidas: 6 primarias, 0 secundarias, 0 terciarias",
+      "severity": "info",
+      "context": {
+        "primary": [
+          "chest",
+          "back",
+          "shoulders",
+          "quads",
+          "hamstrings",
+          "glutes"
+        ],
+        "secondary": [],
+        "tertiary": []
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "muscle_priorities",
+      "description": "Demasiadas prioridades primarias (6 > 4)",
+      "severity": "warning",
+      "context": {},
+      "action": "Difícil distribuir volumen efectivo entre tantos grupos"
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "volume_config",
+      "description": "Volumen base total: 82 series/semana",
+      "severity": "info",
+      "context": {
+        "volumePerMuscle": {
+          "chest": 12,
+          "back": 14,
+          "shoulders": 10,
+          "quads": 10,
+          "hamstrings": 8,
+          "glutes": 10,
+          "biceps": 6,
+          "triceps": 6,
+          "abs": 6
+        },
+        "totalVolume": 82
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "time_constraint",
+      "description": "Volumen base requiere más tiempo del disponible (~328 min vs 240 min)",
+      "severity": "warning",
+      "context": {},
+      "action": "Se ajustará volumen al tiempo disponible"
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "missing_data",
+      "description": "No hay historial de entrenamiento disponible",
+      "severity": "warning",
+      "context": {},
+      "action": "Se usarán valores conservadores sin referencia histórica"
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "missing_data",
+      "description": "No hay feedback reciente disponible",
+      "severity": "warning",
+      "context": {},
+      "action": "Se asumirán valores neutros para recuperación"
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "interview_parsed",
+      "description": "Entrevista materializada (lesiones, preferencias, barreras)",
+      "severity": "info",
+      "context": {
+        "injuriesType": "Null",
+        "preferencesType": "Null",
+        "barriersType": "Null"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "derived_metrics",
+      "description": "Métricas efectivas derivadas",
+      "severity": "info",
+      "context": {
+        "effectiveSleepHours": 7.5,
+        "effectiveAdherence": null,
+        "effectiveAvgRir": null
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase1DataIngestion",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "validation_result",
+      "description": "Validación con advertencias: 4 puntos de atención",
+      "severity": "warning",
+      "context": {
+        "warnings": [
+          "Demasiadas prioridades primarias",
+          "Volumen excede tiempo disponible",
+          "Sin historial de entrenamiento",
+          "Sin feedback reciente"
+        ]
+      },
+      "action": "Se procederá con valores conservadores"
+    },
+    {
+      "phase": "Phase2ReadinessEvaluation",
+      "timestamp": "2025-01-06T00:00:00.000Z",
+      "category": "sleep_evaluation",
+      "description": "Sueño adecuado (7.5h)",
+      "severity": "info",
+      "context": {
+        "sleepHours": 7.5,
+        "score": 0.8
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase2ReadinessEvaluation",
+      "timestamp": "2025-01-06T00:00:00.000Z",
+      "category": "fatigue_evaluation",
+      "description": "Recuperación buena (fatiga: 5.0/10)",
+      "severity": "info",
+      "context": {
+        "fatigue": 5.0,
+        "soreness": 5.0,
+        "combined": 5.0,
+        "score": 0.8
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase2ReadinessEvaluation",
+      "timestamp": "2025-01-06T00:00:00.000Z",
+      "category": "stress_evaluation",
+      "description": "Estrés moderado (5.0/10)",
+      "severity": "info",
+      "context": {
+        "stressLevel": 5.0,
+        "score": 0.8
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase2ReadinessEvaluation",
+      "timestamp": "2025-01-06T00:00:00.000Z",
+      "category": "motivation_evaluation",
+      "description": "Motivación buena (7.0/10)",
+      "severity": "info",
+      "context": {
+        "motivation": 7.0,
+        "score": 0.8
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase2ReadinessEvaluation",
+      "timestamp": "2025-01-06T00:00:00.000Z",
+      "category": "history_evaluation",
+      "description": "Sin historial disponible",
+      "severity": "info",
+      "context": {},
+      "action": "Se usará enfoque conservador"
+    },
+    {
+      "phase": "Phase2ReadinessEvaluation",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "volume_adjustment",
+      "description": "Factor de ajuste calculado: 98%",
+      "severity": "info",
+      "context": {
+        "readinessLevel": "good",
+        "readinessScore": 0.79,
+        "adjustmentFactor": 0.9797
+      },
+      "action": "Mantener volumen"
+    },
+    {
+      "phase": "Phase2ReadinessEvaluation",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "final_assessment",
+      "description": "Readiness: good, Score: 79.0%, Ajuste volumen: 98%",
+      "severity": "info",
+      "context": {
+        "sleepScore": 0.8,
+        "fatigueScore": 0.8,
+        "stressScore": 0.8,
+        "motivationScore": 0.8,
+        "historyScore": 0.7,
+        "readinessScore": 0.79,
+        "volumeAdjustmentFactor": 0.9797
+      },
+      "action": "Mantener volumen estándar"
+    },
+    {
+      "phase": "TrainingProgramEngine",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "readiness_mode",
+      "description": "Modo readiness: normal",
+      "severity": "info",
+      "context": {
+        "level": "good",
+        "factor": 0.9797
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "level_determination",
+      "description": "Nivel de entrenamiento del perfil: intermediate",
+      "severity": "info",
+      "context": {},
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "pharmacology",
+      "description": "Sin farmacología anabólica",
+      "severity": "info",
+      "context": {},
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "muscle_selection",
+      "description": "Programando 6 grupos musculares",
+      "severity": "info",
+      "context": {
+        "muscles": [
+          "chest",
+          "back",
+          "shoulders",
+          "quads",
+          "hamstrings",
+          "glutes"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "base_volume_source",
+      "description": "Fuente TABLA para chest (sin historial)",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "source": "table",
+        "table_mev": 8,
+        "table_mav": 14,
+        "table_mrv": 18
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "final_envelope",
+      "description": "Envelope final para chest",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "source": "table",
+        "MEV": 8,
+        "MAV": 14,
+        "MRV": 18,
+        "recommended": 11,
+        "pharmacologyFactor": 1.0,
+        "ageFactor": 1.0,
+        "genderAdjusted": false,
+        "readinessGlobal": 0.9797,
+        "readinessLocal": 1.0,
+        "trainingLevel": "intermediate"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "base_volume_source",
+      "description": "Fuente TABLA para back (sin historial)",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "source": "table",
+        "table_mev": 10,
+        "table_mav": 16,
+        "table_mrv": 20
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "final_envelope",
+      "description": "Envelope final para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "source": "table",
+        "MEV": 10,
+        "MAV": 16,
+        "MRV": 20,
+        "recommended": 13,
+        "pharmacologyFactor": 1.0,
+        "ageFactor": 1.0,
+        "genderAdjusted": false,
+        "readinessGlobal": 0.9797,
+        "readinessLocal": 1.0,
+        "trainingLevel": "intermediate"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "base_volume_source",
+      "description": "Fuente TABLA para shoulders (sin historial)",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "source": "table",
+        "table_mev": 8,
+        "table_mav": 14,
+        "table_mrv": 18
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "final_envelope",
+      "description": "Envelope final para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "source": "table",
+        "MEV": 8,
+        "MAV": 14,
+        "MRV": 18,
+        "recommended": 11,
+        "pharmacologyFactor": 1.0,
+        "ageFactor": 1.0,
+        "genderAdjusted": false,
+        "readinessGlobal": 0.9797,
+        "readinessLocal": 1.0,
+        "trainingLevel": "intermediate"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "base_volume_source",
+      "description": "Fuente TABLA para quads (sin historial)",
+      "severity": "info",
+      "context": {
+        "muscle": "quads",
+        "source": "table",
+        "table_mev": 8,
+        "table_mav": 12,
+        "table_mrv": 16
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "final_envelope",
+      "description": "Envelope final para quads",
+      "severity": "info",
+      "context": {
+        "muscle": "quads",
+        "source": "table",
+        "MEV": 8,
+        "MAV": 12,
+        "MRV": 16,
+        "recommended": 10,
+        "pharmacologyFactor": 1.0,
+        "ageFactor": 1.0,
+        "genderAdjusted": false,
+        "readinessGlobal": 0.9797,
+        "readinessLocal": 1.0,
+        "trainingLevel": "intermediate"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "base_volume_source",
+      "description": "Fuente TABLA para hamstrings (sin historial)",
+      "severity": "info",
+      "context": {
+        "muscle": "hamstrings",
+        "source": "table",
+        "table_mev": 6,
+        "table_mav": 10,
+        "table_mrv": 14
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "final_envelope",
+      "description": "Envelope final para hamstrings",
+      "severity": "info",
+      "context": {
+        "muscle": "hamstrings",
+        "source": "table",
+        "MEV": 6,
+        "MAV": 10,
+        "MRV": 14,
+        "recommended": 8,
+        "pharmacologyFactor": 1.0,
+        "ageFactor": 1.0,
+        "genderAdjusted": false,
+        "readinessGlobal": 0.9797,
+        "readinessLocal": 1.0,
+        "trainingLevel": "intermediate"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "base_volume_source",
+      "description": "Fuente TABLA para glutes (sin historial)",
+      "severity": "info",
+      "context": {
+        "muscle": "glutes",
+        "source": "table",
+        "table_mev": 6,
+        "table_mav": 12,
+        "table_mrv": 16
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "final_envelope",
+      "description": "Envelope final para glutes",
+      "severity": "info",
+      "context": {
+        "muscle": "glutes",
+        "source": "table",
+        "MEV": 6,
+        "MAV": 12,
+        "MRV": 16,
+        "recommended": 9,
+        "pharmacologyFactor": 1.0,
+        "ageFactor": 1.0,
+        "genderAdjusted": false,
+        "readinessGlobal": 0.9797,
+        "readinessLocal": 1.0,
+        "trainingLevel": "intermediate"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "time_validation",
+      "description": "Volumen recomendado: 62 series/semana (~248 min vs 240 min disponibles)",
+      "severity": "info",
+      "context": {
+        "totalRecommended": 62,
+        "totalMRV": 102,
+        "estimatedMinutes": 248,
+        "availableMinutes": 240
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase3VolumeCapacity",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "final_result",
+      "description": "Límites de volumen calculados para 6 grupos musculares",
+      "severity": "info",
+      "context": {
+        "totalMEV": 46,
+        "totalMAV": 78,
+        "totalMRV": 102,
+        "recommendedVolume": 62
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "split_selection",
+      "description": "Split seleccionado: upper_lower_4d",
+      "severity": "info",
+      "context": {
+        "daysPerWeek": 4,
+        "readinessMode": "normal"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "weekly_targets",
+      "description": "Objetivos semanales por músculo calculados",
+      "severity": "info",
+      "context": {
+        "back": 13,
+        "chest": 11,
+        "glutes": 9,
+        "hamstrings": 8,
+        "quads": 10,
+        "shoulders": 11
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "priority_degraded_due_to_limit",
+      "description": "Límite de prioridades alcanzado: máximo 2 músculos primarios",
+      "severity": "warning",
+      "context": {
+        "originalPrimary": [
+          "back",
+          "chest",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "shoulders"
+        ],
+        "adjustedPrimary": [
+          "back",
+          "chest"
+        ],
+        "degradedToSecondary": [
+          "glutes",
+          "hamstrings",
+          "quads",
+          "shoulders"
+        ],
+        "scores": {
+          "chest": 11,
+          "back": 13,
+          "shoulders": 11,
+          "quads": 10,
+          "hamstrings": 8,
+          "glutes": 9
+        },
+        "maxPrimaryMuscles": 2
+      },
+      "action": "Músculos degradados a prioridad secundaria: shoulders, quads, hamstrings, glutes"
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "frequency_target",
+      "description": "Frecuencia objetivo para back: 2",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "minFreq": 2,
+        "maxFreq": 3,
+        "daysAvailable": [
+          1,
+          3
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "frequency_target",
+      "description": "Frecuencia objetivo para chest: 2",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "minFreq": 2,
+        "maxFreq": 3,
+        "daysAvailable": [
+          1,
+          3
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "frequency_target",
+      "description": "Frecuencia objetivo para glutes: 2",
+      "severity": "info",
+      "context": {
+        "muscle": "glutes",
+        "minFreq": 2,
+        "maxFreq": 3,
+        "daysAvailable": [
+          2,
+          4
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "frequency_target",
+      "description": "Frecuencia objetivo para hamstrings: 2",
+      "severity": "info",
+      "context": {
+        "muscle": "hamstrings",
+        "minFreq": 2,
+        "maxFreq": 3,
+        "daysAvailable": [
+          2,
+          4
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "frequency_target",
+      "description": "Frecuencia objetivo para quads: 2",
+      "severity": "info",
+      "context": {
+        "muscle": "quads",
+        "minFreq": 2,
+        "maxFreq": 3,
+        "daysAvailable": [
+          2,
+          4
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "frequency_target",
+      "description": "Frecuencia objetivo para shoulders: 2",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "minFreq": 2,
+        "maxFreq": 3,
+        "daysAvailable": [
+          1,
+          3
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "time_adjustment",
+      "description": "Día 1: reducción por límite de tiempo (est=76 > max=60)",
+      "severity": "warning",
+      "context": {
+        "before": {
+          "back": 7,
+          "chest": 6,
+          "shoulders": 6
+        },
+        "after": {
+          "back": 7,
+          "chest": 6,
+          "shoulders": 6
+        },
+        "minutesPerSession": 60
+      },
+      "action": "Reducido proporcionalmente sets/día"
+    },
+    {
+      "phase": "Phase4SplitDistribution",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "time_adjustment",
+      "description": "Día 3: reducción por límite de tiempo (est=64 > max=60)",
+      "severity": "warning",
+      "context": {
+        "before": {
+          "back": 6,
+          "chest": 5,
+          "shoulders": 5
+        },
+        "after": {
+          "back": 6,
+          "chest": 5,
+          "shoulders": 5
+        },
+        "minutesPerSession": 60
+      },
+      "action": "Reducido proporcionalmente sets/día"
+    },
+    {
+      "phase": "Phase5Periodization",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "pattern",
+      "description": "Patrón de fases generado para 4 semanas",
+      "severity": "info",
+      "context": {
+        "1": "accumulation",
+        "2": "accumulation",
+        "3": "intensification",
+        "4": "deload"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase5Periodization",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "week_plan",
+      "description": "Semana 1: accumulation",
+      "severity": "info",
+      "context": {
+        "week": 1,
+        "phase": "accumulation",
+        "factor": 0.95,
+        "effortIntent": "technique",
+        "repBias": "high",
+        "fatigueExpectation": "low"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase5Periodization",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "week_plan",
+      "description": "Semana 2: accumulation",
+      "severity": "info",
+      "context": {
+        "week": 2,
+        "phase": "accumulation",
+        "factor": 1.0,
+        "effortIntent": "base",
+        "repBias": "moderate",
+        "fatigueExpectation": "moderate"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase5Periodization",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "week_plan",
+      "description": "Semana 3: intensification",
+      "severity": "info",
+      "context": {
+        "week": 3,
+        "phase": "intensification",
+        "factor": 0.9,
+        "effortIntent": "push",
+        "repBias": "low",
+        "fatigueExpectation": "high"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase5Periodization",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "week_plan",
+      "description": "Semana 4: deload",
+      "severity": "info",
+      "context": {
+        "week": 4,
+        "phase": "deload",
+        "factor": 0.5,
+        "effortIntent": "deload",
+        "repBias": "high",
+        "fatigueExpectation": "reset"
+      },
+      "action": null
+    },
+    {
+      "phase": "TrainingProgramEngine",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_catalog_loaded",
+      "description": "Catálogo de ejercicios cargado",
+      "severity": "info",
+      "context": {
+        "count": 23
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "init",
+      "description": "Seleccionando ejercicios con equipo disponible",
+      "severity": "info",
+      "context": {
+        "equipment": [
+          "barbell",
+          "dumbbell",
+          "machine",
+          "cable",
+          "bodyweight"
+        ],
+        "weeks": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 1: back → barbell_row, lat_pulldown",
+      "severity": "info",
+      "context": {
+        "sets": 7,
+        "muscle": "back"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 1: chest → bench_press, cable_fly",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "chest"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 1: shoulders → lateral_raise, ohp",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "shoulders"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 2: glutes → cable_abduction",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "glutes"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 2: hamstrings → leg_curl",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "hamstrings"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 2: quads → back_squat",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "quads"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_fallback_applied",
+      "description": "Fallback determinista aplicado para completar día (<4)",
+      "severity": "critical",
+      "context": {
+        "day": 2,
+        "muscles": [
+          "calves",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "abs",
+          "core"
+        ],
+        "finalCount": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 3: back → lat_pulldown, seated_row",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "back"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 3: chest → cable_fly",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "chest"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 3: shoulders → lateral_raise",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "shoulders"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 4: glutes → glute_bridge",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "glutes"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 4: hamstrings → rdl",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "hamstrings"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 1 Día 4: quads → leg_extension",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "quads"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_fallback_applied",
+      "description": "Fallback determinista aplicado para completar día (<4)",
+      "severity": "critical",
+      "context": {
+        "day": 4,
+        "muscles": [
+          "calves",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "abs",
+          "core"
+        ],
+        "finalCount": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 1: back → barbell_row, lat_pulldown",
+      "severity": "info",
+      "context": {
+        "sets": 7,
+        "muscle": "back"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 1: chest → bench_press, cable_fly",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "chest"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 1: shoulders → lateral_raise, ohp",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "shoulders"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 2: glutes → cable_abduction",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "glutes"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 2: hamstrings → leg_curl",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "hamstrings"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 2: quads → back_squat",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "quads"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_fallback_applied",
+      "description": "Fallback determinista aplicado para completar día (<4)",
+      "severity": "critical",
+      "context": {
+        "day": 2,
+        "muscles": [
+          "calves",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "abs",
+          "core"
+        ],
+        "finalCount": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 3: back → lat_pulldown, seated_row",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "back"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 3: chest → cable_fly",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "chest"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 3: shoulders → lateral_raise",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "shoulders"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 4: glutes → glute_bridge",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "glutes"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 4: hamstrings → rdl",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "hamstrings"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 2 Día 4: quads → leg_extension",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "quads"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_fallback_applied",
+      "description": "Fallback determinista aplicado para completar día (<4)",
+      "severity": "critical",
+      "context": {
+        "day": 4,
+        "muscles": [
+          "calves",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "abs",
+          "core"
+        ],
+        "finalCount": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 1: back → barbell_row, lat_pulldown",
+      "severity": "info",
+      "context": {
+        "sets": 7,
+        "muscle": "back"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 1: chest → bench_press, cable_fly",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "chest"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 1: shoulders → lateral_raise, ohp",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "shoulders"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 2: glutes → cable_abduction",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "glutes"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 2: hamstrings → leg_curl",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "hamstrings"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 2: quads → back_squat",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "quads"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_fallback_applied",
+      "description": "Fallback determinista aplicado para completar día (<4)",
+      "severity": "critical",
+      "context": {
+        "day": 2,
+        "muscles": [
+          "calves",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "abs",
+          "core"
+        ],
+        "finalCount": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 3: back → lat_pulldown, seated_row",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "back"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 3: chest → cable_fly",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "chest"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 3: shoulders → lateral_raise",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "shoulders"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 4: glutes → glute_bridge",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "glutes"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 4: hamstrings → rdl",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "hamstrings"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 3 Día 4: quads → leg_extension",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "quads"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_fallback_applied",
+      "description": "Fallback determinista aplicado para completar día (<4)",
+      "severity": "critical",
+      "context": {
+        "day": 4,
+        "muscles": [
+          "calves",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "abs",
+          "core"
+        ],
+        "finalCount": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 1: back → barbell_row, lat_pulldown",
+      "severity": "info",
+      "context": {
+        "sets": 7,
+        "muscle": "back"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 1: chest → bench_press, cable_fly",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "chest"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 1: shoulders → lateral_raise, ohp",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "shoulders"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 2: glutes → cable_abduction",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "glutes"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 2: hamstrings → leg_curl",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "hamstrings"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 2: quads → back_squat",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "quads"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_fallback_applied",
+      "description": "Fallback determinista aplicado para completar día (<4)",
+      "severity": "critical",
+      "context": {
+        "day": 2,
+        "muscles": [
+          "calves",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "abs",
+          "core"
+        ],
+        "finalCount": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 3: back → lat_pulldown, seated_row",
+      "severity": "info",
+      "context": {
+        "sets": 6,
+        "muscle": "back"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 3: chest → cable_fly",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "chest"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 3: shoulders → lateral_raise",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "shoulders"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 4: glutes → glute_bridge",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "glutes"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 4: hamstrings → rdl",
+      "severity": "info",
+      "context": {
+        "sets": 4,
+        "muscle": "hamstrings"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_selection",
+      "description": "Semana 4 Día 4: quads → leg_extension",
+      "severity": "info",
+      "context": {
+        "sets": 5,
+        "muscle": "quads"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase6ExerciseSelection",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "exercise_fallback_applied",
+      "description": "Fallback determinista aplicado para completar día (<4)",
+      "severity": "critical",
+      "context": {
+        "day": 4,
+        "muscles": [
+          "calves",
+          "glutes",
+          "hamstrings",
+          "quads",
+          "abs",
+          "core"
+        ],
+        "finalCount": 4
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_override_applied",
+      "description": "Override de intensificación aplicado (allow=false, maxPerWeek=1)",
+      "severity": "info",
+      "context": {
+        "week": 1,
+        "allowIntensification": false,
+        "maxPerWeek": 1
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "week_setup",
+      "description": "Semana 1: accumulation (intent=technique, repBias=high)",
+      "severity": "info",
+      "context": {
+        "weekIndex": 1,
+        "phase": "accumulation",
+        "effortIntent": "technique",
+        "repBias": "high",
+        "fatigueExpectation": "low",
+        "repRange": "11-15"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para bench_press: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "bench_press",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para ohp: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "ohp",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para barbell_row: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "barbell_row",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_applied",
+      "description": "Técnica myo_reps aplicada a cable_fly",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "technique": "myo_reps",
+        "notes": "Myo-reps: 1 top set (RIR=3 - 4) + mini-sets (3-5 reps, 15-20s descanso)",
+        "budgetRemaining": 0
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_fly: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 11,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "low",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lat_pulldown: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lat_pulldown",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 13,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "low",
+        "targetRIR": "3 - 4",
+        "sets": 4,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lateral_raise: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lateral_raise",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 11,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 1 Día 1: 6 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "bench_press",
+          "ohp",
+          "barbell_row",
+          "cable_fly",
+          "lat_pulldown",
+          "lateral_raise"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para back_squat: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "back_squat",
+        "muscle": "quads",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para glutes",
+      "severity": "info",
+      "context": {
+        "muscle": "glutes",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "low",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_abduction: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_abduction",
+        "muscle": "glutes",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 9,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para hamstrings",
+      "severity": "info",
+      "context": {
+        "muscle": "hamstrings",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "low",
+        "targetRIR": "3 - 4",
+        "sets": 4,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para leg_curl: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "leg_curl",
+        "muscle": "hamstrings",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 8,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 1 Día 2: 3 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "back_squat",
+          "cable_abduction",
+          "leg_curl"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para seated_row: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "seated_row",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 13,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para chest",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "low",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_fly: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 11,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "low",
+        "targetRIR": "3 - 4",
+        "sets": 3,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lat_pulldown: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lat_pulldown",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 13,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "low",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lateral_raise: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lateral_raise",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 11,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 1 Día 3: 4 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "seated_row",
+          "cable_fly",
+          "lat_pulldown",
+          "lateral_raise"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para rdl: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "rdl",
+        "muscle": "hamstrings",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para glute_bridge: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "glute_bridge",
+        "muscle": "glutes",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para quads",
+      "severity": "info",
+      "context": {
+        "muscle": "quads",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "low",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para leg_extension: allow=true, maxSlots=1",
+      "severity": "info",
+      "context": {
+        "exercise": "leg_extension",
+        "muscle": "quads",
+        "allowFailure": true,
+        "maxFailureSetsThisSession": 1,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 10,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 1,
+          "slotsThisDay": 1
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 1 Día 4: 3 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "rdl",
+          "glute_bridge",
+          "leg_extension"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_override_applied",
+      "description": "Override de intensificación aplicado (allow=false, maxPerWeek=1)",
+      "severity": "info",
+      "context": {
+        "week": 2,
+        "allowIntensification": false,
+        "maxPerWeek": 1
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "week_setup",
+      "description": "Semana 2: accumulation (intent=base, repBias=moderate)",
+      "severity": "info",
+      "context": {
+        "weekIndex": 2,
+        "phase": "accumulation",
+        "effortIntent": "base",
+        "repBias": "moderate",
+        "fatigueExpectation": "moderate",
+        "repRange": "8-10"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para bench_press: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "bench_press",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para ohp: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "ohp",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para barbell_row: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "barbell_row",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_applied",
+      "description": "Técnica drop_set aplicada a cable_fly",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "technique": "drop_set",
+        "notes": "Drop set: completar sets objetivo, luego -20% carga x1 en último set",
+        "budgetRemaining": 0
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_fly: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 11,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "moderate",
+        "targetRIR": "3 - 4",
+        "sets": 3,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lat_pulldown: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lat_pulldown",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 13,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "moderate",
+        "targetRIR": "3 - 4",
+        "sets": 4,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lateral_raise: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lateral_raise",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 11,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 2 Día 1: 6 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "bench_press",
+          "ohp",
+          "barbell_row",
+          "cable_fly",
+          "lat_pulldown",
+          "lateral_raise"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para back_squat: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "back_squat",
+        "muscle": "quads",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para glutes",
+      "severity": "info",
+      "context": {
+        "muscle": "glutes",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "moderate",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_abduction: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_abduction",
+        "muscle": "glutes",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 9,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para hamstrings",
+      "severity": "info",
+      "context": {
+        "muscle": "hamstrings",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "moderate",
+        "targetRIR": "3 - 4",
+        "sets": 4,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para leg_curl: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "leg_curl",
+        "muscle": "hamstrings",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 8,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 2 Día 2: 3 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "back_squat",
+          "cable_abduction",
+          "leg_curl"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para seated_row: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "seated_row",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 13,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para chest",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "moderate",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_fly: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 11,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "moderate",
+        "targetRIR": "3 - 4",
+        "sets": 4,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lat_pulldown: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lat_pulldown",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 13,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "moderate",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lateral_raise: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lateral_raise",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 11,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 0,
+          "slotsThisDay": 0
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 2 Día 3: 4 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "seated_row",
+          "cable_fly",
+          "lat_pulldown",
+          "lateral_raise"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para rdl: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "rdl",
+        "muscle": "hamstrings",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para glute_bridge: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "glute_bridge",
+        "muscle": "glutes",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "compound_freeweight_blocked"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para quads",
+      "severity": "info",
+      "context": {
+        "muscle": "quads",
+        "level": "intermediate",
+        "reasons": [
+          "effortBudget.canApply=false"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "moderate",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": false
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para leg_extension: allow=true, maxSlots=1",
+      "severity": "info",
+      "context": {
+        "exercise": "leg_extension",
+        "muscle": "quads",
+        "allowFailure": true,
+        "maxFailureSetsThisSession": 1,
+        "reasons": [
+          "allowed"
+        ],
+        "debugContext": {
+          "muscleWeeklySets": 10,
+          "muscleWeeklyFrequency": 4,
+          "percentageByFrequency": 0.1,
+          "maxFailureSlots": 1,
+          "slotsPerDay": 1,
+          "slotsThisDay": 1
+        }
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 2 Día 4: 3 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "rdl",
+          "glute_bridge",
+          "leg_extension"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_override_applied",
+      "description": "Override de intensificación aplicado (allow=false, maxPerWeek=1)",
+      "severity": "info",
+      "context": {
+        "week": 3,
+        "allowIntensification": false,
+        "maxPerWeek": 1
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "week_setup",
+      "description": "Semana 3: intensification (intent=push, repBias=low)",
+      "severity": "info",
+      "context": {
+        "weekIndex": 3,
+        "phase": "intensification",
+        "effortIntent": "push",
+        "repBias": "low",
+        "fatigueExpectation": "high",
+        "repRange": "6-8"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para bench_press: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "bench_press",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para ohp: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "ohp",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para barbell_row: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "barbell_row",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para chest",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_fly: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lat_pulldown: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lat_pulldown",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 3,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lateral_raise: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lateral_raise",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 3 Día 1: 6 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "bench_press",
+          "ohp",
+          "barbell_row",
+          "cable_fly",
+          "lat_pulldown",
+          "lateral_raise"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para back_squat: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "back_squat",
+        "muscle": "quads",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para glutes",
+      "severity": "info",
+      "context": {
+        "muscle": "glutes",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_abduction: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_abduction",
+        "muscle": "glutes",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para hamstrings",
+      "severity": "info",
+      "context": {
+        "muscle": "hamstrings",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 4,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para leg_curl: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "leg_curl",
+        "muscle": "hamstrings",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 3 Día 2: 3 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "back_squat",
+          "cable_abduction",
+          "leg_curl"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para seated_row: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "seated_row",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para chest",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 5,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_fly: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 3,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lat_pulldown: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lat_pulldown",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 4,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lateral_raise: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lateral_raise",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 3 Día 3: 4 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "seated_row",
+          "cable_fly",
+          "lat_pulldown",
+          "lateral_raise"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para rdl: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "rdl",
+        "muscle": "hamstrings",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para glute_bridge: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "glute_bridge",
+        "muscle": "glutes",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para quads",
+      "severity": "info",
+      "context": {
+        "muscle": "quads",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "high",
+        "targetRIR": "3 - 4",
+        "sets": 4,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para leg_extension: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "leg_extension",
+        "muscle": "quads",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "fatigueExpectation=high"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 3 Día 4: 3 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "rdl",
+          "glute_bridge",
+          "leg_extension"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_override_applied",
+      "description": "Override de intensificación aplicado (allow=false, maxPerWeek=1)",
+      "severity": "info",
+      "context": {
+        "week": 4,
+        "allowIntensification": false,
+        "maxPerWeek": 1
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "week_setup",
+      "description": "Semana 4: deload (intent=deload, repBias=high)",
+      "severity": "info",
+      "context": {
+        "weekIndex": 4,
+        "phase": "deload",
+        "effortIntent": "deload",
+        "repBias": "high",
+        "fatigueExpectation": "reset",
+        "repRange": "12-15"
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para bench_press: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "bench_press",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para ohp: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "ohp",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para barbell_row: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "barbell_row",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para chest",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 1,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_fly: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lat_pulldown: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lat_pulldown",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lateral_raise: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lateral_raise",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 4 Día 1: 6 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "bench_press",
+          "ohp",
+          "barbell_row",
+          "cable_fly",
+          "lat_pulldown",
+          "lateral_raise"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para back_squat: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "back_squat",
+        "muscle": "quads",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para glutes",
+      "severity": "info",
+      "context": {
+        "muscle": "glutes",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 3,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_abduction: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_abduction",
+        "muscle": "glutes",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para hamstrings",
+      "severity": "info",
+      "context": {
+        "muscle": "hamstrings",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para leg_curl: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "leg_curl",
+        "muscle": "hamstrings",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 4 Día 2: 3 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "back_squat",
+          "cable_abduction",
+          "leg_curl"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para seated_row: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "seated_row",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para chest",
+      "severity": "info",
+      "context": {
+        "muscle": "chest",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 3,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para cable_fly: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "cable_fly",
+        "muscle": "chest",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para back",
+      "severity": "info",
+      "context": {
+        "muscle": "back",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lat_pulldown: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lat_pulldown",
+        "muscle": "back",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para shoulders",
+      "severity": "info",
+      "context": {
+        "muscle": "shoulders",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para lateral_raise: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "lateral_raise",
+        "muscle": "shoulders",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 4 Día 3: 4 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "seated_row",
+          "cable_fly",
+          "lat_pulldown",
+          "lateral_raise"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para rdl: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "rdl",
+        "muscle": "hamstrings",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para glute_bridge: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "glute_bridge",
+        "muscle": "glutes",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "intensification_skipped_reason",
+      "description": "Intensificación omitida para quads",
+      "severity": "info",
+      "context": {
+        "muscle": "quads",
+        "level": "intermediate",
+        "reasons": [
+          "fatigueExpectation=reset",
+          "phase=deload"
+        ],
+        "allowIntensification": true,
+        "fatigueExpectation": "reset",
+        "targetRIR": "3 - 4",
+        "sets": 2,
+        "budgetCanApply": true
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "failure_policy_applied",
+      "description": "Política de fallo para leg_extension: allow=false, maxSlots=0",
+      "severity": "info",
+      "context": {
+        "exercise": "leg_extension",
+        "muscle": "quads",
+        "allowFailure": false,
+        "maxFailureSetsThisSession": 0,
+        "reasons": [
+          "phase=deload"
+        ],
+        "debugContext": {}
+      },
+      "action": null
+    },
+    {
+      "phase": "Phase7Prescription",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "day_prescriptions",
+      "description": "Semana 4 Día 4: 3 ejercicios generados",
+      "severity": "info",
+      "context": {
+        "prescriptions": [
+          "rdl",
+          "glute_bridge",
+          "leg_extension"
+        ]
+      },
+      "action": null
+    },
+    {
+      "phase": "TrainingProgramEngine",
+      "timestamp": "2025-01-01T00:00:00.000",
+      "category": "insufficient_exercises_after_prescription",
+      "description": "Día con menos de 4 ejercicios tras prescripción",
+      "severity": "critical",
+      "context": {
+        "week": 1,
+        "day": 2,
+        "count": 3
+      },
+      "action": "Verificar catálogo y distribución; bloquear plan"
+    }
+  ]
+}

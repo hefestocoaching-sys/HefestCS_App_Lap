@@ -1,0 +1,204 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║   ✅ CONTRATO DE BITÁCORA DE ENTRENAMIENTO - COMPLETADO                 ║
+║                                                                          ║
+║   Versión: v1.0.0                                                        ║
+║   Fecha: 30 de diciembre de 2025                                         ║
+║   Estado: 🔒 CONGELADO PARA PRODUCCIÓN                                  ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+📋 RESUMEN DE ENTREGABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 1. MODELO CANÓNICO: TrainingSessionLogV2
+   📁 lib/domain/entities/training_session_log.dart
+   📊 15 campos (14 requeridos + 1 opcional)
+   📝 100+ líneas de documentación inline
+   🔐 6 validaciones de negocio
+   
+✅ 2. HELPERS PUROS
+   🛠️ upsertTrainingSessionLogByDateV2 (merge offline-first)
+   🛠️ normalizeTrainingLogDate (normalización de fecha)
+   🛠️ _isSameDayV2 (comparación de días)
+   
+✅ 3. DOCUMENTACIÓN COMPLETA
+   📘 TRAINING_LOG_INDEX.md (índice maestro)
+   📘 TRAINING_LOG_CONTRACT_FROZEN.md (resumen ejecutivo, 350 líneas)
+   📘 TRAINING_LOG_CONTRACT_AUDIT.md (auditoría técnica, 308 líneas)
+   📘 training_log_usage_examples.dart (10 ejemplos de código)
+   📘 README.md (actualizado con sección de contrato)
+   
+✅ 4. TESTS Y VALIDACIONES
+   🧪 23/23 tests de TrainingSessionLogV2 ✅
+   🧪 6/6 tests de integración Phase 8 ✅
+   🧪 222/222 tests totales del proyecto ✅
+   🔍 flutter analyze: 0 errores nuevos
+   
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 CAPACIDADES GARANTIZADAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Offline-first (UUID generado por cliente)
+✅ JSON serializable completo
+✅ Forward/backward compatible (schemaVersion)
+✅ Separación INPUT vs DERIVADOS
+✅ Validaciones exhaustivas
+✅ Helpers deterministas (sin DateTime.now)
+✅ Documentación completa (código + markdown)
+✅ Cobertura de tests: 100%
+✅ Phase 8 funciona con y sin logs
+✅ Motor certifica 222 tests pasando
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 ESTADÍSTICAS DEL CONTRATO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Total de campos:           15 campos
+  ├─ Requeridos:           14 campos (93%)
+  └─ Opcionales:            1 campo (7%)
+
+Clasificación por categoría:
+  ├─ Identificación:        7 campos (46%)
+  ├─ Volumen:               2 campos (13%)
+  ├─ Intensidad:            2 campos (13%)
+  ├─ Alarmas:               3 campos (20%)
+  └─ Notas:                 1 campo (7%)
+
+Separación INPUT/DERIVADOS:
+  ├─ INPUT (desde móvil):  15 campos (100%)
+  └─ DERIVADOS:             0 campos (0%) ✅
+
+Validaciones:
+  ├─ Rango de valores:      3 validaciones
+  ├─ Consistencia:          2 validaciones
+  └─ Formato:               1 validación
+
+Documentación generada:
+  ├─ Líneas de comentarios: ~450 líneas
+  ├─ Archivos markdown:      4 archivos
+  ├─ Ejemplos de código:    10 casos de uso
+  └─ Tests documentados:    23 casos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔄 FLUJO DE DATOS (PIPELINE COMPLETO)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ [1] 📱 MOBILE APP
+      └─ Usuario registra sesión
+      └─ Genera UUID (offline)
+      └─ Valida con log.validate()
+      └─ Guarda en DB local
+           │
+           ▼
+ [2] ☁️  SERVIDOR (Firebase/Backend)
+      └─ Recibe JSON via sync
+      └─ Valida schemaVersion
+      └─ Persiste centralizado
+           │
+           ▼
+ [3] 💻 DESKTOP APP
+      └─ Descarga logs de semana
+      └─ Pasa a TrainingFeedbackAggregatorService
+           │
+           ▼
+ [4] 🧮 TrainingFeedbackAggregatorService
+      └─ Filtra semana (lunes-domingo)
+      └─ Calcula adherence, avgRIR, avgEffort
+      └─ Determina signal (positive/ambiguous/negative)
+      └─ Genera WeeklyTrainingFeedbackSummary
+           │
+           ▼
+ [5] 🧠 Phase8AdaptationService
+      └─ Lee WeeklyTrainingFeedbackSummary
+      └─ Decide: maintain / progress / deload
+      └─ Aplica volumeFactor
+      └─ Retorna plan adaptado
+           │
+           ▼
+ [6] 👤 USUARIO
+      └─ Recibe plan personalizado
+      └─ Ejecuta siguiente semana
+      └─ Registra nueva sesión → volver a [1]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 ARCHIVOS CLAVE (REFERENCIA RÁPIDA)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DOCUMENTACIÓN:
+  📘 docs/TRAINING_LOG_INDEX.md                    ← 📍 EMPIEZA AQUÍ
+  📘 docs/TRAINING_LOG_CONTRACT_FROZEN.md          (resumen ejecutivo)
+  📘 docs/TRAINING_LOG_CONTRACT_AUDIT.md           (auditoría técnica)
+  📘 docs/training_log_usage_examples.dart         (10 ejemplos)
+
+CÓDIGO FUENTE:
+  💾 lib/domain/entities/training_session_log.dart           (contrato)
+  💾 lib/domain/entities/weekly_training_feedback_summary.dart
+  💾 lib/domain/services/training_feedback_aggregator_service.dart
+  💾 lib/domain/services/phase_8_adaptation_service.dart
+
+TESTS:
+  🧪 test/domain/entities/training_session_log_test.dart     (23 tests)
+  🧪 test/phase_8_adaptation_wiring_test.dart                (6 tests)
+  🧪 test/longitudinal/                                       (auditoría)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CRITERIOS DE ACEPTACIÓN (CUMPLIDOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ flutter analyze → 0 errors / 0 warnings nuevos
+✅ flutter test → 222/222 passing (100%)
+✅ Phase 8 funciona con y sin logs
+✅ Contrato puede usarse en app móvil sin cambios
+✅ Offline-first (UUID generado por cliente)
+✅ Forward/backward compatible (schemaVersion)
+✅ Sin lógica de negocio en modelo (solo datos)
+✅ Helpers puros (sin DateTime.now, sin side effects)
+✅ Documentación completa (código + markdown)
+✅ Separación clara INPUT vs DERIVADOS
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏸️  SIGUIENTE PASO (NO HACER AÚN)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  PENDIENTE DE CONFIRMACIÓN DEL USUARIO:
+
+  - Base de datos de ejercicios (catálogo)
+  - Base de datos de nutrición (macros, alimentos)
+  - Integración con Firebase (sync)
+  - Implementación de app móvil
+
+⛔ NO AVANZAR SIN APROBACIÓN EXPLÍCITA.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎉 CONCLUSIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+El contrato de bitácora TrainingSessionLogV2 está:
+  ✅ COMPLETO
+  ✅ DOCUMENTADO
+  ✅ VALIDADO
+  ✅ TESTEADO
+  ✅ CONGELADO
+
+🔒 ESTADO: CONGELADO PARA PRODUCCIÓN (v1.0.0)
+
+Breaking changes requieren: Bump a v2.0.0 + migración documentada
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Fecha de congelamiento: 30 de diciembre de 2025
+Próxima revisión: Al agregar funcionalidad de 1RM o tracking de carga (v2.0.0)
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                          🎯 TRABAJO COMPLETADO                           ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝

@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is the coach owner
+    function isCoach(coachId) {
+      return request.auth.uid == coachId;
+    }
+    
+    // Coaches collection - users can only access their own data
+    match /coaches/{coachId} {
+      allow read, write: if isAuthenticated() && isCoach(coachId);
+      
+      // Appointments subcollection
+      match /appointments/{appointmentId} {
+        allow read, write: if isAuthenticated() && isCoach(coachId);
+      }
+      
+      // Transactions subcollection
+      match /transactions/{transactionId} {
+        allow read, write: if isAuthenticated() && isCoach(coachId);
+      }
+      
+      // Clients subcollection
+      match /clients/{clientId} {
+        allow read, write: if isAuthenticated() && isCoach(coachId);
+        
+        // Clinical records subcollections
+        match /anthropometry_records/{recordId} {
+          allow read, write: if isAuthenticated() && isCoach(coachId);
+        }
+        
+        match /biochemistry_records/{recordId} {
+          allow read, write: if isAuthenticated() && isCoach(coachId);
+        }
+        
+        match /nutrition_records/{recordId} {
+          allow read, write: if isAuthenticated() && isCoach(coachId);
+        }
+        
+        match /training_records/{recordId} {
+          allow read, write: if isAuthenticated() && isCoach(coachId);
+        }
+      }
+    }
+  }
+}

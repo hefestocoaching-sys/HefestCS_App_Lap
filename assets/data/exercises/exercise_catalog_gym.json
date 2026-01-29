@@ -1,0 +1,7915 @@
+{
+  "schemaVersion": "3.0",
+  "lastUpdated": "2026-01-22",
+  "notes": "FULL COMPLETE catalog. Muscle-level VOP. No generic groups.",
+  "exercises": [
+    {
+      "id": "lat_pulldown_pron",
+      "name": {
+        "es": "Jalón al pecho prono",
+        "en": "Lat pulldown pronated"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "lat_pulldown_neu",
+      "name": {
+        "es": "Jalón al pecho neutro",
+        "en": "Lat pulldown neutral"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "lat_pulldown_sup",
+      "name": {
+        "es": "Jalón al pecho supino",
+        "en": "Lat pulldown supinated"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "pullup_pron",
+      "name": {
+        "es": "Dominadas pronas",
+        "en": "Pull-up pronated"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "pullup_neu",
+      "name": {
+        "es": "Dominadas neutras",
+        "en": "Neutral pull-up"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "pullup_sup",
+      "name": {
+        "es": "Dominadas supinas",
+        "en": "Chin-up"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "pullover_bar",
+      "name": {
+        "es": "Pullover polea barra",
+        "en": "Cable pullover bar"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "pullover_rope",
+      "name": {
+        "es": "Pullover polea cuerda",
+        "en": "Cable pullover rope"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "lat_unilateral",
+      "name": {
+        "es": "Jalón unilateral",
+        "en": "Single-arm lat pulldown"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "lat_close",
+      "name": {
+        "es": "Jalón agarre cerrado",
+        "en": "Close-grip lat pulldown"
+      },
+      "primaryMuscles": [
+        "lats"
+      ],
+      "secondaryMuscles": [
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "lats": 1.0,
+        "biceps": 0.3
+      },
+      "movementPattern": "vertical_pull",
+      "equipment": [
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lat_vertical_pull"
+    },
+    {
+      "id": "row_cable_pron",
+      "name": {
+        "es": "Remo polea prono",
+        "en": "Seated cable row pronated"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "row_cable_neu",
+      "name": {
+        "es": "Remo polea neutro",
+        "en": "Seated cable row neutral"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "row_cable_sup",
+      "name": {
+        "es": "Remo polea supino",
+        "en": "Seated cable row supinated"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "row_bar_pron",
+      "name": {
+        "es": "Remo barra prono",
+        "en": "Barbell row pronated"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "row_bar_sup",
+      "name": {
+        "es": "Remo barra supino",
+        "en": "Barbell row supinated"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "pendlay",
+      "name": {
+        "es": "Remo Pendlay",
+        "en": "Pendlay row"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "row_db_uni",
+      "name": {
+        "es": "Remo mancuerna unilateral",
+        "en": "One-arm dumbbell row"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "row_t_machine",
+      "name": {
+        "es": "Remo T máquina",
+        "en": "T-bar row machine"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "row_landmine",
+      "name": {
+        "es": "Remo barra en T",
+        "en": "Landmine row"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "row_machine",
+      "name": {
+        "es": "Remo máquina horizontal",
+        "en": "Horizontal machine row"
+      },
+      "primaryMuscles": [
+        "upper_back"
+      ],
+      "secondaryMuscles": [
+        "lats",
+        "biceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "upper_back": 1.0,
+        "lats": 0.3
+      },
+      "movementPattern": "horizontal_pull",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "upper_back_row"
+    },
+    {
+      "id": "shrug_bar",
+      "name": {
+        "es": "Encogimiento barra",
+        "en": "Barbell shrug"
+      },
+      "primaryMuscles": [
+        "traps_upper"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_upper": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "shrug_db",
+      "name": {
+        "es": "Encogimiento mancuernas",
+        "en": "Dumbbell shrug"
+      },
+      "primaryMuscles": [
+        "traps_upper"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_upper": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "shrug_machine",
+      "name": {
+        "es": "Encogimiento máquina",
+        "en": "Machine shrug"
+      },
+      "primaryMuscles": [
+        "traps_upper"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_upper": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "farmer",
+      "name": {
+        "es": "Farmer carry",
+        "en": "Farmer carry"
+      },
+      "primaryMuscles": [
+        "traps_upper"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_upper": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "face_pull",
+      "name": {
+        "es": "Face pull",
+        "en": "Face pull"
+      },
+      "primaryMuscles": [
+        "traps_middle"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_middle": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "y_raise_bench",
+      "name": {
+        "es": "Y raise banco",
+        "en": "Bench Y raise"
+      },
+      "primaryMuscles": [
+        "traps_middle"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_middle": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "high_row_control",
+      "name": {
+        "es": "Remo alto controlado",
+        "en": "High row controlled"
+      },
+      "primaryMuscles": [
+        "traps_middle"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_middle": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "trap3_raise",
+      "name": {
+        "es": "Trap-3 raise",
+        "en": "Trap-3 raise"
+      },
+      "primaryMuscles": [
+        "traps_lower"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_lower": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "y_raise_cable",
+      "name": {
+        "es": "Y raise polea",
+        "en": "Cable Y raise"
+      },
+      "primaryMuscles": [
+        "traps_lower"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_lower": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "scap_pulldown",
+      "name": {
+        "es": "Pull-down escapular",
+        "en": "Scapular pulldown"
+      },
+      "primaryMuscles": [
+        "traps_lower"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "traps_lower": 1.0
+      },
+      "movementPattern": "scapular_control",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine",
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "trap_specific"
+    },
+    {
+      "id": "bench_bar",
+      "name": {
+        "es": "Press banca barra",
+        "en": "Barbell bench press"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "bench_db",
+      "name": {
+        "es": "Press banca mancuernas",
+        "en": "Dumbbell bench press"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "incline_bar",
+      "name": {
+        "es": "Press inclinado barra",
+        "en": "Incline barbell press"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "incline_db",
+      "name": {
+        "es": "Press inclinado mancuernas",
+        "en": "Incline dumbbell press"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "decline_bar",
+      "name": {
+        "es": "Press declinado barra",
+        "en": "Decline barbell press"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "decline_db",
+      "name": {
+        "es": "Press declinado mancuernas",
+        "en": "Decline dumbbell press"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "fly_flat",
+      "name": {
+        "es": "Aperturas planas",
+        "en": "Flat dumbbell fly"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "fly_incline",
+      "name": {
+        "es": "Aperturas inclinadas",
+        "en": "Incline dumbbell fly"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "crossover_high",
+      "name": {
+        "es": "Crossover polea alta",
+        "en": "High cable crossover"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "chest_dips",
+      "name": {
+        "es": "Fondos inclinados",
+        "en": "Chest dips"
+      },
+      "primaryMuscles": [
+        "chest"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "chest": 1.0,
+        "triceps": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "press_military",
+      "name": {
+        "es": "Press militar",
+        "en": "Military press"
+      },
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_anterior": 1.0
+      },
+      "movementPattern": "shoulder_press",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "shoulder_press"
+    },
+    {
+      "id": "press_db",
+      "name": {
+        "es": "Press hombro mancuernas",
+        "en": "Dumbbell shoulder press"
+      },
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_anterior": 1.0
+      },
+      "movementPattern": "shoulder_press",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "shoulder_press"
+    },
+    {
+      "id": "arnold_press",
+      "name": {
+        "es": "Press Arnold",
+        "en": "Arnold press"
+      },
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_anterior": 1.0
+      },
+      "movementPattern": "shoulder_press",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "shoulder_press"
+    },
+    {
+      "id": "front_raise_bar",
+      "name": {
+        "es": "Elevación frontal barra",
+        "en": "Barbell front raise"
+      },
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_anterior": 1.0
+      },
+      "movementPattern": "shoulder_press",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "shoulder_press"
+    },
+    {
+      "id": "front_raise_db",
+      "name": {
+        "es": "Elevación frontal mancuernas",
+        "en": "Dumbbell front raise"
+      },
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_anterior": 1.0
+      },
+      "movementPattern": "shoulder_press",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "shoulder_press"
+    },
+    {
+      "id": "front_raise_plate",
+      "name": {
+        "es": "Elevación frontal disco",
+        "en": "Plate front raise"
+      },
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_anterior": 1.0
+      },
+      "movementPattern": "shoulder_press",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "shoulder_press"
+    },
+    {
+      "id": "landmine_press",
+      "name": {
+        "es": "Press landmine",
+        "en": "Landmine press"
+      },
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_anterior": 1.0
+      },
+      "movementPattern": "shoulder_press",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "shoulder_press"
+    },
+    {
+      "id": "machine_press",
+      "name": {
+        "es": "Press hombro máquina",
+        "en": "Machine shoulder press"
+      },
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_anterior": 1.0
+      },
+      "movementPattern": "shoulder_press",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "shoulder_press"
+    },
+    {
+      "id": "lat_raise_db",
+      "name": {
+        "es": "Elevaciones laterales",
+        "en": "Dumbbell lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_cable",
+      "name": {
+        "es": "Elevaciones laterales polea",
+        "en": "Cable lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_machine",
+      "name": {
+        "es": "Elevaciones laterales máquina",
+        "en": "Machine lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_uni",
+      "name": {
+        "es": "Elevación lateral unilateral",
+        "en": "Unilateral lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_lean",
+      "name": {
+        "es": "Elevación lateral inclinada",
+        "en": "Lean-away lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_partial",
+      "name": {
+        "es": "Elevaciones parciales",
+        "en": "Partial lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_seated",
+      "name": {
+        "es": "Elevaciones laterales sentado",
+        "en": "Seated lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_high",
+      "name": {
+        "es": "Elevaciones laterales altas",
+        "en": "High lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_drop",
+      "name": {
+        "es": "Elevaciones laterales drop",
+        "en": "Drop lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "lat_raise_band",
+      "name": {
+        "es": "Elevaciones laterales banda",
+        "en": "Band lateral raise"
+      },
+      "primaryMuscles": [
+        "deltoide_lateral"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_lateral": 1.0
+      },
+      "movementPattern": "shoulder_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "lateral_raise"
+    },
+    {
+      "id": "rear_fly_db",
+      "name": {
+        "es": "Pájaros mancuernas",
+        "en": "Rear delt fly dumbbell"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "rear_fly_cable",
+      "name": {
+        "es": "Pájaros polea",
+        "en": "Cable rear delt fly"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "rear_fly_machine",
+      "name": {
+        "es": "Pájaros máquina",
+        "en": "Machine rear delt fly"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "face_pull_rd",
+      "name": {
+        "es": "Face pull posterior",
+        "en": "Face pull rear delt"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "reverse_pec",
+      "name": {
+        "es": "Pec deck inverso",
+        "en": "Reverse pec deck"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "rear_raise_prone",
+      "name": {
+        "es": "Elevación posterior prono",
+        "en": "Prone rear raise"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "rear_raise_seated",
+      "name": {
+        "es": "Elevación posterior sentado",
+        "en": "Seated rear raise"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "row_wide",
+      "name": {
+        "es": "Remo agarre amplio",
+        "en": "Wide grip row"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "rear_raise_band",
+      "name": {
+        "es": "Elevación posterior banda",
+        "en": "Band rear raise"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "rear_raise_uni",
+      "name": {
+        "es": "Elevación posterior unilateral",
+        "en": "Unilateral rear raise"
+      },
+      "primaryMuscles": [
+        "deltoide_posterior"
+      ],
+      "secondaryMuscles": [
+        "upper_back"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "deltoide_posterior": 1.0
+      },
+      "movementPattern": "horizontal_abduction",
+      "equipment": [
+        "dumbbell",
+        "cable",
+        "machine",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "rear_delt"
+    },
+    {
+      "id": "hip_thrust",
+      "name": {
+        "es": "Hip thrust",
+        "en": "Hip thrust"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "glute_bridge",
+      "name": {
+        "es": "Puente glúteo",
+        "en": "Glute bridge"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "bulgarian",
+      "name": {
+        "es": "Bulgarian split squat",
+        "en": "Bulgarian split squat"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "step_up",
+      "name": {
+        "es": "Step up",
+        "en": "Step up"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "lunge_rev",
+      "name": {
+        "es": "Zancada reversa",
+        "en": "Reverse lunge"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "lunge_walk",
+      "name": {
+        "es": "Zancada caminando",
+        "en": "Walking lunge"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "deadlift_sumo",
+      "name": {
+        "es": "Peso muerto sumo",
+        "en": "Sumo deadlift"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "kickback_cable",
+      "name": {
+        "es": "Patada glúteo polea",
+        "en": "Cable glute kickback"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "squat_lowbar",
+      "name": {
+        "es": "Sentadilla low bar",
+        "en": "Low bar squat"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "hip_abduction",
+      "name": {
+        "es": "Abducción cadera máquina",
+        "en": "Hip abduction machine"
+      },
+      "primaryMuscles": [
+        "glutes"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "quads"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "glutes": 1.0
+      },
+      "movementPattern": "hip_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "glute_general"
+    },
+    {
+      "id": "back_squat",
+      "name": {
+        "es": "Sentadilla trasera",
+        "en": "Back squat"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "front_squat",
+      "name": {
+        "es": "Sentadilla frontal",
+        "en": "Front squat"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "hack_squat",
+      "name": {
+        "es": "Hack squat",
+        "en": "Hack squat"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "leg_press",
+      "name": {
+        "es": "Prensa",
+        "en": "Leg press"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "leg_extension",
+      "name": {
+        "es": "Extensión cuádriceps",
+        "en": "Leg extension"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "split_squat",
+      "name": {
+        "es": "Split squat",
+        "en": "Split squat"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "step_down",
+      "name": {
+        "es": "Step down",
+        "en": "Step down"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "sissy",
+      "name": {
+        "es": "Sissy squat",
+        "en": "Sissy squat"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "goblet",
+      "name": {
+        "es": "Goblet squat",
+        "en": "Goblet squat"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "smith_squat",
+      "name": {
+        "es": "Sentadilla smith",
+        "en": "Smith squat"
+      },
+      "primaryMuscles": [
+        "quads"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quads": 1.0
+      },
+      "movementPattern": "knee_dominant",
+      "equipment": [
+        "barbell",
+        "machine",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "quad_knee"
+    },
+    {
+      "id": "rdl",
+      "name": {
+        "es": "Peso muerto rumano",
+        "en": "Romanian deadlift"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "leg_curl",
+      "name": {
+        "es": "Curl femoral",
+        "en": "Leg curl"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "leg_curl_seated",
+      "name": {
+        "es": "Curl femoral sentado",
+        "en": "Seated leg curl"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "good_morning",
+      "name": {
+        "es": "Good morning",
+        "en": "Good morning"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "hip_hinge",
+      "name": {
+        "es": "Hip hinge",
+        "en": "Hip hinge"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "glute_ham",
+      "name": {
+        "es": "Glute ham raise",
+        "en": "Glute-ham raise"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "single_leg_rdl",
+      "name": {
+        "es": "RDL unilateral",
+        "en": "Single-leg RDL"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "kettlebell_swing",
+      "name": {
+        "es": "Swing kettlebell",
+        "en": "Kettlebell swing"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "band_curl",
+      "name": {
+        "es": "Curl femoral banda",
+        "en": "Band leg curl"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "slider_curl",
+      "name": {
+        "es": "Curl deslizante",
+        "en": "Slider curl"
+      },
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "hamstrings": 1.0
+      },
+      "movementPattern": "hip_hinge",
+      "equipment": [
+        "barbell",
+        "machine",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": false
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          0
+        ]
+      },
+      "equivalenceGroup": "hamstring"
+    },
+    {
+      "id": "calf_standing",
+      "name": {
+        "es": "Elevación talones de pie",
+        "en": "Standing calf raise"
+      },
+      "primaryMuscles": [
+        "gastrocnemio"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "gastrocnemio": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_machine",
+      "name": {
+        "es": "Elevación talones máquina",
+        "en": "Machine calf raise"
+      },
+      "primaryMuscles": [
+        "gastrocnemio"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "gastrocnemio": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_donkey",
+      "name": {
+        "es": "Donkey calf raise",
+        "en": "Donkey calf raise"
+      },
+      "primaryMuscles": [
+        "gastrocnemio"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "gastrocnemio": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_single",
+      "name": {
+        "es": "Pantorrilla unilateral",
+        "en": "Single-leg calf raise"
+      },
+      "primaryMuscles": [
+        "gastrocnemio"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "gastrocnemio": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_seated",
+      "name": {
+        "es": "Pantorrilla sentado",
+        "en": "Seated calf raise"
+      },
+      "primaryMuscles": [
+        "soleo"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "soleo": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_seated_machine",
+      "name": {
+        "es": "Pantorrilla sentado máquina",
+        "en": "Seated calf machine"
+      },
+      "primaryMuscles": [
+        "soleo"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "soleo": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_band",
+      "name": {
+        "es": "Pantorrilla banda",
+        "en": "Band calf raise"
+      },
+      "primaryMuscles": [
+        "soleo"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "soleo": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_pause",
+      "name": {
+        "es": "Pantorrilla pausada",
+        "en": "Paused calf raise"
+      },
+      "primaryMuscles": [
+        "soleo"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "soleo": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_iso",
+      "name": {
+        "es": "Pantorrilla isométrica",
+        "en": "Isometric calf"
+      },
+      "primaryMuscles": [
+        "soleo"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "soleo": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_jump",
+      "name": {
+        "es": "Saltos pantorrilla",
+        "en": "Calf jumps"
+      },
+      "primaryMuscles": [
+        "gastrocnemio"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "gastrocnemio": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_step",
+      "name": {
+        "es": "Pantorrilla escalón",
+        "en": "Step calf raise"
+      },
+      "primaryMuscles": [
+        "gastrocnemio"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "gastrocnemio": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "calf_smith",
+      "name": {
+        "es": "Pantorrilla smith",
+        "en": "Smith calf raise"
+      },
+      "primaryMuscles": [
+        "gastrocnemio"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "gastrocnemio": 1.0
+      },
+      "movementPattern": "plantar_flexion",
+      "equipment": [
+        "machine",
+        "barbell",
+        "band",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "calf"
+    },
+    {
+      "id": "curl_bar",
+      "name": {
+        "es": "Curl barra",
+        "en": "Barbell curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_db",
+      "name": {
+        "es": "Curl mancuernas",
+        "en": "Dumbbell curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_alt",
+      "name": {
+        "es": "Curl alterno",
+        "en": "Alternating curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_hammer",
+      "name": {
+        "es": "Curl martillo",
+        "en": "Hammer curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_preacher",
+      "name": {
+        "es": "Curl predicador",
+        "en": "Preacher curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_conc",
+      "name": {
+        "es": "Curl concentración",
+        "en": "Concentration curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_cable",
+      "name": {
+        "es": "Curl polea",
+        "en": "Cable curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_spider",
+      "name": {
+        "es": "Curl spider",
+        "en": "Spider curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_band",
+      "name": {
+        "es": "Curl banda",
+        "en": "Band curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "curl_ez",
+      "name": {
+        "es": "Curl EZ",
+        "en": "EZ bar curl"
+      },
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "biceps": 1.0
+      },
+      "movementPattern": "elbow_flexion",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "band"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "biceps"
+    },
+    {
+      "id": "pushdown_bar",
+      "name": {
+        "es": "Extensión polea barra",
+        "en": "Cable pushdown bar"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "pushdown_rope",
+      "name": {
+        "es": "Extensión polea cuerda",
+        "en": "Cable pushdown rope"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "skullcrusher",
+      "name": {
+        "es": "Press francés",
+        "en": "Skullcrusher"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "overhead_db",
+      "name": {
+        "es": "Extensión overhead mancuerna",
+        "en": "Overhead dumbbell extension"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "overhead_cable",
+      "name": {
+        "es": "Extensión overhead polea",
+        "en": "Overhead cable extension"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "bench_close",
+      "name": {
+        "es": "Press cerrado",
+        "en": "Close-grip bench press"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "dip_triceps",
+      "name": {
+        "es": "Fondos tríceps",
+        "en": "Triceps dips"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "kickback",
+      "name": {
+        "es": "Kickback",
+        "en": "Triceps kickback"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "jm_press",
+      "name": {
+        "es": "JM press",
+        "en": "JM press"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "triceps_machine",
+      "name": {
+        "es": "Tríceps máquina",
+        "en": "Triceps machine"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "cable",
+        "machine",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          4,
+          6
+        ],
+        "medium": [
+          6,
+          10
+        ],
+        "light": [
+          10,
+          15
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "crunch_machine",
+      "name": {
+        "es": "Crunch máquina",
+        "en": "Machine crunch"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "core_flexion",
+      "equipment": [
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          20
+        ],
+        "light": [
+          20,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "crunch_cable",
+      "name": {
+        "es": "Crunch polea",
+        "en": "Cable crunch"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "core_flexion",
+      "equipment": [
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          20
+        ],
+        "light": [
+          20,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "leg_raise",
+      "name": {
+        "es": "Elevación piernas",
+        "en": "Leg raise"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "core_flexion",
+      "equipment": [
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          20
+        ],
+        "light": [
+          20,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "hanging_raise",
+      "name": {
+        "es": "Elevación colgado",
+        "en": "Hanging leg raise"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "core_flexion",
+      "equipment": [
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          20
+        ],
+        "light": [
+          20,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "ab_wheel",
+      "name": {
+        "es": "Rueda abdominal",
+        "en": "Ab wheel"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "core_flexion",
+      "equipment": [
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          20
+        ],
+        "light": [
+          20,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "plank",
+      "name": {
+        "es": "Plancha",
+        "en": "Plank"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "core_flexion",
+      "equipment": [
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          20
+        ],
+        "light": [
+          20,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "side_plank",
+      "name": {
+        "es": "Plancha lateral",
+        "en": "Side plank"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "core_flexion",
+      "equipment": [
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          20
+        ],
+        "light": [
+          20,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "dead_bug",
+      "name": {
+        "es": "Dead bug",
+        "en": "Dead bug"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "core_flexion",
+      "equipment": [
+        "machine",
+        "cable",
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          12,
+          20
+        ],
+        "light": [
+          20,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    }
+  ]
+}

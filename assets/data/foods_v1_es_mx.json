@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1.1,
+  "source": "USDA SR Legacy (curated, es-MX) + yield factors",
+  "foods": [
+    {
+      "foodId": "pechuga_pollo_cruda_sin_piel",
+      "name": "Pechuga de pollo cruda sin piel",
+      "aliases": ["pollo"],
+      "origin": "animal",
+      "groupHint": "alimentos_origen_animal",
+      "subgroupHint": "bajo_aporte_grasa",
+      "preparationState": "raw",
+      "yieldFactor": 0.75,
+      "macrosPer100g": {
+        "kcal": 120,
+        "protein_g": 22.0,
+        "fat_g": 2.6,
+        "carb_g": 0.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "foodId": "pechuga_pollo_cocida_sin_piel",
+      "name": "Pechuga de pollo cocida sin piel",
+      "aliases": ["pollo cocido", "pechuga cocida"],
+      "origin": "animal",
+      "groupHint": "alimentos_origen_animal",
+      "subgroupHint": "bajo_aporte_grasa",
+      "preparationState": "cooked",
+      "baseFoodId": "pechuga_pollo_cruda_sin_piel",
+      "macrosPer100g": {
+        "kcal": 165,
+        "protein_g": 31.0,
+        "fat_g": 3.6,
+        "carb_g": 0.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "foodId": "res_magro_cruda",
+      "name": "Carne de res magra cruda",
+      "aliases": ["res magra"],
+      "origin": "animal",
+      "groupHint": "alimentos_origen_animal",
+      "subgroupHint": "moderado_aporte_grasa",
+      "preparationState": "raw",
+      "yieldFactor": 0.70,
+      "macrosPer100g": {
+        "kcal": 137,
+        "protein_g": 21.0,
+        "fat_g": 5.0,
+        "carb_g": 0.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "foodId": "arroz_blanco_crudo",
+      "name": "Arroz blanco crudo",
+      "aliases": ["arroz crudo"],
+      "origin": "vegetal",
+      "groupHint": "cereales",
+      "subgroupHint": "sin_grasa",
+      "preparationState": "raw",
+      "yieldFactor": 2.5,
+      "macrosPer100g": {
+        "kcal": 365,
+        "protein_g": 7.1,
+        "fat_g": 0.7,
+        "carb_g": 80.0,
+        "fiber_g": 1.3
+      }
+    },
+    {
+      "foodId": "arroz_blanco_cocido",
+      "name": "Arroz blanco cocido",
+      "aliases": ["arroz", "arroz cocido"],
+      "origin": "vegetal",
+      "groupHint": "cereales",
+      "subgroupHint": "sin_grasa",
+      "preparationState": "cooked",
+      "baseFoodId": "arroz_blanco_crudo",
+      "macrosPer100g": {
+        "kcal": 130,
+        "protein_g": 2.7,
+        "fat_g": 0.3,
+        "carb_g": 28.2,
+        "fiber_g": 0.4
+      }
+    },
+    {
+      "foodId": "avena_hojuelas_cruda",
+      "name": "Avena en hojuelas cruda",
+      "aliases": ["avena"],
+      "origin": "vegetal",
+      "groupHint": "cereales",
+      "subgroupHint": "con_fibra",
+      "preparationState": "raw",
+      "yieldFactor": 2.0,
+      "macrosPer100g": {
+        "kcal": 389,
+        "protein_g": 16.9,
+        "fat_g": 6.9,
+        "carb_g": 66.3,
+        "fiber_g": 10.6
+      }
+    },
+    {
+      "foodId": "frijol_negro_crudo",
+      "name": "Frijol negro crudo",
+      "aliases": ["frijoles crudos"],
+      "origin": "vegetal",
+      "groupHint": "leguminosas",
+      "subgroupHint": "alto_fodmap",
+      "preparationState": "raw",
+      "yieldFactor": 2.3,
+      "macrosPer100g": {
+        "kcal": 339,
+        "protein_g": 21.6,
+        "fat_g": 1.4,
+        "carb_g": 62.4,
+        "fiber_g": 15.5
+      }
+    },
+    {
+      "foodId": "frijol_negro_cocido",
+      "name": "Frijol negro cocido",
+      "aliases": ["frijoles", "frijoles negros"],
+      "origin": "vegetal",
+      "groupHint": "leguminosas",
+      "subgroupHint": "alto_fodmap",
+      "preparationState": "cooked",
+      "baseFoodId": "frijol_negro_crudo",
+      "macrosPer100g": {
+        "kcal": 132,
+        "protein_g": 8.9,
+        "fat_g": 0.5,
+        "carb_g": 23.7,
+        "fiber_g": 8.7
+      }
+    },
+    {
+      "foodId": "manzana_cruda_con_cascara",
+      "name": "Manzana cruda con cáscara",
+      "aliases": ["manzana"],
+      "origin": "vegetal",
+      "groupHint": "frutas",
+      "subgroupHint": "bajo_indice_glucemico",
+      "preparationState": "cooked",
+      "macrosPer100g": {
+        "kcal": 52,
+        "protein_g": 0.3,
+        "fat_g": 0.2,
+        "carb_g": 14.0,
+        "fiber_g": 2.4
+      }
+    },
+    {
+      "foodId": "platano_crudo",
+      "name": "Plátano crudo",
+      "aliases": ["banana", "plátano"],
+      "origin": "vegetal",
+      "groupHint": "frutas",
+      "subgroupHint": "moderado_indice_glucemico",
+      "preparationState": "cooked",
+      "macrosPer100g": {
+        "kcal": 89,
+        "protein_g": 1.1,
+        "fat_g": 0.3,
+        "carb_g": 22.8,
+        "fiber_g": 2.6
+      }
+    },
+    {
+      "foodId": "aceite_oliva",
+      "name": "Aceite de oliva",
+      "aliases": ["aceite de oliva"],
+      "origin": "vegetal",
+      "groupHint": "grasas",
+      "subgroupHint": "sin_proteina",
+      "preparationState": "cooked",
+      "macrosPer100g": {
+        "kcal": 884,
+        "protein_g": 0.0,
+        "fat_g": 100.0,
+        "carb_g": 0.0,
+        "fiber_g": 0.0
+      }
+    },
+    {
+      "foodId": "platano_crudo",
+      "name": "Plátano crudo",
+      "aliases": ["banana", "plátano"],
+      "origin": "vegetal",
+      "groupHint": "frutas",
+      "subgroupHint": "moderado_indice_glucemico",
+      "preparationState": "cooked",
+      "macrosPer100g": {
+        "kcal": 89,
+        "protein_g": 1.1,
+        "fat_g": 0.3,
+        "carb_g": 22.8,
+        "fiber_g": 2.6
+      }
+    },
+    {
+      "foodId": "aguacate_crudo",
+      "name": "Aguacate crudo",
+      "aliases": ["aguacate"],
+      "origin": "vegetal",
+      "groupHint": "grasas",
+      "subgroupHint": "con_fibra",
+      "preparationState": "cooked",
+      "macrosPer100g": {
+        "kcal": 160,
+        "protein_g": 2.0,
+        "fat_g": 14.7,
+        "carb_g": 8.5,
+        "fiber_g": 6.7
+      }
+    }
+  ]
+}

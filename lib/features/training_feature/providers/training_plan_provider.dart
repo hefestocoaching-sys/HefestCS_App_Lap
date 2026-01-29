@@ -1,0 +1,1073 @@
+﻿import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hcs_app_lap/core/constants/muscle_keys.dart';
+import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
+import 'package:hcs_app_lap/domain/entities/generated_plan.dart';
+import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/domain/entities/client.dart';
+import 'package:hcs_app_lap/domain/exceptions/training_plan_blocked_exception.dart';
+import 'package:hcs_app_lap/domain/training/training_cycle.dart';
+// Legacy UI compatibility imports
+import 'package:hcs_app_lap/domain/services/training_plan_mapper.dart';
+import 'package:hcs_app_lap/data/datasources/local/exercise_catalog_loader.dart';
+import 'package:hcs_app_lap/domain/entities/training_profile.dart';
+import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
+import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
+import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
+// Facade (SSOT motor)
+import 'package:hcs_app_lap/domain/training/facade/training_engine_facade.dart';
+// VopSnapshot SSOT
+import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
+import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
+import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+
+/// Estado inmutable para el plan de entrenamiento
+/// PARTE 3 A6: Incluye vopByMuscle como SSOT para que UI y motor usen la misma fuente
+class TrainingPlanState {
+  final bool isLoading;
+  final String? error;
+  final String? blockReason;
+  final List<String>? suggestions;
+  final GeneratedPlan? plan;
+  final List<String> missingFields;
+
+  /// PARTE 3 A6: VOP Map como SSOT (claves canónicas, valores en series/semana)
+  /// Motor V2 usa este mismo Map sin copias
+  final Map<String, int> vopByMuscle;
+
+  const TrainingPlanState({
+    this.isLoading = false,
+    this.error,
+    this.blockReason,
+    this.suggestions,
+    this.plan,
+    this.missingFields = const [],
+    this.vopByMuscle = const {},
+  });
+
+  bool get isBlocked => blockReason != null;
+
+  TrainingPlanState copyWith({
+    bool? isLoading,
+    String? error,
+    String? blockReason,
+    List<String>? suggestions,
+    GeneratedPlan? plan,
+    List<String>? missingFields,
+    Map<String, int>? vopByMuscle,
+  }) {
+    return TrainingPlanState(
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      blockReason: blockReason,
+      suggestions: suggestions,
+      plan: plan ?? this.plan,
+      missingFields: missingFields ?? this.missingFields,
+      vopByMuscle: vopByMuscle ?? this.vopByMuscle,
+    );
+  }
+
+  factory TrainingPlanState.blocked({
+    required String reason,
+    List<String> suggestions = const [],
+    List<String> missingFields = const [],
+  }) {
+    return TrainingPlanState(
+      isLoading: false,
+      error: null,
+      blockReason: reason,
+      suggestions: suggestions,
+      plan: null,
+      missingFields: missingFields,
+      vopByMuscle: const {},
+    );
+  }
+}
+
+/// Notifier: Contiene la lógica de negocio (el "cerebro" del provider)
+class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
+  @override
+  TrainingPlanState build() {
+    final clientsAsync = ref.watch(clientsProvider);
+    final client = clientsAsync.value?.activeClient;
+    if (client == null) {
+      return const TrainingPlanState();
+    }
+
+    // PARTE 3 A6: Extraer VOP canónico desde VopContext
+    final vopContext = VopContext.ensure(client.training.extra);
+    final vopByMuscle = vopContext?.snapshot.setsByMuscle ?? {};
+
+    debugPrint('[VOP][Provider] VOP cargado: ${vopByMuscle.keys.join(", ")}');
+
+    // El plan se guarda en client.trainingPlans (persistencia local vía Client.toJson()).
+    // Por defecto, exponer el plan más reciente para que el UI muestre el último registro.
+    if (client.trainingPlans.isEmpty) {
+      return TrainingPlanState(plan: null, vopByMuscle: vopByMuscle);
+    }
+
+    final active = _findActivePlanConfigById(client);
+    final chosen =
+        active ??
+        client.trainingPlans.reduce(
+          (a, b) => a.startDate.isAfter(b.startDate) ? a : b,
+        );
+
+    final derived = TrainingPlanMapper.toGeneratedPlan(chosen);
+    return TrainingPlanState(plan: derived, vopByMuscle: vopByMuscle);
+  }
+
+  GeneratedPlan? _readPersistedPlan(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is GeneratedPlan) return raw;
+    if (raw is Map<String, dynamic>) return GeneratedPlan.fromMap(raw);
+    if (raw is Map) {
+      return GeneratedPlan.fromMap(raw.cast<String, dynamic>());
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>> _readPlanRecords(dynamic raw) {
+    if (raw is! List) return [];
+    return raw
+        .whereType<Map>()
+        .map(
+          (record) =>
+              record.map((key, value) => MapEntry(key.toString(), value)),
+        )
+        .toList();
+  }
+
+  // ignore: unused_element
+  Map<String, dynamic>? _recordForDate(
+    List<Map<String, dynamic>> records,
+    String dateIso,
+  ) {
+    for (final record in records) {
+      final recordDate = record[TrainingExtraKeys.forDateIso]?.toString();
+      if (recordDate == dateIso) {
+        return record;
+      }
+    }
+    return null;
+  }
+
+  // ignore: unused_element
+  Map<String, dynamic>? _latestRecordByDate(
+    List<Map<String, dynamic>> records,
+  ) {
+    if (records.isEmpty) return null;
+    var latest = records.first;
+    var latestDate = latest[TrainingExtraKeys.forDateIso]?.toString() ?? '';
+    for (final record in records.skip(1)) {
+      final recordDate = record[TrainingExtraKeys.forDateIso]?.toString() ?? '';
+      if (recordDate.compareTo(latestDate) > 0) {
+        latest = record;
+        latestDate = recordDate;
+      }
+    }
+    return latest;
+  }
+
+  // ignore: unused_element
+  GeneratedPlan? _planFromRecord(Map<String, dynamic>? record) {
+    if (record == null) return null;
+    final rawPlan = record[TrainingExtraKeys.generatedPlan];
+    return _readPersistedPlan(rawPlan);
+  }
+
+  TrainingPlanConfig? _findActivePlanConfigById(Client client) {
+    final extra = client.training.extra;
+    final raw = extra[TrainingExtraKeys.activePlanId];
+    final planId = raw?.toString().trim();
+    if (planId == null || planId.isEmpty) return null;
+
+    for (final p in client.trainingPlans) {
+      if (p.id == planId) return p;
+    }
+    return null;
+  }
+
+  TrainingPlanConfig? _findLatestPlan(List<TrainingPlanConfig> plans) {
+    if (plans.isEmpty) return null;
+    return plans.reduce((a, b) => a.startDate.isAfter(b.startDate) ? a : b);
+  }
+
+  /// Carga el plan persistido (activePlanId o más reciente) sin generar
+  ///
+  /// REGLAS:
+  /// (A) Obtener Client actual desde clientsProvider
+  /// (B) Buscar activePlanId en training.extra → si existe y plan encontrado, usar
+  /// (C) Si no existe activePlanId, usar plan más reciente por startDate
+  /// (D) Si no hay planes, dejar activePlan = null
+  /// (E) Actualizar state sin disparar generación
+  Future<void> loadPersistedActivePlanIfAny() async {
+    try {
+      final clientsAsync = ref.read(clientsProvider);
+      final client = clientsAsync.value?.activeClient;
+
+      if (client == null) {
+        state = const TrainingPlanState();
+        return;
+      }
+
+      if (client.trainingPlans.isEmpty) {
+        state = const TrainingPlanState(plan: null);
+        return;
+      }
+
+      // (A) Priorizar activePlanId
+      final activeConfig = _findActivePlanConfigById(client);
+      final chosen = activeConfig ?? _findLatestPlan(client.trainingPlans);
+
+      if (chosen == null) {
+        state = const TrainingPlanState(plan: null);
+        return;
+      }
+
+      final derived = TrainingPlanMapper.toGeneratedPlan(chosen);
+      state = TrainingPlanState(
+        isLoading: false,
+        error: null,
+        blockReason: null,
+        suggestions: null,
+        plan: derived,
+        missingFields: const [],
+      );
+    } catch (e) {
+      debugPrint('❌ Error en loadPersistedActivePlanIfAny: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Error al cargar plan persistido: $e',
+      );
+    }
+  }
+
+  /// Obtiene o crea un TrainingCycle activo para el cliente.
+  ///
+  /// REGLAS:
+  /// (A) Si activeCycleId existe y el ciclo está en trainingCycles → usarlo
+  /// (B) Si NO existe → crear uno nuevo basado en perfil + evaluación
+  /// (C) Persistir el ciclo en client.trainingCycles y setear activeCycleId
+  /// (D) Guardar cliente actualizado en repositorio
+  Future<TrainingCycle?> _getOrCreateActiveCycle({
+    required Client client,
+    required TrainingProfile profile,
+    required DateTime startDate,
+  }) async {
+    try {
+      // (A) Buscar ciclo activo existente
+      if (client.activeCycleId != null && client.activeCycleId!.isNotEmpty) {
+        try {
+          final existing = client.trainingCycles.firstWhere(
+            (c) => c.cycleId == client.activeCycleId,
+          );
+          debugPrint(
+            '[TrainingPlanProvider] Usando ciclo activo existente: ${client.activeCycleId}',
+          );
+          return existing;
+        } catch (e) {
+          // Ciclo no encontrado, crear uno nuevo
+          debugPrint(
+            '[TrainingPlanProvider] Ciclo activo no encontrado, creando nuevo',
+          );
+        }
+      }
+
+      // (B) Crear nuevo ciclo
+      final cycleId =
+          'tc_${client.id}_${startDate.year}${startDate.month.toString().padLeft(2, '0')}${startDate.day.toString().padLeft(2, '0')}';
+
+      // Obtener goal y músculos prioritarios del perfil
+      final goal = profile.extra['goal'] as String? ?? 'hipertrofia_general';
+      final priorityMuscles = _extractPriorityMuscles(profile);
+      final splitType =
+          profile.extra['splitType'] as String? ?? 'torso_pierna_4d';
+
+      // Construir mapa base de ejercicios (vacío por ahora, se completará después)
+      final baseExercises = <String, List<String>>{};
+      for (final muscle in priorityMuscles) {
+        baseExercises[muscle] = [];
+      }
+
+      final newCycle = TrainingCycle(
+        cycleId: cycleId,
+        startDate: startDate,
+        goal: goal,
+        priorityMuscles: priorityMuscles,
+        splitType: splitType,
+        baseExercisesByMuscle: baseExercises,
+        phaseState: 'VME',
+        currentWeek: 1,
+        createdAt: DateTime.now(),
+      );
+
+      // (C) Persistir ciclo
+      final updatedCycles = List<TrainingCycle>.from(client.trainingCycles)
+        ..add(newCycle);
+      final updatedClient = client.copyWith(
+        trainingCycles: updatedCycles,
+        activeCycleId: cycleId,
+      );
+
+      // (D) Guardar en repositorio
+      await ref.read(clientRepositoryProvider).saveClient(updatedClient);
+
+      debugPrint('[TrainingPlanProvider] Nuevo ciclo creado: $cycleId');
+      return newCycle;
+    } catch (e) {
+      debugPrint('❌ Error en _getOrCreateActiveCycle: $e');
+      return null;
+    }
+  }
+
+  /// Extrae músculos prioritarios del perfil
+  List<String> _extractPriorityMuscles(TrainingProfile profile) {
+    final extra = profile.extra;
+    final primary = (extra['priorityMusclesPrimary'] as String? ?? '')
+        .split(',')
+        .where((m) => m.trim().isNotEmpty)
+        .toList();
+    final secondary = (extra['priorityMusclesSecondary'] as String? ?? '')
+        .split(',')
+        .where((m) => m.trim().isNotEmpty)
+        .toList();
+    final tertiary = (extra['priorityMusclesTertiary'] as String? ?? '')
+        .split(',')
+        .where((m) => m.trim().isNotEmpty)
+        .toList();
+
+    final all = <String>{};
+    all.addAll(primary);
+    all.addAll(secondary);
+    all.addAll(tertiary);
+
+    return all.toList();
+  }
+
+  /// Genera un plan basado en el perfil de entrenamiento (usa TrainingProgramEngine 1→8)
+  Future<void> generatePlan({
+    required TrainingProfile profile,
+    String? forDateIso,
+  }) async {
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      missingFields: const [],
+    );
+    try {
+      // Preparar inputs
+      final normalizedProfile = profile.normalizedFromExtra();
+
+      // VALIDACIÓN TEMPRANA Y MENSAJES ESPECÍFICOS
+      final missingFields = <String>[];
+
+      if (normalizedProfile.trainingLevel == null) {
+        missingFields.add(
+          'Selecciona tu nivel de experiencia (Principiante, Intermedio, Avanzado)',
+        );
+      }
+
+      if (normalizedProfile.daysPerWeek <= 0) {
+        missingFields.add('Selecciona cuántos días por semana vas a entrenar');
+      }
+
+      if (normalizedProfile.timePerSessionMinutes <= 0) {
+        missingFields.add(
+          'Selecciona cuánto tiempo por sesión tienes disponible',
+        );
+      }
+
+      // Verificar si hay ALGÚN dato de volumen/músculos
+      final hasPriorityMuscles =
+          normalizedProfile.priorityMusclesPrimary.isNotEmpty ||
+          normalizedProfile.priorityMusclesSecondary.isNotEmpty ||
+          normalizedProfile.priorityMusclesTertiary.isNotEmpty;
+      final hasBaseVolume = normalizedProfile.baseVolumePerMuscle.values.any(
+        (value) => value > 0,
+      );
+      final hasSeriesDistribution = normalizedProfile.seriesDistribution.values
+          .any((dist) => dist.values.any((value) => value > 0));
+
+      // Solo bloquear si NO hay NINGÚN dato de volumen
+      if (!hasBaseVolume && !hasSeriesDistribution && !hasPriorityMuscles) {
+        missingFields.add(
+          'Define músculos prioritarios: arrastra músculos a Primarios, Secundarios o Terciarios',
+        );
+      }
+
+      if (missingFields.isNotEmpty) {
+        if (kDebugMode) {
+          debugPrint('🚫 BLOQUEADO - Campos faltantes:');
+          for (var i = 0; i < missingFields.length; i++) {
+            debugPrint('  ${i + 1}. ${missingFields[i]}');
+          }
+        }
+        state = TrainingPlanState.blocked(
+          reason: 'Faltan datos críticos del perfil de entrenamiento',
+          suggestions: missingFields,
+          missingFields: missingFields,
+        );
+        return;
+      }
+
+      if (kDebugMode) {
+        debugPrint('✅ Validación pasada - Generando plan...');
+      }
+
+      // PASO 0: Recargar Client desde repositorio para obtener último TrainingProfile
+      final clientId = ref.read(clientsProvider).value?.activeClient?.id;
+      if (clientId == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: "No hay cliente activo para recargar.",
+        );
+        return;
+      }
+
+      final freshClient = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+      if (freshClient == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: "No se pudo recargar el cliente desde BD.",
+        );
+        return;
+      }
+
+      // ═══════════════════════════════════════════════════════════════
+      // SSOT: Si ya hay activePlanId y existe ese plan, NO regenerar.
+      // Esto evita regeneración por entrar/salir si alguna UI dispara generatePlan.
+      // ═══════════════════════════════════════════════════════════════
+      final activeConfig = _findActivePlanConfigById(freshClient);
+      if (activeConfig != null) {
+        final derived = TrainingPlanMapper.toGeneratedPlan(activeConfig);
+        debugPrint(
+          '[TrainingPlanProvider] activePlanId encontrado -> skip regen',
+        );
+        state = TrainingPlanState(
+          isLoading: false,
+          error: null,
+          blockReason: null,
+          suggestions: null,
+          plan: derived,
+          missingFields: const [],
+        );
+        return;
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // VALIDACIÓN CRÍTICA PARA MOTOR V2 (TrainingContextBuilder)
+      // Requiere gender + ageYears (Personal Data).
+      // ─────────────────────────────────────────────────────────────
+      final resolvedGender =
+          freshClient.training.gender ?? freshClient.profile.gender;
+      final resolvedAgeYears =
+          freshClient.training.age ?? freshClient.profile.age;
+
+      final missingCritical = <String>[];
+      if (resolvedGender == null) {
+        missingCritical.add('Completa el sexo (gender) en Personal Data');
+      }
+      if (resolvedAgeYears == null) {
+        missingCritical.add('Completa la edad (age) en Personal Data');
+      }
+
+      if (missingCritical.isNotEmpty) {
+        state = TrainingPlanState.blocked(
+          reason: 'Faltan datos críticos para generar el plan (Motor V2)',
+          suggestions: missingCritical,
+          missingFields: missingCritical,
+        );
+        return;
+      }
+
+      // Usar explícitamente el TrainingProfile del cliente recargado
+      final trainingProfile = freshClient.training;
+      debugPrint('✅ Cliente recargado: $clientId');
+      debugPrint(
+        '✅ TrainingProfile extra keys: ${trainingProfile.extra.keys.length}',
+      );
+
+      // Fecha activa para el plan
+      final activeDateIso =
+          forDateIso ?? dateIsoFrom(ref.read(globalDateProvider));
+      final startDate = DateTime.parse(activeDateIso);
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // GUARDRAIL: Evitar regeneración silenciosa si ya existe plan para esa fecha
+      // ═══════════════════════════════════════════════════════════════════════
+      final existing = freshClient.trainingPlans.where(
+        (p) =>
+            p.startDate.year == startDate.year &&
+            p.startDate.month == startDate.month &&
+            p.startDate.day == startDate.day,
+      );
+
+      if (existing.isNotEmpty) {
+        final latestSameDay = existing.reduce(
+          (a, b) => a.startDate.isAfter(b.startDate) ? a : b,
+        );
+        final derived = TrainingPlanMapper.toGeneratedPlan(latestSameDay);
+
+        if (kDebugMode) {
+          debugPrint(
+            '✅ Plan ya existe para $activeDateIso. Usando el persistido (sin regenerar).',
+          );
+        }
+
+        state = TrainingPlanState(
+          isLoading: false,
+          error: null,
+          blockReason: null,
+          suggestions: null,
+          plan: derived,
+          missingFields: const [],
+        );
+        return;
+      }
+
+      // Generar plan VÍA FACADE (persistencia obligatoria dentro)
+      final facade = TrainingEngineFacade();
+      final exercises = await ExerciseCatalogLoader.load();
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // PASO 1: Obtener o crear TrainingCycle activo
+      // ═══════════════════════════════════════════════════════════════════════
+      final activeCycle = await _getOrCreateActiveCycle(
+        client: freshClient,
+        profile: trainingProfile,
+        startDate: startDate,
+      );
+
+      if (activeCycle == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'No se pudo crear el ciclo de entrenamiento',
+        );
+        return;
+      }
+
+      // Generar planId determinístico: tp_{clientId}_{YYYYMMDD(startDate)}
+      final planIdDeterministic =
+          'tp_${clientId}_${startDate.year}${startDate.month.toString().padLeft(2, '0')}${startDate.day.toString().padLeft(2, '0')}';
+
+      final planConfig = await facade.generatePlan(
+        planId: planIdDeterministic,
+        clientId: clientId,
+        planName: 'Plan $activeDateIso',
+        startDate: startDate,
+        profile: trainingProfile,
+        client: freshClient, // ← Pasar cliente para persistencia
+        repository: ref.read(clientRepositoryProvider), // ← Pasar repositorio
+        exercises: exercises,
+      );
+
+      // Mapper de compatibilidad para UI legacy (GeneratedPlan derivado)
+      final plan = TrainingPlanMapper.toGeneratedPlan(planConfig);
+
+      // Recargar cliente después de persistencia en facade
+      final client = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+      if (client == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: "No hay cliente activo después de persistencia.",
+        );
+        return;
+      }
+
+      final now = DateTime.now();
+
+      // =====================================================
+      // FIX DEFINITIVO TAB 3 — DERIVAR MAPAS UI
+      // =====================================================
+
+      final Map<String, double> targetSetsByMuscleUi = {};
+      final Map<String, double> finalTargetSetsByMuscleUi = {};
+
+      // 1️⃣ targetSetsByMuscleUi = copia plana (UI necesita mapa simple)
+      final rawTargetSets =
+          planConfig.trainingProfileSnapshot?.extra[TrainingExtraKeys
+                  .targetSetsByMuscleUi]
+              as Map<String, dynamic>?;
+
+      if (rawTargetSets != null) {
+        rawTargetSets.forEach((k, v) {
+          targetSetsByMuscleUi[k] = (v as num).toDouble();
+        });
+      }
+
+      // 2️⃣ finalTargetSetsByMuscleUi = suma total por músculo
+      final rawPriorityIntensity =
+          planConfig.trainingProfileSnapshot?.extra[TrainingExtraKeys
+                  .intensityProfiles]
+              as Map<String, dynamic>?;
+
+      if (rawPriorityIntensity != null) {
+        rawPriorityIntensity.forEach((muscle, priorityMap) {
+          double total = 0;
+
+          (priorityMap as Map<String, dynamic>).forEach((_, intensityMap) {
+            (intensityMap as Map<String, dynamic>).forEach((_, sets) {
+              total += (sets as num).toDouble();
+            });
+          });
+
+          finalTargetSetsByMuscleUi[muscle] = total;
+        });
+      }
+
+      // Persist using a merge to avoid clobbering concurrent training.extra changes
+      await ref.read(clientsProvider.notifier).updateActiveClient((current) {
+        var extra = Map<String, dynamic>.from(current.training.extra);
+
+        // ✅ AGREGAR MAPAS UI DERIVADOS AL EXTRA
+        extra[TrainingExtraKeys.targetSetsByMuscleUi] = targetSetsByMuscleUi;
+        extra[TrainingExtraKeys.finalTargetSetsByMuscleUi] =
+            finalTargetSetsByMuscleUi;
+
+        // Persistir aprendizajes/snapshot del motor al perfil del cliente (extra).
+        final snapshotExtra = planConfig.trainingProfileSnapshot?.extra;
+        if (snapshotExtra != null && snapshotExtra.isNotEmpty) {
+          // ═══════════════════════════════════════════════════════════════
+          // BLINDAJE DEFENSIVO: Persistir solo keys críticas para Tab 3
+          // Esto evita que futuros refactors rompan Tab 3 silenciosamente
+          // ═══════════════════════════════════════════════════════════════
+          for (final entry in snapshotExtra.entries) {
+            if (entry.key == TrainingExtraKeys.targetSetsByMuscleUi ||
+                entry.key == TrainingExtraKeys.finalTargetSetsByMuscleUi ||
+                entry.key == 'targetSetsByMuscle' ||
+                entry.key == 'finalTargetSetsByMuscle' ||
+                entry.key == 'mevByMuscle' ||
+                entry.key == 'mrvByMuscle' ||
+                entry.key == 'vmrByMuscleRole' ||
+                entry.key == TrainingExtraKeys.trainingExtraVersion) {
+              extra[entry.key] = entry.value;
+            }
+          }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // ✨ NEW: Crear VopSnapshot como SSOT
+        // Escrito una sola vez aquí (Tab 2 writer), leído por Tabs 1, 3, 4
+        // ═══════════════════════════════════════════════════════════════
+
+        // PASO 1 (SSOT REAL): Normalizar + expandir legacy -> 14 canónicos
+        // Esto sí maneja 'back' y 'shoulders' (no solo *_group)
+        final canonicalVop = normalizeLegacyVopToCanonical(
+          finalTargetSetsByMuscleUi.map((k, v) => MapEntry(k, v.toInt())),
+        );
+
+        // PASO 2: Enforce 14 keys como SSOT (con 0 si faltan)
+        // Importante para que el snapshot siempre sea estable.
+        final all = MuscleKeys.all;
+        final stabilized = <String, int>{};
+        for (final k in all) {
+          stabilized[k] = canonicalVop[k] ?? 0;
+        }
+
+        // PASO 3: Validación fuerte (si tus reglas exigen que estén todos >0, cámbialo a >0)
+        assert(
+          stabilized.length == 14,
+          'VOP inválido: deben existir exactamente 14 músculos canónicos, tiene ${stabilized.length}',
+        );
+
+        // PASO 4: Persistir snapshot ya estabilizado
+        final vopSnapshot = _buildVopSnapshot(
+          setsByMuscle: stabilized,
+          source: 'auto',
+        );
+        if (vopSnapshot != null) {
+          extra = VopContext.writeSnapshot(extra, vopSnapshot);
+          debugPrint(
+            '[TRAINING][SSOT] VopSnapshot creado (muscles='
+            '${vopSnapshot.setsByMuscle.length}, keys=${vopSnapshot.setsByMuscle.keys.toList()})',
+          );
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CAPA DEFENSIVA: Generar mapas UI localmente si no existen
+        // (respaldo por si el motor no los generó correctamente)
+        // ═══════════════════════════════════════════════════════════════
+        if (!extra.containsKey(TrainingExtraKeys.targetSetsByMuscleUi) ||
+            !extra.containsKey(TrainingExtraKeys.finalTargetSetsByMuscleUi)) {
+          // 1. targetSetsByMuscleUi: copia directa de targetSetsByMuscle
+          final targetSetsByMuscle =
+              extra[TrainingExtraKeys.targetSetsByMuscleUi] as Map?;
+          if (targetSetsByMuscle != null) {
+            final Map<String, double> targetSetsByMuscleUi = {};
+            targetSetsByMuscle.forEach((muscle, value) {
+              targetSetsByMuscleUi[muscle.toString()] = (value as num)
+                  .toDouble();
+            });
+            extra[TrainingExtraKeys.targetSetsByMuscleUi] =
+                targetSetsByMuscleUi;
+          }
+
+          // 2. finalTargetSetsByMuscleUi: síntesis de prioridades/intensidades
+          // Usa el split final si existe
+          final targetSetsByMusclePriorityIntensity =
+              extra[TrainingExtraKeys.intensityProfiles] as Map? ?? {};
+          final Map<String, Map<String, num>> finalTargetSetsByMuscleUi = {};
+
+          if (targetSetsByMusclePriorityIntensity.isNotEmpty) {
+            targetSetsByMusclePriorityIntensity.forEach((muscle, priorityMap) {
+              double total = 0;
+              if (priorityMap is Map) {
+                priorityMap.forEach((_, intensityMap) {
+                  if (intensityMap is Map) {
+                    intensityMap.forEach((_, sets) {
+                      total += (sets as num?)?.toDouble() ?? 0;
+                    });
+                  }
+                });
+              }
+              finalTargetSetsByMuscleUi[muscle.toString()] = {'total': total};
+            });
+          } else {
+            // Fallback: usar targetSetsByMuscle si prioridad/intensidad no existe
+            final targetSetsByMuscle =
+                extra[TrainingExtraKeys.targetSetsByMuscleUi] as Map?;
+            if (targetSetsByMuscle != null) {
+              targetSetsByMuscle.forEach((muscle, value) {
+                finalTargetSetsByMuscleUi[muscle.toString()] = {
+                  'total': (value as num).toDouble(),
+                };
+              });
+            }
+          }
+
+          if (finalTargetSetsByMuscleUi.isNotEmpty) {
+            extra[TrainingExtraKeys.finalTargetSetsByMuscleUi] =
+                finalTargetSetsByMuscleUi;
+          }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // VALIDACIÓN FINAL: Verificar que los mapas UI existen
+        // Si aún no existen, lanzar error informativo
+        // ═══════════════════════════════════════════════════════════════
+        if (!extra.containsKey(TrainingExtraKeys.targetSetsByMuscleUi) ||
+            !extra.containsKey(TrainingExtraKeys.finalTargetSetsByMuscleUi)) {
+          final hasUiFinal = extra.containsKey(
+            TrainingExtraKeys.finalTargetSetsByMuscleUi,
+          );
+          final hasUiTarget = extra.containsKey(
+            TrainingExtraKeys.targetSetsByMuscleUi,
+          );
+          debugPrint(
+            '[TRAINING][ERROR] Mapas UI no pudieron ser generados:\n'
+            '  - targetSetsByMuscleUi: $hasUiTarget\n'
+            '  - finalTargetSetsByMuscleUi: $hasUiFinal\n'
+            '  - targetSetsByMuscle disponible: ${extra.containsKey('targetSetsByMuscle')}\n'
+            '  - targetSetsByMusclePriorityIntensity disponible: ${extra.containsKey('targetSetsByMusclePriorityIntensity')}\n'
+            '  Keys en extra: ${extra.keys.toList()}',
+          );
+        }
+
+        final records = _readPlanRecords(
+          extra[TrainingExtraKeys.generatedPlanRecords],
+        );
+        records.removeWhere(
+          (record) =>
+              record[TrainingExtraKeys.forDateIso]?.toString() == activeDateIso,
+        );
+        records.add({
+          TrainingExtraKeys.forDateIso: activeDateIso,
+          TrainingExtraKeys.generatedAtIso: now.toIso8601String(),
+          // Decision traces NO se guardan en Firestore (solo para debugging en memoria)
+        });
+        records.sort((a, b) {
+          final left = a[TrainingExtraKeys.forDateIso]?.toString() ?? '';
+          final right = b[TrainingExtraKeys.forDateIso]?.toString() ?? '';
+          return left.compareTo(right);
+        });
+        extra[TrainingExtraKeys.generatedPlanRecords] = records;
+        // Decision traces NO se persisten en Firestore (datos de debugging)
+        extra[TrainingExtraKeys.generatedAtIso] = now.toIso8601String();
+        extra[TrainingExtraKeys.forDateIso] = activeDateIso;
+        // Nota: trainingPlanConfig se guarda en client.trainingPlans (colección fuerte),
+        // NO en extra (para evitar problemas de serialización con Firestore)
+        // plan.toMap() TAMPOCO se guarda en extra - el plan completo ya está en trainingPlans
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // ACTUALIZACIÓN DE CLIENTE SOLO PARA EXTRA (mapas UI, metadata)
+        // El plan YA FUE persistido en trainingPlans por la FACADE
+        // ═══════════════════════════════════════════════════════════════════════
+        return current.copyWith(
+          training: current.training.copyWith(extra: extra),
+        );
+      });
+
+      state = state.copyWith(
+        isLoading: false,
+        plan: plan,
+        blockReason: null,
+        suggestions: null,
+        missingFields: const [],
+      );
+    } on TrainingPlanBlockedException catch (blocked) {
+      // Bloqueo controlado del motor
+      state = TrainingPlanState.blocked(
+        reason: blocked.reason,
+        suggestions: blocked.suggestions,
+        missingFields: const [],
+      );
+    } catch (e) {
+      // Error técnico inesperado
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Error técnico: ${e.toString()}',
+        blockReason: null,
+        suggestions: null,
+        missingFields: const [],
+      );
+    }
+  }
+
+  /// Helper: Construye snapshot canónico (int, claves internas).
+  VopSnapshot? _buildVopSnapshot({
+    required Map<String, int> setsByMuscle,
+    required String source,
+  }) {
+    if (setsByMuscle.isEmpty) return null;
+
+    return VopSnapshot(
+      setsByMuscle: setsByMuscle,
+      updatedAt: DateTime.now(),
+      source: source,
+    );
+  }
+
+  /// TAREA A5: Genera plan desde ciclo activo (Motor V2)
+  ///
+  /// WORKFLOW:
+  /// 1. Obtiene cliente + ciclo activo
+  /// 2. Ejecuta Motor V2 con TrainingCycle como SSOT
+  /// 3. Persiste TrainingPlan en client.trainingPlans
+  /// 4. Setea activePlanId en training.extra
+  /// 5. notifyListeners() para UI
+  Future<void> generatePlanFromActiveCycle(DateTime selectedDate) async {
+    debugPrint('🎯 [Motor V2] Generando plan desde ciclo activo...');
+
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      missingFields: const [],
+    );
+
+    try {
+      // 1. Obtener cliente activo
+      final clientId = ref.read(clientsProvider).value?.activeClient?.id;
+      if (clientId == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'No hay cliente activo',
+        );
+        return;
+      }
+
+      final client = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+      if (client == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Cliente no encontrado',
+        );
+        return;
+      }
+
+      // 2. Verificar ciclo activo
+      if (client.activeCycleId == null || client.activeCycleId!.isEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'No hay ciclo activo. Crea un ciclo primero.',
+        );
+        return;
+      }
+
+      TrainingCycle? activeCycle;
+      try {
+        activeCycle = client.trainingCycles.firstWhere(
+          (c) => c.cycleId == client.activeCycleId,
+        );
+      } catch (_) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Ciclo activo no encontrado en client.trainingCycles',
+        );
+        return;
+      }
+
+      debugPrint(
+        '✅ [Motor V2] Ciclo activo encontrado: ${activeCycle.cycleId}',
+      );
+
+      // PARTE 4 A6: Validar que TODOS los músculos del ciclo tengan VOP válido
+      final cycleMuscles = activeCycle.baseExercisesByMuscle.keys.toSet();
+      final vopContext = VopContext.ensure(client.training.extra);
+      final vopMap = vopContext?.snapshot.setsByMuscle ?? {};
+
+      // Normalizar claves del ciclo para comparación
+      final normalizedCycleMuscles = <String>{};
+      for (final m in cycleMuscles) {
+        normalizedCycleMuscles.add(normalizeMuscleKey(m));
+      }
+
+      // Verificar que cada músculo del ciclo tenga VOP > 0
+      final missingVop = <String>[];
+      for (final muscle in normalizedCycleMuscles) {
+        final vop = vopMap[muscle] ?? 0;
+        if (vop <= 0) {
+          missingVop.add(muscle);
+        }
+      }
+
+      if (missingVop.isNotEmpty) {
+        final msg =
+            'Músculos del ciclo sin VOP configurado: ${missingVop.join(", ")}. '
+            'Ve a Tab 2 y asigna volumen a estos músculos.';
+        debugPrint('❌ [Motor V2] Validación VOP fallida: $msg');
+        state = TrainingPlanState.blocked(
+          reason: 'Validación VOP',
+          suggestions: [msg],
+          missingFields: missingVop,
+        );
+        return;
+      }
+
+      debugPrint(
+        '✅ [Motor V2] Validación VOP: ${normalizedCycleMuscles.length} músculos OK',
+      );
+
+      // 3. Ejecutar Motor V2 via Facade
+      final facade = TrainingEngineFacade();
+      final exercises = await ExerciseCatalogLoader.load();
+
+      final planId =
+          'tp_${clientId}_${selectedDate.year}${selectedDate.month.toString().padLeft(2, '0')}${selectedDate.day.toString().padLeft(2, '0')}';
+
+      debugPrint('🔧 [Motor V2] Generando plan $planId...');
+
+      final planConfig = await facade.generatePlan(
+        planId: planId,
+        clientId: clientId,
+        planName: 'Plan ${selectedDate.toIso8601String().split('T')[0]}',
+        startDate: selectedDate,
+        profile: client.training,
+        client: client,
+        repository: ref.read(clientRepositoryProvider),
+        exercises: exercises,
+      );
+
+      debugPrint(
+        '✅ [Motor V2] Plan generado: ${planConfig.weeks.length} semanas, '
+        '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
+      );
+
+      // 4. Convertir a GeneratedPlan para UI
+      final plan = TrainingPlanMapper.toGeneratedPlan(planConfig);
+
+      // 5. Actualizar state
+      state = state.copyWith(
+        isLoading: false,
+        plan: plan,
+        blockReason: null,
+        suggestions: null,
+        missingFields: const [],
+      );
+
+      debugPrint(
+        '🎉 [Motor V2] Plan persistido con activePlanId=${planConfig.id}',
+      );
+    } on TrainingPlanBlockedException catch (blocked) {
+      debugPrint('🚫 [Motor V2] Bloqueado: ${blocked.reason}');
+      state = TrainingPlanState.blocked(
+        reason: blocked.reason,
+        suggestions: blocked.suggestions,
+        missingFields: const [],
+      );
+    } catch (e, s) {
+      debugPrint('❌ [Motor V2] Error: $e');
+      debugPrint('Stack: $s');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Error al generar plan: ${e.toString()}',
+      );
+    }
+  }
+
+  /// TAREA A5 PARTE 2: Recalcular series sin cambiar ejercicios
+  ///
+  /// Se llama cuando el usuario mueve los sliders de Tab 2 (H/M/L)
+  /// SOLO recalcula distribución de series, NO regenera ejercicios ni split
+  Future<void> recalculateSeriesDistribution({
+    required int heavyPercent,
+    required int mediumPercent,
+    required int lightPercent,
+  }) async {
+    debugPrint(
+      '🔄 [Tab 2] Recalculando series: H=$heavyPercent% M=$mediumPercent% L=$lightPercent%',
+    );
+
+    try {
+      final clientId = ref.read(clientsProvider).value?.activeClient?.id;
+      if (clientId == null) {
+        debugPrint('❌ [Tab 2] No active client');
+        return;
+      }
+
+      final client = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+      if (client == null) {
+        debugPrint('❌ [Tab 2] Client not found: $clientId');
+        return;
+      }
+
+      // OPTIMISTIC UPDATE: Actualizar localmente primero
+      await ref
+          .read(clientsProvider.notifier)
+          .updateActiveClient((c) {
+            final extra = Map<String, dynamic>.from(c.training.extra);
+            extra[TrainingExtraKeys.seriesTypePercentSplit] = {
+              'heavy': heavyPercent,
+              'medium': mediumPercent,
+              'light': lightPercent,
+            };
+
+            debugPrint('✅ [Tab 2] Split actualizado en training.extra (local)');
+
+            return c.copyWith(
+              training: c.training.copyWith(extra: extra),
+              updatedAt: DateTime.now(),
+            );
+          })
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              debugPrint(
+                '⚠️  [Tab 2] updateActiveClient timeout (continuando con estado local)',
+              );
+            },
+          );
+
+      debugPrint('✅ [Tab 2] Series recalculadas sin cambiar ejercicios');
+    } catch (e, st) {
+      debugPrint('❌ [Tab 2] Error al recalcular: $e');
+      debugPrint('Stack: ${st.toString()}');
+      // No relanzar - permitir que la UI continúe con estado local
+    }
+  }
+}
+
+/// Provider: Expone el estado y el notificador a la UI
+final trainingPlanProvider =
+    NotifierProvider<TrainingPlanNotifier, TrainingPlanState>(
+      TrainingPlanNotifier.new,
+    );

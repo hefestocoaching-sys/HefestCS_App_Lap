@@ -1,0 +1,10 @@
+targets:
+  $default:
+    builders:
+      freezed:
+        enabled: true
+        options:
+          # Generate fromJson and toJson
+          json_serializable: true
+          # Generate copyWith and == overrides
+          union: union_factory

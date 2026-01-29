@@ -1,0 +1,64 @@
+name: hcs_app_lap
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_localizations:
+    sdk: flutter
+
+  http: ^1.2.1
+
+  cupertino_icons: ^1.0.8
+  intl: ^0.20.2
+  fl_chart: ^1.1.1
+  provider: ^6.1.5+1
+  riverpod: ^3.0.3
+  collection: ^1.18.0
+  firebase_core: ^4.2.1
+  cloud_firestore: ^6.1.0
+  sqflite_common_ffi: ^2.3.0
+  sqflite: ^2.3.0
+  path_provider: ^2.1.2
+  path: ^1.8.3
+  pdf: ^3.10.8
+  firebase_auth: ^6.1.2
+  flutter_riverpod: ^3.0.3
+  riverpod_annotation: ^3.0.0
+  flutter_form_builder: ^10.2.0
+  form_builder_validators: ^11.1.2
+  flutter_dotenv: ^6.0.0
+  equatable: ^2.0.7
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+  url_launcher: ^6.2.2
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.12
+  riverpod_generator: ^3.0.3
+  freezed: ^3.0.0
+  json_serializable: ^6.8.0
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/Logos/
+    - assets/data/
+    - assets/data/exercise_catalog_gym.json
+    - assets/data/exercises/
