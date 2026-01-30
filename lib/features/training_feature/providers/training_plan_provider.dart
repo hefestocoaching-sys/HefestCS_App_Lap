@@ -3,10 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/constants/muscle_keys.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/generated_plan.dart';
+import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/exceptions/training_plan_blocked_exception.dart';
 import 'package:hcs_app_lap/domain/training/training_cycle.dart';
+import 'package:hcs_app_lap/domain/training/models/mev_table.dart';
+import 'package:hcs_app_lap/domain/training/validation/vop_validator.dart';
+import 'package:hcs_app_lap/domain/training/utils/frequency_inference.dart';
 // Legacy UI compatibility imports
 import 'package:hcs_app_lap/domain/services/training_plan_mapper.dart';
 import 'package:hcs_app_lap/data/datasources/local/exercise_catalog_loader.dart';
@@ -21,6 +25,7 @@ import 'package:hcs_app_lap/domain/training/facade/training_engine_facade.dart';
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/domain/training/services/active_cycle_bootstrapper.dart';
 
 /// Estado inmutable para el plan de entrenamiento
 /// PARTE 3 A6: Incluye vopByMuscle como SSOT para que UI y motor usen la misma fuente
@@ -854,6 +859,22 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   Future<void> generatePlanFromActiveCycle(DateTime selectedDate) async {
     debugPrint('🎯 [Motor V2] Generando plan desde ciclo activo...');
 
+    const dbTimeout = Duration(seconds: 6);
+    const catalogTimeout = Duration(seconds: 8);
+    const engineTimeout = Duration(seconds: 15);
+
+    // ─────────────────────────────────────────────
+    // FORZAR INVALIDACIÓN DE ESTADO (REGENERACIÓN)
+    // ─────────────────────────────────────────────
+    state = state.copyWith(
+      isLoading: false,
+      error: null,
+      plan: null,
+      blockReason: null,
+      suggestions: null,
+      missingFields: const [],
+    );
+
     state = state.copyWith(
       isLoading: true,
       error: null,
@@ -862,6 +883,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
     try {
       // 1. Obtener cliente activo
+      debugPrint('🧭 [Motor V2][Step] 1/6 read active clientId...');
       final clientId = ref.read(clientsProvider).value?.activeClient?.id;
       if (clientId == null) {
         state = state.copyWith(
@@ -871,9 +893,24 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
+      debugPrint(
+        '🧭 [Motor V2][Step] 2/6 loading client from repository (DB)...',
+      );
       final client = await ref
           .read(clientRepositoryProvider)
-          .getClientById(clientId);
+          .getClientById(clientId)
+          .timeout(
+            dbTimeout,
+            onTimeout: () {
+              throw Exception(
+                'TIMEOUT DB getClientById($clientId) after ${dbTimeout.inSeconds}s',
+              );
+            },
+          );
+      debugPrint(
+        '✅ [Motor V2][Step] 2/6 client loaded. cycles=${client?.trainingCycles.length ?? 0}, activeCycleId=${client?.activeCycleId}',
+      );
+
       if (client == null) {
         state = state.copyWith(
           isLoading: false,
@@ -882,19 +919,73 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
-      // 2. Verificar ciclo activo
-      if (client.activeCycleId == null || client.activeCycleId!.isEmpty) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'No hay ciclo activo. Crea un ciclo primero.',
+      // 2. Cargar catálogo de ejercicios (necesario para bootstrap Y facade)
+      debugPrint('🧭 [Motor V2][Step] 2.5/6 loading exercise catalog...');
+      final exercises = await ExerciseCatalogLoader.load().timeout(
+        catalogTimeout,
+        onTimeout: () {
+          throw Exception(
+            'TIMEOUT ExerciseCatalogLoader.load() after ${catalogTimeout.inSeconds}s',
+          );
+        },
+      );
+      debugPrint(
+        '✅ [Motor V2][Step] 2.5/6 catalog loaded. exercises=${exercises.length}',
+      );
+
+      // 🔴 FORZAR CICLO ACTIVO NO VACÍO
+      var workingClient = client;
+      TrainingCycle? currentCycle;
+      try {
+        if (workingClient.activeCycleId != null &&
+            workingClient.activeCycleId!.isNotEmpty) {
+          currentCycle = workingClient.trainingCycles.firstWhere(
+            (c) => c.cycleId == workingClient.activeCycleId,
+          );
+        }
+      } catch (_) {
+        currentCycle = null;
+      }
+
+      if (workingClient.trainingCycles.isEmpty ||
+          workingClient.activeCycleId == null ||
+          currentCycle == null ||
+          currentCycle.baseExercisesByMuscle.isEmpty) {
+        debugPrint(
+          '🧩 [Bootstrap] activeCycle vacío o inexistente → creando ciclo base',
         );
-        return;
+
+        final cycle = ActiveCycleBootstrapper.buildDefaultCycle(
+          clientId: clientId,
+          exercises: exercises,
+        );
+
+        workingClient = workingClient.copyWith(
+          trainingCycles: [...workingClient.trainingCycles, cycle],
+          activeCycleId: cycle.cycleId,
+        );
+
+        await ref.read(clientRepositoryProvider).saveClient(workingClient);
+
+        debugPrint(
+          '🧩 [Bootstrap] ciclo creado y asignado: '
+          'id=${cycle.cycleId} muscles=${cycle.baseExercisesByMuscle.keys} '
+          'counts=${cycle.baseExercisesByMuscle.map((k, v) => MapEntry(k, v.length))}',
+        );
+      }
+
+      debugPrint('🧭 [Motor V2][Step] 3/6 resolving active cycle...');
+
+      // Fail-fast si después de bootstrap aún no hay ciclo
+      if (workingClient.trainingCycles.isEmpty ||
+          workingClient.activeCycleId == null) {
+        throw Exception('No hay ciclo activo. No se pudo bootstrapear.');
       }
 
       TrainingCycle? activeCycle;
       try {
-        activeCycle = client.trainingCycles.firstWhere(
-          (c) => c.cycleId == client.activeCycleId,
+        activeCycle = workingClient.trainingCycles.firstWhere(
+          (c) => c.cycleId == workingClient.activeCycleId,
         );
       } catch (_) {
         state = state.copyWith(
@@ -905,85 +996,199 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       debugPrint(
-        '✅ [Motor V2] Ciclo activo encontrado: ${activeCycle.cycleId}',
+        '✅ [Motor V2][Step] 3/6 activeCycle found. muscles=${activeCycle.baseExercisesByMuscle.keys.toList()}',
       );
 
-      // PARTE 4 A6: Validar que TODOS los músculos del ciclo tengan VOP válido
-      final cycleMuscles = activeCycle.baseExercisesByMuscle.keys.toSet();
-      final vopContext = VopContext.ensure(client.training.extra);
+      // ─────────────────────────────────────────────
+      // FORZAR REGENERACIÓN DE PLAN DEL CICLO ACTIVO
+      // ─────────────────────────────────────────────
+      final hasActivePlanId =
+          workingClient.training.extra[TrainingExtraKeys.activePlanId] != null;
+      if (workingClient.trainingPlans.isNotEmpty || hasActivePlanId) {
+        debugPrint(
+          '♻️ [Motor V2] Forzando regeneración del plan: limpiando semanas previas',
+        );
+
+        final updatedExtra = Map<String, dynamic>.from(
+          workingClient.training.extra,
+        )..remove(TrainingExtraKeys.activePlanId);
+
+        workingClient = workingClient.copyWith(
+          training: workingClient.training.copyWith(extra: updatedExtra),
+          trainingPlans: const [],
+        );
+
+        await ref.read(clientRepositoryProvider).saveClient(workingClient);
+      }
+
+      // 3.1 Inferir frecuencia desde VMR y persistir en ciclo
+      final rawTargets = workingClient.training.extra['targetSetsByMuscle'];
+
+      final Map<String, double> targets = {};
+      if (rawTargets is Map) {
+        rawTargets.forEach((k, v) {
+          if (v is num) targets[k.toString()] = v.toDouble();
+        });
+      }
+
+      final inferredFrequency = FrequencyInference.inferFromVmr(targets);
+
+      if (activeCycle.frequency != inferredFrequency) {
+        final updatedCycle = activeCycle.copyWith(frequency: inferredFrequency);
+
+        final updatedCycles = [
+          for (final c in workingClient.trainingCycles)
+            if (c.cycleId == updatedCycle.cycleId) updatedCycle else c,
+        ];
+
+        workingClient = workingClient.copyWith(trainingCycles: updatedCycles);
+
+        await ref.read(clientRepositoryProvider).saveClient(workingClient);
+
+        activeCycle = updatedCycle;
+
+        debugPrint(
+          '📌 [Motor] Frecuencia inferida y guardada en ciclo: $inferredFrequency',
+        );
+      }
+
+      // PARTE 4 A6: Validación VOP se hace POST-plan (requiere ejercicios reales)
+      debugPrint('🧭 [Motor V2][Step] 4/6 VOP validate (post-plan)');
+      final vopContext = VopContext.ensure(workingClient.training.extra);
       final vopMap = vopContext?.snapshot.setsByMuscle ?? {};
 
-      // Normalizar claves del ciclo para comparación
-      final normalizedCycleMuscles = <String>{};
-      for (final m in cycleMuscles) {
-        normalizedCycleMuscles.add(normalizeMuscleKey(m));
-      }
-
-      // Verificar que cada músculo del ciclo tenga VOP > 0
-      final missingVop = <String>[];
-      for (final muscle in normalizedCycleMuscles) {
-        final vop = vopMap[muscle] ?? 0;
-        if (vop <= 0) {
-          missingVop.add(muscle);
-        }
-      }
-
-      if (missingVop.isNotEmpty) {
-        final msg =
-            'Músculos del ciclo sin VOP configurado: ${missingVop.join(", ")}. '
-            'Ve a Tab 2 y asigna volumen a estos músculos.';
-        debugPrint('❌ [Motor V2] Validación VOP fallida: $msg');
-        state = TrainingPlanState.blocked(
-          reason: 'Validación VOP',
-          suggestions: [msg],
-          missingFields: missingVop,
-        );
-        return;
-      }
-
+      // 4. Ejecutar Motor V2 via Facade
       debugPrint(
-        '✅ [Motor V2] Validación VOP: ${normalizedCycleMuscles.length} músculos OK',
+        '🧪 [Motor V2] Regenerando plan desde cero — timestamp: ${DateTime.now()}',
       );
-
-      // 3. Ejecutar Motor V2 via Facade
       final facade = TrainingEngineFacade();
-      final exercises = await ExerciseCatalogLoader.load();
 
       final planId =
           'tp_${clientId}_${selectedDate.year}${selectedDate.month.toString().padLeft(2, '0')}${selectedDate.day.toString().padLeft(2, '0')}';
 
-      debugPrint('🔧 [Motor V2] Generando plan $planId...');
+      debugPrint('🧭 [Motor V2][Step] 6/6 running facade.generatePlan...');
 
-      final planConfig = await facade.generatePlan(
-        planId: planId,
-        clientId: clientId,
-        planName: 'Plan ${selectedDate.toIso8601String().split('T')[0]}',
-        startDate: selectedDate,
-        profile: client.training,
-        client: client,
-        repository: ref.read(clientRepositoryProvider),
-        exercises: exercises,
-      );
+      final planConfig = await facade
+          .generatePlan(
+            planId: planId,
+            clientId: clientId,
+            planName: 'Plan ${selectedDate.toIso8601String().split('T')[0]}',
+            startDate: selectedDate,
+            profile: workingClient.training,
+            client: workingClient,
+            repository: ref.read(clientRepositoryProvider),
+            exercises: exercises,
+          )
+          .timeout(
+            engineTimeout,
+            onTimeout: () {
+              throw Exception(
+                'TIMEOUT facade.generatePlan() after ${engineTimeout.inSeconds}s',
+              );
+            },
+          );
 
       debugPrint(
         '✅ [Motor V2] Plan generado: ${planConfig.weeks.length} semanas, '
         '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
       );
 
+      // 4.1 Validar VOP con cobertura indirecta (post-plan)
+      final directVopByMuscle = <String, double>{};
+      vopMap.forEach((k, v) {
+        directVopByMuscle[normalizeMuscleKey(k)] = v.toDouble();
+      });
+
+      final mevByMuscle = <String, double>{};
+      final mevRaw =
+          planConfig.trainingProfileSnapshot?.extra[TrainingExtraKeys
+              .mevByMuscle] ??
+          workingClient.training.extra[TrainingExtraKeys.mevByMuscle];
+
+      if (mevRaw is Map) {
+        mevRaw.forEach((k, v) {
+          final key = normalizeMuscleKey(k.toString());
+          if (v is num) {
+            mevByMuscle[key] = v.toDouble();
+          } else {
+            final parsed = double.tryParse(v?.toString() ?? '');
+            if (parsed != null) {
+              mevByMuscle[key] = parsed;
+            }
+          }
+        });
+      }
+
+      MevTable.seed(mevByMuscle);
+
+      final exerciseByCode = <String, Exercise>{};
+      for (final ex in exercises) {
+        if (ex.id.isNotEmpty) exerciseByCode[ex.id] = ex;
+        if (ex.externalId.isNotEmpty) exerciseByCode[ex.externalId] = ex;
+      }
+
+      final plannedExercises = <VopPlannedExercise>[];
+      for (final week in planConfig.weeks) {
+        for (final session in week.sessions) {
+          for (final prescription in session.prescriptions) {
+            final catalogExercise = exerciseByCode[prescription.exerciseCode];
+            if (catalogExercise == null) continue;
+
+            plannedExercises.add(
+              VopPlannedExercise(
+                stimulusContribution: catalogExercise.stimulusContribution,
+                plannedSets: prescription.sets,
+              ),
+            );
+          }
+        }
+      }
+
+      VopValidator.validate(
+        cycle: activeCycle,
+        directVopByMuscle: directVopByMuscle,
+        plannedExercises: plannedExercises,
+      );
+
+      debugPrint(
+        '✅ [Motor V2] Validación VOP: '
+        '${activeCycle.baseExercisesByMuscle.keys.length} músculos OK',
+      );
+
       // 4. Convertir a GeneratedPlan para UI
       final plan = TrainingPlanMapper.toGeneratedPlan(planConfig);
 
-      // 5. Actualizar state
-      state = state.copyWith(
+      // 5. Actualizar state (reemplazo completo)
+      state = TrainingPlanState(
         isLoading: false,
-        plan: plan,
+        error: null,
         blockReason: null,
         suggestions: null,
+        plan: plan,
         missingFields: const [],
+        vopByMuscle: state.vopByMuscle,
       );
 
       debugPrint(
         '🎉 [Motor V2] Plan persistido con activePlanId=${planConfig.id}',
+      );
+
+      // 6. Refrescar clientsProvider para que UI refleje el plan persistido
+      await ref.read(clientsProvider.notifier).refresh();
+
+      // 7. Validar que el plan fue persistido correctamente
+      final refreshedClient = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+      debugPrint(
+        '[Motor V2] after refresh trainingPlans=${refreshedClient?.trainingPlans.length ?? 0}, activePlanId=${refreshedClient?.training.extra[TrainingExtraKeys.activePlanId]}',
+      );
+    } on VopValidationException catch (e) {
+      debugPrint('❌ [Motor V2] Validación VOP fallida: ${e.reason}');
+      state = TrainingPlanState.blocked(
+        reason: 'Validación VOP',
+        suggestions: [e.reason],
+        missingFields: e.muscles,
       );
     } on TrainingPlanBlockedException catch (blocked) {
       debugPrint('🚫 [Motor V2] Bloqueado: ${blocked.reason}');
@@ -997,7 +1202,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       debugPrint('Stack: $s');
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al generar plan: ${e.toString()}',
+        error: 'Motor V2 falló: ${e.toString()}',
       );
     }
   }

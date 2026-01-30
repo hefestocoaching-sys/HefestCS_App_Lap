@@ -152,6 +152,57 @@ class TrainingProgramEngineV2Full {
 
   String _norm(String v) => v.trim().toLowerCase();
 
+  MuscleGroup _toDomainMuscleGroup(String muscle) {
+    final ml = muscle.toLowerCase();
+    switch (ml) {
+      case 'chest':
+      case 'pecho':
+        return MuscleGroup.chest;
+      case 'lats':
+      case 'dorsales':
+      case 'dorsal':
+        return MuscleGroup.lats;
+      case 'upper_back':
+      case 'espalda alta':
+      case 'romboides':
+        return MuscleGroup.back;
+      case 'traps':
+      case 'trapecio':
+      case 'trapecios':
+        return MuscleGroup.traps;
+      case 'back':
+      case 'espalda':
+        return MuscleGroup.back;
+      case 'shoulders':
+      case 'hombros':
+      case 'deltoide_anterior':
+      case 'deltoide_lateral':
+      case 'deltoide_posterior':
+        return MuscleGroup.shoulders;
+      case 'biceps':
+        return MuscleGroup.biceps;
+      case 'triceps':
+        return MuscleGroup.triceps;
+      case 'quads':
+      case 'cuadriceps':
+        return MuscleGroup.quads;
+      case 'hamstrings':
+      case 'isquiotibiales':
+        return MuscleGroup.hamstrings;
+      case 'glutes':
+      case 'gluteos':
+        return MuscleGroup.glutes;
+      case 'calves':
+      case 'pantorrillas':
+        return MuscleGroup.calves;
+      case 'abs':
+      case 'abdominales':
+        return MuscleGroup.abs;
+      default:
+        return MuscleGroup.chest; // fallback
+    }
+  }
+
   List<String> _pickMany({
     required List<String> candidates,
     required List<String> priority,
@@ -516,20 +567,81 @@ class TrainingProgramEngineV2Full {
     required Map<int, Map<int, Map<MuscleGroup, List<ExerciseEntry>>>>
     selections,
     required int daysPerWeek,
+    TrainingCycle? activeCycle,
   }) {
-    const int minExercises = 5;
+    final int minExercises = (activeCycle?.frequency == 2) ? 5 : 2;
     const int maxExercises =
         Phase6ExerciseSelectionService.MAX_EXERCISES_PER_SESSION;
 
     for (final weekEntry in selections.entries) {
       final week = weekEntry.key;
       for (var day = 1; day <= daysPerWeek; day++) {
-        final dayMap =
+        var dayMap =
             weekEntry.value[day] ?? const <MuscleGroup, List<ExerciseEntry>>{};
-        final count = dayMap.values.fold<int>(
+        // ─────────────────────────────────────────────
+        // DENSIFICACIÓN DE DÍA (solo frecuencia 2)
+        // ─────────────────────────────────────────────
+        if (activeCycle?.frequency == 2) {
+          final usedExerciseIds = <String>{};
+
+          for (final list in dayMap.values) {
+            for (final ex in list) {
+              usedExerciseIds.add(ex.code);
+            }
+          }
+
+          int currentCount = usedExerciseIds.length;
+
+          if (currentCount < minExercises) {
+            // Pool de músculos permitidos para completar el día:
+            // todos los músculos del ciclo que NO estén ya en el día
+            final fillerMuscles =
+                (activeCycle?.baseExercisesByMuscle.keys
+                            .where(
+                              (m) =>
+                                  !dayMap.containsKey(_toDomainMuscleGroup(m)),
+                            )
+                            .toList() ??
+                        [])
+                    .toList();
+
+            for (final muscle in fillerMuscles) {
+              if (currentCount >= minExercises) break;
+
+              final candidates =
+                  activeCycle?.baseExercisesByMuscle[muscle] ?? const [];
+              final muscleGroup = _toDomainMuscleGroup(muscle);
+
+              for (final ex in candidates) {
+                if (currentCount >= minExercises) break;
+                if (usedExerciseIds.contains(ex)) continue;
+
+                final entry = ExerciseEntry(
+                  code: ex,
+                  name: ex,
+                  muscleGroup: muscleGroup,
+                  equipment: const [],
+                  isCompound: false,
+                );
+
+                dayMap = {...dayMap};
+                dayMap.putIfAbsent(muscleGroup, () => []);
+                dayMap[muscleGroup]!.add(entry);
+
+                usedExerciseIds.add(ex);
+                currentCount++;
+              }
+            }
+          }
+        }
+
+        weekEntry.value[day] = dayMap;
+
+        var count = dayMap.values.fold<int>(
           0,
           (sum, list) => sum + list.length,
         );
+
         if (count < minExercises) {
           throw TrainingPlanBlockedException.insufficientExercisesPerDay(
             week: week,
@@ -710,6 +822,7 @@ class TrainingProgramEngineV2Full {
       _validateSessionFrameworkSelections(
         selections: selections,
         daysPerWeek: effectiveSplit.daysPerWeek,
+        activeCycle: activeCycle,
       );
     }
 

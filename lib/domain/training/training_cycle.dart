@@ -24,6 +24,7 @@ class TrainingCycle extends Equatable {
   baseExercisesByMuscle; // ej: { pecho: [press_bancada, aperturas], ...}
   final String phaseState; // VME, VMR, DELOAD
   final int currentWeek; // semana actual del ciclo (1..N)
+  final int frequency; // 2 o 3, inferida por VMR
   final DateTime createdAt;
 
   const TrainingCycle({
@@ -36,6 +37,7 @@ class TrainingCycle extends Equatable {
     required this.baseExercisesByMuscle,
     required this.phaseState,
     required this.currentWeek,
+    this.frequency = 2,
     required this.createdAt,
   });
 
@@ -51,6 +53,7 @@ class TrainingCycle extends Equatable {
       'baseExercisesByMuscle': baseExercisesByMuscle,
       'phaseState': phaseState,
       'currentWeek': currentWeek,
+      'frequency': frequency,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -75,6 +78,7 @@ class TrainingCycle extends Equatable {
       ),
       phaseState: map['phaseState'] as String? ?? 'VME',
       currentWeek: map['currentWeek'] as int? ?? 1,
+      frequency: map['frequency'] as int? ?? 2,
       createdAt: DateTime.parse(map['createdAt'] as String? ?? '2000-01-01'),
     );
   }
@@ -90,6 +94,7 @@ class TrainingCycle extends Equatable {
     Map<String, List<String>>? baseExercisesByMuscle,
     String? phaseState,
     int? currentWeek,
+    int? frequency,
     DateTime? createdAt,
   }) {
     return TrainingCycle(
@@ -103,6 +108,7 @@ class TrainingCycle extends Equatable {
           baseExercisesByMuscle ?? this.baseExercisesByMuscle,
       phaseState: phaseState ?? this.phaseState,
       currentWeek: currentWeek ?? this.currentWeek,
+      frequency: frequency ?? this.frequency,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -123,6 +129,7 @@ class TrainingCycle extends Equatable {
     baseExercisesByMuscle,
     phaseState,
     currentWeek,
+    frequency,
     createdAt,
   ];
 }

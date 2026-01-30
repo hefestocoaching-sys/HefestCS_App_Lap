@@ -61,7 +61,16 @@ class TrainingEngineFacade {
     // Fail-fast explícito si el catálogo está vacío
     if (exercises == null || exercises.isEmpty) {
       throw Exception(
-        'Catálogo de ejercicios vacío. Verifica asset en assets/data/exercise_catalog_gym.json y pubspec.yaml',
+        'Catálogo de ejercicios vacío. Verifica asset en assets/data/exercises/exercise_catalog_gym.json y pubspec.yaml',
+      );
+    }
+
+    // Cast seguro: convertir List<dynamic> a List<Exercise>
+    final exerciseList = exercises.whereType<Exercise>().toList();
+
+    if (exerciseList.isEmpty) {
+      throw Exception(
+        'Error de tipo: exercises no contiene objetos Exercise válidos. Tipo recibido: ${exercises.runtimeType}',
       );
     }
 
@@ -73,7 +82,7 @@ class TrainingEngineFacade {
       startDate: startDate,
       profile: profile,
       client: client,
-      exercises: exercises as List<Exercise>?,
+      exercises: exerciseList,
     );
 
     // ═══════════════════════════════════════════════════════════════════════

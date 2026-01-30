@@ -125,7 +125,7 @@ class Phase6ExerciseSelectionService {
                 phase: 'Phase6ExerciseSelection',
                 category: 'muscle_omitted_no_base_exercises',
                 description:
-                    'Semana $w Día $d: ${mName} omitido (sin ejercicios base en ciclo)',
+                    'Semana $w Día $d: $mName omitido (sin ejercicios base en ciclo)',
                 context: {'muscle': mName},
               ),
             );
@@ -161,7 +161,7 @@ class Phase6ExerciseSelectionService {
                     phase: 'Phase6ExerciseSelection',
                     category: 'base_exercises_not_in_catalog',
                     description:
-                        'Semana $w Día $d: ${mName} → ejercicios base no encontrados en catálogo. Usando fallback.',
+                        'Semana $w Día $d: $mName → ejercicios base no encontrados en catálogo. Usando fallback.',
                     context: {
                       'muscle': mName,
                       'baseExercises': baseExercisesForMuscle,
@@ -172,7 +172,7 @@ class Phase6ExerciseSelectionService {
                 candidates = [
                   Exercise(
                     id: '${mName}_cycle_default',
-                    name: '${mName} (predeterminado del ciclo)',
+                    name: '$mName (predeterminado del ciclo)',
                     muscleKey: mName,
                     equipment: 'bodyweight',
                     externalId: '',

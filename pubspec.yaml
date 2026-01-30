@@ -60,5 +60,5 @@ flutter:
   assets:
     - assets/Logos/
     - assets/data/
-    - assets/data/exercise_catalog_gym.json
-    - assets/data/exercises/
+    - assets/data/exercises/exercise_catalog_gym.json
+    

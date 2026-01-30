@@ -36,7 +36,7 @@ class _WeeklyPlanTabState extends State<WeeklyPlanTab> {
       return _buildBlocked(
         title: 'No hay plan semanal persistido',
         message:
-            'Este tab solo muestra el plan generado por el Motor V2. Genera un plan en "Perfiles" para la fecha seleccionada.',
+            'Este tab solo muestra el plan persistido. Presiona "Generar Plan" en el dashboard para la fecha seleccionada.',
       );
     }
 

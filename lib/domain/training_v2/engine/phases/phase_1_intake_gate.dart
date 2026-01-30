@@ -93,9 +93,10 @@ class V2SafetyCaps {
     required this.maxWeeklyProgression,
   });
 
-  factory V2SafetyCaps.defaultCaps() {
-    return const V2SafetyCaps(
-      minExercisesPerDay: 4,
+  factory V2SafetyCaps.defaultCaps({int? cycleFrequency}) {
+    final minExercisesPerDay = (cycleFrequency == 2) ? 5 : 2;
+    return V2SafetyCaps(
+      minExercisesPerDay: minExercisesPerDay,
       maxWeeklySetsPerMuscleSoft: 24,
       maxIntensificationPerWeek: 2,
       maxWeeklyProgression: 0.08,
@@ -165,7 +166,8 @@ class Phase1IntakeGate {
     );
 
     // 6) Caps base (pueden ajustarse aquí con señales duras)
-    var caps = V2SafetyCaps.defaultCaps();
+    // Nota: frecuencia real se infiere después, usar default 2
+    var caps = V2SafetyCaps.defaultCaps(cycleFrequency: 2);
 
     // En déficit alto → restringir agresividad y sets soft
     if (normalized.energyState == 'deficit' &&

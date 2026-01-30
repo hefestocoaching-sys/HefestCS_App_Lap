@@ -303,8 +303,14 @@ class TrainingContextBuilder {
     for (final item in raw) {
       if (item is! Map) continue;
       final m = Map<String, dynamic>.from(item);
-      final d = DateTime.tryParse(m['dateIso']?.toString() ?? '');
-      if (d == null) continue;
+      final dateStr = m['dateIso']?.toString() ?? '';
+      if (dateStr.trim().isEmpty) continue;
+      DateTime? d;
+      try {
+        d = DateTime.parse(dateStr);
+      } catch (_) {
+        continue;
+      }
       if (d.isAfter(asOfDate)) continue;
       if (bestDate == null || d.isAfter(bestDate)) {
         bestDate = d;

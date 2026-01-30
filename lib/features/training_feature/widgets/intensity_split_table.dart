@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/constants/muscle_labels_es.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
-import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
 import 'package:hcs_app_lap/utils/theme.dart';

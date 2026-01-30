@@ -13,7 +13,19 @@ class ExerciseCatalogLoader {
       return false;
     }
     final name = e['name'];
-    if (name is! String || name.trim().isEmpty) {
+    if (name is String) {
+      if (name.trim().isEmpty) {
+        debugPrint('[ExerciseCatalogV3] idx=$i id=$id: falta name');
+        return false;
+      }
+    } else if (name is Map) {
+      final es = name['es']?.toString() ?? '';
+      final en = name['en']?.toString() ?? '';
+      if (es.trim().isEmpty && en.trim().isEmpty) {
+        debugPrint('[ExerciseCatalogV3] idx=$i id=$id: falta name');
+        return false;
+      }
+    } else {
       debugPrint('[ExerciseCatalogV3] idx=$i id=$id: falta name');
       return false;
     }
@@ -26,10 +38,10 @@ class ExerciseCatalogLoader {
   }
 
   static Future<List<Exercise>> load() async {
-    if (_cache != null) return _cache!;
+    if (_cache != null && _cache!.isNotEmpty) return _cache!;
 
     try {
-      const path = 'assets/data/exercise_catalog_gym.json'; // CANÓNICO
+      const path = 'assets/data/exercises/exercise_catalog_gym.json';
       final jsonStr = await rootBundle.loadString(path);
       final decoded = jsonDecode(jsonStr);
 
