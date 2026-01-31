@@ -1269,6 +1269,73 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // No relanzar - permitir que la UI continúe con estado local
     }
   }
+
+  /// Borra el plan activo para forzar regeneración
+  ///
+  /// PROPÓSITO: Invalidar caché cuando el usuario quiere regenerar
+  ///
+  /// WORKFLOW:
+  /// 1. Obtener cliente activo
+  /// 2. Limpiar activePlanId de training.extra
+  /// 3. Limpiar trainingPlans (opcional: solo borrar el activo)
+  /// 4. Guardar cliente actualizado
+  /// 5. Resetear state del provider
+  Future<void> clearActivePlan() async {
+    try {
+      final clientId = ref.read(clientsProvider).value?.activeClient?.id;
+      if (clientId == null) {
+        debugPrint('⚠️ clearActivePlan: No hay cliente activo');
+        return;
+      }
+
+      final client = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+      if (client == null) {
+        debugPrint('⚠️ clearActivePlan: Cliente no encontrado');
+        return;
+      }
+
+      debugPrint('🗑️ Limpiando plan activo...');
+
+      // Limpiar activePlanId
+      final updatedExtra = Map<String, dynamic>.from(client.training.extra);
+      updatedExtra.remove(TrainingExtraKeys.activePlanId);
+
+      final updatedTraining = client.training.copyWith(extra: updatedExtra);
+
+      // OPCIÓN A: Borrar TODOS los planes (regeneración completa)
+      final updatedClient = client.copyWith(
+        training: updatedTraining,
+        trainingPlans: const [],
+      );
+
+      // Guardar en repositorio
+      await ref.read(clientRepositoryProvider).saveClient(updatedClient);
+
+      // Refrescar provider
+      await ref.read(clientsProvider.notifier).refresh();
+
+      debugPrint('✅ Plan activo borrado exitosamente');
+
+      // Resetear state
+      state = const TrainingPlanState(
+        isLoading: false,
+        error: null,
+        plan: null,
+        blockReason: null,
+        suggestions: null,
+        missingFields: const [],
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error en clearActivePlan: $e');
+      debugPrint('Stack: $stackTrace');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Error al limpiar plan: $e',
+      );
+    }
+  }
 }
 
 /// Provider: Expone el estado y el notificador a la UI

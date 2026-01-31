@@ -1,4 +1,6 @@
 // ignore_for_file: deprecated_member_use_from_same_package
+import 'dart:math';
+
 import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/domain/entities/decision_trace.dart';
@@ -42,6 +44,18 @@ class Phase6ExerciseSelectionService {
 
   // Rastrea patrón principal por músculo dentro de la semana para evitar consecutivos.
   final Map<int, Map<String, String?>> _lastPrimaryPatternForWeek = {};
+
+  /// Genera un número determinístico basado en clientId + muscle + day
+  /// para introducir variabilidad controlada entre clientes
+  int _getClientSeed(String clientId, String muscle, int dayNumber) {
+    final combined = '$clientId-$muscle-$dayNumber';
+    int hash = 0;
+    for (int i = 0; i < combined.length; i++) {
+      hash = ((hash << 5) - hash) + combined.codeUnitAt(i);
+      hash = hash & hash; // Convertir a 32-bit int
+    }
+    return hash.abs();
+  }
 
   Phase6SelectionResult selectExercises({
     required TrainingProfile profile,
@@ -137,6 +151,7 @@ class Phase6ExerciseSelectionService {
             catalogList,
             mg.name,
             limit: 6,
+            clientSeed: profile.id,
           );
 
           // RESTRICCIÓN A3: Filtrar candidatos para que SOLO provengan de baseExercisesByMuscle
@@ -187,6 +202,7 @@ class Phase6ExerciseSelectionService {
               catalogList,
               'fullBody',
               limit: 6,
+              clientSeed: profile.id,
             );
           }
 
@@ -304,6 +320,14 @@ class Phase6ExerciseSelectionService {
             candidatesEntries = [_defaultExercise(mg)];
           }
 
+          // Variabilidad determinística por cliente/músculo/día
+          final clientId = profile.id ?? 'unknown_client';
+          final seed = _getClientSeed(clientId, mg.name, d);
+          final random = Random(seed);
+          final shuffled = List<ExerciseEntry>.from(candidatesEntries);
+          shuffled.shuffle(random);
+          candidatesEntries = shuffled;
+
           final used = usedByMuscle.putIfAbsent(mg, () => <String>{});
 
           // Must-have: forzar si aplica
@@ -395,6 +419,23 @@ class Phase6ExerciseSelectionService {
               context: {'sets': sets, 'muscle': mg.name},
             ),
           );
+          decisions.add(
+            DecisionTrace.info(
+              phase: 'Phase6ExerciseSelection',
+              category: 'exercise_selection_shuffled',
+              description:
+                  'Ejercicios seleccionados con variabilidad por cliente',
+              context: {
+                'clientId': clientId,
+                'muscle': mg.name,
+                'day': d,
+                'seed': seed,
+                'availableCount': candidatesEntries.length,
+                'selectedCount': selected.length,
+                'firstExercise': selected.first.name,
+              },
+            ),
+          );
 
           // VALIDACIÓN A3: Verificar límites duros después de agregar ejercicios
           var totalExercisesThisDay = dayMap.values.fold<int>(
@@ -427,6 +468,7 @@ class Phase6ExerciseSelectionService {
             catalog: catalogList,
             availableEquipment: availableEquipment,
             minExercisesForDay: minExercisesPerDay,
+            clientSeed: profile.id,
           );
           if (fallback.isEmpty) {
             throw TrainingPlanBlockedException(
@@ -479,6 +521,7 @@ class Phase6ExerciseSelectionService {
               catalog: catalogList,
               availableEquipment: availableEquipment,
               minExercisesForDay: minExercisesPerDay,
+              clientSeed: profile.id,
             );
             // Merge determinista evitando duplicados por código
             final existingCodes = dayMap.values
@@ -534,6 +577,7 @@ class Phase6ExerciseSelectionService {
           availableEquipment,
           contraindicatedPatterns,
           decisions,
+          clientSeed: profile.id,
         );
       }
     }
@@ -549,6 +593,7 @@ class Phase6ExerciseSelectionService {
     required List<Exercise> catalog,
     required List<String> availableEquipment,
     required int minExercisesForDay,
+    String? clientSeed,
   }) {
     final lowerEq = availableEquipment.map((e) => e.toLowerCase()).toSet();
     final result = <MuscleGroup, List<ExerciseEntry>>{};
@@ -563,7 +608,12 @@ class Phase6ExerciseSelectionService {
         orElse: () => MuscleGroup.fullBody,
       );
       final candidates =
-          ExerciseSelector.byMuscle(catalog, mg.name, limit: 12)
+          ExerciseSelector.byMuscle(
+                catalog,
+                mg.name,
+                limit: 12,
+                clientSeed: clientSeed,
+              )
               .map(
                 (e) => ExerciseEntry(
                   code: e.id.isNotEmpty
@@ -614,7 +664,12 @@ class Phase6ExerciseSelectionService {
       final mg = MuscleGroup.fullBody;
       final current = result.putIfAbsent(mg, () => <ExerciseEntry>[]);
       final fb =
-          ExerciseSelector.byMuscle(catalog, 'fullBody', limit: 6)
+          ExerciseSelector.byMuscle(
+                catalog,
+                'fullBody',
+                limit: 6,
+                clientSeed: clientSeed,
+              )
               .map(
                 (e) => ExerciseEntry(
                   code: e.id.isNotEmpty
@@ -786,8 +841,9 @@ class Phase6ExerciseSelectionService {
     List<Exercise> catalog,
     List<String> availableEquipment,
     Set<String> contraindicatedPatterns,
-    List<DecisionTrace> decisions,
-  ) {
+    List<DecisionTrace> decisions, {
+    String? clientSeed,
+  }) {
     // 1. Detectar patrones presentes en la semana
     final patterns = <String>{};
     var hasThrust = false;
@@ -850,6 +906,7 @@ class Phase6ExerciseSelectionService {
         availableEquipment: availableEquipment,
         contraindicatedPatterns: contraindicatedPatterns,
         decisions: decisions,
+        clientSeed: clientSeed,
       );
 
       if (!swapped) {
@@ -877,28 +934,35 @@ class Phase6ExerciseSelectionService {
     required List<String> availableEquipment,
     required Set<String> contraindicatedPatterns,
     required List<DecisionTrace> decisions,
+    String? clientSeed,
   }) {
     // 1. Buscar ejercicios elegibles para este patrón
-    final candidates = ExerciseSelector.byMuscle(catalog, 'glutes', limit: 6)
-        .map(
-          (e) => ExerciseEntry(
-            code: e.id.isNotEmpty
-                ? e.id
-                : (e.externalId.isNotEmpty ? e.externalId : e.name),
-            name: e.name,
-            muscleGroup: MuscleGroup.glutes,
-            equipment: e.equipment.isNotEmpty
-                ? <String>[e.equipment]
-                : const [],
-            isCompound: false,
-          ),
-        )
-        .where((e) => !_isContraindicated(e, contraindicatedPatterns))
-        .where((e) {
-          final tags = _exerciseTags(e);
-          return tags.contains(pattern);
-        })
-        .toList();
+    final candidates =
+        ExerciseSelector.byMuscle(
+              catalog,
+              'glutes',
+              limit: 6,
+              clientSeed: clientSeed,
+            )
+            .map(
+              (e) => ExerciseEntry(
+                code: e.id.isNotEmpty
+                    ? e.id
+                    : (e.externalId.isNotEmpty ? e.externalId : e.name),
+                name: e.name,
+                muscleGroup: MuscleGroup.glutes,
+                equipment: e.equipment.isNotEmpty
+                    ? <String>[e.equipment]
+                    : const [],
+                isCompound: false,
+              ),
+            )
+            .where((e) => !_isContraindicated(e, contraindicatedPatterns))
+            .where((e) {
+              final tags = _exerciseTags(e);
+              return tags.contains(pattern);
+            })
+            .toList();
 
     if (candidates.isEmpty) {
       // No hay ejercicios disponibles para este patrón

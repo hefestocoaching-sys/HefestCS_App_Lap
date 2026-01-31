@@ -244,27 +244,88 @@ class _TrainingDashboardScreenState
                   ),
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final now = DateTime.now();
-                  await ref
-                      .read(trainingPlanProvider.notifier)
-                      .generatePlanFromActiveCycle(now);
-                  // Cambiar a Tab 4 (Semanal) después de generar
-                  if (mounted && _tabController != null) {
-                    _tabController!.animateTo(3);
-                  }
-                },
-                icon: const Icon(Icons.auto_awesome, size: 18),
-                label: const Text('Generar Plan'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+              Row(
+                children: [
+                  // Botón "Generar" (usa caché si existe)
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final now = DateTime.now();
+                      await ref
+                          .read(trainingPlanProvider.notifier)
+                          .generatePlanFromActiveCycle(now);
+                      if (mounted && _tabController != null) {
+                        _tabController!.animateTo(3);
+                      }
+                    },
+                    icon: const Icon(Icons.auto_awesome, size: 18),
+                    label: const Text('Generar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  // Botón "Regenerar" (fuerza nueva generación)
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final now = DateTime.now();
+
+                      // Mostrar diálogo de confirmación
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Regenerar Plan'),
+                          content: const Text(
+                            '¿Estás seguro de regenerar el plan?\n\n'
+                            'Esto borrará el plan actual y creará uno nuevo '
+                            'con las configuraciones actualizadas.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                              ),
+                              child: const Text('Regenerar'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed != true) return;
+
+                      // Forzar regeneración
+                      await ref
+                          .read(trainingPlanProvider.notifier)
+                          .clearActivePlan();
+                      await ref
+                          .read(trainingPlanProvider.notifier)
+                          .generatePlanFromActiveCycle(now);
+
+                      if (mounted && _tabController != null) {
+                        _tabController!.animateTo(3);
+                      }
+                    },
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Regenerar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

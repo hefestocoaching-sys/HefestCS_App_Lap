@@ -193,6 +193,7 @@ class TrainingEngineFacade {
   /// - Nadie más decide en la UI o providers
   // ignore: unused_element
   @Deprecated('Use activePlanId from SSOT instead')
+  // ignore: unused_element
   TrainingPlanConfig _selectLatestPlan(List<TrainingPlanConfig> plans) {
     if (plans.isEmpty) {
       throw StateError('No training plans available for selection');

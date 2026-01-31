@@ -633,6 +633,7 @@ class Phase3VolumeCapacityModelService {
   }
 
   /// Tabla de límites de volumen base por grupo muscular
+  // ignore: unused_element
   Map<String, int> _getBaseVolumeLandmarks(String muscle) {
     // DEPRECATED: Ahora se usa VolumeLandmarks
     throw DeprecationException(

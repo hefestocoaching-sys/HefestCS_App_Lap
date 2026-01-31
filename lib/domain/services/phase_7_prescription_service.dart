@@ -695,6 +695,7 @@ class Phase7PrescriptionService {
     return min == max ? RirTarget.single(min) : RirTarget.range(min, max);
   }
 
+  // ignore: unused_element
   RepRange _repRangeForBias(RepBias bias, int weekIdx, TrainingPhase phase) {
     // Progresión determinística por semana
     final cyclePos = weekIdx % 4;

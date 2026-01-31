@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/constants/muscle_keys.dart';
 import 'package:hcs_app_lap/core/enums/muscle_group.dart';
@@ -382,6 +381,7 @@ class Phase4SplitDistributionService {
 
   /// Construye la lista de músculos por día a partir de los músculos disponibles
   /// en weeklyTarget, aplicando categorías base y un fill-pass para densidad mínima.
+  // ignore: unused_element
   Map<int, List<String>> _buildDayMusclesFromAvailable({
     required int daysPerWeek,
     required List<String> availableMuscles,
