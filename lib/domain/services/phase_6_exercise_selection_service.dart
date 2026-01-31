@@ -180,42 +180,28 @@ class Phase6ExerciseSelectionService {
                 'candidates filtrados=${candidates.take(3).map((e) => e.id).toList()}',
               );
 
-              if (candidates.isEmpty) {
-                // Los ejercicios base del ciclo no están en el catálogo
-                // Usar fallback seguro (ejercicio por defecto del ciclo)
-                decisions.add(
-                  DecisionTrace.warning(
-                    phase: 'Phase6ExerciseSelection',
-                    category: 'base_exercises_not_in_catalog',
-                    description:
-                        'Semana $w Día $d: $mName → ejercicios base no encontrados en catálogo. Usando fallback.',
-                    context: {
-                      'muscle': mName,
-                      'baseExercises': baseExercisesForMuscle,
-                    },
-                  ),
+              // ✅ Si el filtro dejó candidates vacío, crear Exercise desde baseExercises del ciclo
+              if (candidates.isEmpty && baseExercisesForMuscle.isNotEmpty) {
+                debugPrint(
+                  '⚠️ [Phase6] Filtro dejó candidates=[] para $mName. Creando desde baseExercises del ciclo.',
                 );
-                // Crear ejercicio fallback basado en el nombre del ciclo
-                candidates = [
-                  Exercise(
-                    id: '${mName}_cycle_default',
-                    name: '$mName (predeterminado del ciclo)',
+                candidates = baseExercisesForMuscle.map((exerciseId) {
+                  return Exercise(
+                    id: exerciseId,
+                    name: exerciseId.replaceAll('_', ' '),
                     muscleKey: mName,
                     equipment: 'bodyweight',
-                    externalId: '',
-                  ),
-                ];
+                    externalId: exerciseId,
+                    primaryMuscles: [mName],
+                    secondaryMuscles: const [],
+                    tertiaryMuscles: const [],
+                  );
+                }).toList();
+                debugPrint(
+                  '✅ [Phase6] Creados ${candidates.length} placeholders para $mName desde ciclo',
+                );
               }
             }
-          }
-
-          if (candidates.isEmpty) {
-            candidates = ExerciseSelector.byMuscle(
-              catalogList,
-              'fullBody',
-              limit: 6,
-              clientSeed: profile.id,
-            );
           }
 
           List<ExerciseEntry> toEntry(List<Exercise> list) {
