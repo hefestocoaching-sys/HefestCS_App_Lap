@@ -302,37 +302,100 @@ class _TrainingDashboardScreenState
 
                       if (confirmed != true) return;
 
-                      // Mostrar indicador de carga durante limpieza
+                      // Mostrar feedback: Limpiando
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('🗑️ Limpiando plan y ciclos...'),
+                            content: Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 16),
+                                Text('Limpiando plan y ciclos...'),
+                              ],
+                            ),
                             duration: Duration(seconds: 4),
                           ),
                         );
                       }
 
-                      // Forzar regeneración con sincronización de Firestore
+                      // PASO 1: Limpiar plan activo y ciclos
+                      debugPrint('🔧 [UI] PASO 1: Limpiando plan activo...');
                       await ref
                           .read(trainingPlanProvider.notifier)
                           .clearActivePlan();
 
-                      // Mostrar indicador de generación
+                      // PASO 2: ESPERAR sincronización de Firestore (CRÍTICO)
+                      debugPrint(
+                        '⏳ [UI] PASO 2: Esperando sincronización Firestore (4 segundos)...',
+                      );
+                      await Future.delayed(const Duration(seconds: 4));
+                      debugPrint('✅ [UI] PASO 2: Sincronización completa');
+
+                      // Mostrar feedback: Generando
                       if (mounted) {
+                        ScaffoldMessenger.of(context).clearSnackBars();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('🔄 Generando plan nuevo...'),
-                            duration: Duration(seconds: 2),
+                            content: Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 16),
+                                Text('Generando plan nuevo...'),
+                              ],
+                            ),
+                            duration: Duration(seconds: 20),
                           ),
                         );
                       }
 
+                      // PASO 3: Generar plan nuevo
+                      debugPrint(
+                        '🔧 [UI] PASO 3: Generando plan desde ciclo activo...',
+                      );
                       await ref
                           .read(trainingPlanProvider.notifier)
                           .generatePlanFromActiveCycle(now);
 
-                      if (mounted && _tabController != null) {
-                        _tabController!.animateTo(3);
+                      // Mostrar feedback: Completado
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).clearSnackBars();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.white),
+                                SizedBox(width: 16),
+                                Text('Plan generado exitosamente'),
+                              ],
+                            ),
+                            duration: Duration(seconds: 2),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+
+                        if (_tabController != null) {
+                          _tabController!.animateTo(3);
+                        }
                       }
                     },
                     icon: const Icon(Icons.refresh, size: 18),
