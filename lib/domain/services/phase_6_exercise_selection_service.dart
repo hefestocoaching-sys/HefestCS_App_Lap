@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/domain/entities/decision_trace.dart';
@@ -154,6 +155,11 @@ class Phase6ExerciseSelectionService {
             clientSeed: profile.id,
           );
 
+          debugPrint(
+            '🔍 [Phase6][Pre-filtro] Músculo=$mName, clientSeed=${profile.id}, '
+            'candidates=${candidates.take(3).map((e) => e.id).toList()}',
+          );
+
           // RESTRICCIÓN A3: Filtrar candidatos para que SOLO provengan de baseExercisesByMuscle
           if (baseExercisesByMuscle != null &&
               baseExercisesByMuscle.isNotEmpty) {
@@ -167,6 +173,12 @@ class Phase6ExerciseSelectionService {
                         baseSet.contains(e.externalId),
                   )
                   .toList();
+
+              debugPrint(
+                '🔍 [Phase6][Post-filtro] Músculo=$mName, '
+                'baseExercises=${baseExercisesForMuscle.take(3).toList()}, '
+                'candidates filtrados=${candidates.take(3).map((e) => e.id).toList()}',
+              );
 
               if (candidates.isEmpty) {
                 // Los ejercicios base del ciclo no están en el catálogo
