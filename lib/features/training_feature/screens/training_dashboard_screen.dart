@@ -302,10 +302,31 @@ class _TrainingDashboardScreenState
 
                       if (confirmed != true) return;
 
-                      // Forzar regeneración
+                      // Mostrar indicador de carga durante limpieza
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('🗑️ Limpiando plan y ciclos...'),
+                            duration: Duration(seconds: 4),
+                          ),
+                        );
+                      }
+
+                      // Forzar regeneración con sincronización de Firestore
                       await ref
                           .read(trainingPlanProvider.notifier)
                           .clearActivePlan();
+
+                      // Mostrar indicador de generación
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('🔄 Generando plan nuevo...'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+
                       await ref
                           .read(trainingPlanProvider.notifier)
                           .generatePlanFromActiveCycle(now);

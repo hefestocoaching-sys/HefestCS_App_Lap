@@ -1332,8 +1332,35 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // Guardar en repositorio
       await ref.read(clientRepositoryProvider).saveClient(updatedClient);
 
+      debugPrint('✅ Cliente guardado en repositorio local');
+
+      // ✅ CRÍTICO: Esperar sincronización de Firestore
+      debugPrint('⏳ Esperando sincronización de Firestore (3 segundos)...');
+      await Future.delayed(const Duration(seconds: 3));
+      debugPrint('✅ Sincronización completa (asumida)');
+
       // Refrescar provider
       await ref.read(clientsProvider.notifier).refresh();
+
+      // ✅ VERIFICAR que el cliente NO tiene ciclos
+      final verifyClient = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+
+      debugPrint('🔍 Verificación post-limpieza:');
+      debugPrint(
+        '   trainingCycles.length: ${verifyClient?.trainingCycles.length ?? 0}',
+      );
+      debugPrint(
+        '   activeCycleId: ${verifyClient?.training.extra['activeCycleId']}',
+      );
+
+      if (verifyClient?.trainingCycles.isNotEmpty ?? false) {
+        debugPrint(
+          '⚠️ WARNING: Cliente TODAVÍA tiene ciclos después de limpiar',
+        );
+        debugPrint('   Esto indica problema de sincronización de Firestore');
+      }
 
       debugPrint('✅ Plan, ciclos y ejercicios base borrados exitosamente');
       debugPrint(
