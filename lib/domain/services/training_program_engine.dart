@@ -1,4 +1,5 @@
 // ignore_for_file: deprecated_member_use_from_same_package
+import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
 import 'package:hcs_app_lap/core/constants/muscle_keys.dart';
@@ -693,14 +694,19 @@ class LegacyTrainingProgramEngine {
       }
     }
 
+    // ✅ CRÍTICO: Setear profile.id con clientId para variabilidad
+    final profileWithId = profileWithBounds.copyWith(id: clientId);
+
     final r6 = _p6.selectExercises(
-      profile: profileWithBounds,
+      profile: profileWithId, // ← Usar profile con ID
       baseSplit: r4.split,
       catalog: catalog,
       weeks: r5.weeks.length,
       baseExercisesByMuscle: baseExercisesByMuscle,
     );
     lastDecisions.addAll(r6.decisions);
+
+    debugPrint('🔍 [Engine] Phase6 llamado con profile.id=$clientId');
 
     // Fase 7
     final r7 = _p7.buildPrescriptions(

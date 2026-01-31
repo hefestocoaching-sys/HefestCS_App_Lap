@@ -1,4 +1,5 @@
 // ignore_for_file: deprecated_member_use_from_same_package
+import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/decision_trace.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
@@ -800,8 +801,12 @@ class TrainingProgramEngineV2Full {
 
     // 6) Phase 6 - exercise selection
     final catalogInput = (exerciseCatalog ?? exercises ?? const <Exercise>[]);
+
+    // ✅ CRÍTICO: Setear profile.id con clientId
+    final profileWithId = profile.copyWith(id: clientId);
+
     final r6 = _p6.selectExercises(
-      profile: profile,
+      profile: profileWithId, // ← Usar profile con ID
       baseSplit: effectiveSplit,
       catalog: catalogInput,
       weeks: r5.weeks.length,
@@ -810,6 +815,8 @@ class TrainingProgramEngineV2Full {
       baseExercisesByMuscle: activeCycle?.baseExercisesByMuscle,
     );
     lastDecisions.addAll(r6.decisions);
+
+    debugPrint('🔍 [EngineV2] Phase6 llamado con profile.id=$clientId');
 
     final selections = sessionFramework == null
         ? r6.selections
