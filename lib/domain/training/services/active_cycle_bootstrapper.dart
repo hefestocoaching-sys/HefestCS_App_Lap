@@ -21,6 +21,8 @@ class ActiveCycleBootstrapper {
     required String clientId,
     required List<Exercise> exercises,
   }) {
+    debugPrint('🧩 [Bootstrap] Creando ciclo para clientId: $clientId');
+
     // Agrupar ejercicios por músculo primario (YA normalizado)
     final Map<String, List<String>> grouped = {};
 
@@ -60,6 +62,7 @@ class ActiveCycleBootstrapper {
 
       if (list.isEmpty) {
         baseExercisesByMuscle[muscle] = [];
+        debugPrint('   ⚠️  $muscle: sin ejercicios en catálogo');
         continue;
       }
 
@@ -70,17 +73,18 @@ class ActiveCycleBootstrapper {
       shuffled.shuffle(random);
 
       // Tomar hasta 10 ejercicios de la lista mezclada
-      baseExercisesByMuscle[muscle] = shuffled.take(10).toList();
+      final selected = shuffled.take(10).toList();
+      baseExercisesByMuscle[muscle] = selected;
+
+      debugPrint(
+        '   ✅ $muscle: ${selected.length} ejercicios (seed=$muscleSeed, primero=${selected.isNotEmpty ? selected.first : 'N/A'})',
+      );
     }
 
     final cycleId = 'cycle_${DateTime.now().millisecondsSinceEpoch}';
     final now = DateTime.now();
 
-    debugPrint(
-      '🧩 [BootstrapCycle] created cycle $cycleId for client $clientId with '
-      'muscles=${baseExercisesByMuscle.keys} '
-      'counts=${baseExercisesByMuscle.map((k, v) => MapEntry(k, v.length))}',
-    );
+    debugPrint('🎯 [Bootstrap] Ciclo $cycleId creado para cliente $clientId');
 
     return TrainingCycle(
       cycleId: cycleId,

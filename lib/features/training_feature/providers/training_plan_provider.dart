@@ -980,9 +980,8 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         debugPrint('✅ [Bootstrap] Ciclo guardado en SQLite, recargando...');
 
         // ✅ CRÍTICO: Recargar desde SQLite para sincronizar memoria con BD
-        workingClient = await ref
-                .read(clientRepositoryProvider)
-                .getClientById(clientId) ??
+        workingClient =
+            await ref.read(clientRepositoryProvider).getClientById(clientId) ??
             workingClient;
 
         debugPrint(
@@ -1047,9 +1046,8 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         debugPrint('✅ [Motor] Plan limpiado en SQLite, recargando...');
 
         // ✅ CRÍTICO: Recargar desde SQLite
-        workingClient = await ref
-                .read(clientRepositoryProvider)
-                .getClientById(clientId) ??
+        workingClient =
+            await ref.read(clientRepositoryProvider).getClientById(clientId) ??
             workingClient;
 
         debugPrint(
@@ -1084,9 +1082,8 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         debugPrint('✅ [Motor] Frecuencia guardada en SQLite, recargando...');
 
         // ✅ CRÍTICO: Recargar desde SQLite
-        workingClient = await ref
-                .read(clientRepositoryProvider)
-                .getClientById(clientId) ??
+        workingClient =
+            await ref.read(clientRepositoryProvider).getClientById(clientId) ??
             workingClient;
 
         activeCycle = updatedCycle;
