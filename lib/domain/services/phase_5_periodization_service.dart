@@ -5,6 +5,7 @@ import 'package:hcs_app_lap/domain/entities/decision_trace.dart';
 import 'package:hcs_app_lap/domain/entities/manual_override.dart';
 import 'package:hcs_app_lap/domain/entities/split_template.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
+import 'package:hcs_app_lap/domain/constants/rir_by_phase.dart';
 
 enum RepBias { high, moderate, low }
 
@@ -16,6 +17,14 @@ class PeriodizedWeek {
   final RepBias repBias;
   final String fatigueExpectation; // low/moderate/high/reset
   final Map<int, Map<String, int>> dailyVolume; // scaled per week
+  final double rirTarget;
+  final double rirMin;
+  final double rirMax;
+  final int repRangeMin;
+  final int repRangeMax;
+  final double intensityTarget;
+  final String primaryGoal;
+  final String description;
 
   PeriodizedWeek({
     required this.weekIndex,
@@ -25,6 +34,14 @@ class PeriodizedWeek {
     required this.repBias,
     required this.fatigueExpectation,
     required this.dailyVolume,
+    this.rirTarget = 2.5,
+    this.rirMin = 2.0,
+    this.rirMax = 4.0,
+    this.repRangeMin = 8,
+    this.repRangeMax = 12,
+    this.intensityTarget = 0.70,
+    this.primaryGoal = 'volume',
+    this.description = '',
   });
 }
 
@@ -72,6 +89,11 @@ class Phase5PeriodizationService {
 
     for (var i = 0; i < totalWeeks; i++) {
       final phase = pattern[i];
+      final phaseKey =
+          phase.name; // 'accumulation', 'intensification', 'deload'
+      final config = RIRByPhase.getPhaseConfig(phaseKey);
+      final (repMin, repMax) = RIRByPhase.getRepRange(phaseKey);
+
       final targets = _weekTargets(
         phase: phase,
         weekIdx: i,
@@ -122,6 +144,32 @@ class Phase5PeriodizationService {
           repBias: targets.repBias,
           fatigueExpectation: targets.fatigueExpectation,
           dailyVolume: scaled,
+          rirTarget: config['rirTarget'] as double,
+          rirMin: config['rirMin'] as double,
+          rirMax: config['rirMax'] as double,
+          repRangeMin: repMin,
+          repRangeMax: repMax,
+          intensityTarget: RIRByPhase.getIntensity(phaseKey),
+          primaryGoal: config['primaryGoal'] as String,
+          description: config['description'] as String,
+        ),
+      );
+
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase5Periodization',
+          category: 'phase_assignment',
+          description: 'Semana ${i + 1}: ${config['description']}',
+          context: {
+            'weekNumber': i + 1,
+            'phase': phaseKey,
+            'rirTarget': config['rirTarget'],
+            'rirRange': '${config['rirMin']}-${config['rirMax']}',
+            'repRange': '$repMin-$repMax',
+            'intensity':
+                '${(config['intensityMin'] * 100).toInt()}-${(config['intensityMax'] * 100).toInt()}%',
+            'primaryGoal': config['primaryGoal'],
+          },
         ),
       );
 
@@ -137,6 +185,11 @@ class Phase5PeriodizationService {
             'effortIntent': effortIntent.name,
             'repBias': targets.repBias.name,
             'fatigueExpectation': targets.fatigueExpectation,
+            'rirTarget': config['rirTarget'],
+            'rirRange': '${config['rirMin']}-${config['rirMax']}',
+            'repRange': '$repMin-$repMax',
+            'intensityTarget': RIRByPhase.getIntensity(phaseKey),
+            'primaryGoal': config['primaryGoal'],
           },
         ),
       );

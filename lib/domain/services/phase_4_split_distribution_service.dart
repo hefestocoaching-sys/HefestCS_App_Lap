@@ -8,6 +8,7 @@ import 'package:hcs_app_lap/domain/entities/split_template.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/entities/training_structure.dart';
 import 'package:hcs_app_lap/domain/entities/volume_limits.dart';
+import 'package:hcs_app_lap/domain/constants/session_limits.dart';
 
 class Phase4SplitResult {
   final SplitTemplate split;
@@ -472,6 +473,7 @@ class Phase4SplitDistributionService {
     Set<String> prioritarySet,
     List<DecisionTrace> decisions,
   ) {
+    final levelName = profile.trainingLevel?.name ?? 'beginner';
     final days = dayMuscles.keys.toList()..sort();
     final result = <int, Map<String, int>>{
       for (final d in days) d: <String, int>{},
@@ -513,6 +515,87 @@ class Phase4SplitDistributionService {
         if (selectedDays.length >= freq) break;
         if (!selectedDays.contains(d)) selectedDays.add(d);
       }
+
+      // Validar límite por sesión usando SessionVolumeLimits
+      var setsPerSession = (target / selectedDays.length).ceil();
+      final sessionLimit = SessionVolumeLimits.getLimit(levelName, muscle);
+
+      if (setsPerSession > sessionLimit) {
+        // OPCIÓN A: Aumentar frecuencia automáticamente
+        final minFrequency = SessionVolumeLimits.calculateMinimumFrequency(
+          target,
+          levelName,
+          muscle,
+        );
+
+        if (minFrequency <= profile.daysPerWeek) {
+          // Redistribuir en más días
+          frequencyTarget[muscle] = minFrequency;
+
+          decisions.add(
+            DecisionTrace.warning(
+              phase: 'Phase4SplitDistribution',
+              category: 'frequency_increased_saturation',
+              description:
+                  'Frecuencia aumentada para evitar saturación de sesión',
+              context: {
+                'muscle': muscle,
+                'weeklyVolume': target,
+                'originalFrequency': freq,
+                'newFrequency': minFrequency,
+                'sessionLimit': sessionLimit,
+                'originalSetsPerSession': setsPerSession,
+              },
+              action: 'Músculo distribuido en $minFrequency sesiones',
+            ),
+          );
+
+          // Recalcular selección de días y sets por sesión
+          freq = minFrequency.clamp(1, muscleDays.length);
+          selectedDays
+            ..clear()
+            ..addAll(muscleDays.take(freq));
+          setsPerSession = (target / selectedDays.length).ceil();
+        } else {
+          // OPCIÓN B: Reducir volumen semanal
+          final adjustedVolume = sessionLimit * freq;
+
+          decisions.add(
+            DecisionTrace.warning(
+              phase: 'Phase4SplitDistribution',
+              category: 'volume_reduced_saturation',
+              description:
+                  'Volumen reducido: saturación inevitable con días disponibles',
+              context: {
+                'muscle': muscle,
+                'originalVolume': target,
+                'adjustedVolume': adjustedVolume,
+                'frequency': freq,
+                'daysAvailable': profile.daysPerWeek,
+                'sessionLimit': sessionLimit,
+              },
+              action:
+                  'Considere aumentar días de entrenamiento a $minFrequency',
+            ),
+          );
+
+          // Ajustar volumen
+          weeklyTarget[muscle] = adjustedVolume;
+          if (volumeByMuscle.containsKey(muscle)) {
+            volumeByMuscle[muscle] = volumeByMuscle[muscle]!.copyWith(
+              recommendedStartVolume: adjustedVolume,
+            );
+          }
+          setsPerSession = (adjustedVolume / selectedDays.length).ceil();
+        }
+      }
+
+      _validateSessionVolume(
+        muscle: muscle,
+        setsPerSession: setsPerSession,
+        level: levelName,
+        decisions: decisions,
+      );
 
       // Asignación de sets con boost para músculo focal en fullbody 3D
       if (muscle == 'glutes' && gluteSlots.isNotEmpty) {
@@ -650,6 +733,38 @@ class Phase4SplitDistributionService {
     }
 
     return result;
+  }
+
+  /// Valida distribución de volumen respetando límites por sesión
+  bool _validateSessionVolume({
+    required String muscle,
+    required int setsPerSession,
+    required String level,
+    required List<DecisionTrace> decisions,
+  }) {
+    final validation = SessionVolumeLimits.validateDistribution(
+      setsPerSession,
+      level,
+      muscle,
+    );
+
+    if (validation != null) {
+      decisions.add(
+        DecisionTrace.warning(
+          phase: 'Phase4SplitDistribution',
+          category: 'session_saturation_detected',
+          description: validation,
+          context: {
+            'muscle': muscle,
+            'setsPerSession': setsPerSession,
+            'level': level,
+          },
+        ),
+      );
+      return false;
+    }
+
+    return true;
   }
 
   Map<String, double> _normalizeMuscleKeys(Map<String, dynamic> raw) {

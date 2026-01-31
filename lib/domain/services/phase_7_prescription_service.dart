@@ -18,6 +18,7 @@ import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/services/phase_1_data_ingestion_service.dart'
     show DerivedTrainingContext;
 import 'package:hcs_app_lap/domain/services/failure_policy_service.dart';
+import 'package:hcs_app_lap/domain/constants/rest_period_calculator.dart';
 
 class Phase7PrescriptionResult {
   /// weekIndex -> day -> prescriptions
@@ -94,7 +95,7 @@ class Phase7PrescriptionService {
       );
 
       // Usar datos de Phase 5
-      final repRange = _repRangeForBias(week.repBias, wIdx, phase);
+      final repRange = RepRange(week.repRangeMin, week.repRangeMax);
 
       decisions.add(
         DecisionTrace.info(
@@ -171,6 +172,7 @@ class Phase7PrescriptionService {
             label: nextLabel(),
             phase: phase,
             weekIndex: wIdx,
+            intensityTarget: week.intensityTarget,
             derivedContext: derivedContext,
             profile: profile,
             fatigueExpectation: week.fatigueExpectation,
@@ -439,6 +441,7 @@ class Phase7PrescriptionService {
     required String label,
     required TrainingPhase phase,
     required int weekIndex,
+    required double intensityTarget,
     required DerivedTrainingContext? derivedContext,
     required TrainingProfile? profile,
     required String fatigueExpectation,
@@ -463,8 +466,30 @@ class Phase7PrescriptionService {
     // para compensar la intensidad extra de la técnica.
     var rirTargetForPrescription = weeklyRirTarget;
 
-    // Descansos
-    final restMin = ex.isCompound ? (repRange.max <= 8 ? 3.0 : 2.0) : 1.0;
+    // Calcular descanso según reps, tipo ejercicio e intensidad
+    final restSeconds = RestPeriodCalculator.getRestSeconds(
+      repRange.max,
+      ex.isCompound,
+      intensityTarget,
+    );
+
+    final restMinutes = (restSeconds / 60).round();
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase7Prescription',
+        category: 'rest_period_assigned',
+        description: 'Descanso calculado para ${ex.name}',
+        context: {
+          'exercise': ex.name,
+          'reps': repRange.max,
+          'isCompound': ex.isCompound,
+          'intensity': intensityTarget,
+          'restSeconds': restSeconds,
+          'formatted': RestPeriodCalculator.formatRestTime(restSeconds),
+        },
+      ),
+    );
 
     // Intensificación y política de fallo
     String? intensificationTechnique;
@@ -584,7 +609,7 @@ class Phase7PrescriptionService {
       sets: sets,
       repRange: repRange,
       rir: rirDisplay,
-      restMinutes: restMin.toInt(),
+      restMinutes: restMinutes,
       allowFailureOnLastSet: allowFailure,
       notes: intensificationNotes,
       order: 0,

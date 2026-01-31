@@ -6,6 +6,7 @@ import 'package:hcs_app_lap/domain/entities/training_history.dart';
 import 'package:hcs_app_lap/domain/entities/volume_limits.dart';
 import 'package:hcs_app_lap/domain/entities/decision_trace.dart';
 import 'package:hcs_app_lap/domain/entities/manual_override.dart';
+import 'package:hcs_app_lap/domain/constants/volume_landmarks.dart';
 import 'package:hcs_app_lap/domain/services/phase_2_readiness_evaluation_service.dart'
     show ReadinessLevel;
 
@@ -542,36 +543,38 @@ class Phase3VolumeCapacityModelService {
     TrainingLevel level,
     List<DecisionTrace> decisions,
   ) {
-    // Límites base por nivel (series/semana)
-    // Basados en las recomendaciones de Mike Israetel y literatura científica
+    // Usar VolumeLandmarks centralizado
+    final levelName = level.name; // 'beginner', 'intermediate', 'advanced'
 
-    final baseLimits = _getBaseVolumeLandmarks(muscle);
+    final mev = VolumeLandmarks.getMEV(muscle, levelName);
+    final mavMin = VolumeLandmarks.getMAVMin(muscle, levelName);
+    final mavMax = VolumeLandmarks.getMAVMax(muscle, levelName);
+    final mrv = VolumeLandmarks.getMRV(muscle, levelName);
 
-    int mev, mav, mrv;
+    // MAV es el punto medio del rango
+    final mav = ((mavMin + mavMax) / 2).round();
 
-    switch (level) {
-      case TrainingLevel.beginner:
-        // Principiantes: más conservadores
-        mev = baseLimits['mev_beginner'] ?? 8;
-        mav = baseLimits['mav_beginner'] ?? 14;
-        mrv = baseLimits['mrv_beginner'] ?? 20;
-        break;
+    // Volumen inicial recomendado
+    final recommendedStart = VolumeLandmarks.getRecommendedStart(
+      muscle,
+      levelName,
+    );
 
-      case TrainingLevel.intermediate:
-        mev = baseLimits['mev_intermediate'] ?? 10;
-        mav = baseLimits['mav_intermediate'] ?? 18;
-        mrv = baseLimits['mrv_intermediate'] ?? 25;
-        break;
-
-      case TrainingLevel.advanced:
-        mev = baseLimits['mev_advanced'] ?? 12;
-        mav = baseLimits['mav_advanced'] ?? 22;
-        mrv = baseLimits['mrv_advanced'] ?? 30;
-        break;
-    }
-
-    // Volumen inicial recomendado: empezar en el extremo bajo del MAV
-    final recommendedStart = mev + ((mav - mev) * 0.3).round();
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase3VolumeCapacity',
+        category: 'volume_landmarks_loaded',
+        description: 'Límites de volumen cargados desde VolumeLandmarks',
+        context: {
+          'muscle': muscle,
+          'level': levelName,
+          'mev': mev,
+          'mav': mav,
+          'mrv': mrv,
+          'source': 'VolumeLandmarks (Israetel 2024 + Ramos-Campo 2024)',
+        },
+      ),
+    );
 
     return VolumeLimits(
       muscleGroup: muscle,
@@ -585,163 +588,10 @@ class Phase3VolumeCapacityModelService {
 
   /// Tabla de límites de volumen base por grupo muscular
   Map<String, int> _getBaseVolumeLandmarks(String muscle) {
-    // Valores basados en Renaissance Periodization y literatura científica
-    // Ajustados por grupo muscular según tamaño y capacidad de recuperación
-
-    switch (muscle.toLowerCase()) {
-      case 'chest':
-      case 'pecho':
-        return {
-          'mev_beginner': 6,
-          'mav_beginner': 10,
-          'mrv_beginner': 14,
-          'mev_intermediate': 8,
-          'mav_intermediate': 14,
-          'mrv_intermediate': 18,
-          'mev_advanced': 10,
-          'mav_advanced': 16,
-          'mrv_advanced': 22,
-        };
-
-      case 'back':
-      case 'espalda':
-        return {
-          'mev_beginner': 8,
-          'mav_beginner': 12,
-          'mrv_beginner': 16,
-          'mev_intermediate': 10,
-          'mav_intermediate': 16,
-          'mrv_intermediate': 20,
-          'mev_advanced': 12,
-          'mav_advanced': 18,
-          'mrv_advanced': 25,
-        };
-
-      case 'shoulders':
-      case 'hombros':
-        return {
-          'mev_beginner': 6,
-          'mav_beginner': 10,
-          'mrv_beginner': 14,
-          'mev_intermediate': 8,
-          'mav_intermediate': 14,
-          'mrv_intermediate': 18,
-          'mev_advanced': 10,
-          'mav_advanced': 16,
-          'mrv_advanced': 22,
-        };
-
-      case 'quads':
-      case 'cuadriceps':
-        return {
-          'mev_beginner': 6,
-          'mav_beginner': 10,
-          'mrv_beginner': 14,
-          'mev_intermediate': 8,
-          'mav_intermediate': 12,
-          'mrv_intermediate': 16,
-          'mev_advanced': 10,
-          'mav_advanced': 14,
-          'mrv_advanced': 20,
-        };
-
-      case 'hamstrings':
-      case 'isquiotibiales':
-        return {
-          'mev_beginner': 4,
-          'mav_beginner': 8,
-          'mrv_beginner': 12,
-          'mev_intermediate': 6,
-          'mav_intermediate': 10,
-          'mrv_intermediate': 14,
-          'mev_advanced': 8,
-          'mav_advanced': 12,
-          'mrv_advanced': 18,
-        };
-
-      case 'glutes':
-      case 'gluteos':
-        return {
-          'mev_beginner': 4,
-          'mav_beginner': 8,
-          'mrv_beginner': 12,
-          'mev_intermediate': 6,
-          'mav_intermediate': 12,
-          'mrv_intermediate': 16,
-          'mev_advanced': 8,
-          'mav_advanced': 14,
-          'mrv_advanced': 20,
-        };
-
-      case 'biceps':
-        return {
-          'mev_beginner': 4,
-          'mav_beginner': 8,
-          'mrv_beginner': 12,
-          'mev_intermediate': 6,
-          'mav_intermediate': 10,
-          'mrv_intermediate': 14,
-          'mev_advanced': 8,
-          'mav_advanced': 12,
-          'mrv_advanced': 16,
-        };
-
-      case 'triceps':
-        return {
-          'mev_beginner': 4,
-          'mav_beginner': 8,
-          'mrv_beginner': 12,
-          'mev_intermediate': 6,
-          'mav_intermediate': 10,
-          'mrv_intermediate': 14,
-          'mev_advanced': 8,
-          'mav_advanced': 12,
-          'mrv_advanced': 16,
-        };
-
-      case 'calves':
-      case 'pantorrillas':
-        return {
-          'mev_beginner': 6,
-          'mav_beginner': 10,
-          'mrv_beginner': 14,
-          'mev_intermediate': 8,
-          'mav_intermediate': 12,
-          'mrv_intermediate': 16,
-          'mev_advanced': 10,
-          'mav_advanced': 14,
-          'mrv_advanced': 20,
-        };
-
-      case 'abs':
-      case 'abdominales':
-      case 'core':
-        return {
-          'mev_beginner': 0,
-          'mav_beginner': 8,
-          'mrv_beginner': 12,
-          'mev_intermediate': 0,
-          'mav_intermediate': 12,
-          'mrv_intermediate': 16,
-          'mev_advanced': 0,
-          'mav_advanced': 14,
-          'mrv_advanced': 20,
-        };
-
-      default:
-        // Valores genéricos conservadores
-        return {
-          'mev_beginner': 4,
-          'mav_beginner': 8,
-          'mrv_beginner': 12,
-          'mev_intermediate': 6,
-          'mav_intermediate': 10,
-          'mrv_intermediate': 14,
-          'mev_advanced': 8,
-          'mav_advanced': 12,
-          'mrv_advanced': 16,
-        };
-    }
+    // DEPRECATED: Ahora se usa VolumeLandmarks
+    throw DeprecationException(
+      'Use VolumeLandmarks.getComplete() instead of _getBaseVolumeLandmarks()',
+    );
   }
 
   /// Aplica todos los ajustes a los límites base
@@ -1182,4 +1032,13 @@ class Phase3VolumeCapacityModelService {
       }
     }
   }
+}
+
+class DeprecationException implements Exception {
+  final String message;
+
+  DeprecationException(this.message);
+
+  @override
+  String toString() => 'DeprecationException: $message';
 }
