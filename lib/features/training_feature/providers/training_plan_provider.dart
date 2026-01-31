@@ -977,10 +977,21 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
         await ref.read(clientRepositoryProvider).saveClient(workingClient);
 
+        debugPrint('✅ [Bootstrap] Ciclo guardado en SQLite, recargando...');
+
+        // ✅ CRÍTICO: Recargar desde SQLite para sincronizar memoria con BD
+        workingClient = await ref
+                .read(clientRepositoryProvider)
+                .getClientById(clientId) ??
+            workingClient;
+
         debugPrint(
           '🧩 [Bootstrap] ciclo creado y asignado: '
           'id=${cycle.cycleId} muscles=${cycle.baseExercisesByMuscle.keys} '
           'counts=${cycle.baseExercisesByMuscle.map((k, v) => MapEntry(k, v.length))}',
+        );
+        debugPrint(
+          '🔍 [Bootstrap] Verificación: workingClient.trainingCycles.length=${workingClient.trainingCycles.length}',
         );
       }
 
@@ -1032,6 +1043,18 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         );
 
         await ref.read(clientRepositoryProvider).saveClient(workingClient);
+
+        debugPrint('✅ [Motor] Plan limpiado en SQLite, recargando...');
+
+        // ✅ CRÍTICO: Recargar desde SQLite
+        workingClient = await ref
+                .read(clientRepositoryProvider)
+                .getClientById(clientId) ??
+            workingClient;
+
+        debugPrint(
+          '🔍 [Motor] Verificación post-limpieza: trainingPlans.length=${workingClient.trainingPlans.length}',
+        );
       }
 
       // 3.1 Inferir frecuencia desde VMR y persistir en ciclo
@@ -1057,6 +1080,14 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         workingClient = workingClient.copyWith(trainingCycles: updatedCycles);
 
         await ref.read(clientRepositoryProvider).saveClient(workingClient);
+
+        debugPrint('✅ [Motor] Frecuencia guardada en SQLite, recargando...');
+
+        // ✅ CRÍTICO: Recargar desde SQLite
+        workingClient = await ref
+                .read(clientRepositoryProvider)
+                .getClientById(clientId) ??
+            workingClient;
 
         activeCycle = updatedCycle;
 
