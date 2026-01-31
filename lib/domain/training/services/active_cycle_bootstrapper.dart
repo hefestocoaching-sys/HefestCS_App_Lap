@@ -74,8 +74,9 @@ class ActiveCycleBootstrapper {
         continue;
       }
 
-      // 🔴 NUEVO: Shuffle determinístico usando clientId + muscle
-      final muscleSeed = _generateSeed(clientId, muscle);
+      // ✅ Shuffle determinístico con timestamp para variabilidad entre regeneraciones
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final muscleSeed = _generateSeed(clientId, muscle, now.toString());
       final random = Random(muscleSeed);
       final shuffled = List<String>.from(list);
       shuffled.shuffle(random);
@@ -120,10 +121,10 @@ class ActiveCycleBootstrapper {
   /// GARANTÍA:
   /// - Mismo input → mismo output (siempre)
   /// - Inputs diferentes → outputs diferentes (alta probabilidad)
-  static int _generateSeed(String str1, String str2) {
-    // ✅ Incluir timestamp para variabilidad entre regeneraciones
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final combined = '$str1-$str2-${now ~/ 1000}'; // Granularidad de 1 segundo
+  static int _generateSeed(String str1, String str2, [String? timestamp]) {
+    final combined = timestamp != null
+        ? '$str1-$str2-$timestamp'
+        : '$str1-$str2';
     int hash = 0;
 
     for (int i = 0; i < combined.length; i++) {
@@ -131,9 +132,6 @@ class ActiveCycleBootstrapper {
       hash = hash & hash; // Convertir a 32-bit int
     }
 
-    debugPrint(
-      '🎲 [Bootstrap] Seed para $str2: ${hash.abs()} (timestamp: ${now ~/ 1000})',
-    );
     return hash.abs();
   }
 }
