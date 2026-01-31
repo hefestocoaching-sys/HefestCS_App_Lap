@@ -124,7 +124,7 @@ class Phase6ExerciseSelectionService {
         for (final mName in dayMuscles) {
           final mg = MuscleGroup.values.firstWhere(
             (e) => e.name == mName,
-            orElse: () => MuscleGroup.fullBody,
+            orElse: () => MuscleGroup.chest, // fallback seguro
           );
           final sets = baseSplit.dailyVolume[d]?[mName] ?? 0;
           if (sets <= 0) continue;
@@ -596,14 +596,14 @@ class Phase6ExerciseSelectionService {
     final lowerEq = availableEquipment.map((e) => e.toLowerCase()).toSet();
     final result = <MuscleGroup, List<ExerciseEntry>>{};
 
-    // Si no hay músculos definidos para el día, asumir fullBody
-    final muscles = dayMuscles.isEmpty ? <String>['fullBody'] : dayMuscles;
+    // Si no hay músculos definidos, usar chest como fallback seguro
+    final muscles = dayMuscles.isEmpty ? <String>['chest'] : dayMuscles;
 
     // Selección: priorizar compuestos por músculo, filtrar por equipo
     for (final mName in muscles) {
       final mg = MuscleGroup.values.firstWhere(
         (e) => e.name == mName,
-        orElse: () => MuscleGroup.fullBody,
+        orElse: () => MuscleGroup.chest, // fallback seguro
       );
       final candidates =
           ExerciseSelector.byMuscle(
@@ -654,46 +654,6 @@ class Phase6ExerciseSelectionService {
       }
 
       result[mg] = pick;
-    }
-
-    // Si total < minExercisesForDay, intentar completar con fullBody o defaults
-    var total = result.values.fold<int>(0, (s, l) => s + l.length);
-    if (total < minExercisesForDay) {
-      final mg = MuscleGroup.fullBody;
-      final current = result.putIfAbsent(mg, () => <ExerciseEntry>[]);
-      final fb =
-          ExerciseSelector.byMuscle(
-                catalog,
-                'fullBody',
-                limit: 6,
-                clientSeed: clientSeed,
-              )
-              .map(
-                (e) => ExerciseEntry(
-                  code: e.id.isNotEmpty
-                      ? e.id
-                      : (e.externalId.isNotEmpty ? e.externalId : e.name),
-                  name: e.name,
-                  muscleGroup: mg,
-                  equipment: e.equipment.isNotEmpty
-                      ? <String>[e.equipment.toLowerCase()]
-                      : const <String>[],
-                  isCompound: false,
-                ),
-              )
-              .where(
-                (e) => e.equipment.isEmpty || e.equipment.any(lowerEq.contains),
-              )
-              .toList()
-            ..sort((a, b) => a.code.compareTo(b.code));
-      for (final e in fb) {
-        if (current.length >= 3) break; // no exceder 6 totales sumando otros
-        current.add(e);
-      }
-      while (current.length < 2) {
-        current.add(_defaultExercise(mg));
-      }
-      total = result.values.fold<int>(0, (s, l) => s + l.length);
     }
 
     return result;
