@@ -1270,14 +1270,14 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     }
   }
 
-  /// Borra el plan activo para forzar regeneración
+  /// Borra el plan activo Y ciclos para forzar regeneración completa
   ///
   /// PROPÓSITO: Invalidar caché cuando el usuario quiere regenerar
   ///
   /// WORKFLOW:
   /// 1. Obtener cliente activo
-  /// 2. Limpiar activePlanId de training.extra
-  /// 3. Limpiar trainingPlans (opcional: solo borrar el activo)
+  /// 2. Limpiar activePlanId y activeCycleId de training.extra
+  /// 3. Limpiar trainingPlans Y trainingCycles (regeneración completa)
   /// 4. Guardar cliente actualizado
   /// 5. Resetear state del provider
   Future<void> clearActivePlan() async {
@@ -1296,18 +1296,24 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
-      debugPrint('🗑️ Limpiando plan activo...');
+      debugPrint('🗑️ Limpiando plan activo, ciclos y ejercicios base...');
 
-      // Limpiar activePlanId
+      // Limpiar activePlanId Y activeCycleId
       final updatedExtra = Map<String, dynamic>.from(client.training.extra);
       updatedExtra.remove(TrainingExtraKeys.activePlanId);
+      updatedExtra.remove('activeCycleId');
+
+      // CRÍTICO: También limpiar cualquier snapshot de ejercicios base
+      updatedExtra.remove('baseExercisesByMuscle');
+      updatedExtra.remove('cycleExercises');
 
       final updatedTraining = client.training.copyWith(extra: updatedExtra);
 
-      // OPCIÓN A: Borrar TODOS los planes (regeneración completa)
+      // Borrar TODOS los planes Y ciclos
       final updatedClient = client.copyWith(
         training: updatedTraining,
         trainingPlans: const [],
+        trainingCycles: const [],
       );
 
       // Guardar en repositorio
@@ -1316,7 +1322,10 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // Refrescar provider
       await ref.read(clientsProvider.notifier).refresh();
 
-      debugPrint('✅ Plan activo borrado exitosamente');
+      debugPrint('✅ Plan, ciclos y ejercicios base borrados exitosamente');
+      debugPrint(
+        '   → Motor generará ciclo nuevo con baseExercisesByMuscle únicos',
+      );
 
       // Resetear state
       state = const TrainingPlanState(
