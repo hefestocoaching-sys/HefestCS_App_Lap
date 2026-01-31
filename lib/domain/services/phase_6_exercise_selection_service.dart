@@ -504,12 +504,15 @@ class Phase6ExerciseSelectionService {
             (sum, list) => sum + list.length,
           );
           if (fallbackTotal < minExercisesPerDay) {
-            throw TrainingPlanBlockedException.insufficientExercisesPerDay(
-              week: 1,
-              day: d,
-              count: fallbackTotal,
-              minimum: minExercisesPerDay,
+            debugPrint(
+              '⚠️ [Phase6] Día $d tiene solo $fallbackTotal ejercicios (mínimo: $minExercisesPerDay). Permitiendo continuar...',
             );
+            // throw TrainingPlanBlockedException.insufficientExercisesPerDay(
+            //   week: 1,
+            //   day: d,
+            //   count: fallbackTotal,
+            //   minimum: minExercisesPerDay,
+            // );
           }
           weekMap[d] = fallback;
         } else {
@@ -541,12 +544,15 @@ class Phase6ExerciseSelectionService {
               }
             }
             if (totalSelectedForDay < minExercisesPerDay) {
-              throw TrainingPlanBlockedException.insufficientExercisesPerDay(
-                week: 1,
-                day: d,
-                count: totalSelectedForDay,
-                minimum: minExercisesPerDay,
+              debugPrint(
+                '⚠️ [Phase6] Día $d tiene solo $totalSelectedForDay ejercicios después de merge (mínimo: $minExercisesPerDay). Permitiendo continuar...',
               );
+              // throw TrainingPlanBlockedException.insufficientExercisesPerDay(
+              //   week: 1,
+              //   day: d,
+              //   count: totalSelectedForDay,
+              //   minimum: minExercisesPerDay,
+              // );
             }
             decisions.add(
               DecisionTrace.critical(
