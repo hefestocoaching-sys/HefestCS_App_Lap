@@ -272,6 +272,11 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
             '[TrainingPlanProvider] Usando ciclo activo existente: ${client.activeCycleId}',
           );
           return existing;
+        } on StateError {
+          // activeCycleId no coincide con ningún ciclo existente
+          debugPrint(
+            '[TrainingPlanProvider] activeCycleId="${client.activeCycleId}" no encontrado en trainingCycles',
+          );
         } catch (e) {
           // Ciclo no encontrado, crear uno nuevo
           debugPrint(
@@ -936,15 +941,20 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // 🔴 FORZAR CICLO ACTIVO NO VACÍO
       var workingClient = client;
       TrainingCycle? currentCycle;
-      try {
-        if (workingClient.activeCycleId != null &&
-            workingClient.activeCycleId!.isNotEmpty) {
+      if (workingClient.activeCycleId != null &&
+          workingClient.activeCycleId!.isNotEmpty &&
+          workingClient.trainingCycles.isNotEmpty) {
+        try {
           currentCycle = workingClient.trainingCycles.firstWhere(
             (c) => c.cycleId == workingClient.activeCycleId,
           );
+        } on StateError {
+          // activeCycleId no coincide con ningún ciclo existente
+          debugPrint(
+            '⚠️ activeCycleId="${workingClient.activeCycleId}" no encontrado en ${workingClient.trainingCycles.length} ciclos',
+          );
+          currentCycle = null;
         }
-      } catch (_) {
-        currentCycle = null;
       }
 
       if (workingClient.trainingCycles.isEmpty ||
@@ -987,10 +997,13 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         activeCycle = workingClient.trainingCycles.firstWhere(
           (c) => c.cycleId == workingClient.activeCycleId,
         );
-      } catch (_) {
+      } on StateError {
         state = state.copyWith(
           isLoading: false,
           error: 'Ciclo activo no encontrado en client.trainingCycles',
+        );
+        debugPrint(
+          '❌ Error crítico: activeCycleId="${workingClient.activeCycleId}" no existe después de bootstrap',
         );
         return;
       }
