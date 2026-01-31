@@ -121,7 +121,9 @@ class ActiveCycleBootstrapper {
   /// - Mismo input → mismo output (siempre)
   /// - Inputs diferentes → outputs diferentes (alta probabilidad)
   static int _generateSeed(String str1, String str2) {
-    final combined = '$str1-$str2';
+    // ✅ Incluir timestamp para variabilidad entre regeneraciones
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final combined = '$str1-$str2-${now ~/ 1000}'; // Granularidad de 1 segundo
     int hash = 0;
 
     for (int i = 0; i < combined.length; i++) {
@@ -129,6 +131,9 @@ class ActiveCycleBootstrapper {
       hash = hash & hash; // Convertir a 32-bit int
     }
 
+    debugPrint(
+      '🎲 [Bootstrap] Seed para $str2: ${hash.abs()} (timestamp: ${now ~/ 1000})',
+    );
     return hash.abs();
   }
 }
