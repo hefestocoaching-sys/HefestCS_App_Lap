@@ -76,7 +76,8 @@ class ActiveCycleBootstrapper {
 
       // ✅ Shuffle determinístico con timestamp para variabilidad entre regeneraciones
       final now = DateTime.now().millisecondsSinceEpoch;
-      final muscleSeed = _generateSeed(clientId, muscle, now.toString());
+      final timestamp = (now ~/ 1000).toString(); // Granularidad de 1 segundo
+      final muscleSeed = _generateSeed(clientId, muscle, timestamp);
       final random = Random(muscleSeed);
       final shuffled = List<String>.from(list);
       shuffled.shuffle(random);
