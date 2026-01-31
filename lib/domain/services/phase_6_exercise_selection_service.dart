@@ -115,7 +115,8 @@ class Phase6ExerciseSelectionService {
       final weekMap = <int, Map<MuscleGroup, List<ExerciseEntry>>>{};
 
       for (var d = 1; d <= baseSplit.daysPerWeek; d++) {
-        final int minExercisesPerDay = (baseSplit.daysPerWeek >= 4) ? 5 : 3;
+        final int minExercisesPerDay =
+            3; // Temporal: reducir mientras arreglamos el matching
         final dayMuscles = baseSplit.dayMuscles[d] ?? const <String>[];
         final dayMap = <MuscleGroup, List<ExerciseEntry>>{};
 
