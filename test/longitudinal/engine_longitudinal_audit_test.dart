@@ -787,6 +787,7 @@ class LongitudinalAuditor {
 
   void runAudit() {
     loadWeeks();
+    validateFrequencies();
     reconstructTimeline();
     checkInvariants();
     checkDirectionality();
@@ -796,5 +797,60 @@ class LongitudinalAuditor {
     checkTraceability();
     calculateScores();
     generateReport();
+  }
+
+  void validateFrequencies() {
+    print('\n${'=' * 80}');
+    print('🔢 VALIDACIÓN DE FRECUENCIAS');
+    print('${'=' * 80}');
+
+    for (int i = 0; i < weeks.length; i++) {
+      final week = weeks[i];
+      if (week.blocked) {
+        print('⚠️  Semana ${i + 1}: bloqueada, se omite validación');
+        continue;
+      }
+
+      final muscleFrequencies = <String, int>{};
+      final plan = week.rawData['plan'];
+      if (plan is Map<String, dynamic>) {
+        final weeksList = (plan['weeks'] as List).cast<Map<String, dynamic>>();
+        final activeWeek = weeksList.firstWhere(
+          (w) => (w['weekNumber'] as int) == week.weekNumber,
+          orElse: () => weeksList.first,
+        );
+
+        final sessions = (activeWeek['sessions'] as List)
+            .cast<Map<String, dynamic>>();
+        for (final session in sessions) {
+          final prescriptions = (session['prescriptions'] as List)
+              .cast<Map<String, dynamic>>();
+          for (final prescription in prescriptions) {
+            final muscle = prescription['muscleGroup'] as String? ?? 'unknown';
+            muscleFrequencies[muscle] = (muscleFrequencies[muscle] ?? 0) + 1;
+          }
+        }
+      }
+
+      for (final entry in muscleFrequencies.entries) {
+        final muscle = entry.key;
+        final frequency = entry.value;
+        final weeklyVolume = week.volumeByMuscle[muscle] ?? 0;
+
+        final expectedFrequency = weeklyVolume >= 21 ? 3 : 2;
+
+        if (frequency != expectedFrequency) {
+          print(
+            '⚠️  Semana ${i + 1}: $muscle tiene frecuencia $frequency '
+            '(esperado: $expectedFrequency para $weeklyVolume sets)',
+          );
+        } else {
+          print(
+            '✅ Semana ${i + 1}: $muscle frecuencia $frequency correcta '
+            '($weeklyVolume sets)',
+          );
+        }
+      }
+    }
   }
 }

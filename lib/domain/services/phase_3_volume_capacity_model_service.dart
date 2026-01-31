@@ -491,17 +491,17 @@ class Phase3VolumeCapacityModelService {
       // Sistema de 12 músculos canónicos alineado con el resto del sistema
       const fallbackMinimal = <String>[
         'chest',
-        'back',
+        'lats',
+        'back_mid_upper',
+        'upper_traps',
+        'shoulders',
         'quads',
         'hamstrings',
         'glutes',
-        'calves',
-        'shoulders',
         'biceps',
         'triceps',
+        'calves',
         'abs',
-        'traps',
-        'lats',
       ];
       muscles.addAll(fallbackMinimal);
       sources.add('fallback_canonical');
@@ -509,9 +509,9 @@ class Phase3VolumeCapacityModelService {
       decisions.add(
         DecisionTrace.warning(
           phase: 'Phase3VolumeCapacity',
-          category: 'muscle_selection_fallback',
+          category: 'muscle_selection',
           description:
-              'No se encontraron músculos en baseVolumePerMuscle ni prioridades: usando fallback canónico mínimo',
+              'Sin prioridades ni baseVolumePerMuscle: usando grupos musculares estándar',
           context: {
             'muscleCount': muscles.length,
             'daysPerWeek': profile.daysPerWeek,
@@ -546,19 +546,64 @@ class Phase3VolumeCapacityModelService {
     // Usar VolumeLandmarks centralizado
     final levelName = level.name; // 'beginner', 'intermediate', 'advanced'
 
-    final mev = VolumeLandmarks.getMEV(muscle, levelName);
-    final mavMin = VolumeLandmarks.getMAVMin(muscle, levelName);
-    final mavMax = VolumeLandmarks.getMAVMax(muscle, levelName);
-    final mrv = VolumeLandmarks.getMRV(muscle, levelName);
+    int mev;
+    int mav;
+    int mrv;
+    int recommendedStart;
+    String source;
 
-    // MAV es el punto medio del rango
-    final mav = ((mavMin + mavMax) / 2).round();
+    try {
+      final mavMin = VolumeLandmarks.getMAVMin(muscle, levelName);
+      final mavMax = VolumeLandmarks.getMAVMax(muscle, levelName);
+      mev = VolumeLandmarks.getMEV(muscle, levelName);
+      mrv = VolumeLandmarks.getMRV(muscle, levelName);
 
-    // Volumen inicial recomendado
-    final recommendedStart = VolumeLandmarks.getRecommendedStart(
-      muscle,
-      levelName,
-    );
+      // MAV es el punto medio del rango
+      mav = ((mavMin + mavMax) / 2).round();
+
+      // Volumen inicial recomendado
+      recommendedStart = VolumeLandmarks.getRecommendedStart(muscle, levelName);
+      source = 'VolumeLandmarks (Israetel 2024 + Ramos-Campo 2024)';
+    } catch (e) {
+      // Fallback conservador para músculos no reconocidos
+      switch (level) {
+        case TrainingLevel.beginner:
+          mev = 6;
+          mav = 10;
+          mrv = 14;
+          break;
+        case TrainingLevel.intermediate:
+          mev = 8;
+          mav = 12;
+          mrv = 18; // Conservador
+          break;
+        case TrainingLevel.advanced:
+          mev = 10;
+          mav = 14;
+          mrv = 20; // Conservador
+          break;
+      }
+
+      recommendedStart = mev + ((mav - mev) * 0.3).round();
+      source = 'fallback_conservative';
+
+      decisions.add(
+        DecisionTrace.warning(
+          phase: 'Phase3VolumeCapacity',
+          category: 'unknown_muscle_fallback',
+          description:
+              'Músculo no reconocido: $muscle. Usando valores conservadores',
+          context: {
+            'muscle': muscle,
+            'level': levelName,
+            'mev': mev,
+            'mav': mav,
+            'mrv': mrv,
+            'source': source,
+          },
+        ),
+      );
+    }
 
     decisions.add(
       DecisionTrace.info(
@@ -571,7 +616,7 @@ class Phase3VolumeCapacityModelService {
           'mev': mev,
           'mav': mav,
           'mrv': mrv,
-          'source': 'VolumeLandmarks (Israetel 2024 + Ramos-Campo 2024)',
+          'source': source,
         },
       ),
     );
@@ -582,7 +627,8 @@ class Phase3VolumeCapacityModelService {
       mav: mav,
       mrv: mrv,
       recommendedStartVolume: recommendedStart,
-      reasoning: 'Límites base para $muscle, nivel ${level.name}',
+      reasoning:
+          'Límites base para $muscle, nivel ${level.name}. Source: $source',
     );
   }
 

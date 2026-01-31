@@ -9,6 +9,7 @@ import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/entities/training_structure.dart';
 import 'package:hcs_app_lap/domain/entities/volume_limits.dart';
 import 'package:hcs_app_lap/domain/constants/session_limits.dart';
+import 'package:hcs_app_lap/domain/constants/frequency_by_volume.dart';
 
 class Phase4SplitResult {
   final SplitTemplate split;
@@ -165,55 +166,13 @@ class Phase4SplitDistributionService {
       ...profile.priorityMusclesSecondary,
     }.toSet();
 
-    // Si el contexto derivado tiene mustHave que podemos mapear a músculos
-    final mustHaveExtras = <String>{};
-    try {
-      if (derivedContext != null && derivedContext.exerciseMustHave is Set) {
-        mustHaveExtras.addAll(
-          (derivedContext.exerciseMustHave as Set).map(
-            (e) => e.toString().toLowerCase(),
-          ),
-        );
-      }
-    } catch (e) {
-      // Ignorar error al procesar mustHave - usar lista vacía por defecto
-      if (kDebugMode) {
-        debugPrint('Error procesando exerciseMustHave: $e');
-      }
-    }
-
-    // Frecuencia mínima: prioritarios 2-3, otros 1-2
-    final frequencyTarget = <String, int>{};
-    for (final m in weeklyTarget.keys.toList()..sort()) {
-      final isPriority =
-          prioritarySet.contains(m) || mustHaveExtras.contains(m);
-      final minFreq = isPriority ? 2 : 1;
-      final maxFreq = isPriority ? 3 : 2;
-      // Bounded por cantidad de días donde aparece
-      final daysAvailable = dayMuscles.entries
-          .where((e) => e.value.contains(m))
-          .map((e) => e.key)
-          .toList();
-      frequencyTarget[m] = daysAvailable.isEmpty
-          ? 0
-          : (daysAvailable.length < minFreq
-                ? daysAvailable.length
-                : minFreq.clamp(1, maxFreq));
-
-      decisions.add(
-        DecisionTrace.info(
-          phase: 'Phase4SplitDistribution',
-          category: 'frequency_target',
-          description: 'Frecuencia objetivo para $m: ${frequencyTarget[m]}',
-          context: {
-            'muscle': m,
-            'minFreq': minFreq,
-            'maxFreq': maxFreq,
-            'daysAvailable': daysAvailable,
-          },
-        ),
-      );
-    }
+    final levelName = profile.trainingLevel?.name ?? 'beginner';
+    final frequencyTarget = _calculateMuscleFrequencies(
+      volumeLimits: volumeByMuscle,
+      maxDaysAvailable: profile.daysPerWeek,
+      level: levelName,
+      decisions: decisions,
+    );
 
     // 3.7) Especialización de glúteo (si aplica)
     final gluteSlots = <int, String>{}; // day -> slot (heavy/moderate/pump)
@@ -335,6 +294,88 @@ class Phase4SplitDistributionService {
       structure: structure,
       decisions: decisions,
     );
+  }
+
+  /// Calcula frecuencia óptima para cada músculo según volumen
+  Map<String, int> _calculateMuscleFrequencies({
+    required Map<String, VolumeLimits> volumeLimits,
+    required int maxDaysAvailable,
+    required String level,
+    required List<DecisionTrace> decisions,
+  }) {
+    final frequencies = <String, int>{};
+
+    for (final entry in volumeLimits.entries) {
+      final muscle = entry.key;
+      final limits = entry.value;
+      final weeklyVolume = limits.recommendedStartVolume;
+
+      // Calcular frecuencia según regla de volumen
+      int frequency = FrequencyByVolume.calculateFrequency(
+        weeklyVolume: weeklyVolume,
+        maxDaysAvailable: maxDaysAvailable,
+      );
+
+      // Validar que sea suficiente para respetar límites de sesión
+      final isSufficient = FrequencyByVolume.isFrequencySufficient(
+        weeklyVolume: weeklyVolume,
+        frequency: frequency,
+        level: level,
+        muscle: muscle,
+      );
+
+      if (!isSufficient) {
+        // Aumentar frecuencia si es necesario
+        final minFrequency = FrequencyByVolume.calculateMinimumFrequency(
+          weeklyVolume: weeklyVolume,
+          level: level,
+          muscle: muscle,
+        );
+
+        final adjusted = minFrequency.clamp(1, maxDaysAvailable);
+        frequency = adjusted;
+
+        decisions.add(
+          DecisionTrace.warning(
+            phase: 'Phase4SplitDistribution',
+            category: 'frequency_increased_session_limit',
+            description: 'Frecuencia aumentada para respetar límite de sesión',
+            context: {
+              'muscle': muscle,
+              'weeklyVolume': weeklyVolume,
+              'originalFrequency': FrequencyByVolume.calculateFrequency(
+                weeklyVolume: weeklyVolume,
+                maxDaysAvailable: maxDaysAvailable,
+              ),
+              'adjustedFrequency': frequency,
+              'reason': 'Session limit exceeded',
+            },
+          ),
+        );
+      }
+
+      frequencies[muscle] = frequency;
+
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase4SplitDistribution',
+          category: 'frequency_assigned',
+          description: FrequencyByVolume.explainFrequency(
+            weeklyVolume: weeklyVolume,
+            frequency: frequency,
+            muscle: muscle,
+          ),
+          context: {
+            'muscle': muscle,
+            'weeklyVolume': weeklyVolume,
+            'frequency': frequency,
+            'rule': weeklyVolume >= 21 ? '≥21→3x' : '≤20→2x',
+          },
+        ),
+      );
+    }
+
+    return frequencies;
   }
 
   /// Construye la lista de músculos por día a partir de los músculos disponibles
@@ -497,6 +538,41 @@ class Phase4SplitDistributionService {
       if (muscleDays.isEmpty) continue; // No asignado en este split
       var freq = frequencyTarget[muscle] ?? muscleDays.length;
       freq = freq.clamp(1, muscleDays.length);
+
+      if (profile.daysPerWeek == 4 && freq == 3) {
+        final lowerMuscles = <String>{
+          'quads',
+          'hamstrings',
+          'glutes',
+          'calves',
+        };
+        final muscleType = lowerMuscles.contains(muscle) ? 'lower' : 'upper';
+        final distribution = _distribute3xIn4Days(
+          muscle: muscle,
+          weeklyVolume: target,
+          muscleType: muscleType,
+        );
+
+        for (final entry in distribution.entries) {
+          result[entry.key]![muscle] = entry.value;
+        }
+
+        decisions.add(
+          DecisionTrace.info(
+            phase: 'Phase4SplitDistribution',
+            category: '3x_frequency_distributed',
+            description:
+                '$muscle: $target sets distribuidos en 3 sesiones (4 días)',
+            context: {
+              'muscle': muscle,
+              'weeklyVolume': target,
+              'frequency': 3,
+              'distribution': distribution,
+            },
+          ),
+        );
+        continue;
+      }
 
       // Seleccionar días con preferencia a evitar consecutivos
       final selectedDays = <int>[];
@@ -733,6 +809,24 @@ class Phase4SplitDistributionService {
     }
 
     return result;
+  }
+
+  /// Distribuye músculo con frecuencia 3x en split de 4 días
+  Map<int, int> _distribute3xIn4Days({
+    required String muscle,
+    required int weeklyVolume,
+    required String muscleType, // 'upper' o 'lower'
+  }) {
+    final distribution = FrequencyByVolume.distributeSetsAcrossFrequency(
+      weeklyVolume: weeklyVolume,
+      frequency: 3,
+    );
+
+    if (muscleType == 'lower') {
+      return {1: distribution[0], 2: distribution[1], 3: distribution[2]};
+    }
+
+    return {1: distribution[0], 2: distribution[1], 4: distribution[2]};
   }
 
   /// Valida distribución de volumen respetando límites por sesión
