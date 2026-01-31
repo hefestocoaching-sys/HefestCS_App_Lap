@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
 import '../entities/exercise.dart';
 
 class ExerciseSelector {
@@ -24,7 +26,29 @@ class ExerciseSelector {
     int limit = 6,
     String? clientSeed,
   }) {
+    // ✅ DEBUG: Ver total de ejercicios antes de filtrar
+    debugPrint(
+      '🔍 [ExerciseSelector] Buscando muscleKey=$muscleKey en ${all.length} ejercicios',
+    );
+
     final filtered = all.where((e) => e.matchesMuscle(muscleKey)).toList();
+
+    // ✅ DEBUG: Mostrar cuántos coincidieron
+    debugPrint(
+      '🔍 [ExerciseSelector] Encontrados ${filtered.length} ejercicios para $muscleKey',
+    );
+
+    // ✅ DEBUG: Si está vacío, mostrar ejemplos de lo que SÍ hay
+    if (filtered.isEmpty && all.isNotEmpty) {
+      final sample = all
+          .take(3)
+          .map((e) => '${e.id}[${e.primaryMuscles.join(",")}]')
+          .toList();
+      debugPrint(
+        '⚠️ [ExerciseSelector] NO encontró ejercicios para $muscleKey. Muestra catálogo: $sample',
+      );
+    }
+
     if (filtered.isEmpty) return [];
 
     // NUEVA LÓGICA: Ordenar con variabilidad si hay clientSeed

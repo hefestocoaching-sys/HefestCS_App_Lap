@@ -37,6 +37,14 @@ class ActiveCycleBootstrapper {
       grouped[muscle]!.add(ex.id);
     }
 
+    debugPrint('═══════════════════════════════════════════');
+    debugPrint('📚 [Catalog] IDs de ejercicios por músculo:');
+    for (final muscle in grouped.keys.take(5)) {
+      final ids = grouped[muscle]!.take(5).toList();
+      debugPrint('   $muscle: $ids');
+    }
+    debugPrint('═══════════════════════════════════════════');
+
     // 🔴 CLAVE: forzar presencia de las 14 keys canónicas
     const canonicalMuscles = [
       'chest',
