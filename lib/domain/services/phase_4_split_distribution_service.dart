@@ -117,11 +117,21 @@ class Phase4SplitDistributionService {
       ),
     );
 
-    // 2.5) Construir dayMuscles desde los músculos realmente disponibles en weeklyTarget
-    final available = weeklyTarget.keys.toList()..sort();
-    final dayMuscles = _buildDayMusclesFromAvailable(
+    // 2.5) Calcular frecuencia objetivo por músculo ANTES de asignar días
+    final levelName = profile.trainingLevel?.name ?? 'beginner';
+    final frequencyTarget = _calculateMuscleFrequencies(
+      volumeLimits: volumeByMuscle,
+      maxDaysAvailable: profile.daysPerWeek,
+      level: levelName,
+      decisions: decisions,
+    );
+
+    // 2.6) Construir dayMuscles usando frecuencias calculadas
+    final dayMuscles = _buildDayMuscleAssignments(
+      muscleFrequencies: frequencyTarget,
       daysPerWeek: profile.daysPerWeek,
-      availableMuscles: available,
+      weeklyVolume: weeklyTarget,
+      decisions: decisions,
     );
 
     // 3.5) Aplicar overrides de prioridad antes de especialización
@@ -160,19 +170,11 @@ class Phase4SplitDistributionService {
     // 3.6) [ELIMINADO] Especialización con aumento de volumen - las prioridades
     //      solo afectan orden/frecuencia, no volumen total
 
-    // 3.6) Frecuencia objetivo por músculo
+    // 3.6) Prioridades para orden de ejercicios (frecuencias ya calculadas)
     final prioritarySet = {
       ...profile.priorityMusclesPrimary,
       ...profile.priorityMusclesSecondary,
     }.toSet();
-
-    final levelName = profile.trainingLevel?.name ?? 'beginner';
-    final frequencyTarget = _calculateMuscleFrequencies(
-      volumeLimits: volumeByMuscle,
-      maxDaysAvailable: profile.daysPerWeek,
-      level: levelName,
-      decisions: decisions,
-    );
 
     // 3.7) Especialización de glúteo (si aplica)
     final gluteSlots = <int, String>{}; // day -> slot (heavy/moderate/pump)
@@ -455,6 +457,415 @@ class Phase4SplitDistributionService {
     }
 
     return result;
+  }
+
+  /// Construye asignación de músculos a días respetando frecuencias calculadas
+  Map<int, List<String>> _buildDayMuscleAssignments({
+    required Map<String, int> muscleFrequencies,
+    required int daysPerWeek,
+    required Map<String, int> weeklyVolume,
+    required List<DecisionTrace> decisions,
+  }) {
+    final dayToMuscles = <int, List<String>>{};
+
+    // Inicializar días vacíos
+    for (int i = 1; i <= daysPerWeek; i++) {
+      dayToMuscles[i] = [];
+    }
+
+    // CLASIFICACIÓN DE MÚSCULOS (14 canónicos)
+    final upperMuscles = [
+      'chest',
+      'lats',
+      'back_mid_upper',
+      'upper_traps',
+      'deltoide_anterior', // ← Independiente
+      'deltoide_lateral', // ← Independiente
+      'deltoide_posterior', // ← Independiente
+      'biceps',
+      'triceps',
+    ];
+
+    final lowerMuscles = ['quads', 'hamstrings', 'glutes', 'calves', 'abs'];
+
+    // ASIGNACIÓN DE TIPOS DE DÍA
+    Map<int, String> dayTypes = {};
+    List<int> upperDays = [];
+    List<int> lowerDays = [];
+
+    if (daysPerWeek == 4) {
+      // UPPER/LOWER SPLIT
+      dayTypes = {1: 'lower', 2: 'upper', 3: 'lower', 4: 'upper'};
+      upperDays = [2, 4];
+      lowerDays = [1, 3];
+    } else if (daysPerWeek == 3) {
+      // FULL BODY
+      dayTypes = {1: 'full', 2: 'full', 3: 'full'};
+    } else if (daysPerWeek == 6) {
+      // PPL (Push/Pull/Legs)
+      dayTypes = {
+        1: 'push', // Pecho + hombros + tríceps
+        2: 'pull', // Espalda + bíceps
+        3: 'legs',
+        4: 'push',
+        5: 'pull',
+        6: 'legs',
+      };
+      upperDays = [1, 2, 4, 5]; // Push + Pull
+      lowerDays = [3, 6];
+    }
+
+    // ASIGNACIÓN POR MÚSCULO SEGÚN FRECUENCIA
+    for (final entry in muscleFrequencies.entries) {
+      final muscle = entry.key;
+      final frequency = entry.value;
+      final volume = weeklyVolume[muscle] ?? 0;
+
+      // Determinar tipo
+      final isUpper = upperMuscles.contains(muscle);
+      final isLower = lowerMuscles.contains(muscle);
+
+      if (!isUpper && !isLower) {
+        decisions.add(
+          DecisionTrace.warning(
+            phase: 'Phase4SplitDistribution',
+            category: 'muscle_not_classified',
+            description: 'Músculo $muscle no clasificado como upper/lower',
+          ),
+        );
+        continue;
+      }
+
+      // LÓGICA PARA SPLIT 4 DÍAS (UPPER/LOWER)
+      if (daysPerWeek == 4) {
+        if (isUpper) {
+          if (frequency >= 2) {
+            // ASIGNAR A AMBOS DÍAS UPPER (2 y 4)
+            for (final day in upperDays) {
+              dayToMuscles[day]!.add(muscle);
+            }
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_2x',
+                description:
+                    '$muscle asignado a días upper (2 y 4) - frecuencia 2x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                  'days': upperDays,
+                },
+              ),
+            );
+          } else {
+            // Frecuencia 1x: asignar solo a día 4 (upper con más capacidad)
+            dayToMuscles[4]!.add(muscle);
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_1x',
+                description: '$muscle asignado solo a día 4 - frecuencia 1x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                },
+              ),
+            );
+          }
+        } else if (isLower) {
+          if (frequency >= 2 && frequency < 3) {
+            // ASIGNAR A AMBOS DÍAS LOWER (1 y 3)
+            for (final day in lowerDays) {
+              dayToMuscles[day]!.add(muscle);
+            }
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_2x',
+                description:
+                    '$muscle asignado a días lower (1 y 3) - frecuencia 2x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                  'days': lowerDays,
+                },
+              ),
+            );
+          } else if (frequency >= 3) {
+            // FRECUENCIA 3x: días 1, 2 (finisher), 3
+            dayToMuscles[1]!.add(muscle);
+            dayToMuscles[2]!.add(
+              muscle,
+            ); // Upper day finisher (ej: glute bridge)
+            dayToMuscles[3]!.add(muscle);
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_3x',
+                description:
+                    '$muscle asignado a 3 días (1, 2 finisher, 3) - volumen alto',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                  'days': [1, 2, 3],
+                },
+              ),
+            );
+          } else {
+            // Frecuencia 1x: solo día 1
+            dayToMuscles[1]!.add(muscle);
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_1x',
+                description: '$muscle asignado solo a día 1 - frecuencia 1x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                },
+              ),
+            );
+          }
+        }
+      }
+      // LÓGICA PARA SPLIT 3 DÍAS (FULL BODY)
+      else if (daysPerWeek == 3) {
+        if (frequency >= 3) {
+          dayToMuscles[1]!.add(muscle);
+          dayToMuscles[2]!.add(muscle);
+          dayToMuscles[3]!.add(muscle);
+
+          decisions.add(
+            DecisionTrace.info(
+              phase: 'Phase4SplitDistribution',
+              category: 'muscle_assigned_3x',
+              description: '$muscle asignado a 3 días - frecuencia 3x',
+              context: {
+                'muscle': muscle,
+                'frequency': frequency,
+                'volume': volume,
+                'days': [1, 2, 3],
+              },
+            ),
+          );
+        } else if (frequency == 2) {
+          dayToMuscles[1]!.add(muscle);
+          dayToMuscles[3]!.add(muscle);
+
+          decisions.add(
+            DecisionTrace.info(
+              phase: 'Phase4SplitDistribution',
+              category: 'muscle_assigned_2x',
+              description: '$muscle asignado a días 1 y 3 - frecuencia 2x',
+              context: {
+                'muscle': muscle,
+                'frequency': frequency,
+                'volume': volume,
+                'days': [1, 3],
+              },
+            ),
+          );
+        } else {
+          dayToMuscles[2]!.add(muscle);
+
+          decisions.add(
+            DecisionTrace.info(
+              phase: 'Phase4SplitDistribution',
+              category: 'muscle_assigned_1x',
+              description: '$muscle asignado solo a día 2 - frecuencia 1x',
+              context: {
+                'muscle': muscle,
+                'frequency': frequency,
+                'volume': volume,
+              },
+            ),
+          );
+        }
+      }
+      // LÓGICA PARA SPLIT 6 DÍAS (PPL)
+      else if (daysPerWeek == 6) {
+        // Push muscles: chest, deltoide_anterior, deltoide_lateral, triceps
+        final pushMuscles = [
+          'chest',
+          'deltoide_anterior',
+          'deltoide_lateral',
+          'triceps',
+        ];
+        // Pull muscles: lats, back_mid_upper, upper_traps, deltoide_posterior, biceps
+        final pullMuscles = [
+          'lats',
+          'back_mid_upper',
+          'upper_traps',
+          'deltoide_posterior',
+          'biceps',
+        ];
+
+        if (pushMuscles.contains(muscle)) {
+          if (frequency >= 2) {
+            dayToMuscles[1]!.add(muscle); // Push día 1
+            dayToMuscles[4]!.add(muscle); // Push día 2
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_2x',
+                description:
+                    '$muscle asignado a días push (1 y 4) - frecuencia 2x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                  'days': [1, 4],
+                },
+              ),
+            );
+          } else {
+            dayToMuscles[1]!.add(muscle);
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_1x',
+                description:
+                    '$muscle asignado solo a día 1 push - frecuencia 1x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                },
+              ),
+            );
+          }
+        } else if (pullMuscles.contains(muscle)) {
+          if (frequency >= 2) {
+            dayToMuscles[2]!.add(muscle); // Pull día 1
+            dayToMuscles[5]!.add(muscle); // Pull día 2
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_2x',
+                description:
+                    '$muscle asignado a días pull (2 y 5) - frecuencia 2x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                  'days': [2, 5],
+                },
+              ),
+            );
+          } else {
+            dayToMuscles[2]!.add(muscle);
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_1x',
+                description:
+                    '$muscle asignado solo a día 2 pull - frecuencia 1x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                },
+              ),
+            );
+          }
+        } else if (isLower) {
+          if (frequency >= 2) {
+            dayToMuscles[3]!.add(muscle); // Legs día 1
+            dayToMuscles[6]!.add(muscle); // Legs día 2
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_2x',
+                description:
+                    '$muscle asignado a días legs (3 y 6) - frecuencia 2x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                  'days': [3, 6],
+                },
+              ),
+            );
+          } else {
+            dayToMuscles[3]!.add(muscle);
+
+            decisions.add(
+              DecisionTrace.info(
+                phase: 'Phase4SplitDistribution',
+                category: 'muscle_assigned_1x',
+                description:
+                    '$muscle asignado solo a día 3 legs - frecuencia 1x',
+                context: {
+                  'muscle': muscle,
+                  'frequency': frequency,
+                  'volume': volume,
+                },
+              ),
+            );
+          }
+        }
+      }
+    }
+
+    // VALIDACIÓN: Mínimo 4 músculos por día
+    for (final entry in dayToMuscles.entries) {
+      final day = entry.key;
+      final muscles = entry.value;
+
+      if (muscles.length < 4) {
+        decisions.add(
+          DecisionTrace.warning(
+            phase: 'Phase4SplitDistribution',
+            category: 'insufficient_muscles_per_day',
+            description:
+                'Día $day solo tiene ${muscles.length} músculos (mínimo 4)',
+            context: {
+              'day': day,
+              'muscleCount': muscles.length,
+              'muscles': muscles,
+              'dayType': dayTypes[day],
+            },
+            action: 'Revisar configuración de volumen o agregar músculos',
+          ),
+        );
+      }
+    }
+
+    // LOG FINAL
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase4SplitDistribution',
+        category: 'day_muscle_assignments_complete',
+        description: 'Asignación de músculos a días completada',
+        context: {
+          'daysPerWeek': daysPerWeek,
+          'splitType': daysPerWeek == 4
+              ? 'upper_lower'
+              : daysPerWeek == 3
+              ? 'full_body'
+              : 'ppl',
+          'dayToMuscles': dayToMuscles.map((k, v) => MapEntry(k, v.length)),
+          'totalMuscles': muscleFrequencies.length,
+        },
+      ),
+    );
+
+    return dayToMuscles;
   }
 
   // [ELIMINADO] _applySpecializationWithTradeoffs
