@@ -159,30 +159,9 @@ class TrainingContextBuilder {
       performanceTrend: _n.performanceTrend(extra),
 
       // Optional PRs
-      prSquatKg:
-          _n.readInt(extra, const [
-                TrainingExtraKeys.prSquat,
-                'prSquat',
-              ], fallback: 0) >
-              0
-          ? _n.readInt(extra, const [TrainingExtraKeys.prSquat], fallback: 0)
-          : null,
-      prBenchKg:
-          _n.readInt(extra, const [
-                TrainingExtraKeys.prBench,
-                'prBench',
-              ], fallback: 0) >
-              0
-          ? _n.readInt(extra, const [TrainingExtraKeys.prBench], fallback: 0)
-          : null,
-      prDeadliftKg:
-          _n.readInt(extra, const [
-                TrainingExtraKeys.prDeadlift,
-                'prDeadlift',
-              ], fallback: 0) >
-              0
-          ? _n.readInt(extra, const [TrainingExtraKeys.prDeadlift], fallback: 0)
-          : null,
+      prSquatKg: _parsePR(extra, 'prSquatKg'),
+      prBenchKg: _parsePR(extra, 'prBenchKg'),
+      prDeadliftKg: _parsePR(extra, 'prDeadliftKg'),
     );
 
     // -------- EnergyAvailability (derivado desde nutrition.extra) --------
@@ -444,5 +423,11 @@ class TrainingContextBuilder {
     }
 
     return profiles.isEmpty ? defaults : profiles;
+  }
+
+  /// Helper para parsear Personal Records
+  int? _parsePR(Map<String, dynamic> extra, String key) {
+    final value = _n.readInt(extra, [key], fallback: 0);
+    return value > 0 ? value : null;
   }
 }
