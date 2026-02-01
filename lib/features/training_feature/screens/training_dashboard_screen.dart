@@ -1,6 +1,8 @@
 // ignore_for_file: deprecated_member_use_from_same_package, unused_element, unused_field, prefer_final_fields
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hcs_app_lap/data/datasources/local/exercise_catalog_loader.dart';
+import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 
 import 'package:hcs_app_lap/utils/theme.dart';
@@ -327,7 +329,25 @@ class _TrainingDashboardScreenState
         const SizedBox(height: 16),
 
         // Botón V3
-        TrainingPlanGeneratorV3Button(onPlanGenerated: _onPlanGenerated),
+        FutureBuilder<List<Exercise>>(
+          future: ExerciseCatalogLoader.load(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Text(
+                'Error cargando ejercicios: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+              );
+            }
+            final exercises = snapshot.data ?? const <Exercise>[];
+            return TrainingPlanGeneratorV3Button(
+              onPlanGenerated: _onPlanGenerated,
+              exercises: exercises,
+            );
+          },
+        ),
 
         // Botón legacy (mantener por ahora)
         const SizedBox(height: 8),
@@ -410,19 +430,17 @@ class _TrainingDashboardScreenState
     return [
       // Contenido pre-TabBar (scroll normal)
       SliverToBoxAdapter(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Aquí va contenido pre-TabBar si es necesario
-                ],
-              ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildGeneratePlanSection(),
+                // Aquí va contenido pre-TabBar si es necesario
+              ],
             ),
           ),
         ),

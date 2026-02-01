@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod/riverpod.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/engine/training_program_engine_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml/strategies/hybrid_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/training_dataset_service.dart';
 
@@ -86,11 +85,14 @@ class TrainingPlanGenerationState {
 }
 
 class TrainingPlanGenerationNotifier
-    extends StateNotifier<TrainingPlanGenerationState> {
-  final TrainingProgramEngineV3 _engine;
+    extends Notifier<TrainingPlanGenerationState> {
+  late final TrainingProgramEngineV3 _engine;
 
-  TrainingPlanGenerationNotifier(this._engine)
-    : super(const TrainingPlanGenerationState());
+  @override
+  TrainingPlanGenerationState build() {
+    _engine = ref.read(trainingEngineV3Provider);
+    return const TrainingPlanGenerationState();
+  }
 
   /// Genera plan usando Motor V3
   Future<void> generatePlan({
@@ -133,12 +135,9 @@ class TrainingPlanGenerationNotifier
   }
 }
 
-/// Provider para StateNotifier
+/// Provider para Notifier
 final trainingPlanGenerationProvider =
-    StateNotifierProvider<
+    NotifierProvider<
       TrainingPlanGenerationNotifier,
       TrainingPlanGenerationState
-    >((ref) {
-      final engine = ref.watch(trainingEngineV3Provider);
-      return TrainingPlanGenerationNotifier(engine);
-    });
+    >(TrainingPlanGenerationNotifier.new);

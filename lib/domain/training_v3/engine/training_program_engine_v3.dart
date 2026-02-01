@@ -3,10 +3,12 @@ import 'package:hcs_app_lap/core/enums/training_phase.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/decision_trace.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
+import 'package:hcs_app_lap/domain/entities/split_template.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/entities/training_session.dart';
 import 'package:hcs_app_lap/domain/entities/training_week.dart';
+import 'package:hcs_app_lap/domain/entities/volume_limits.dart';
 import 'package:hcs_app_lap/domain/services/phase_3_volume_capacity_model_service.dart';
 import 'package:hcs_app_lap/domain/services/phase_4_split_distribution_service.dart';
 import 'package:hcs_app_lap/domain/services/phase_5_periodization_service.dart';
@@ -223,7 +225,7 @@ class TrainingProgramEngineV3 {
     final features = FeatureVector.fromContext(
       context,
       clientId: client.id,
-      historicalAdherence: context.longitudinal.averageAdherence,
+      historicalAdherence: context.longitudinal.adherence,
     );
 
     decisions.add(
@@ -289,7 +291,7 @@ class TrainingProgramEngineV3 {
 
     if (recordPrediction && _datasetService != null) {
       try {
-        mlExampleId = await _datasetService!.recordPrediction(
+        mlExampleId = await _datasetService.recordPrediction(
           clientId: client.id,
           context: context,
           volumeDecision: volumeDecision,
@@ -383,7 +385,7 @@ class TrainingProgramEngineV3 {
             'totalWeeks': plan.weeks.length,
             'totalSessions': plan.weeks.fold<int>(
               0,
-              (sum, w) => sum + w.sessions.length,
+              (total, w) => total + w.sessions.length,
             ),
             'mlExampleId': mlExampleId,
           },
@@ -459,7 +461,8 @@ class TrainingProgramEngineV3 {
       final muscle = entry.key;
       final limits = entry.value;
 
-      adjustedVolumeLimits[muscle.name] = VolumeLimits(
+      adjustedVolumeLimits[muscle] = VolumeLimits(
+        muscleGroup: muscle,
         mev: (limits.mev * volumeDecision.adjustmentFactor).round(),
         mav: (limits.mav * volumeDecision.adjustmentFactor).round(),
         mrv: (limits.mrv * volumeDecision.adjustmentFactor).round(),
@@ -495,7 +498,7 @@ class TrainingProgramEngineV3 {
     // PHASE 4: SPLIT DISTRIBUTION
     // ════════════════════════════════════════════════════════════
 
-    final readinessMode = readinessDecision.level == ReadinessLevel.high
+    final readinessMode = readinessDecision.level == ReadinessLevel.excellent
         ? 'normal'
         : 'conservative';
 
@@ -672,7 +675,7 @@ class TrainingProgramEngineV3 {
           'totalWeeks': weeks.length,
           'totalSessions': weeks.fold<int>(
             0,
-            (sum, w) => sum + w.sessions.length,
+            (total, w) => total + w.sessions.length,
           ),
           'totalPrescriptions': weeks
               .expand((w) => w.sessions)

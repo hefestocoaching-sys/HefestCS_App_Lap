@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/engine/training_program_engine_v3.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_engine_v3_provider.dart';
-import 'package:hcs_app_lap/domain/entities/exercise_catalog.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Botón para generar plan con Motor V3 (ML-Ready)
@@ -17,142 +15,159 @@ import 'package:hcs_app_lap/utils/theme.dart';
 /// - Link a mlExampleId para tracking
 class TrainingPlanGeneratorV3Button extends ConsumerWidget {
   final VoidCallback? onPlanGenerated;
+  final List<Exercise> exercises;
 
-  const TrainingPlanGeneratorV3Button({super.key, this.onPlanGenerated});
+  const TrainingPlanGeneratorV3Button({
+    super.key,
+    this.onPlanGenerated,
+    required this.exercises,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final client = ref.watch(clientsProvider).value?.activeClient;
+    final clientAsync = ref.watch(clientsProvider);
     final generationState = ref.watch(trainingPlanGenerationProvider);
     final strategy = ref.watch(decisionStrategyProvider);
 
-    if (client == null) {
-      return const SizedBox.shrink();
-    }
+    return clientAsync.when(
+      data: (clientsData) {
+        final client = clientsData.activeClient;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Info de estrategia
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: kCardColor.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.psychology, color: kPrimaryColor, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Motor V3 (ML-Ready)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: kPrimaryColor,
-                      ),
+        if (client == null) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Info de estrategia
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: kCardColor.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.psychology, color: kPrimaryColor, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Motor V3 (ML-Ready)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: kPrimaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Estrategia: ${strategy.name}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: kTextColorSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Estrategia: ${strategy.name}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: kTextColorSecondary,
+                  ),
+                  if (strategy.isTrainable)
+                    Chip(
+                      label: const Text('ML', style: TextStyle(fontSize: 10)),
+                      backgroundColor: Colors.purple.withOpacity(0.3),
+                      padding: EdgeInsets.zero,
+                    ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Botón principal
+            ElevatedButton.icon(
+              onPressed: generationState.isLoading
+                  ? null
+                  : () => _onGeneratePlan(context, ref, client),
+              icon: generationState.isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.auto_awesome),
+              label: Text(
+                generationState.isLoading
+                    ? 'Generando Plan V3...'
+                    : 'Generar Plan con IA/Ciencia',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            // Feedback de resultado
+            if (generationState.result != null) ...[
+              const SizedBox(height: 12),
+              _buildResultFeedback(context, generationState.result!),
+            ],
+
+            // Error message
+            if (generationState.error != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.withOpacity(0.5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        generationState.error!,
+                        style: const TextStyle(fontSize: 12, color: Colors.red),
                       ),
                     ),
                   ],
                 ),
               ),
-              if (strategy.isTrainable)
-                Chip(
-                  label: const Text('ML', style: TextStyle(fontSize: 10)),
-                  backgroundColor: Colors.purple.withOpacity(0.3),
-                  padding: EdgeInsets.zero,
-                ),
             ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Botón principal
-        ElevatedButton.icon(
-          onPressed: generationState.isLoading
-              ? null
-              : () => _onGeneratePlan(context, ref, client),
-          icon: generationState.isLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(Icons.auto_awesome),
-          label: Text(
-            generationState.isLoading
-                ? 'Generando Plan V3...'
-                : 'Generar Plan con IA/Ciencia',
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: kPrimaryColor,
-            foregroundColor: kTextColor,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            textStyle: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-
-        // Feedback de resultado
-        if (generationState.result != null) ...[
-          const SizedBox(height: 12),
-          _buildResultFeedback(context, generationState.result!),
-        ],
-
-        // Error message
-        if (generationState.error != null) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.withOpacity(0.5)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    generationState.error!,
-                    style: const TextStyle(fontSize: 12, color: Colors.red),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Text('Error: $error'),
     );
   }
 
   Future<void> _onGeneratePlan(
     BuildContext context,
     WidgetRef ref,
-    Client client,
+    client,
   ) async {
-    // Obtener catálogo de ejercicios
-    final exercises = ExerciseCatalog.allExercises;
-
     if (exercises.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -173,23 +188,26 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
         );
 
     final result = ref.read(trainingPlanGenerationProvider).result;
+    if (result == null) {
+      return;
+    }
 
-    if (result != null) {
-      if (result.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✅ Plan generado exitosamente (${result.strategyUsed})',
-            ),
-            backgroundColor: Colors.green,
+    // ignore: use_build_context_synchronously
+    if (result.isSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✅ Plan generado exitosamente (${result.strategyUsed})',
           ),
-        );
+          backgroundColor: Colors.green,
+        ),
+      );
 
-        onPlanGenerated?.call();
-      } else {
-        // Plan bloqueado (ej: readiness crítico)
-        _showBlockedDialog(context, result);
-      }
+      onPlanGenerated?.call();
+    } else {
+      // Plan bloqueado (ej: readiness crítico)
+      // ignore: use_build_context_synchronously
+      _showBlockedDialog(context, result);
     }
   }
 
@@ -392,7 +410,7 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.warning_amber, color: Colors.orange, size: 28),
+            const Icon(Icons.warning_amber, color: Colors.orange, size: 28),
             const SizedBox(width: 12),
             const Text('Plan Bloqueado'),
           ],

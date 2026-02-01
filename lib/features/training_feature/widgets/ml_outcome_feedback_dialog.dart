@@ -193,7 +193,7 @@ class _MLOutcomeFeedbackDialogState
           label: Text(_isSaving ? 'Guardando...' : 'Guardar Feedback'),
           style: ElevatedButton.styleFrom(
             backgroundColor: kPrimaryColor,
-            foregroundColor: kTextColor,
+            foregroundColor: Colors.white,
           ),
         ),
       ],
