@@ -221,7 +221,7 @@ class TrainingContextNormalizer {
       'doms',
       'soreness',
     ], fallback: 0);
-    return value > 0 ? value : null;
+    return value > 0 && value <= 10 ? value : null;
   }
 
   /// Period breaks last 12 months (opcional)
@@ -230,7 +230,7 @@ class TrainingContextNormalizer {
       TrainingInterviewKeys.periodBreaksLast12Months,
       'periodBreaks',
       'trainingBreaks',
-    ], fallback: 0);
+    ], fallback: -1);
     return value >= 0 ? value : null;
   }
 
@@ -240,7 +240,7 @@ class TrainingContextNormalizer {
       TrainingInterviewKeys.sessionCompletionRate,
       'adherence',
       'completionRate',
-    ], fallback: 0.0);
+    ], fallback: -1.0);
     return value >= 0.0 && value <= 1.0 ? value : null;
   }
 
