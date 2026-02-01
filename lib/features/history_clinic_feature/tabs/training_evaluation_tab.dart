@@ -15,6 +15,7 @@ import 'package:hcs_app_lap/core/enums/stress_level.dart';
 import 'package:hcs_app_lap/core/enums/recovery_quality.dart';
 import 'package:hcs_app_lap/core/enums/injury_region.dart';
 import 'package:hcs_app_lap/core/enums/training_interview_enums.dart';
+import 'package:hcs_app_lap/core/enums/performance_trend.dart';
 import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/domain/training/models/supported_muscles.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
@@ -62,6 +63,31 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
   late TextEditingController _sessionDurationCtrl;
   late TextEditingController _restBetweenSetsCtrl;
   late TextEditingController _avgSleepHoursCtrl;
+
+  // ═══════════════════════════════════════════════════════════════
+  // CONTROLLERS V2 (2025) - MANDATORY FIELDS
+  // ═══════════════════════════════════════════════════════════════
+
+  late TextEditingController _avgWeeklySetsPerMuscleCtrl;
+  late TextEditingController _consecutiveWeeksTrainingCtrl;
+  late TextEditingController _perceivedRecoveryStatusCtrl;
+  late TextEditingController _averageRIRCtrl;
+  late TextEditingController _averageSessionRPECtrl;
+
+  // ═══════════════════════════════════════════════════════════════
+  // CONTROLLERS V2 - RECOMMENDED FIELDS (opcionales)
+  // ═══════════════════════════════════════════════════════════════
+
+  late TextEditingController _maxWeeklySetsCtrl;
+  late TextEditingController _deloadFrequencyCtrl;
+  late TextEditingController _soreness48hCtrl;
+  late TextEditingController _periodBreaksCtrl;
+
+  // ═══════════════════════════════════════════════════════════════
+  // STATE V2 - ENUMS
+  // ═══════════════════════════════════════════════════════════════
+
+  PerformanceTrend? _performanceTrend;
 
   // Variables de Estado - TODAS cerradas
   TrainingDiscipline? _discipline;
@@ -150,6 +176,19 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
     _sessionDurationCtrl = TextEditingController();
     _restBetweenSetsCtrl = TextEditingController();
     _avgSleepHoursCtrl = TextEditingController();
+
+    // V2 Controllers (mandatory)
+    _avgWeeklySetsPerMuscleCtrl = TextEditingController();
+    _consecutiveWeeksTrainingCtrl = TextEditingController();
+    _perceivedRecoveryStatusCtrl = TextEditingController();
+    _averageRIRCtrl = TextEditingController();
+    _averageSessionRPECtrl = TextEditingController();
+
+    // V2 Controllers (recommended)
+    _maxWeeklySetsCtrl = TextEditingController();
+    _deloadFrequencyCtrl = TextEditingController();
+    _soreness48hCtrl = TextEditingController();
+    _periodBreaksCtrl = TextEditingController();
   }
 
   // ✅ Helper: lectura robusta con fallback keys
@@ -208,6 +247,18 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
       _sessionDurationCtrl.clear();
       _restBetweenSetsCtrl.clear();
       _avgSleepHoursCtrl.clear();
+
+      // ✅ Limpiar controllers V2
+      _avgWeeklySetsPerMuscleCtrl.clear();
+      _consecutiveWeeksTrainingCtrl.clear();
+      _perceivedRecoveryStatusCtrl.clear();
+      _averageRIRCtrl.clear();
+      _averageSessionRPECtrl.clear();
+      _maxWeeklySetsCtrl.clear();
+      _deloadFrequencyCtrl.clear();
+      _soreness48hCtrl.clear();
+      _periodBreaksCtrl.clear();
+      _performanceTrend = null;
 
       return;
     }
@@ -375,6 +426,48 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
       } catch (_) {
         _dietQuality = null;
       }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // CARGAR CAMPOS V2 (2025)
+    // ═══════════════════════════════════════════════════════════════
+
+    // Mandatory V2
+    _avgWeeklySetsPerMuscleCtrl.text =
+        (extra[TrainingInterviewKeys.avgWeeklySetsPerMuscle] ?? 12).toString();
+
+    _consecutiveWeeksTrainingCtrl.text =
+        (extra[TrainingInterviewKeys.consecutiveWeeksTraining] ?? 4).toString();
+
+    _perceivedRecoveryStatusCtrl.text =
+        (extra[TrainingInterviewKeys.perceivedRecoveryStatus] ?? 7).toString();
+
+    _averageRIRCtrl.text = (extra[TrainingInterviewKeys.averageRIR] ?? 2.0)
+        .toString();
+
+    _averageSessionRPECtrl.text =
+        (extra[TrainingInterviewKeys.averageSessionRPE] ?? 7).toString();
+
+    // Recommended V2 (opcionales)
+    final maxSets =
+        extra[TrainingInterviewKeys.maxWeeklySetsBeforeOverreaching];
+    _maxWeeklySetsCtrl.text = maxSets != null ? maxSets.toString() : '';
+
+    final deloadFreq = extra[TrainingInterviewKeys.deloadFrequencyWeeks];
+    _deloadFrequencyCtrl.text = deloadFreq != null ? deloadFreq.toString() : '';
+
+    final soreness = extra[TrainingInterviewKeys.soreness48hAverage];
+    _soreness48hCtrl.text = soreness != null ? soreness.toString() : '';
+
+    final breaks = extra[TrainingInterviewKeys.periodBreaksLast12Months];
+    _periodBreaksCtrl.text = breaks != null ? breaks.toString() : '';
+
+    // Performance Trend
+    _performanceTrend = null;
+    if (extra[TrainingInterviewKeys.performanceTrend] != null) {
+      _performanceTrend = performanceTrendFromString(
+        extra[TrainingInterviewKeys.performanceTrend].toString(),
+      );
     }
 
     _isDirty = false;
@@ -681,7 +774,54 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
       avgSleepHours: derivedSleep ?? 0.0,
     );
 
-    return client.copyWith(training: finalTraining);
+    // ═══════════════════════════════════════════════════════════════
+    // GUARDAR CAMPOS V2 (2025) - MANDATORY
+    // ═══════════════════════════════════════════════════════════════
+
+    extra[TrainingInterviewKeys.avgWeeklySetsPerMuscle] =
+        int.tryParse(_avgWeeklySetsPerMuscleCtrl.text) ?? 12;
+
+    extra[TrainingInterviewKeys.consecutiveWeeksTraining] =
+        int.tryParse(_consecutiveWeeksTrainingCtrl.text) ?? 4;
+
+    extra[TrainingInterviewKeys.perceivedRecoveryStatus] =
+        int.tryParse(_perceivedRecoveryStatusCtrl.text) ?? 7;
+
+    extra[TrainingInterviewKeys.averageRIR] =
+        double.tryParse(_averageRIRCtrl.text) ?? 2.0;
+
+    extra[TrainingInterviewKeys.averageSessionRPE] =
+        int.tryParse(_averageSessionRPECtrl.text) ?? 7;
+
+    // ═══════════════════════════════════════════════════════════════
+    // GUARDAR CAMPOS V2 - RECOMMENDED (solo si tienen valor)
+    // ═══════════════════════════════════════════════════════════════
+
+    final maxSets = int.tryParse(_maxWeeklySetsCtrl.text);
+    if (maxSets != null && maxSets > 0) {
+      extra[TrainingInterviewKeys.maxWeeklySetsBeforeOverreaching] = maxSets;
+    }
+
+    final deloadFreq = int.tryParse(_deloadFrequencyCtrl.text);
+    if (deloadFreq != null && deloadFreq > 0) {
+      extra[TrainingInterviewKeys.deloadFrequencyWeeks] = deloadFreq;
+    }
+
+    final soreness = int.tryParse(_soreness48hCtrl.text);
+    if (soreness != null && soreness > 0) {
+      extra[TrainingInterviewKeys.soreness48hAverage] = soreness;
+    }
+
+    final breaks = int.tryParse(_periodBreaksCtrl.text);
+    if (breaks != null && breaks >= 0) {
+      extra[TrainingInterviewKeys.periodBreaksLast12Months] = breaks;
+    }
+
+    if (_performanceTrend != null) {
+      extra[TrainingInterviewKeys.performanceTrend] = _performanceTrend!.name;
+    }
+
+    return client.copyWith(training: finalTraining.copyWith(extra: extra));
   }
 
   Future<void> _onSavePressed() async {
@@ -1067,6 +1207,17 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
     _restBetweenSetsCtrl.dispose();
     _avgSleepHoursCtrl.dispose();
 
+    // V2 Controllers
+    _avgWeeklySetsPerMuscleCtrl.dispose();
+    _consecutiveWeeksTrainingCtrl.dispose();
+    _perceivedRecoveryStatusCtrl.dispose();
+    _averageRIRCtrl.dispose();
+    _averageSessionRPECtrl.dispose();
+    _maxWeeklySetsCtrl.dispose();
+    _deloadFrequencyCtrl.dispose();
+    _soreness48hCtrl.dispose();
+    _periodBreaksCtrl.dispose();
+
     super.dispose();
   }
 
@@ -1141,6 +1292,11 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
                   icon: Icons.edit_note,
                   title: '8. Datos Individualizados (Override Opcional)',
                   child: _buildIndividualizedDataOverrides(),
+                ),
+                ClinicSectionSurface(
+                  icon: Icons.trending_up,
+                  title: '9. Evaluación Avanzada V2 (Científica 2025)',
+                  child: _buildAdvancedEvaluationV2(),
                 ),
                 const SizedBox(height: 32),
                 Align(
@@ -1562,6 +1718,207 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  // 9. EVALUACIÓN AVANZADA V2 (2025)
+  Widget _buildAdvancedEvaluationV2() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // SUBSECCIÓN: VOLUMEN
+        Text(
+          'Capacidad de Volumen',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: kPrimaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _avgWeeklySetsPerMuscleCtrl,
+                label: '¿Cuántos sets DUROS haces por músculo/semana? *',
+                hintText:
+                    'Ejemplo: 12 (si haces pecho 2 días, 6 sets cada día)',
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _consecutiveWeeksTrainingCtrl,
+                label: '¿Cuántas semanas consecutivas llevas entrenando? *',
+                hintText: 'Ejemplo: 16 (sin parar >1 semana)',
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _maxWeeklySetsCtrl,
+                label: '¿Máximo sets/semana tolerados? (opcional)',
+                hintText: 'Ejemplo: 20 (máximo sin sobreentrenarte)',
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _deloadFrequencyCtrl,
+                label: '¿Cada cuántas semanas necesitas descarga? (opcional)',
+                hintText: 'Ejemplo: 4 (deload cada 4 semanas)',
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 32),
+        const Divider(),
+        const SizedBox(height: 16),
+
+        // SUBSECCIÓN: RECUPERACIÓN Y READINESS
+        Text(
+          'Recuperación y Estado de Readiness',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: kPrimaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _perceivedRecoveryStatusCtrl,
+                label: '¿Cómo te sientes antes de entrenar? (PRS 1-10) *',
+                hintText: '1=Agotado, 10=Fresco',
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _soreness48hCtrl,
+                label: '¿Qué tan adolorido quedas a las 48h? (DOMS 1-10)',
+                hintText: '1=Sin dolor, 10=Dolor extremo',
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _periodBreaksCtrl,
+                label: '¿Pausas >2 semanas en el último año?',
+                hintText: 'Ejemplo: 2 (dos pausas largas)',
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 32),
+        const Divider(),
+        const SizedBox(height: 16),
+
+        // SUBSECCIÓN: INTENSIDAD Y ESFUERZO
+        Text(
+          'Intensidad y Esfuerzo Percibido',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: kPrimaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _averageRIRCtrl,
+                label: '¿Cuántas reps dejas en reserva? (RIR 0-5) *',
+                hintText: '0=Fallo, 2=Óptimo hipertrofia, 5=Muy fácil',
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+            SizedBox(
+              width: 380,
+              child: CustomTextFormField(
+                controller: _averageSessionRPECtrl,
+                label: '¿Qué tan duro entrenas? (RPE 1-10) *',
+                hintText: '1=Muy fácil, 10=Máximo esfuerzo',
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+            SizedBox(
+              width: 380,
+              child: EnumGlassDropdown<PerformanceTrend>(
+                label: 'Tendencia de rendimiento actual',
+                value: _performanceTrend,
+                values: PerformanceTrend.values,
+                labelBuilder: (trend) => trend.label,
+                onChanged: (v) {
+                  setState(() => _performanceTrend = v);
+                  _markDirty();
+                },
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Nota informativa
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: kPrimaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: kPrimaryColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Los campos marcados con * son OBLIGATORIOS para el Motor V2. '
+                  'Los opcionales mejoran la precisión de la prescripción.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: kTextColor.withOpacity(0.8),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
