@@ -70,7 +70,7 @@ class TrainingProgramV3Result {
 /// - ✅ Registra predictions en Firestore (ML dataset)
 /// - ✅ FeatureVector con 37 features científicas
 /// - ✅ Alineado 100% con Phase2ReadinessEvaluation
-/// - ✅ Reutiliza Phases 3-8 legacy (no reinventar rueda)
+/// - ✅ Integra Phases 3-7 legacy (plan completo real)
 /// - ✅ Explicabilidad completa (DecisionTrace + reasoning)
 ///
 /// Filosofía:
@@ -687,7 +687,7 @@ class TrainingProgramEngineV3 {
       ),
     );
 
-    // Crear TrainingPlanConfig final
+    // Crear TrainingPlanConfig final con metadata V3
     final plan = TrainingPlanConfig(
       id: 'plan_v3_${DateTime.now().millisecondsSinceEpoch}',
       name: 'Plan V3 - ${client.profile.fullName}',
@@ -697,7 +697,25 @@ class TrainingProgramEngineV3 {
       splitId: baseSplit.splitId,
       microcycleLengthInWeeks: periodizedWeeks.length,
       weeks: weeks,
-      trainingProfileSnapshot: profile,
+      trainingProfileSnapshot: profile.copyWith(
+        extra: {
+          ...profile.extra,
+          // ✅ Metadata Motor V3
+          'engineVersion': 'v3.0.0',
+          'strategyUsed': _strategy.name,
+          'mlExampleId': mlExampleId,
+          'volumeAdjustmentFactor': volumeDecision.adjustmentFactor,
+          'readinessLevel': readinessDecision.level.name,
+          'readinessScore': readinessDecision.score,
+          'features': {
+            'readinessScore': features.readinessScore,
+            'fatigueIndex': features.fatigueIndex,
+            'overreachingRisk': features.overreachingRisk,
+            'volumeOptimalityIndex': features.volumeOptimalityIndex,
+          },
+          'generatedAt': referenceDate.toIso8601String(),
+        },
+      ),
     );
 
     return plan;
@@ -733,6 +751,14 @@ class TrainingProgramEngineV3 {
       sessionDurationMinutes: context.interview.sessionDurationMinutes,
       restBetweenSetsSeconds: context.interview.restBetweenSetsSeconds,
       avgSleepHours: context.interview.avgSleepHours,
+
+      // ✅ Campos adicionales para Phases 4-7
+      equipment: context.constraints.availableEquipment,
+      movementRestrictions: context.constraints.movementRestrictions,
+      priorityMusclesPrimary: context.priorities.primary,
+      priorityMusclesSecondary: context.priorities.secondary,
+      priorityMusclesTertiary: context.priorities.tertiary,
+
       extra: {
         'avgWeeklySetsPerMuscle': context.interview.avgWeeklySetsPerMuscle,
         'consecutiveWeeksTraining': context.interview.consecutiveWeeksTraining,
@@ -740,6 +766,12 @@ class TrainingProgramEngineV3 {
         'stressLevel': context.interview.stressLevel,
         'averageRIR': context.interview.averageRIR,
         'averageSessionRPE': context.interview.averageSessionRPE,
+        'maxWeeklySetsBeforeOverreaching':
+            context.interview.maxWeeklySetsBeforeOverreaching,
+        'deloadFrequencyWeeks': context.interview.deloadFrequencyWeeks,
+        'activeInjuries': context.constraints.activeInjuries,
+        'adherence': context.longitudinal.adherence,
+        'posteriorByMuscle': context.longitudinal.posteriorByMuscle,
       },
     );
   }
