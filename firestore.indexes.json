@@ -1,0 +1,30 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "ml_training_data",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "outcome.hasOutcome", "order": "ASCENDING" },
+        { "fieldPath": "label.computed", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ml_training_data",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clientId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "ml_training_data",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "outcome.hasOutcome", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

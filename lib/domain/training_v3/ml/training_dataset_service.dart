@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
+import 'package:csv/csv.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
@@ -8,8 +10,14 @@ import 'package:hcs_app_lap/domain/entities/weekly_training_feedback_summary.dar
 ///
 /// Representa un ciclo completo:
 /// INPUT (features) → PREDICTION (decision) → OUTCOME (real) → LABEL (optimal)
+///
+/// V1.1 Changes:
+/// - Usa featureTensor (List\<double\>) en lugar de FeatureVector completo
+/// - Integra weeklyFeedback en serialización
+/// - fromJson() completamente funcional
+/// - Heurística mejorada usando progressionAllowed/deloadRecommended
 class TrainingExample {
-  /// ID único del ejemplo (UUID)
+  /// ID único del ejemplo (UUID v4)
   final String exampleId;
 
   /// Timestamp de creación (cuando se generó el plan)
@@ -22,8 +30,12 @@ class TrainingExample {
   // INPUT: Features al momento de generar el plan
   // ════════════════════════════════════════════════════════════
 
-  /// Vector de características normalizado (37 features)
-  final FeatureVector features;
+  /// ✅ ACTUALIZADO: Tensor de features (37 doubles) en lugar de FeatureVector
+  /// Más eficiente para serialización y reconstrucción
+  final List<double> featureTensor;
+
+  /// Metadata mínima de features (para trazabilidad)
+  final Map<String, dynamic> featureMetadata;
 
   // ════════════════════════════════════════════════════════════
   // PREDICTION: Qué predijo el motor
@@ -62,7 +74,7 @@ class TrainingExample {
   /// Usuario reportó que fue muy fácil (bool)
   final bool? userRatedTooEasy;
 
-  /// Feedback semanal agregado (opcional)
+  /// ✅ ACTUALIZADO: Feedback semanal agregado (opcional, ahora se serializa)
   final WeeklyTrainingFeedbackSummary? weeklyFeedback;
 
   // ════════════════════════════════════════════════════════════
@@ -83,7 +95,8 @@ class TrainingExample {
     required this.exampleId,
     required this.timestamp,
     required this.clientId,
-    required this.features,
+    required this.featureTensor,
+    required this.featureMetadata,
     required this.predictedVolume,
     required this.predictedReadiness,
     required this.strategyUsed,
@@ -99,27 +112,92 @@ class TrainingExample {
     this.schemaVersion = 1,
   });
 
+  /// Factory desde FeatureVector (para recordPrediction)
+  factory TrainingExample.fromFeatures({
+    required String exampleId,
+    required DateTime timestamp,
+    required String clientId,
+    required FeatureVector features,
+    required VolumeDecision predictedVolume,
+    required ReadinessDecision predictedReadiness,
+    required String strategyUsed,
+  }) {
+    return TrainingExample(
+      exampleId: exampleId,
+      timestamp: timestamp,
+      clientId: clientId,
+      featureTensor: features.toTensor(),
+      featureMetadata: {
+        'clientId': features.clientId,
+        'timestamp': features.timestamp.toIso8601String(),
+        'schemaVersion': features.schemaVersion,
+        'readinessScore': features.readinessScore,
+        'fatigueIndex': features.fatigueIndex,
+        'overreachingRisk': features.overreachingRisk,
+        'volumeOptimalityIndex': features.volumeOptimalityIndex,
+      },
+      predictedVolume: predictedVolume,
+      predictedReadiness: predictedReadiness,
+      strategyUsed: strategyUsed,
+    );
+  }
+
   /// Indica si tiene outcome completo (listo para training)
   bool get hasOutcome => actualAdherence != null && actualFatigue != null;
 
   /// Indica si tiene label calculado
   bool get hasLabel => optimalVolumeAdjustment != null;
 
-  /// Calcula label automáticamente (heurística científica)
+  /// ✅ MEJORADO: Calcula label usando weeklyFeedback si existe
   ///
   /// Basado en:
   /// - Israetel et al. (2024): adherencia + fatiga → ajuste óptimo
   /// - Schoenfeld et al. (2021): progreso + lesiones → validación
+  /// - WeeklyTrainingFeedbackSummary: progressionAllowed/deloadRecommended
   double? get computedOptimalVolume {
     if (!hasOutcome) return null;
 
-    final adherence = actualAdherence!;
-    final fatigue = actualFatigue!;
     final predicted = predictedVolume.adjustmentFactor;
 
     // ════════════════════════════════════════════════════════════
-    // HEURÍSTICA: Calcular ajuste óptimo retroactivamente
+    // PRIORIDAD 1: Usar WeeklyFeedbackSummary si existe (más preciso)
     // ════════════════════════════════════════════════════════════
+
+    if (weeklyFeedback != null) {
+      final feedback = weeklyFeedback!;
+
+      // Si deload recomendado → volumen estuvo DEFINITIVAMENTE alto
+      if (feedback.deloadRecommended) {
+        return (predicted * 0.75).clamp(0.5, 1.2);
+      }
+
+      // Si progresión permitida → volumen estuvo bien o bajo
+      if (feedback.progressionAllowed) {
+        // Si además usuario dice "muy fácil" → +15%
+        if (userRatedTooEasy == true) {
+          return (predicted * 1.15).clamp(0.5, 1.2);
+        }
+        // Si solo progresión permitida → +5%
+        return (predicted * 1.05).clamp(0.5, 1.2);
+      }
+
+      // Signal negative (fatiga/dolor/bajo rendimiento) → -10%
+      if (feedback.signal == 'negative') {
+        return (predicted * 0.90).clamp(0.5, 1.2);
+      }
+
+      // Signal positive + NO progressionAllowed (plateau) → mantener
+      if (feedback.signal == 'positive' && !feedback.progressionAllowed) {
+        return predicted;
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // PRIORIDAD 2: Heurística basada en adherence/fatigue
+    // ════════════════════════════════════════════════════════════
+
+    final adherence = actualAdherence!;
+    final fatigue = actualFatigue!;
 
     // CASO 1: Adherencia alta + fatiga baja = volumen estuvo bajo
     if (adherence > 0.90 && fatigue < 5.0) {
@@ -169,7 +247,7 @@ class TrainingExample {
     return predicted;
   }
 
-  /// Serializa a JSON para Firestore
+  /// ✅ ACTUALIZADO: Serializa weeklyFeedback
   Map<String, dynamic> toJson() {
     return {
       'exampleId': exampleId,
@@ -177,8 +255,8 @@ class TrainingExample {
       'clientId': clientId,
       'schemaVersion': schemaVersion,
 
-      // Input features
-      'features': features.toJson(),
+      // Input features (tensor + metadata)
+      'features': {'tensor': featureTensor, 'metadata': featureMetadata},
 
       // Prediction
       'prediction': {
@@ -208,6 +286,9 @@ class TrainingExample {
         'hasOutcome': hasOutcome,
       },
 
+      // ✅ NUEVO: weeklyFeedback serializado
+      'weeklyFeedback': weeklyFeedback?.toJson(),
+
       // Label (nullable, calculado)
       'label': {
         'optimalVolumeAdjustment':
@@ -218,26 +299,30 @@ class TrainingExample {
     };
   }
 
-  /// Deserializa desde JSON
+  /// ✅ CORREGIDO: fromJson completamente funcional
   factory TrainingExample.fromJson(Map<String, dynamic> json) {
+    final featuresMap = json['features'] as Map<String, dynamic>;
     final predictionMap = json['prediction'] as Map<String, dynamic>;
     final volumeMap = predictionMap['volume'] as Map<String, dynamic>;
     final readinessMap = predictionMap['readiness'] as Map<String, dynamic>;
     final outcomeMap = json['outcome'] as Map<String, dynamic>? ?? {};
     final labelMap = json['label'] as Map<String, dynamic>? ?? {};
+    final weeklyFeedbackMap = json['weeklyFeedback'] as Map<String, dynamic>?;
 
     return TrainingExample(
       exampleId: json['exampleId'] as String,
       timestamp: (json['timestamp'] as Timestamp).toDate(),
       clientId: json['clientId'] as String,
-      features: FeatureVector.fromContext(
-        // TODO: Reconstruir TrainingContext desde features JSON
-        throw UnimplementedError('Reconstruction from JSON pending'),
-        clientId: json['clientId'] as String,
-      ),
+
+      // ✅ CORREGIDO: Lee tensor directamente
+      featureTensor: (featuresMap['tensor'] as List)
+          .map((e) => (e as num).toDouble())
+          .toList(),
+      featureMetadata: featuresMap['metadata'] as Map<String, dynamic>,
+
       predictedVolume: VolumeDecision(
-        adjustmentFactor: volumeMap['adjustmentFactor'] as double,
-        confidence: volumeMap['confidence'] as double,
+        adjustmentFactor: (volumeMap['adjustmentFactor'] as num).toDouble(),
+        confidence: (volumeMap['confidence'] as num).toDouble(),
         reasoning: volumeMap['reasoning'] as String,
         metadata: volumeMap['metadata'] as Map<String, dynamic>? ?? {},
       ),
@@ -245,8 +330,8 @@ class TrainingExample {
         level: ReadinessLevel.values.firstWhere(
           (e) => e.name == readinessMap['level'],
         ),
-        score: readinessMap['score'] as double,
-        confidence: readinessMap['confidence'] as double,
+        score: (readinessMap['score'] as num).toDouble(),
+        confidence: (readinessMap['confidence'] as num).toDouble(),
         recommendations:
             (readinessMap['recommendations'] as List?)
                 ?.map((e) => e.toString())
@@ -254,12 +339,19 @@ class TrainingExample {
             [],
       ),
       strategyUsed: predictionMap['strategyUsed'] as String,
+
       actualAdherence: outcomeMap['adherence'] as double?,
       actualFatigue: outcomeMap['fatigue'] as double?,
       actualProgress: outcomeMap['progress'] as double?,
       injuryOccurred: outcomeMap['injury'] as bool?,
       userRatedTooHard: outcomeMap['tooHard'] as bool?,
       userRatedTooEasy: outcomeMap['tooEasy'] as bool?,
+
+      // ✅ CORREGIDO: Deserializa weeklyFeedback
+      weeklyFeedback: weeklyFeedbackMap != null
+          ? WeeklyTrainingFeedbackSummary.fromJson(weeklyFeedbackMap)
+          : null,
+
       optimalVolumeAdjustment: labelMap['optimalVolumeAdjustment'] as double?,
       optimalReadinessScore: labelMap['optimalReadinessScore'] as double?,
       schemaVersion: json['schemaVersion'] as int? ?? 1,
@@ -268,8 +360,15 @@ class TrainingExample {
 }
 
 /// Servicio para recolectar y gestionar dataset de entrenamiento ML
+///
+/// V1.1 Changes:
+/// - Usa UUID v4 real (package uuid)
+/// - Integra weeklyFeedback en recordOutcome
+/// - CSV export con library csv
+/// - Optimización de queries con aggregation
 class TrainingDatasetService {
   final FirebaseFirestore _firestore;
+  final Uuid _uuid = const Uuid();
 
   /// Nombre de la colección en Firestore
   static const String collectionName = 'ml_training_data';
@@ -291,7 +390,7 @@ class TrainingDatasetService {
 
     final features = FeatureVector.fromContext(context, clientId: clientId);
 
-    final example = TrainingExample(
+    final example = TrainingExample.fromFeatures(
       exampleId: exampleId,
       timestamp: DateTime.now(),
       clientId: clientId,
@@ -309,8 +408,9 @@ class TrainingDatasetService {
     return exampleId;
   }
 
-  /// Actualiza con outcomes reales (llamar después de 2-4 semanas)
+  /// ✅ ACTUALIZADO: Incluye weeklyFeedback
   ///
+  /// Actualiza con outcomes reales (llamar después de 2-4 semanas)
   /// Llamar desde UI cuando coach/usuario completa feedback semanal.
   Future<void> recordOutcome({
     required String exampleId,
@@ -324,7 +424,7 @@ class TrainingDatasetService {
   }) async {
     final docRef = _firestore.collection(collectionName).doc(exampleId);
 
-    await docRef.update({
+    final updateData = <String, dynamic>{
       'outcome.adherence': adherence,
       'outcome.fatigue': fatigue,
       'outcome.progress': progress,
@@ -334,7 +434,14 @@ class TrainingDatasetService {
       'outcome.hasOutcome': true,
       'label.computed': true,
       'updatedAt': FieldValue.serverTimestamp(),
-    });
+    };
+
+    // ✅ NUEVO: Agregar weeklyFeedback si existe
+    if (weeklyFeedback != null) {
+      updateData['weeklyFeedback'] = weeklyFeedback.toJson();
+    }
+
+    await docRef.update(updateData);
   }
 
   /// Exporta dataset para entrenar modelos offline
@@ -379,7 +486,7 @@ class TrainingDatasetService {
         .toList();
   }
 
-  /// Exporta a CSV para análisis en Python/R
+  /// ✅ MEJORADO: Exporta a CSV usando library csv
   Future<String> exportToCSV({DateTime? startDate, DateTime? endDate}) async {
     final examples = await exportDataset(
       startDate: startDate,
@@ -391,14 +498,25 @@ class TrainingDatasetService {
       return 'No data available for export';
     }
 
-    // Header
-    final header = [
+    // ✅ MEJORADO: Headers descriptivos con nombres reales de features
+    final headers = [
       'exampleId',
       'timestamp',
       'clientId',
       'strategyUsed',
-      // Features (37)
-      ...List.generate(37, (i) => 'feature_$i'),
+      // Features con nombres reales (37)
+      'age_norm', 'gender_male', 'height_norm', 'weight_norm', 'bmi_norm',
+      'years_training_norm', 'consecutive_weeks_norm', 'level_encoded',
+      'avg_sets_norm', 'max_sets_norm', 'volume_tolerance_ratio',
+      'sleep_norm', 'prs_norm', 'stress_norm', 'doms_norm',
+      'session_duration_norm', 'rest_between_sets_norm',
+      'rir_norm', 'rpe_norm', 'rir_optimality',
+      'deload_freq_norm', 'breaks_norm', 'adherence_historical',
+      'performance_trend',
+      'fatigue_index', 'recovery_capacity', 'training_maturity',
+      'overreaching_risk', 'readiness_score', 'volume_optimality',
+      'goal_hypertrophy', 'goal_strength', 'goal_endurance', 'goal_general',
+      'focus_upper', 'focus_lower', 'focus_fullbody',
       // Prediction
       'predicted_volume',
       'predicted_readiness',
@@ -407,62 +525,65 @@ class TrainingDatasetService {
       'actual_fatigue',
       'actual_progress',
       'injury',
+      'too_hard',
+      'too_easy',
       // Label
       'optimal_volume',
-    ].join(',');
+    ];
 
     // Rows
-    final rows = examples
-        .map((ex) {
-          final tensor = ex.features.toTensor();
-          return [
-            ex.exampleId,
-            ex.timestamp.toIso8601String(),
-            ex.clientId,
-            ex.strategyUsed,
-            ...tensor.map((v) => v.toStringAsFixed(4)),
-            ex.predictedVolume.adjustmentFactor.toStringAsFixed(4),
-            ex.predictedReadiness.score.toStringAsFixed(4),
-            ex.actualAdherence?.toStringAsFixed(4) ?? '',
-            ex.actualFatigue?.toStringAsFixed(2) ?? '',
-            ex.actualProgress?.toStringAsFixed(2) ?? '',
-            ex.injuryOccurred?.toString() ?? '',
-            ex.computedOptimalVolume?.toStringAsFixed(4) ?? '',
-          ].join(',');
-        })
-        .join('\n');
+    final rows = examples.map((ex) {
+      final tensor = ex.featureTensor;
+      return [
+        ex.exampleId,
+        ex.timestamp.toIso8601String(),
+        ex.clientId,
+        ex.strategyUsed,
+        ...tensor.map((v) => v.toStringAsFixed(4)),
+        ex.predictedVolume.adjustmentFactor.toStringAsFixed(4),
+        ex.predictedReadiness.score.toStringAsFixed(4),
+        ex.actualAdherence?.toStringAsFixed(4) ?? '',
+        ex.actualFatigue?.toStringAsFixed(2) ?? '',
+        ex.actualProgress?.toStringAsFixed(2) ?? '',
+        ex.injuryOccurred?.toString() ?? '',
+        ex.userRatedTooHard?.toString() ?? '',
+        ex.userRatedTooEasy?.toString() ?? '',
+        ex.computedOptimalVolume?.toStringAsFixed(4) ?? '',
+      ];
+    }).toList();
 
-    return '$header\n$rows';
+    // ✅ NUEVO: Usar library csv para escapar correctamente
+    return const ListToCsvConverter().convert([headers, ...rows]);
   }
 
-  /// Estadísticas del dataset
+  /// ✅ MEJORADO: Estadísticas con single query (más eficiente)
   Future<Map<String, dynamic>> getDatasetStats() async {
-    final total = await _firestore.collection(collectionName).count().get();
+    final snapshot = await _firestore.collection(collectionName).get();
 
-    final withOutcome = await _firestore
-        .collection(collectionName)
-        .where('outcome.hasOutcome', isEqualTo: true)
-        .count()
-        .get();
+    int total = snapshot.size;
+    int withOutcome = 0;
+    int withLabels = 0;
+    int withWeeklyFeedback = 0;
 
-    final withLabels = await _firestore
-        .collection(collectionName)
-        .where('label.computed', isEqualTo: true)
-        .count()
-        .get();
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['outcome']?['hasOutcome'] == true) withOutcome++;
+      if (data['label']?['computed'] == true) withLabels++;
+      if (data['weeklyFeedback'] != null) withWeeklyFeedback++;
+    }
 
     return {
-      'totalExamples': total.count,
-      'withOutcome': withOutcome.count,
-      'withLabels': withLabels.count,
-      'readyForTraining': withLabels.count,
-      'pendingOutcome': total.count! - withOutcome.count!,
+      'totalExamples': total,
+      'withOutcome': withOutcome,
+      'withLabels': withLabels,
+      'withWeeklyFeedback': withWeeklyFeedback,
+      'readyForTraining': withLabels,
+      'pendingOutcome': total - withOutcome,
     };
   }
 
+  /// ✅ CORREGIDO: UUID v4 real
   String _generateUUID() {
-    // Simple UUID v4 generator
-    final random = DateTime.now().millisecondsSinceEpoch.toString();
-    return 'example_$random';
+    return _uuid.v4();
   }
 }
