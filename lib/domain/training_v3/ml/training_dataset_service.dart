@@ -26,10 +26,17 @@ class TrainingDatasetService {
   /// Guardar decisión + features para posterior análisis
   Future<String> recordDecision(
     FeatureVector features,
-    TrainingDecision decision,
+    VolumeDecision volumeDecision,
+    ReadinessDecision readinessDecision,
   ) async {
     final timestamp = DateTime.now();
     final docId = 'decision_${timestamp.millisecondsSinceEpoch}';
+
+    final strategy =
+        readinessDecision.metadata['strategy'] ??
+        volumeDecision.metadata['strategy'] ??
+        'unknown';
+    final version = readinessDecision.metadata['version'] ?? 'unknown';
 
     try {
       await _firestore
@@ -39,10 +46,11 @@ class TrainingDatasetService {
           .doc(docId)
           .set({
             'features': features.toJson(),
-            'decision': decision.toJson(),
+            'volumeDecision': volumeDecision.toJson(),
+            'readinessDecision': readinessDecision.toJson(),
             'timestamp': timestamp,
-            'strategy': decision.metadata['strategy'] ?? 'unknown',
-            'version': decision.metadata['version'] ?? 'unknown',
+            'strategy': strategy,
+            'version': version,
           });
 
       // Limpiar si excedemos límite
@@ -87,7 +95,8 @@ class TrainingDatasetService {
 
   /// Registrar error de predicción (para debugging + reentrenamiento)
   Future<void> recordPredictionError(
-    TrainingDecision decision,
+    VolumeDecision volumeDecision,
+    ReadinessDecision readinessDecision,
     Map<String, dynamic> actualOutcome, {
     required String errorType,
     String? feedback,
@@ -101,7 +110,8 @@ class TrainingDatasetService {
           .collection('prediction_errors')
           .doc('error_${timestamp.millisecondsSinceEpoch}')
           .set({
-            'decision': decision.toJson(),
+            'volumeDecision': volumeDecision.toJson(),
+            'readinessDecision': readinessDecision.toJson(),
             'actualOutcome': actualOutcome,
             'errorType': errorType, // WRONG_CALL, WRONG_INTENSITY, etc
             'feedback': feedback,
@@ -174,21 +184,23 @@ class TrainingDatasetService {
         int correctPredictions = 0;
 
         for (final record in records) {
-          final recommendation = record['decision']['recommendation'];
-          final rpeActual = record['outcome']['sessionRPEActual'];
+          final adjustment =
+              record['volumeDecision']['adjustmentFactor'] as num? ?? 1.0;
+          final rpeActual =
+              record['outcome']['sessionRPEActual'] as num? ?? 0.0;
 
-          // Heurística simple: verificar si recomendación coincide con RPE real
+          // Heurística simple: alinear ajuste de volumen con RPE real
           bool isCorrect = false;
-          if (recommendation == 'REST' && rpeActual < 3) {
+          if (adjustment < 0.85 && rpeActual < 5) {
             isCorrect = true;
           }
-          if (recommendation == 'LIGHT' && rpeActual >= 3 && rpeActual < 5) {
+          if (adjustment >= 0.85 &&
+              adjustment <= 1.05 &&
+              rpeActual >= 5 &&
+              rpeActual < 7) {
             isCorrect = true;
           }
-          if (recommendation == 'MODERATE' && rpeActual >= 5 && rpeActual < 7) {
-            isCorrect = true;
-          }
-          if (recommendation == 'HIGH' && rpeActual >= 7) {
+          if (adjustment > 1.05 && rpeActual >= 7) {
             isCorrect = true;
           }
 
@@ -204,7 +216,7 @@ class TrainingDatasetService {
               : 0.0,
           'avgConfidence': records.isNotEmpty
               ? records
-                        .map((r) => r['decision']['confidence'] as double)
+                        .map((r) => r['volumeDecision']['confidence'] as double)
                         .reduce((a, b) => a + b) /
                     records.length
               : 0.0,
@@ -254,7 +266,7 @@ class TrainingDatasetService {
 
       // Header
       buffer.writeln(
-        'timestamp,strategy,recommendation,confidence,sessionRPEActual,setsCompleted,reactionScore,features_json',
+        'timestamp,strategy,adjustmentFactor,confidence,readinessScore,sessionRPEActual,setsCompleted,reactionScore,features_json',
       );
 
       // Rows
@@ -262,8 +274,9 @@ class TrainingDatasetService {
         if (record['outcome'] != null) {
           final timestamp = record['timestamp'];
           final strategy = record['strategy'] ?? 'unknown';
-          final recommendation = record['decision']['recommendation'];
-          final confidence = record['decision']['confidence'];
+          final adjustment = record['volumeDecision']['adjustmentFactor'];
+          final confidence = record['volumeDecision']['confidence'];
+          final readinessScore = record['readinessDecision']['score'];
           final rpe = record['outcome']['sessionRPEActual'];
           final sets = record['outcome']['setsCompleted'];
           final reaction = record['outcome']['reactionScore'];
@@ -275,7 +288,7 @@ class TrainingDatasetService {
           );
 
           buffer.writeln(
-            '$timestamp,$strategy,$recommendation,$confidence,$rpe,$sets,$reaction,"$featuresJson"',
+            '$timestamp,$strategy,$adjustment,$confidence,$readinessScore,$rpe,$sets,$reaction,"$featuresJson"',
           );
         }
       }

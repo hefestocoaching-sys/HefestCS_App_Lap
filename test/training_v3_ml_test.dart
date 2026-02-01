@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml/rule_based_strategy.dart';
+import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
 
 void main() {
   group('FeatureVector Unit Tests', () {
@@ -9,7 +10,7 @@ void main() {
       final vector = FeatureVector(
         clientId: 'test_user',
         timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 1,
+        schemaVersion: 2,
         // Biological (5)
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
@@ -27,11 +28,13 @@ void main() {
         maxSetsToleratedNorm: 0.55,
         volumeToleranceRatio: 0.6,
 
-        // Recovery (4)
+        // Recovery (6)
         avgSleepHoursNorm: 0.75,
         perceivedRecoveryNorm: 0.7,
         stressLevelNorm: 0.3,
         soreness48hNorm: 0.4,
+        sessionDurationNorm: 0.6,
+        restBetweenSetsNorm: 0.5,
 
         // Intensity (3)
         averageRIRNorm: 0.5,
@@ -76,11 +79,11 @@ void main() {
       expect(vector.readinessScore, inInclusiveRange(0.0, 1.0));
     });
 
-    test('toTensor() returns 36-element list', () {
+    test('toTensor() returns 38-element list', () {
       final vector = FeatureVector(
         clientId: 'test_user',
         timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 1,
+        schemaVersion: 2,
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -96,6 +99,8 @@ void main() {
         perceivedRecoveryNorm: 0.7,
         stressLevelNorm: 0.3,
         soreness48hNorm: 0.4,
+        sessionDurationNorm: 0.6,
+        restBetweenSetsNorm: 0.5,
         averageRIRNorm: 0.5,
         averageSessionRPENorm: 0.65,
         rirOptimalityScore: 0.8,
@@ -125,7 +130,7 @@ void main() {
 
       final tensor = vector.toTensor();
 
-      expect(tensor.length, equals(36));
+      expect(tensor.length, equals(38));
 
       // Validar que no hay valores inválidos
       for (final value in tensor) {
@@ -138,7 +143,7 @@ void main() {
       final vector = FeatureVector(
         clientId: 'test_user',
         timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 1,
+        schemaVersion: 2,
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -154,6 +159,8 @@ void main() {
         perceivedRecoveryNorm: 0.7,
         stressLevelNorm: 0.3,
         soreness48hNorm: 0.4,
+        sessionDurationNorm: 0.6,
+        restBetweenSetsNorm: 0.5,
         averageRIRNorm: 0.5,
         averageSessionRPENorm: 0.65,
         rirOptimalityScore: 0.8,
@@ -189,7 +196,7 @@ void main() {
       final vector = FeatureVector(
         clientId: 'test_user',
         timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 1,
+        schemaVersion: 2,
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -205,6 +212,8 @@ void main() {
         perceivedRecoveryNorm: 0.7,
         stressLevelNorm: 0.3,
         soreness48hNorm: 0.4,
+        sessionDurationNorm: 0.6,
+        restBetweenSetsNorm: 0.5,
         averageRIRNorm: 0.5,
         averageSessionRPENorm: 0.65,
         rirOptimalityScore: 0.8,
@@ -250,19 +259,16 @@ void main() {
     test('RuleBasedStrategy has name and version', () {
       final strategy = RuleBasedStrategy();
 
-      expect(strategy.name, equals('RuleBasedStrategy'));
+      expect(strategy.name, equals('RuleBased_Israetel_Schoenfeld_Helms'));
       expect(strategy.version, isNotEmpty);
-      expect(strategy.version, contains('Israetel'));
-      expect(strategy.version, contains('Schoenfeld'));
-      expect(strategy.version, contains('Helms'));
     });
 
-    test('decide() returns TrainingDecision with valid structure', () async {
+    test('decideVolume/decideReadiness return valid structures', () {
       final strategy = RuleBasedStrategy();
       final vector = FeatureVector(
         clientId: 'test_user',
         timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 1,
+        schemaVersion: 2,
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -278,6 +284,8 @@ void main() {
         perceivedRecoveryNorm: 0.7,
         stressLevelNorm: 0.3,
         soreness48hNorm: 0.4,
+        sessionDurationNorm: 0.6,
+        restBetweenSetsNorm: 0.5,
         averageRIRNorm: 0.5,
         averageSessionRPENorm: 0.65,
         rirOptimalityScore: 0.8,
@@ -305,39 +313,26 @@ void main() {
         },
       );
 
-      final decision = await strategy.decide(vector);
+      final volumeDecision = strategy.decideVolume(vector);
+      final readinessDecision = strategy.decideReadiness(vector);
 
-      // Validar estructura básica
-      expect(decision.recommendation, isNotEmpty);
-      expect([
-        'REST',
-        'LIGHT',
-        'MODERATE',
-        'HIGH',
-        'DELOAD',
-      ], contains(decision.recommendation));
+      expect(volumeDecision.adjustmentFactor, inInclusiveRange(0.5, 1.2));
+      expect(volumeDecision.confidence, inInclusiveRange(0.0, 1.0));
+      expect(volumeDecision.reasoning, isNotEmpty);
 
-      // Validar confidence
-      expect(decision.confidence, greaterThanOrEqualTo(0.5));
-      expect(decision.confidence, lessThanOrEqualTo(1.0));
-
-      // Validar factor scores
-      expect(decision.factorScores.isNotEmpty, isTrue);
-      expect(decision.factorScores.containsKey('trainingReadiness'), isTrue);
-
-      // Validar metadata
-      expect(decision.metadata.isNotEmpty, isTrue);
-      expect(decision.metadata.containsKey('strategy'), isTrue);
+      expect(readinessDecision.score, inInclusiveRange(0.0, 1.0));
+      expect(readinessDecision.confidence, inInclusiveRange(0.0, 1.0));
+      expect(readinessDecision.level, isA<ReadinessLevel>());
     });
 
-    test('High readiness leads to HIGH/MODERATE', () async {
+    test('High readiness leads to GOOD/EXCELLENT', () {
       final strategy = RuleBasedStrategy();
 
       // Vector con excelente readiness
       final vector = FeatureVector(
         clientId: 'test_user',
         timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 1,
+        schemaVersion: 2,
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -353,6 +348,8 @@ void main() {
         perceivedRecoveryNorm: 0.9,
         stressLevelNorm: 0.1,
         soreness48hNorm: 0.1,
+        sessionDurationNorm: 0.8,
+        restBetweenSetsNorm: 0.4,
         averageRIRNorm: 0.5,
         averageSessionRPENorm: 0.65,
         rirOptimalityScore: 0.8,
@@ -380,19 +377,22 @@ void main() {
         },
       );
 
-      final decision = await strategy.decide(vector);
+      final readiness = strategy.decideReadiness(vector);
 
-      expect(['HIGH', 'MODERATE'], contains(decision.recommendation));
+      expect([
+        ReadinessLevel.good,
+        ReadinessLevel.excellent,
+      ], contains(readiness.level));
     });
 
-    test('Low readiness leads to REST/LIGHT', () async {
+    test('Low readiness leads to LOW/CRITICAL', () {
       final strategy = RuleBasedStrategy();
 
       // Vector con pobre readiness
       final vector = FeatureVector(
         clientId: 'test_user',
         timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 1,
+        schemaVersion: 2,
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -408,6 +408,8 @@ void main() {
         perceivedRecoveryNorm: 0.2,
         stressLevelNorm: 0.9,
         soreness48hNorm: 0.9,
+        sessionDurationNorm: 0.3,
+        restBetweenSetsNorm: 0.8,
         averageRIRNorm: 0.5,
         averageSessionRPENorm: 0.65,
         rirOptimalityScore: 0.8,
@@ -435,9 +437,12 @@ void main() {
         },
       );
 
-      final decision = await strategy.decide(vector);
+      final readiness = strategy.decideReadiness(vector);
 
-      expect(['REST', 'LIGHT'], contains(decision.recommendation));
+      expect([
+        ReadinessLevel.low,
+        ReadinessLevel.critical,
+      ], contains(readiness.level));
     });
   });
 }

@@ -1,140 +1,179 @@
 import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
 
-/// Objeto de decisión que encapsula predicción + confianza + justificación
-class TrainingDecision {
-  /// Recomendación principal: 'REST', 'LIGHT', 'MODERATE', 'HIGH', 'DELOAD'
-  final String recommendation;
+/// Nivel de readiness (disposición) del atleta para entrenar
+enum ReadinessLevel {
+  /// Requiere deload o descanso activo
+  critical,
 
-  /// Confianza en la recomendación (0.0-1.0)
+  /// Reducir volumen significativamente
+  low,
+
+  /// Mantener volumen conservador
+  moderate,
+
+  /// Volumen normal
+  good,
+
+  /// Puede manejar volumen alto
+  excellent,
+}
+
+/// Decisión de ajuste de volumen
+///
+/// Contiene el factor de ajuste (multiplicador) y metadata
+/// para trazabilidad y explicabilidad.
+class VolumeDecision {
+  /// Factor de ajuste para volumen (0.5 - 1.2)
+  /// - 0.5 = reducir 50% (deload crítico)
+  /// - 0.7 = reducir 30% (fatiga alta)
+  /// - 0.85 = reducir 15% (fatiga moderada)
+  /// - 1.0 = mantener volumen
+  /// - 1.05 = aumentar 5% (progresión conservadora)
+  /// - 1.08 = aumentar 8% (progresión normal)
+  /// - 1.1 = aumentar 10% (progresión agresiva)
+  /// - 1.2 = aumentar 20% (atleta avanzado con capacidad)
+  final double adjustmentFactor;
+
+  /// Confianza en la decisión (0.0 - 1.0)
+  /// - Reglas científicas: 0.80-0.90 (alta confianza)
+  /// - ML con poco datos: 0.40-0.60 (baja confianza)
+  /// - Hybrid: combinación ponderada
   final double confidence;
 
-  /// Justificación legible para el usuario
-  final String rationale;
+  /// Explicación textual de la decisión (para coach)
+  /// Ej: "PRS bajo (4/10) + RPE alto (8/10) → reducir volumen 30%"
+  final String reasoning;
 
-  /// Scores de factores clave (para visualización)
-  final Map<String, double> factorScores;
-
-  /// Metadata: timestamp, engine version, etc.
+  /// Metadata adicional (para debugging, audit logs)
   final Map<String, dynamic> metadata;
 
-  TrainingDecision({
-    required this.recommendation,
+  const VolumeDecision({
+    required this.adjustmentFactor,
     required this.confidence,
-    required this.rationale,
-    required this.factorScores,
+    required this.reasoning,
     this.metadata = const {},
   });
 
-  /// Serializar para persistencia
+  /// Crea decisión de mantener volumen (baseline)
+  factory VolumeDecision.maintain({String? reasoning}) {
+    return VolumeDecision(
+      adjustmentFactor: 1.0,
+      confidence: 0.85,
+      reasoning: reasoning ?? 'Mantener volumen actual',
+      metadata: const {'type': 'maintain'},
+    );
+  }
+
+  /// Crea decisión de deload (reducción significativa)
+  factory VolumeDecision.deload({
+    required String reasoning,
+    double factor = 0.7,
+  }) {
+    return VolumeDecision(
+      adjustmentFactor: factor,
+      confidence: 0.90, // Alta confianza en deloads (seguridad)
+      reasoning: reasoning,
+      metadata: {'type': 'deload', 'factor': factor},
+    );
+  }
+
+  /// Crea decisión de progresión (aumento conservador)
+  factory VolumeDecision.progress({
+    required String reasoning,
+    double factor = 1.05,
+  }) {
+    return VolumeDecision(
+      adjustmentFactor: factor,
+      confidence: 0.85,
+      reasoning: reasoning,
+      metadata: {'type': 'progress', 'factor': factor},
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'recommendation': recommendation,
+      'adjustmentFactor': adjustmentFactor,
       'confidence': confidence,
-      'rationale': rationale,
-      'factorScores': factorScores,
+      'reasoning': reasoning,
       'metadata': metadata,
-      'timestamp': DateTime.now().toIso8601String(),
     };
   }
 
   @override
-  String toString() =>
-      'TrainingDecision(rec=$recommendation, conf=$confidence, rationale=$rationale)';
+  String toString() {
+    return 'VolumeDecision(factor: ${adjustmentFactor.toStringAsFixed(2)}, '
+        'confidence: ${confidence.toStringAsFixed(2)})';
+  }
 }
 
-/// Interfaz para estrategias de decisión pluggables
-///
-/// Soporta múltiples motores:
-/// 1. RuleBasedStrategy: Reglas científicas hardcoded (Israetel/Schoenfeld/Helms)
-/// 2. MLModelStrategy: TensorFlow Lite model for predicting optimal volume
-/// 3. HybridStrategy: Combina reglas + ML con pesos ajustables
-/// 4. EnsembleStrategy: Múltiples estrategias votando
-abstract class DecisionStrategy {
-  /// Nombre de la estrategia (para logging/debugging)
-  String get name;
+/// Decisión de readiness (estado de preparación)
+class ReadinessDecision {
+  /// Nivel de readiness categórico
+  final ReadinessLevel level;
 
-  /// Versión del engine (para reproducibilidad)
-  String get version;
+  /// Score numérico de readiness (0.0 - 1.0)
+  /// Calculado desde features (PRS, sleep, fatigue, etc.)
+  final double score;
 
-  /// Procesar FeatureVector y retornar decisión
-  Future<TrainingDecision> decide(FeatureVector features);
+  /// Confianza en la evaluación (0.0 - 1.0)
+  final double confidence;
 
-  /// Evaluar calidad de predicción contra resultado real (para entrenamiento)
-  /// outcome: datos reales post-sesión (RPE realizado, sets completados, etc.)
-  Future<void> recordOutcome(
-    TrainingDecision decision,
-    Map<String, dynamic> outcome,
-  );
-}
+  /// Recomendaciones para el coach/atleta
+  /// Ej: ["Mejorar higiene del sueño", "Reducir estrés laboral"]
+  final List<String> recommendations;
 
-/// Evaluación de predicción para análisis de performance
-class PredictionEvaluation {
-  /// Número de predicciones evaluadas
-  final int sampleCount;
+  /// Metadata adicional
+  final Map<String, dynamic> metadata;
 
-  /// Accuracy: % de predicciones correctas (si es clasificación)
-  final double accuracy;
-
-  /// MAE: Mean Absolute Error (si es regresión)
-  final double mae;
-
-  /// AUC (si es binaria)
-  final double? auc;
-
-  /// Confusion matrix para debugging
-  final Map<String, dynamic>? confusionMatrix;
-
-  PredictionEvaluation({
-    required this.sampleCount,
-    required this.accuracy,
-    required this.mae,
-    this.auc,
-    this.confusionMatrix,
+  const ReadinessDecision({
+    required this.level,
+    required this.score,
+    required this.confidence,
+    this.recommendations = const [],
+    this.metadata = const {},
   });
 
+  /// Indica si necesita deload inmediato
+  bool get needsDeload => level == ReadinessLevel.critical;
+
+  /// Indica si necesita reducir volumen
+  bool get needsVolumeReduction =>
+      level == ReadinessLevel.low || level == ReadinessLevel.critical;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'level': level.name,
+      'score': score,
+      'confidence': confidence,
+      'recommendations': recommendations,
+      'metadata': metadata,
+    };
+  }
+
   @override
-  String toString() =>
-      'PredictionEvaluation(n=$sampleCount, acc=$accuracy, mae=$mae)';
+  String toString() {
+    return 'ReadinessDecision(level: ${level.name}, score: ${score.toStringAsFixed(2)})';
+  }
 }
 
-/// Estrategia base con helpers comunes
-abstract class BaseDecisionStrategy implements DecisionStrategy {
-  /// Helper: Normalizar score a recomendación
-  /// 0.0-0.2 = REST, 0.2-0.4 = LIGHT, 0.4-0.6 = MODERATE, 0.6-0.8 = HIGH, 0.8-1.0 = DELOAD (invert logic)
-  String scoreToRecommendation(double score) {
-    if (score < 0.2) return 'REST';
-    if (score < 0.4) return 'LIGHT';
-    if (score < 0.6) return 'MODERATE';
-    if (score < 0.8) return 'HIGH';
-    return 'DELOAD'; // Alta fatiga = deload
-  }
+/// Interfaz para estrategias de decisión (Rules, ML, Hybrid)
+///
+/// Implementa el patrón Strategy para permitir intercambiar
+/// algoritmos de decisión sin cambiar el motor.
+abstract class DecisionStrategy {
+  /// Nombre de la estrategia
+  /// Ej: "RuleBased_Israetel_v1", "NeuralNetwork_v2", "Hybrid_70R30ML"
+  String get name;
 
-  /// Helper: Generar rationale basado en factores dominantes
-  String generateRationale(Map<String, double> factors) {
-    final sorted = factors.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+  /// Versión de la estrategia
+  String get version;
 
-    final top3 = sorted
-        .take(3)
-        .map((e) => '${e.key}(${e.value.toStringAsFixed(2)})')
-        .join(', ');
-    return 'Factores principales: $top3';
-  }
+  /// Indica si esta estrategia puede entrenarse con datos
+  bool get isTrainable;
 
-  /// Helper: Evaluar múltiples scores usando pesos
-  double weightedScore(
-    Map<String, double> scores,
-    Map<String, double> weights,
-  ) {
-    double total = 0.0;
-    double weightSum = 0.0;
+  /// Decide ajuste de volumen basado en features
+  VolumeDecision decideVolume(FeatureVector features);
 
-    for (final entry in scores.entries) {
-      final weight = weights[entry.key] ?? 0.0;
-      total += entry.value * weight;
-      weightSum += weight;
-    }
-
-    return weightSum > 0 ? total / weightSum : 0.5;
-  }
+  /// Evalúa readiness basado en features
+  ReadinessDecision decideReadiness(FeatureVector features);
 }

@@ -13,8 +13,13 @@ import 'package:hcs_app_lap/core/enums/performance_trend.dart';
 /// - Helms et al. (2018-2023): RPE/RIR autoregulation, readiness markers
 /// - NSCA (2022): recovery, fatigue management
 ///
-/// Schema version: 1.0.0
-/// Features: 38 (22 numerical + 7 categorical + 9 derived)
+/// Schema version: 1.1.0 (corregido)
+/// Features: 38 (24 numerical + 8 categorical + 6 derived)
+/// Changes from 1.0.0:
+///   - Added sessionDurationNorm
+///   - Added restBetweenSetsNorm
+///   - Fixed clientId (required parameter in fromContext)
+///   - Fixed adherenceHistorical (prioritizes sessionCompletionRate)
 class FeatureVector {
   // ════════════════════════════════════════════════════════════
   // NUMERICAL FEATURES (normalizadas 0-1)
@@ -68,6 +73,14 @@ class FeatureVector {
   /// Dolor muscular a las 48h (DOMS 0-10 → 0.0-1.0)
   final double soreness48hNorm;
 
+  /// Duración de sesión normalizada (30-120 min → 0.0-1.0)
+  /// Indica capacidad de tiempo del usuario
+  final double sessionDurationNorm;
+
+  /// Descanso entre series normalizado (30-300 seg → 0.0-1.0)
+  /// Indica estilo de entrenamiento (metabolic vs strength)
+  final double restBetweenSetsNorm;
+
   /// RIR promedio (0-5 RIR → 0.0-1.0)
   /// Schoenfeld (2021): proximity to failure
   final double averageRIRNorm;
@@ -87,6 +100,7 @@ class FeatureVector {
   final double periodBreaksNorm;
 
   /// Adherencia histórica (0.0-1.0)
+  /// Prioriza sessionCompletionRate si existe, fallback a parameter
   final double adherenceHistorical;
 
   /// Tendencia de rendimiento codificada
@@ -102,7 +116,7 @@ class FeatureVector {
   final Map<String, double> goalOneHot;
 
   /// Enfoque de entrenamiento one-hot
-  /// {upper: 1.0/0.0, lower: 1.0/0.0, fullbody: 1.0/0.0}
+  /// {hypertrophy: 1.0/0.0, strength: 1.0/0.0, power: 1.0/0.0, mixed: 1.0/0.0}
   final Map<String, double> focusOneHot;
 
   // ════════════════════════════════════════════════════════════
@@ -162,6 +176,7 @@ class FeatureVector {
   // METADATA (trazabilidad, NO entra en tensor)
   // ════════════════════════════════════════════════════════════
 
+  /// clientId real del usuario (no timestamp)
   final String clientId;
   final DateTime timestamp;
   final int schemaVersion;
@@ -183,6 +198,8 @@ class FeatureVector {
     required this.perceivedRecoveryNorm,
     required this.stressLevelNorm,
     required this.soreness48hNorm,
+    required this.sessionDurationNorm,
+    required this.restBetweenSetsNorm,
     required this.averageRIRNorm,
     required this.averageSessionRPENorm,
     required this.rirOptimalityScore,
@@ -203,7 +220,7 @@ class FeatureVector {
     // Metadata
     required this.clientId,
     required this.timestamp,
-    this.schemaVersion = 1,
+    this.schemaVersion = 2,
   });
 
   /// Convierte a tensor 1D para TensorFlow Lite o Firebase ML
@@ -229,11 +246,13 @@ class FeatureVector {
       maxSetsToleratedNorm,
       volumeToleranceRatio,
 
-      // Recovery (4)
+      // Recovery (6)
       avgSleepHoursNorm,
       perceivedRecoveryNorm,
       stressLevelNorm,
       soreness48hNorm,
+      sessionDurationNorm,
+      restBetweenSetsNorm,
 
       // Intensity (3)
       averageRIRNorm,
@@ -300,6 +319,8 @@ class FeatureVector {
         'prs_norm': perceivedRecoveryNorm,
         'stress_norm': stressLevelNorm,
         'doms_norm': soreness48hNorm,
+        'session_duration_norm': sessionDurationNorm,
+        'rest_between_sets_norm': restBetweenSetsNorm,
       },
       'intensity': {
         'rir_norm': averageRIRNorm,
@@ -327,6 +348,7 @@ class FeatureVector {
   /// Crea desde TrainingContext V2
   factory FeatureVector.fromContext(
     TrainingContext context, {
+    required String clientId,
     double? historicalAdherence,
   }) {
     final interview = context.interview;
@@ -376,6 +398,9 @@ class FeatureVector {
     final stressNorm = interview.stressLevel / 10.0;
     final domsNorm = (interview.soreness48hAverage ?? 5) / 10.0;
 
+    final sessionNorm = (interview.sessionDurationMinutes - 30) / 90.0;
+    final restNorm = (interview.restBetweenSetsSeconds - 30) / 270.0;
+
     final rirNorm = interview.averageRIR / 5.0;
     final rpeNorm = interview.averageSessionRPE / 10.0;
 
@@ -385,6 +410,9 @@ class FeatureVector {
 
     final deloadNorm = (interview.deloadFrequencyWeeks ?? 6) / 12.0;
     final breaksNorm = (interview.periodBreaksLast12Months ?? 1) / 6.0;
+
+    final adherence =
+        interview.sessionCompletionRate ?? historicalAdherence ?? 0.8;
 
     double trendEncoded = 0.5; // plateau default
     switch (interview.performanceTrend) {
@@ -416,7 +444,11 @@ class FeatureVector {
       'hypertrophy': meta.focus == TrainingFocus.hypertrophy ? 1.0 : 0.0,
       'strength': meta.focus == TrainingFocus.strength ? 1.0 : 0.0,
       'power': meta.focus == TrainingFocus.power ? 1.0 : 0.0,
-      'mixed': meta.focus == TrainingFocus.mixed ? 1.0 : 0.0,
+      'mixed':
+          (meta.focus == TrainingFocus.mixed ||
+              meta.focus == TrainingFocus.gluteSpecialization)
+          ? 1.0
+          : 0.0,
     };
 
     // ════════════════════════════════════════════════════════════
@@ -486,6 +518,8 @@ class FeatureVector {
       perceivedRecoveryNorm: prsNorm.clamp(0.0, 1.0),
       stressLevelNorm: stressNorm.clamp(0.0, 1.0),
       soreness48hNorm: domsNorm.clamp(0.0, 1.0),
+      sessionDurationNorm: sessionNorm.clamp(0.0, 1.0),
+      restBetweenSetsNorm: restNorm.clamp(0.0, 1.0),
 
       // Intensity
       averageRIRNorm: rirNorm.clamp(0.0, 1.0),
@@ -495,7 +529,7 @@ class FeatureVector {
       // Consistency
       deloadFrequencyNorm: deloadNorm.clamp(0.0, 1.0),
       periodBreaksNorm: breaksNorm.clamp(0.0, 1.0),
-      adherenceHistorical: (historicalAdherence ?? 0.8).clamp(0.0, 1.0),
+      adherenceHistorical: adherence.clamp(0.0, 1.0),
 
       // Performance
       performanceTrendEncoded: trendEncoded,
@@ -513,9 +547,9 @@ class FeatureVector {
       volumeOptimalityIndex: (volOptimality.clamp(0.0, 3.0) / 3.0),
 
       // Metadata
-      clientId: context.asOfDate.millisecondsSinceEpoch.toString(),
+      clientId: clientId,
       timestamp: context.asOfDate,
-      schemaVersion: 1,
+      schemaVersion: 2,
     );
   }
 
@@ -538,6 +572,8 @@ class FeatureVector {
     'performanceTrendEncoded': 0.50,
     'adherenceHistorical': 0.45,
     'consecutiveWeeksNorm': 0.40,
+    'sessionDurationNorm': 0.35,
+    'restBetweenSetsNorm': 0.30,
 
     // Menos críticos (pero útiles)
     'ageYearsNorm': 0.30,
