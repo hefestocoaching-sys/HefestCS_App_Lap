@@ -1,35 +1,36 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is authenticated
+    // ════════════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ════════════════════════════════════════════════════════════
+    
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Helper function to check if user is the coach owner
     function isCoach(coachId) {
       return request.auth.uid == coachId;
     }
     
-    // Coaches collection - users can only access their own data
+    // ════════════════════════════════════════════════════════════
+    // COACHES & CLIENTS (MANTENER)
+    // ════════════════════════════════════════════════════════════
+    
     match /coaches/{coachId} {
       allow read, write: if isAuthenticated() && isCoach(coachId);
       
-      // Appointments subcollection
       match /appointments/{appointmentId} {
         allow read, write: if isAuthenticated() && isCoach(coachId);
       }
       
-      // Transactions subcollection
       match /transactions/{transactionId} {
         allow read, write: if isAuthenticated() && isCoach(coachId);
       }
       
-      // Clients subcollection
       match /clients/{clientId} {
         allow read, write: if isAuthenticated() && isCoach(coachId);
         
-        // Clinical records subcollections
         match /anthropometry_records/{recordId} {
           allow read, write: if isAuthenticated() && isCoach(coachId);
         }
@@ -46,6 +47,15 @@ service cloud.firestore {
           allow read, write: if isAuthenticated() && isCoach(coachId);
         }
       }
+    }
+    
+    // ════════════════════════════════════════════════════════════
+    // ✅ ML TRAINING DATA (NUEVO - CRÍTICO)
+    // ════════════════════════════════════════════════════════════
+    
+    match /ml_training_data/{exampleId} {
+      // Permitir lectura/escritura a usuarios autenticados
+      allow read, write: if isAuthenticated();
     }
   }
 }
