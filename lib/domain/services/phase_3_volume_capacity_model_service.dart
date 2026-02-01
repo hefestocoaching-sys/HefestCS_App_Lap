@@ -9,6 +9,7 @@ import 'package:hcs_app_lap/domain/entities/manual_override.dart';
 import 'package:hcs_app_lap/domain/constants/volume_landmarks.dart';
 import 'package:hcs_app_lap/domain/services/phase_2_readiness_evaluation_service.dart'
     show ReadinessLevel;
+import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
 
 /// Resultado de la Fase 3: Modelo de capacidad de volumen
 class Phase3Result {
@@ -213,6 +214,172 @@ class Phase3VolumeCapacityModelService {
             0,
             (sum, l) => sum + l.recommendedStartVolume,
           ),
+        },
+      ),
+    );
+
+    return Phase3Result(
+      volumeLimitsByMuscle: volumeLimits,
+      decisions: decisions,
+      metadata: metadata,
+    );
+  }
+
+  /// V2: Calcula los límites de volumen usando TrainingContext V2
+  Phase3Result calculateVolumeCapacityV2({
+    required TrainingContext context,
+    TrainingHistory? history,
+    required double readinessAdjustment, // Factor de Phase2 (0.5 - 1.15)
+    Map<MuscleGroup, ReadinessLevel> readinessByMuscle = const {},
+    ManualOverride? manualOverride,
+  }) {
+    final decisions = <DecisionTrace>[];
+    final metadata = <String, dynamic>{};
+    final volumeLimits = <String, VolumeLimits>{};
+
+    // 1. Determinar nivel de entrenamiento efectivo desde V2
+    final effectiveLevel = _determineEffectiveTrainingLevelV2(
+      context.meta.level,
+      context.interview,
+      history,
+      decisions,
+    );
+    metadata['effectiveTrainingLevel'] = effectiveLevel.name;
+
+    // 2. Calcular factores de ajuste globales usando V2
+    final pharmacologyFactor = _calculatePharmacologyFactorV2(
+      context.athlete,
+      decisions,
+    );
+    final ageFactor = _calculateAgeFactorV2(context.athlete, decisions);
+    final genderFactor = _calculateGenderFactorV2(context.athlete, decisions);
+
+    metadata['pharmacologyFactor'] = pharmacologyFactor;
+    metadata['ageFactor'] = ageFactor;
+    metadata['genderFactor'] = genderFactor;
+    metadata['readinessAdjustment'] = readinessAdjustment;
+
+    // 3. Obtener lista de músculos a programar desde V2
+    final muscleGroups = _getMuscleGroupsToProgramV2(
+      context.priorities,
+      decisions,
+    );
+
+    // 4. Calcular límites base para cada músculo
+    for (final muscle in muscleGroups) {
+      final baseLimits = _getBaseLimitsForMuscle(
+        muscle,
+        effectiveLevel,
+        decisions,
+      );
+
+      // 5. Aplicar ajustes específicos usando datos V2
+      var adjustedLimits = _applyAdjustmentsV2(
+        baseLimits,
+        pharmacologyFactor: pharmacologyFactor,
+        ageFactor: ageFactor,
+        genderFactor: genderFactor,
+        readinessAdjustment: readinessAdjustment,
+        readinessByMuscle: readinessByMuscle,
+        context: context,
+        muscle: muscle,
+        decisions: decisions,
+      );
+
+      // 5b. Aplicar overrides manuales de volumen
+      if (manualOverride?.volumeOverrides != null) {
+        final override = manualOverride!.volumeOverrides![muscle];
+        if (override != null && !override.isEmpty) {
+          var overriddenMev = override.mev ?? adjustedLimits.mev;
+          var overriddenMav = override.mav ?? adjustedLimits.mav;
+          var overriddenMrv = override.mrv ?? adjustedLimits.mrv;
+
+          // Guardrails defensivos
+          if (effectiveLevel == TrainingLevel.beginner && overriddenMrv > 16) {
+            overriddenMrv = 16;
+            decisions.add(
+              DecisionTrace.warning(
+                phase: 'Phase3VolumeCapacityV2',
+                category: 'guardrail_override',
+                description:
+                    'Override de MRV para $muscle clampado a 16 (seguro principiante)',
+                context: {
+                  'muscle': muscle,
+                  'overrideAttempted': override.mrv,
+                  'clampedTo': 16,
+                },
+              ),
+            );
+          }
+
+          // MRV >= MEV base
+          if (overriddenMrv < baseLimits.mev) {
+            overriddenMrv = baseLimits.mev;
+            decisions.add(
+              DecisionTrace.warning(
+                phase: 'Phase3VolumeCapacityV2',
+                category: 'guardrail_override',
+                description:
+                    'Override de MRV para $muscle debe ser >= MEV base (${baseLimits.mev})',
+                context: {
+                  'muscle': muscle,
+                  'overrideMrv': override.mrv,
+                  'baseMev': baseLimits.mev,
+                  'adjustedMrv': overriddenMrv,
+                },
+              ),
+            );
+          }
+
+          adjustedLimits = adjustedLimits.copyWith(
+            mev: overriddenMev,
+            mav: overriddenMav,
+            mrv: overriddenMrv,
+          );
+
+          decisions.add(
+            DecisionTrace.info(
+              phase: 'Phase3VolumeCapacityV2',
+              category: 'volume_override_applied',
+              description: 'Override de volumen aplicado a $muscle',
+              context: {
+                'muscle': muscle,
+                'mev': overriddenMev,
+                'mav': overriddenMav,
+                'mrv': overriddenMrv,
+              },
+            ),
+          );
+        }
+      }
+
+      volumeLimits[muscle] = adjustedLimits;
+    }
+
+    // 6. Validar límites totales usando datos V2
+    _validateTotalVolumeV2(volumeLimits, context, decisions);
+
+    // 7. Validación final de seguridad
+    _applyFinalSafetyValidation(volumeLimits, effectiveLevel, decisions);
+
+    // 8. Decisión final
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase3VolumeCapacityV2',
+        category: 'final_result',
+        description:
+            'Límites de volumen V2 calculados para ${volumeLimits.length} grupos musculares',
+        context: {
+          'totalMEV': volumeLimits.values.fold(0, (sum, l) => sum + l.mev),
+          'totalMAV': volumeLimits.values.fold(0, (sum, l) => sum + l.mav),
+          'totalMRV': volumeLimits.values.fold(0, (sum, l) => sum + l.mrv),
+          'recommendedVolume': volumeLimits.values.fold(
+            0,
+            (sum, l) => sum + l.recommendedStartVolume,
+          ),
+          'avgWeeklySetsPerMuscle': context.interview.avgWeeklySetsPerMuscle,
+          'consecutiveWeeksTraining':
+              context.interview.consecutiveWeeksTraining,
         },
       ),
     );
@@ -1078,6 +1245,292 @@ class Phase3VolumeCapacityModelService {
         );
       }
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MÉTODOS V2 (NUEVOS) - Usan TrainingContext
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Determina nivel efectivo usando datos V2
+  TrainingLevel _determineEffectiveTrainingLevelV2(
+    TrainingLevel? explicitLevel,
+    TrainingInterviewSnapshot interview,
+    TrainingHistory? history,
+    List<DecisionTrace> decisions,
+  ) {
+    if (explicitLevel != null) {
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase3VolumeCapacityV2',
+          category: 'level_determination_v2',
+          description: 'Nivel explícito V2 desde meta: ${explicitLevel.name}',
+          context: {'explicitLevel': explicitLevel.name},
+        ),
+      );
+      return explicitLevel;
+    }
+
+    // Usar datos V2 para inferir nivel
+    final yearsTraining = interview.yearsTrainingContinuous;
+    final consecutiveWeeks = interview.consecutiveWeeksTraining;
+    final avgWeeklySets = interview.avgWeeklySetsPerMuscle;
+
+    TrainingLevel inferred;
+
+    // Heurística basada en V2
+    if (yearsTraining >= 3 && consecutiveWeeks >= 24 && avgWeeklySets >= 15) {
+      inferred = TrainingLevel.advanced;
+    } else if (yearsTraining >= 1 &&
+        consecutiveWeeks >= 12 &&
+        avgWeeklySets >= 10) {
+      inferred = TrainingLevel.intermediate;
+    } else {
+      inferred = TrainingLevel.beginner;
+    }
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase3VolumeCapacityV2',
+        category: 'level_determination_v2',
+        description: 'Nivel inferido V2: ${inferred.name}',
+        context: {
+          'yearsTrainingContinuous': yearsTraining,
+          'consecutiveWeeksTraining': consecutiveWeeks,
+          'avgWeeklySetsPerMuscle': avgWeeklySets,
+          'inferredLevel': inferred.name,
+        },
+      ),
+    );
+
+    return inferred;
+  }
+
+  /// Calcula factor de farmacología usando V2
+  double _calculatePharmacologyFactorV2(
+    AthleteSnapshot athlete,
+    List<DecisionTrace> decisions,
+  ) {
+    if (athlete.usesAnabolics) {
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase3VolumeCapacityV2',
+          category: 'pharmacology_adjustment_v2',
+          description: 'Uso de farmacología V2 detectado: +15% MRV',
+          context: {'factor': 1.15},
+        ),
+      );
+      return 1.15;
+    }
+    return 1.0;
+  }
+
+  /// Calcula factor de edad usando V2
+  double _calculateAgeFactorV2(
+    AthleteSnapshot athlete,
+    List<DecisionTrace> decisions,
+  ) {
+    if (athlete.ageYears == null) return 1.0;
+
+    final age = athlete.ageYears!;
+    double factor;
+
+    if (age < 25) {
+      factor = 1.05; // Jóvenes recuperan mejor
+    } else if (age >= 25 && age < 40) {
+      factor = 1.0; // Edad óptima
+    } else if (age >= 40 && age < 50) {
+      factor = 0.95; // Reducción leve
+    } else {
+      factor = 0.90; // Reducción moderada
+    }
+
+    if (factor != 1.0) {
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase3VolumeCapacityV2',
+          category: 'age_adjustment_v2',
+          description:
+              'Ajuste por edad V2: $age años → factor ${factor.toStringAsFixed(2)}',
+          context: {'age': age, 'factor': factor},
+        ),
+      );
+    }
+
+    return factor;
+  }
+
+  /// Calcula factor de género usando V2
+  double _calculateGenderFactorV2(
+    AthleteSnapshot athlete,
+    List<DecisionTrace> decisions,
+  ) {
+    // Actualmente no hay ajustes específicos por género a nivel global
+    // (los ajustes por género se aplican por músculo en _applyAdjustmentsV2)
+    return 1.0;
+  }
+
+  /// Obtiene músculos a programar desde V2
+  List<String> _getMuscleGroupsToProgramV2(
+    PrioritiesSnapshot priorities,
+    List<DecisionTrace> decisions,
+  ) {
+    final muscles = <String>{};
+
+    muscles.addAll(priorities.primary);
+    muscles.addAll(priorities.secondary);
+    muscles.addAll(priorities.tertiary);
+
+    if (muscles.isEmpty) {
+      // Fallback: full-body balanceado
+      muscles.addAll([
+        'chest',
+        'back',
+        'shoulders',
+        'quads',
+        'hamstrings',
+        'glutes',
+      ]);
+
+      decisions.add(
+        DecisionTrace.warning(
+          phase: 'Phase3VolumeCapacityV2',
+          category: 'muscle_selection_v2',
+          description: 'Sin prioridades V2 → enfoque full-body balanceado',
+          context: {'muscles': muscles.toList()},
+        ),
+      );
+    } else {
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase3VolumeCapacityV2',
+          category: 'muscle_selection_v2',
+          description: 'Músculos seleccionados V2 desde prioridades',
+          context: {
+            'primary': priorities.primary,
+            'secondary': priorities.secondary,
+            'tertiary': priorities.tertiary,
+            'total': muscles.length,
+          },
+        ),
+      );
+    }
+
+    return muscles.toList();
+  }
+
+  /// Aplica ajustes usando datos V2
+  VolumeLimits _applyAdjustmentsV2(
+    VolumeLimits baseLimits, {
+    required double pharmacologyFactor,
+    required double ageFactor,
+    required double genderFactor,
+    required double readinessAdjustment,
+    required Map<MuscleGroup, ReadinessLevel> readinessByMuscle,
+    required TrainingContext context,
+    required String muscle,
+    required List<DecisionTrace> decisions,
+  }) {
+    var mev = baseLimits.mev;
+    var mav = baseLimits.mav;
+    var mrv = baseLimits.mrv;
+
+    // Aplicar factores globales
+    mrv = (mrv * pharmacologyFactor * ageFactor * genderFactor).round();
+
+    // Ajustar por readiness
+    mev = (mev * readinessAdjustment).round();
+    mav = (mav * readinessAdjustment).round();
+    mrv = (mrv * readinessAdjustment).round();
+
+    // Usar avgWeeklySetsPerMuscle de V2 como referencia
+    final historicalSets = context.interview.avgWeeklySetsPerMuscle;
+
+    // Si el volumen histórico está bien documentado, usarlo como referencia
+    if (historicalSets > 0) {
+      // Ajustar MAV hacia el volumen histórico si es razonable
+      if (historicalSets >= mev && historicalSets <= mrv) {
+        mav = historicalSets;
+        decisions.add(
+          DecisionTrace.info(
+            phase: 'Phase3VolumeCapacityV2',
+            category: 'historical_volume_v2',
+            description: 'MAV ajustado según volumen histórico V2 para $muscle',
+            context: {
+              'muscle': muscle,
+              'historicalSets': historicalSets,
+              'adjustedMAV': mav,
+            },
+          ),
+        );
+      }
+    }
+
+    // Calcular volumen recomendado (70-80% del MAV)
+    final recommended = ((mav * 0.75).round()).clamp(mev, mrv);
+
+    return VolumeLimits(
+      muscleGroup: muscle,
+      mev: mev,
+      mav: mav,
+      mrv: mrv,
+      recommendedStartVolume: recommended,
+    );
+  }
+
+  /// Valida volumen total usando datos V2
+  void _validateTotalVolumeV2(
+    Map<String, VolumeLimits> volumeLimits,
+    TrainingContext context,
+    List<DecisionTrace> decisions,
+  ) {
+    final totalMRV = volumeLimits.values.fold(0, (sum, l) => sum + l.mrv);
+    final totalRecommended = volumeLimits.values.fold(
+      0,
+      (sum, l) => sum + l.recommendedStartVolume,
+    );
+
+    final daysPerWeek = context.meta.daysPerWeek;
+    final timePerSession = context.meta.timePerSessionMinutes;
+    final totalWeeklyTime = daysPerWeek * timePerSession;
+
+    // Estimar tiempo necesario (~4 min por serie)
+    final estimatedTimeNeeded = totalRecommended * 4;
+
+    if (estimatedTimeNeeded > totalWeeklyTime * 1.2) {
+      decisions.add(
+        DecisionTrace.warning(
+          phase: 'Phase3VolumeCapacityV2',
+          category: 'time_constraint_v2',
+          description:
+              'Volumen recomendado V2 requiere más tiempo del disponible',
+          context: {
+            'totalRecommendedSets': totalRecommended,
+            'estimatedMinutesNeeded': estimatedTimeNeeded,
+            'availableMinutes': totalWeeklyTime,
+            'daysPerWeek': daysPerWeek,
+            'timePerSession': timePerSession,
+          },
+          action: 'Considerar reducir volumen o aumentar duración de sesiones',
+        ),
+      );
+    }
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase3VolumeCapacityV2',
+        category: 'total_volume_validation_v2',
+        description: 'Validación de volumen total V2',
+        context: {
+          'totalMEV': volumeLimits.values.fold(0, (sum, l) => sum + l.mev),
+          'totalMAV': volumeLimits.values.fold(0, (sum, l) => sum + l.mav),
+          'totalMRV': totalMRV,
+          'totalRecommended': totalRecommended,
+          'avgWeeklySetsPerMuscle': context.interview.avgWeeklySetsPerMuscle,
+          'estimatedTimeNeeded': estimatedTimeNeeded,
+          'availableTime': totalWeeklyTime,
+        },
+      ),
+    );
   }
 }
 

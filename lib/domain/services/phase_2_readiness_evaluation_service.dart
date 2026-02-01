@@ -4,8 +4,10 @@ import 'package:hcs_app_lap/domain/entities/training_history.dart';
 import 'package:hcs_app_lap/domain/entities/decision_trace.dart';
 import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
+import 'package:hcs_app_lap/core/enums/performance_trend.dart';
 import 'package:hcs_app_lap/domain/services/phase_1_data_ingestion_service.dart'
     show DerivedTrainingContext;
+import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
 
 /// Nivel de readiness (disposición) del atleta para entrenar
 enum ReadinessLevel {
@@ -70,6 +72,129 @@ class Phase2ReadinessEvaluationService {
       history: history,
       latestFeedback: latestFeedback,
       derivedContext: null,
+    );
+  }
+
+  /// V2: Evalúa el readiness usando TrainingContext V2 con campos mejorados (PRS, RIR, RPE)
+  Phase2Result evaluateReadinessV2({
+    required TrainingContext context,
+    TrainingHistory? history,
+    TrainingFeedback? latestFeedback,
+    DerivedTrainingContext? derivedContext,
+  }) {
+    final decisions = <DecisionTrace>[];
+    final metrics = <String, dynamic>{};
+    final recommendations = <String>[];
+
+    // Fecha de referencia para determinismo temporal
+    final referenceDate = derivedContext?.referenceDate ?? context.asOfDate;
+
+    // 1. Evaluar sueño (peso: 30%) - Usa V2 avgSleepHours
+    final sleepScore = _evaluateSleepV2(
+      context.interview,
+      latestFeedback,
+      decisions,
+      recommendations,
+      referenceDate,
+    );
+    metrics['sleepScore'] = sleepScore;
+
+    // 2. Evaluar fatiga y recuperación (peso: 25%) - Usa V2 PRS y DOMS
+    final fatigueScore = _evaluateFatigueV2(
+      context.interview,
+      latestFeedback,
+      decisions,
+      recommendations,
+      referenceDate,
+    );
+    metrics['fatigueScore'] = fatigueScore;
+
+    // 3. Evaluar estrés (peso: 20%) - Usa V2 stressLevel
+    final stressScore = _evaluateStressV2(
+      context.interview,
+      latestFeedback,
+      decisions,
+      recommendations,
+      referenceDate,
+    );
+    metrics['stressScore'] = stressScore;
+
+    // 4. Evaluar motivación (peso: 15%) - Derivar de averageRIR y performanceTrend
+    final motivationScore = _evaluateMotivationV2(
+      context.interview,
+      latestFeedback,
+      decisions,
+      recommendations,
+      referenceDate,
+    );
+    metrics['motivationScore'] = motivationScore;
+
+    // 5. Evaluar historial de adherencia y RPE (peso: 10%) - Usa V2 averageSessionRPE
+    final historyScore = _evaluateHistoryV2(
+      context.interview,
+      history,
+      decisions,
+      recommendations,
+      referenceDate,
+    );
+    metrics['historyScore'] = historyScore;
+
+    // 6. Calcular score ponderado de readiness
+    final readinessScore =
+        (sleepScore * 0.30) +
+        (fatigueScore * 0.25) +
+        (stressScore * 0.20) +
+        (motivationScore * 0.15) +
+        (historyScore * 0.10);
+
+    metrics['readinessScore'] = readinessScore;
+
+    // 7. Determinar nivel de readiness
+    final readinessLevel = _determineReadinessLevel(readinessScore, decisions);
+
+    // 8. Calcular factor de ajuste de volumen (usa gender de context.athlete)
+    final volumeAdjustmentFactor = _calculateVolumeAdjustmentV2(
+      readinessLevel,
+      readinessScore,
+      context.athlete.gender,
+      decisions,
+    );
+
+    metrics['volumeAdjustmentFactor'] = volumeAdjustmentFactor;
+
+    // 9. Readiness local por músculo/patrón
+    final readinessByMuscle = _buildLocalReadinessV2(
+      baseLevel: readinessLevel,
+      context: context,
+      derivedContext: derivedContext,
+      decisions: decisions,
+    );
+
+    // 10. Decisión final
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase2ReadinessEvaluationV2',
+        category: 'final_assessment',
+        description:
+            'Readiness V2: ${readinessLevel.name}, Score: ${(readinessScore * 100).toStringAsFixed(1)}%, '
+            'Ajuste volumen: ${(volumeAdjustmentFactor * 100).toStringAsFixed(0)}%',
+        context: metrics,
+        action: volumeAdjustmentFactor < 0.85
+            ? 'Reducir volumen significativamente'
+            : (volumeAdjustmentFactor > 1.0
+                  ? 'Puede manejar volumen elevado'
+                  : 'Mantener volumen estándar'),
+      ),
+    );
+
+    return Phase2Result(
+      readinessLevel: readinessLevel,
+      readinessScore: readinessScore,
+      volumeAdjustmentFactor: volumeAdjustmentFactor,
+      decisions: decisions,
+      metrics: metrics,
+      readinessByMuscle: readinessByMuscle,
+      recommendations: recommendations,
     );
   }
 
@@ -682,5 +807,482 @@ class Phase2ReadinessEvaluationService {
     );
 
     return factor;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MÉTODOS V2 (NUEVOS) - Usan TrainingInterviewSnapshot
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Evalúa sueño usando datos V2
+  double _evaluateSleepV2(
+    TrainingInterviewSnapshot interview,
+    TrainingFeedback? feedback,
+    List<DecisionTrace> decisions,
+    List<String> recommendations,
+    DateTime referenceDate,
+  ) {
+    final sleepHours = feedback?.sleepHours ?? interview.avgSleepHours;
+
+    double score;
+    String description;
+    String? action;
+
+    if (sleepHours >= 8.0) {
+      score = 1.0;
+      description = 'Sueño óptimo V2 (${sleepHours.toStringAsFixed(1)}h ≥ 8h)';
+    } else if (sleepHours >= 7.0) {
+      score = 0.8;
+      description = 'Sueño adecuado V2 (${sleepHours.toStringAsFixed(1)}h)';
+    } else if (sleepHours >= 6.0) {
+      score = 0.6;
+      description = 'Sueño subóptimo V2 (${sleepHours.toStringAsFixed(1)}h)';
+      action = 'Considerar reducir volumen o intensidad';
+      recommendations.add('Mejorar higiene del sueño (objetivo: 7-9h)');
+    } else {
+      score = 0.3;
+      description = 'Sueño insuficiente V2 (${sleepHours.toStringAsFixed(1)}h < 6h)';
+      action = 'Reducir volumen 20-30% por mala recuperación';
+      recommendations.add('CRÍTICO: Priorizar sueño antes de aumentar volumen');
+    }
+
+    decisions.add(
+      DecisionTrace(
+        phase: 'Phase2ReadinessEvaluationV2',
+        timestamp: referenceDate,
+        category: 'sleep_evaluation_v2',
+        description: description,
+        severity: score < 0.6 ? 'warning' : 'info',
+        context: {'sleepHours': sleepHours, 'score': score},
+        action: action,
+      ),
+    );
+
+    return score;
+  }
+
+  /// Evalúa fatiga usando PRS y DOMS V2
+  double _evaluateFatigueV2(
+    TrainingInterviewSnapshot interview,
+    TrainingFeedback? feedback,
+    List<DecisionTrace> decisions,
+    List<String> recommendations,
+    DateTime referenceDate,
+  ) {
+    // Usar PRS (Perceived Recovery Status) invertido para fatiga
+    final prs = interview.perceivedRecoveryStatus;
+    final fatigue = 10.0 - prs.toDouble(); // Invertir: PRS 10 = fatiga 0
+
+    // Usar DOMS a 48h si existe
+    final soreness = interview.soreness48hAverage?.toDouble() ?? 5.0;
+
+    // Combinar fatiga derivada y DOMS
+    final combinedFatigue = (fatigue + soreness) / 2.0;
+
+    double score;
+    String description;
+    String? action;
+
+    if (combinedFatigue <= 3.0) {
+      score = 1.0;
+      description =
+          'Recuperación excelente V2 (PRS:$prs, fatiga: ${combinedFatigue.toStringAsFixed(1)}/10)';
+    } else if (combinedFatigue <= 5.0) {
+      score = 0.8;
+      description =
+          'Recuperación buena V2 (PRS:$prs, fatiga: ${combinedFatigue.toStringAsFixed(1)}/10)';
+    } else if (combinedFatigue <= 7.0) {
+      score = 0.6;
+      description =
+          'Fatiga moderada V2 (PRS:$prs, ${combinedFatigue.toStringAsFixed(1)}/10)';
+      action = 'Mantener volumen conservador';
+      recommendations.add('Monitorear PRS diariamente');
+    } else {
+      score = 0.3;
+      description = 'Fatiga alta V2 (PRS:$prs, ${combinedFatigue.toStringAsFixed(1)}/10)';
+      action = 'Reducir volumen 10-20% o incluir semana deload';
+      recommendations.add('PRS bajo indica fatiga - considerar descarga');
+    }
+
+    decisions.add(
+      DecisionTrace(
+        phase: 'Phase2ReadinessEvaluationV2',
+        timestamp: referenceDate,
+        category: 'fatigue_evaluation_v2',
+        description: description,
+        severity: score < 0.6 ? 'warning' : 'info',
+        context: {
+          'prs': prs,
+          'soreness48h': soreness,
+          'derivedFatigue': fatigue,
+          'combined': combinedFatigue,
+          'score': score,
+        },
+        action: action,
+      ),
+    );
+
+    return score;
+  }
+
+  /// Evalúa estrés usando campo V2 stressLevel
+  double _evaluateStressV2(
+    TrainingInterviewSnapshot interview,
+    TrainingFeedback? feedback,
+    List<DecisionTrace> decisions,
+    List<String> recommendations,
+    DateTime referenceDate,
+  ) {
+    final stressLevel = feedback?.stressLevel ?? interview.stressLevel.toDouble();
+
+    double score;
+    String description;
+    String? action;
+
+    if (stressLevel <= 3.0) {
+      score = 1.0;
+      description = 'Estrés bajo V2 (${stressLevel.toStringAsFixed(1)}/10)';
+    } else if (stressLevel <= 5.0) {
+      score = 0.8;
+      description = 'Estrés moderado V2 (${stressLevel.toStringAsFixed(1)}/10)';
+    } else if (stressLevel <= 7.0) {
+      score = 0.6;
+      description = 'Estrés elevado V2 (${stressLevel.toStringAsFixed(1)}/10)';
+      action = 'Reducir volumen si se combina con sueño pobre';
+      recommendations.add('Considerar técnicas de manejo de estrés');
+    } else {
+      score = 0.4;
+      description = 'Estrés muy alto V2 (${stressLevel.toStringAsFixed(1)}/10)';
+      action = 'Reducir volumen e intensidad, priorizar recuperación';
+      recommendations.add(
+        'CRÍTICO: Estrés afecta recuperación - considerar reducir frecuencia',
+      );
+    }
+
+    decisions.add(
+      DecisionTrace(
+        phase: 'Phase2ReadinessEvaluationV2',
+        timestamp: referenceDate,
+        category: 'stress_evaluation_v2',
+        description: description,
+        severity: score < 0.6 ? 'warning' : 'info',
+        context: {'stressLevel': stressLevel, 'score': score},
+        action: action,
+      ),
+    );
+
+    return score;
+  }
+
+  /// Evalúa motivación derivada de RIR y performanceTrend V2
+  double _evaluateMotivationV2(
+    TrainingInterviewSnapshot interview,
+    TrainingFeedback? feedback,
+    List<DecisionTrace> decisions,
+    List<String> recommendations,
+    DateTime referenceDate,
+  ) {
+    // Derivar motivación de feedback o de campos V2
+    double motivation = feedback?.motivation ?? 7.0;
+
+    // Ajustar según RIR (RIR muy alto puede indicar baja motivación/esfuerzo)
+    final rir = interview.averageRIR;
+    if (rir > 4.0) {
+      motivation -= 1.0; // Penalizar por RIR muy conservador
+    } else if (rir < 1.0) {
+      motivation -= 0.5; // Penalizar por RIR muy agresivo (burnout)
+    }
+
+    // Ajustar según performanceTrend
+    final trend = interview.performanceTrend;
+    if (trend != null) {
+      switch (trend) {
+        case PerformanceTrend.improving:
+          motivation += 1.0; // Boost por progreso
+          break;
+        case PerformanceTrend.plateaued:
+          // Neutral
+          break;
+        case PerformanceTrend.declining:
+          motivation -= 1.5; // Penalizar por regresión
+          break;
+      }
+    }
+
+    motivation = motivation.clamp(1.0, 10.0);
+
+    double score;
+    String description;
+    String? action;
+
+    if (motivation >= 8.0) {
+      score = 1.0;
+      description =
+          'Motivación excelente V2 (${motivation.toStringAsFixed(1)}/10, RIR:$rir)';
+    } else if (motivation >= 6.0) {
+      score = 0.8;
+      description = 'Motivación buena V2 (${motivation.toStringAsFixed(1)}/10)';
+    } else if (motivation >= 4.0) {
+      score = 0.6;
+      description = 'Motivación moderada V2 (${motivation.toStringAsFixed(1)}/10)';
+      action = 'Considerar variedad en el plan';
+      recommendations.add('Incluir ejercicios preferidos del cliente');
+    } else {
+      score = 0.4;
+      description = 'Motivación baja V2 (${motivation.toStringAsFixed(1)}/10)';
+      action = 'Simplificar plan, reducir frecuencia, enfocarse en disfrute';
+      recommendations.add('Revisar objetivos y expectativas con el cliente');
+    }
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase2ReadinessEvaluationV2',
+        category: 'motivation_evaluation_v2',
+        description: description,
+        context: {
+          'motivation': motivation,
+          'averageRIR': rir,
+          'performanceTrend': trend?.name,
+          'score': score,
+        },
+        action: action,
+        timestamp: referenceDate,
+      ),
+    );
+
+    return score;
+  }
+
+  /// Evalúa historial usando averageSessionRPE V2
+  double _evaluateHistoryV2(
+    TrainingInterviewSnapshot interview,
+    TrainingHistory? history,
+    List<DecisionTrace> decisions,
+    List<String> recommendations,
+    DateTime referenceDate,
+  ) {
+    if (history == null || !history.hasData) {
+      // Usar datos V2 como fallback
+      final rpe = interview.averageSessionRPE;
+      final consecutiveWeeks = interview.consecutiveWeeksTraining;
+
+      double score;
+      if (consecutiveWeeks >= 12 && rpe <= 7) {
+        score = 0.8; // Buena consistencia y RPE razonable
+      } else if (consecutiveWeeks >= 4) {
+        score = 0.7; // Consistencia moderada
+      } else {
+        score = 0.6; // Baja consistencia
+      }
+
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase2ReadinessEvaluationV2',
+          category: 'history_evaluation_v2_interview',
+          description: 'Sin historial - usando datos de entrevista V2',
+          context: {
+            'consecutiveWeeksTraining': consecutiveWeeks,
+            'averageSessionRPE': rpe,
+            'score': score,
+          },
+          action: 'Se usará enfoque conservador basado en entrevista',
+          timestamp: referenceDate,
+        ),
+      );
+      return score;
+    }
+
+    final adherence = history.averageAdherence;
+    final avgRpe = history.averageRpe;
+
+    double score;
+    String description;
+
+    // Evaluar adherencia
+    if (adherence >= 0.85) {
+      score = 1.0;
+      description =
+          'Adherencia excelente V2 (${(adherence * 100).toStringAsFixed(1)}%)';
+    } else if (adherence >= 0.7) {
+      score = 0.8;
+      description =
+          'Adherencia buena V2 (${(adherence * 100).toStringAsFixed(1)}%)';
+    } else if (adherence >= 0.5) {
+      score = 0.6;
+      description =
+          'Adherencia moderada V2 (${(adherence * 100).toStringAsFixed(1)}%)';
+      recommendations.add('Revisar barreras para adherencia');
+    } else {
+      score = 0.4;
+      description =
+          'Adherencia baja V2 (${(adherence * 100).toStringAsFixed(1)}%)';
+      recommendations.add('CRÍTICO: Simplificar plan o ajustar expectativas');
+    }
+
+    // Ajustar por RPE promedio (si RPE muy alto, puede indicar sobreentrenamiento)
+    if (avgRpe > 8.5) {
+      score *= 0.9;
+      recommendations.add(
+        'RPE históricamente alto - considerar reducir intensidad',
+      );
+    }
+
+    // Comparar con averageSessionRPE de entrevista V2
+    final interviewRPE = interview.averageSessionRPE;
+    if ((interviewRPE - avgRpe).abs() > 2.0) {
+      decisions.add(
+        DecisionTrace.warning(
+          phase: 'Phase2ReadinessEvaluationV2',
+          category: 'rpe_discrepancy',
+          description: 'Discrepancia entre RPE histórico ($avgRpe) y entrevista ($interviewRPE)',
+          action: 'Verificar precisión de datos',
+        ),
+      );
+    }
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase2ReadinessEvaluationV2',
+        category: 'history_evaluation_v2',
+        description: description,
+        context: {
+          'adherence': adherence,
+          'avgRpe': avgRpe,
+          'interviewRPE': interviewRPE,
+          'totalSessions': history.totalSessions,
+          'score': score,
+        },
+      ),
+    );
+
+    return score;
+  }
+
+  /// Calcula factor de ajuste de volumen V2 (usa Gender? en lugar de TrainingProfile)
+  double _calculateVolumeAdjustmentV2(
+    ReadinessLevel level,
+    double score,
+    Gender? gender,
+    List<DecisionTrace> decisions,
+  ) {
+    double factor;
+
+    switch (level) {
+      case ReadinessLevel.excellent:
+        factor = 1.0 + (score - 0.85) * 0.5; // 1.0 - 1.15
+        break;
+      case ReadinessLevel.good:
+        factor = 0.95 + (score - 0.7) * 0.33; // 0.95 - 1.0
+        break;
+      case ReadinessLevel.moderate:
+        factor = 0.8 + (score - 0.55) * 0.5; // 0.8 - 0.95
+        break;
+      case ReadinessLevel.low:
+        factor = 0.65 + (score - 0.4) * 0.5; // 0.65 - 0.8
+        break;
+      case ReadinessLevel.critical:
+        factor = 0.5 + score * 0.37; // 0.5 - 0.65
+        break;
+    }
+
+    // Clamp al rango seguro
+    factor = factor.clamp(0.5, 1.15);
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase2ReadinessEvaluationV2',
+        category: 'volume_adjustment_v2',
+        description:
+            'Factor de ajuste V2 calculado: ${(factor * 100).toStringAsFixed(0)}%',
+        context: {
+          'readinessLevel': level.name,
+          'readinessScore': score,
+          'adjustmentFactor': factor,
+          'gender': gender?.name,
+        },
+        action: factor < 0.85
+            ? 'Reducir volumen planificado'
+            : (factor > 1.0 ? 'Puede incrementar volumen' : 'Mantener volumen'),
+      ),
+    );
+
+    return factor;
+  }
+
+  /// Construye readiness local por músculo usando TrainingContext V2
+  Map<MuscleGroup, ReadinessLevel> _buildLocalReadinessV2({
+    required ReadinessLevel baseLevel,
+    required TrainingContext context,
+    required DerivedTrainingContext? derivedContext,
+    required List<DecisionTrace> decisions,
+  }) {
+    // Inicial: todos los músculos con el nivel global
+    final map = <MuscleGroup, ReadinessLevel>{
+      for (final m in MuscleGroup.values) m: baseLevel,
+    };
+
+    // Ajuste por lesiones/restricciones → nivel low
+    final affected = <MuscleGroup>{};
+    final activeInjuries = context.constraints.activeInjuries;
+    final movementRestrictions = context.constraints.movementRestrictions;
+
+    for (final injury in activeInjuries) {
+      final muscles = _mapPatternToMuscles(injury);
+      for (final m in muscles) {
+        map[m] = ReadinessLevel.low;
+        affected.add(m);
+      }
+    }
+
+    for (final restriction in movementRestrictions) {
+      final muscles = _mapPatternToMuscles(restriction);
+      for (final m in muscles) {
+        map[m] = ReadinessLevel.low;
+        affected.add(m);
+      }
+    }
+
+    if (affected.isNotEmpty) {
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase2ReadinessEvaluationV2',
+          category: 'local_readiness_adjustment_v2',
+          description: 'Readiness local V2 reducido por lesiones/restricciones',
+          context: {'affectedMuscles': affected.map((e) => e.name).toList()},
+        ),
+      );
+    }
+
+    // Ajuste por sexo (mujer tolera ligeramente más en glutes/quads/hamstrings)
+    final gender = context.athlete.gender;
+    final bumped = <MuscleGroup>{};
+    if (gender == Gender.female) {
+      for (final m in const [
+        MuscleGroup.glutes,
+        MuscleGroup.quads,
+        MuscleGroup.hamstrings,
+      ]) {
+        final current = map[m] ?? baseLevel;
+        // No sobrescribir una restricción por lesión (low)
+        if (current != ReadinessLevel.low) {
+          final newLevel = _bumpOne(current);
+          if (newLevel != current) {
+            map[m] = newLevel;
+            bumped.add(m);
+          }
+        }
+      }
+    }
+    if (bumped.isNotEmpty) {
+      decisions.add(
+        DecisionTrace.info(
+          phase: 'Phase2ReadinessEvaluationV2',
+          category: 'gender_specific_adjustment_v2',
+          description: 'Ajuste local V2 por sexo (mujer)',
+          context: {'bumpedMuscles': bumped.map((e) => e.name).toList()},
+        ),
+      );
+    }
+
+    return map;
   }
 }
