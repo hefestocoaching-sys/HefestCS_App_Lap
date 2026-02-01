@@ -211,17 +211,24 @@ class LegacyTrainingProgramEngine {
   }) {
     lastDecisions.clear();
 
-    // Leer overrides manuales una única vez
-    final manualOverridesRaw = profile.extra[TrainingExtraKeys.manualOverrides];
-
-    // Fase 1
-    final r1 = _p1.ingestAndValidate(
-      profile: profile,
-      history: history,
-      latestFeedback: latestFeedback,
-      manualOverridesRaw: manualOverridesRaw,
-      referenceDate: startDate,
-    );
+    // Fase 1 - usar TrainingContext V2 si está disponible en el perfil
+    late Phase1Result r1;
+    if (profile.extra['trainingContext'] is TrainingContext) {
+      final context = profile.extra['trainingContext'] as TrainingContext;
+      r1 = _p1.ingestAndValidate(
+        context: context,
+        history: history,
+        latestFeedback: latestFeedback,
+        referenceDate: startDate,
+      );
+    } else {
+      // Por ahora, usar valores del profile para construir un contexto mínimo
+      // Este es un path de compatibilidad hasta que TrainingProfile sea reemplazado completamente
+      throw UnsupportedError(
+        'TrainingProfile debe incluir trainingContext V2. '
+        'Use TrainingContext.fromProfile() o pase context directamente.',
+      );
+    }
     // CAMBIO A — FAIL FAST EN ENGINE: bloquear si faltan datos críticos
     if (!r1.isValid || r1.missingData.isNotEmpty) {
       lastDecisions.add(

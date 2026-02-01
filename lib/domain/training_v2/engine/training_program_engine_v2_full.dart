@@ -686,17 +686,14 @@ class TrainingProgramEngineV2Full {
   }) {
     lastDecisions.clear();
 
-    // 0) mapear contexto -> profile motor-ready
+    // 0) Mapear contexto a profile motor-ready
     final TrainingProfile profile = _mapper.map(context);
 
-    // 1) Phase 1 - ingest & validate (usa manualOverrides ya inyectados en extra)
-    final manualOverridesRaw = profile.extra[TrainingExtraKeys.manualOverrides];
-
+    // 1) Phase 1 - ingest & validate con TrainingContext V2
     final r1 = _p1.ingestAndValidate(
-      profile: profile,
+      context: context,
       history: history,
       latestFeedback: latestFeedback,
-      manualOverridesRaw: manualOverridesRaw,
       referenceDate: startDate,
     );
 
