@@ -17,6 +17,8 @@ import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart'
 import 'package:hcs_app_lap/domain/services/record_deletion_service_provider.dart';
 import 'package:hcs_app_lap/features/common_widgets/record_deletion_dialogs.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
+import 'package:hcs_app_lap/features/training_feature/widgets/ml_outcome_feedback_dialog.dart';
+import 'package:hcs_app_lap/features/training_feature/widgets/training_plan_generator_v3_button.dart';
 
 // Widgets visuales
 import '../widgets/volume_range_muscle_table.dart';
@@ -231,186 +233,8 @@ class _TrainingDashboardScreenState
         // TAREA A5 PARTE 1: Botón de generación Motor V2
         Container(
           color: kAppBarColor,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Plan de Entrenamiento',
-                  style: TextStyle(
-                    color: kTextColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  // Botón "Generar" (usa caché si existe)
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      final now = DateTime.now();
-                      await ref
-                          .read(trainingPlanProvider.notifier)
-                          .generatePlanFromActiveCycle(now);
-                      if (mounted && _tabController != null) {
-                        _tabController!.animateTo(3);
-                      }
-                    },
-                    icon: const Icon(Icons.auto_awesome, size: 18),
-                    label: const Text('Generar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Botón "Regenerar" (fuerza nueva generación)
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      final now = DateTime.now();
-
-                      // Mostrar diálogo de confirmación
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Regenerar Plan'),
-                          content: const Text(
-                            '¿Estás seguro de regenerar el plan?\n\n'
-                            'Esto borrará el plan actual y creará uno nuevo '
-                            'con las configuraciones actualizadas.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancelar'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                              ),
-                              child: const Text('Regenerar'),
-                            ),
-                          ],
-                        ),
-                      );
-
-                      if (confirmed != true) return;
-
-                      // Mostrar feedback: Limpiando
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Row(
-                              children: [
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 16),
-                                Text('Limpiando plan y ciclos...'),
-                              ],
-                            ),
-                            duration: Duration(seconds: 4),
-                          ),
-                        );
-                      }
-
-                      // PASO 1: Limpiar plan activo y ciclos
-                      debugPrint('🔧 [UI] PASO 1: Limpiando plan activo...');
-                      await ref
-                          .read(trainingPlanProvider.notifier)
-                          .clearActivePlan();
-
-                      // PASO 2: ESPERAR sincronización de Firestore (CRÍTICO)
-                      debugPrint(
-                        '⏳ [UI] PASO 2: Esperando sincronización Firestore (4 segundos)...',
-                      );
-                      await Future.delayed(const Duration(seconds: 4));
-                      debugPrint('✅ [UI] PASO 2: Sincronización completa');
-
-                      // Mostrar feedback: Generando
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Row(
-                              children: [
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 16),
-                                Text('Generando plan nuevo...'),
-                              ],
-                            ),
-                            duration: Duration(seconds: 20),
-                          ),
-                        );
-                      }
-
-                      // PASO 3: Generar plan nuevo
-                      debugPrint(
-                        '🔧 [UI] PASO 3: Generando plan desde ciclo activo...',
-                      );
-                      await ref
-                          .read(trainingPlanProvider.notifier)
-                          .generatePlanFromActiveCycle(now);
-
-                      // Mostrar feedback: Completado
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(Icons.check_circle, color: Colors.white),
-                                SizedBox(width: 16),
-                                Text('Plan generado exitosamente'),
-                              ],
-                            ),
-                            duration: Duration(seconds: 2),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-
-                        if (_tabController != null) {
-                          _tabController!.animateTo(3);
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('Regenerar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: _buildGeneratePlanSection(),
         ),
         // TabBar fija en la parte superior
         Container(
@@ -462,6 +286,85 @@ class _TrainingDashboardScreenState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGeneratePlanSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Generar Nuevo Plan',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            // Toggle motor (legacy vs V3)
+            PopupMenuButton<String>(
+              icon: Icon(Icons.settings, size: 20, color: kTextColorSecondary),
+              onSelected: (value) {
+                // TODO: Implementar switch entre motores
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Motor seleccionado: $value')),
+                );
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'v3',
+                  child: Text('Motor V3 (IA/Ciencia)'),
+                ),
+                const PopupMenuItem(
+                  value: 'legacy',
+                  child: Text('Motor Legacy'),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Botón V3
+        TrainingPlanGeneratorV3Button(onPlanGenerated: _onPlanGenerated),
+
+        // Botón legacy (mantener por ahora)
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _onGeneratePlanLegacy,
+          icon: const Icon(Icons.science),
+          label: const Text('Generar con Motor Legacy'),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _onPlanGenerated() {
+    // Callback cuando plan V3 es generado exitosamente
+    setState(() {
+      // Refresh UI si necesario
+    });
+  }
+
+  Future<void> _onGeneratePlanLegacy() async {
+    final now = DateTime.now();
+    await ref
+        .read(trainingPlanProvider.notifier)
+        .generatePlanFromActiveCycle(now);
+    if (mounted && _tabController != null) {
+      _tabController!.animateTo(3);
+    }
+  }
+
+  void _showMLFeedbackDialog(String mlExampleId, String clientId) {
+    showDialog(
+      context: context,
+      builder: (context) =>
+          MLOutcomeFeedbackDialog(mlExampleId: mlExampleId, clientId: clientId),
     );
   }
 
