@@ -366,8 +366,22 @@ class _TrainingDashboardScreenState
   void _onPlanGenerated() {
     // Callback cuando plan V3 es generado exitosamente
     setState(() {
-      // Refresh UI si necesario
+      // Refresh UI
     });
+
+    // ✅ Navegar a tab Semanal para ver plan generado
+    if (_tabController != null) {
+      _tabController!.animateTo(3); // Tab Semanal
+    }
+
+    // ✅ Mostrar snackbar confirmación
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ Plan generado. Revisa la pestaña "Semanal"'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> _onGeneratePlanLegacy() async {
