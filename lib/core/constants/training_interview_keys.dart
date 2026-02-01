@@ -120,4 +120,74 @@ class TrainingInterviewKeys {
   static const usesAnabolics = 'usesAnabolics';
   static const trainingLevel = 'trainingLevel';
   static const trainingLevelLabel = 'trainingLevelLabel';
+
+  // ════════════════════════════════════════════════════════════════
+  // TRAINING INTERVIEW V2 - MANDATORY FIELDS (2025)
+  // Basado en Israetel, Schoenfeld, Helms, NSCA 2024-2025
+  // ════════════════════════════════════════════════════════════════
+
+  /// Volumen promedio semanal por músculo (sets/semana)
+  /// Ejemplo: 12 = entrena pecho con 12 sets totales/semana
+  /// Rango típico: 8-25 sets
+  static const avgWeeklySetsPerMuscle = 'avgWeeklySetsPerMuscle';
+
+  /// Semanas consecutivas entrenando sin pausas >1 semana
+  /// Usado para evaluar consistencia y adaptación
+  /// Ejemplo: 16 = lleva 16 semanas sin parar
+  static const consecutiveWeeksTraining = 'consecutiveWeeksTraining';
+
+  /// Perceived Recovery Status (PRS) - Escala 1-10
+  /// 1 = Completamente fatigado, 10 = Completamente recuperado
+  /// Promedio antes de cada sesión
+  static const perceivedRecoveryStatus = 'perceivedRecoveryStatus';
+
+  /// Reps In Reserve promedio (0-5)
+  /// 0 = Fallo muscular, 5 = Muy fácil
+  /// Usado para autoregulación por RIR
+  static const averageRIR = 'averageRIR';
+
+  /// Rating of Perceived Exertion promedio (1-10)
+  /// Esfuerzo percibido al final de la sesión
+  /// 1 = Muy fácil, 10 = Máximo esfuerzo
+  static const averageSessionRPE = 'averageSessionRPE';
+
+  // ════════════════════════════════════════════════════════════════
+  // TRAINING INTERVIEW V2 - RECOMMENDED FIELDS (2025)
+  // ════════════════════════════════════════════════════════════════
+
+  /// Máximo sets por músculo por semana antes de overreaching
+  /// Usado para calcular MRV individual
+  static const maxWeeklySetsBeforeOverreaching =
+      'maxWeeklySetsBeforeOverreaching';
+
+  /// Frecuencia de deload en semanas (cada cuántas semanas)
+  /// Ejemplo: 4 = necesita deload cada 4 semanas
+  static const deloadFrequencyWeeks = 'deloadFrequencyWeeks';
+
+  /// Resting Heart Rate (RHR) - Frecuencia cardíaca en reposo
+  /// Medido por la mañana, en bpm
+  /// Usado para detectar fatiga sistémica
+  static const restingHeartRate = 'restingHeartRate';
+
+  /// Heart Rate Variability (HRV) - Variabilidad cardíaca
+  /// Medido en ms (RMSSD típicamente)
+  /// Indicador de recuperación del sistema nervioso
+  static const heartRateVariability = 'heartRateVariability';
+
+  /// DOMS promedio a las 48h (1-10)
+  /// Delayed Onset Muscle Soreness
+  /// 1 = Sin dolor, 10 = Dolor extremo
+  static const soreness48hAverage = 'soreness48hAverage';
+
+  /// Pausas >2 semanas en últimos 12 meses
+  /// Ejemplo: 2 = tuvo 2 pausas largas en el año
+  static const periodBreaksLast12Months = 'periodBreaksLast12Months';
+
+  /// Tasa de completitud de sesiones (0.0-1.0)
+  /// Ejemplo: 0.85 = completa 85% de sesiones planificadas
+  static const sessionCompletionRate = 'sessionCompletionRate';
+
+  /// Tendencia de rendimiento actual
+  /// Valores: 'improving', 'plateaued', 'declining'
+  static const performanceTrend = 'performanceTrend';
 }

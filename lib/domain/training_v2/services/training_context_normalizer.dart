@@ -1,5 +1,6 @@
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/constants/training_interview_keys.dart';
+import 'package:hcs_app_lap/core/enums/performance_trend.dart';
 
 class TrainingContextNormalizer {
   const TrainingContextNormalizer();
@@ -131,5 +132,122 @@ class TrainingContextNormalizer {
     if (v is Map<String, dynamic>) return v;
     if (v is Map) return Map<String, dynamic>.from(v);
     return const {};
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // TRAINING INTERVIEW V2 NORMALIZERS (2025)
+  // ════════════════════════════════════════════════════════════════
+
+  /// Sets promedio por músculo por semana
+  int avgWeeklySetsPerMuscle(Map<String, dynamic> extra) =>
+      readInt(extra, const [
+        TrainingInterviewKeys.avgWeeklySetsPerMuscle,
+        'avgWeeklySets',
+        'setsPerMusclePerWeek',
+      ], fallback: 12); // Default conservador: 12 sets/semana
+
+  /// Semanas consecutivas entrenando
+  int consecutiveWeeksTraining(Map<String, dynamic> extra) =>
+      readInt(extra, const [
+        TrainingInterviewKeys.consecutiveWeeksTraining,
+        'consecutiveWeeks',
+        'trainingStreak',
+      ], fallback: 4); // Default: 4 semanas (1 mes)
+
+  /// Perceived Recovery Status (1-10)
+  int perceivedRecoveryStatus(Map<String, dynamic> extra) =>
+      readInt(extra, const [
+        TrainingInterviewKeys.perceivedRecoveryStatus,
+        'prs',
+        'recoveryStatus',
+      ], fallback: 7); // Default: bien recuperado
+
+  /// Average RIR (0-5)
+  double averageRIR(Map<String, dynamic> extra) => readDouble(extra, const [
+    TrainingInterviewKeys.averageRIR,
+    'avgRir',
+    'repsInReserve',
+  ], fallback: 2.0); // Default: 2 RIR (hipertrofia óptima)
+
+  /// Average Session RPE (1-10)
+  int averageSessionRPE(Map<String, dynamic> extra) => readInt(extra, const [
+    TrainingInterviewKeys.averageSessionRPE,
+    'avgRpe',
+    'sessionRpe',
+  ], fallback: 7); // Default: esfuerzo moderado-alto
+
+  /// Max sets before overreaching (opcional)
+  int? maxWeeklySetsBeforeOverreaching(Map<String, dynamic> extra) {
+    final value = readInt(extra, const [
+      TrainingInterviewKeys.maxWeeklySetsBeforeOverreaching,
+      'maxSets',
+      'mrvObserved',
+    ], fallback: 0);
+    return value > 0 ? value : null;
+  }
+
+  /// Deload frequency weeks (opcional)
+  int? deloadFrequencyWeeks(Map<String, dynamic> extra) {
+    final value = readInt(extra, const [
+      TrainingInterviewKeys.deloadFrequencyWeeks,
+      'deloadFreq',
+    ], fallback: 0);
+    return value > 0 ? value : null;
+  }
+
+  /// Resting Heart Rate (opcional)
+  int? restingHeartRate(Map<String, dynamic> extra) {
+    final value = readInt(extra, const [
+      TrainingInterviewKeys.restingHeartRate,
+      'rhr',
+      'heartRate',
+    ], fallback: 0);
+    return value >= 40 && value <= 100 ? value : null;
+  }
+
+  /// Heart Rate Variability (opcional)
+  double? heartRateVariability(Map<String, dynamic> extra) {
+    final value = readDouble(extra, const [
+      TrainingInterviewKeys.heartRateVariability,
+      'hrv',
+    ], fallback: 0.0);
+    return value > 0 ? value : null;
+  }
+
+  /// Soreness 48h average (opcional)
+  int? soreness48hAverage(Map<String, dynamic> extra) {
+    final value = readInt(extra, const [
+      TrainingInterviewKeys.soreness48hAverage,
+      'doms',
+      'soreness',
+    ], fallback: 0);
+    return value > 0 ? value : null;
+  }
+
+  /// Period breaks last 12 months (opcional)
+  int? periodBreaksLast12Months(Map<String, dynamic> extra) {
+    final value = readInt(extra, const [
+      TrainingInterviewKeys.periodBreaksLast12Months,
+      'periodBreaks',
+      'trainingBreaks',
+    ], fallback: 0);
+    return value >= 0 ? value : null;
+  }
+
+  /// Session completion rate (opcional)
+  double? sessionCompletionRate(Map<String, dynamic> extra) {
+    final value = readDouble(extra, const [
+      TrainingInterviewKeys.sessionCompletionRate,
+      'adherence',
+      'completionRate',
+    ], fallback: 0.0);
+    return value >= 0.0 && value <= 1.0 ? value : null;
+  }
+
+  /// Performance trend (opcional)
+  PerformanceTrend? performanceTrend(Map<String, dynamic> extra) {
+    final raw = extra[TrainingInterviewKeys.performanceTrend];
+    if (raw == null) return null;
+    return performanceTrendFromString(raw.toString());
   }
 }

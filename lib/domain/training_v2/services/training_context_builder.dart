@@ -119,21 +119,72 @@ class TrainingContextBuilder {
       );
     }
 
-    // -------- Interview (normalizado) --------
+    // -------- Interview (V2 - 2025) --------
     final interview = TrainingInterviewSnapshot(
+      // Mandatory fields
       yearsTrainingContinuous: _n.yearsTrainingContinuous(extra),
       sessionDurationMinutes: _n.sessionDurationMinutes(extra),
       restBetweenSetsSeconds: _n.restBetweenSetsSeconds(extra),
       avgSleepHours: _n.avgSleepHours(extra),
+      avgWeeklySetsPerMuscle: _n.avgWeeklySetsPerMuscle(extra),
+      consecutiveWeeksTraining: _n.consecutiveWeeksTraining(extra),
+      perceivedRecoveryStatus: _n.perceivedRecoveryStatus(extra),
+      stressLevel: _n.readInt(extra, const [
+        TrainingExtraKeys.stressLevel,
+        'stress',
+      ], fallback: 5),
+      averageRIR: _n.averageRIR(extra),
+      averageSessionRPE: _n.averageSessionRPE(extra),
+
+      // Legacy fields
       workCapacity: _n.workCapacity(extra),
       recoveryHistory: _n.recoveryHistory(extra),
       externalRecovery: _n.externalRecovery(extra),
-      // enums: el motor v2 puede tratarlos como null si no existen todavía
       programNovelty: training.programNovelty,
       physicalStress: training.physicalStress,
       nonPhysicalStress: training.nonPhysicalStress,
       restQuality: training.restQualityEnum,
       dietQuality: training.dietQuality,
+
+      // Recommended V2 fields (nullable)
+      maxWeeklySetsBeforeOverreaching: _n.maxWeeklySetsBeforeOverreaching(
+        extra,
+      ),
+      deloadFrequencyWeeks: _n.deloadFrequencyWeeks(extra),
+      restingHeartRate: _n.restingHeartRate(extra),
+      heartRateVariability: _n.heartRateVariability(extra),
+      soreness48hAverage: _n.soreness48hAverage(extra),
+      periodBreaksLast12Months: _n.periodBreaksLast12Months(extra),
+      sessionCompletionRate: _n.sessionCompletionRate(extra),
+      performanceTrend: _n.performanceTrend(extra),
+
+      // Optional PRs
+      prSquatKg:
+          _n.readInt(extra, const [
+                TrainingExtraKeys.prSquatKg,
+                'prSquat',
+              ], fallback: 0) >
+              0
+          ? _n.readInt(extra, const [TrainingExtraKeys.prSquatKg], fallback: 0)
+          : null,
+      prBenchKg:
+          _n.readInt(extra, const [
+                TrainingExtraKeys.prBenchKg,
+                'prBench',
+              ], fallback: 0) >
+              0
+          ? _n.readInt(extra, const [TrainingExtraKeys.prBenchKg], fallback: 0)
+          : null,
+      prDeadliftKg:
+          _n.readInt(extra, const [
+                TrainingExtraKeys.prDeadliftKg,
+                'prDeadlift',
+              ], fallback: 0) >
+              0
+          ? _n.readInt(extra, const [
+              TrainingExtraKeys.prDeadliftKg,
+            ], fallback: 0)
+          : null,
     );
 
     // -------- EnergyAvailability (derivado desde nutrition.extra) --------
