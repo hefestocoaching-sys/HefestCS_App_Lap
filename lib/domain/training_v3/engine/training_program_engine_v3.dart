@@ -443,32 +443,30 @@ class TrainingProgramEngineV3 {
     // Convertir TrainingContext → TrainingProfile (legacy)
     final profile = _contextToProfile(context);
 
+    // Aplicar ajuste de volumen basado en VolumeDecision
     final phase3Result = _phase3.calculateVolumeCapacity(
       profile: profile,
       history: null,
-      readinessAdjustment: 1.0,
+      readinessAdjustment: volumeDecision.adjustmentFactor,
     );
 
     decisions.addAll(phase3Result.decisions);
 
-    // Override MEV/MAV/MRV con volumeAdjustmentFactor
-    final adjustedVolumeLimits = <String, dynamic>{};
+    // Aplicar volumeAdjustmentFactor a los límites calculados
+    final adjustedVolumeLimits = <String, VolumeLimits>{};
 
     for (final entry in phase3Result.volumeLimitsByMuscle.entries) {
       final muscle = entry.key;
       final limits = entry.value;
 
-      adjustedVolumeLimits[muscle.name] = {
-        'mev': (limits.mev * volumeDecision.adjustmentFactor).round(),
-        'mav': (limits.mav * volumeDecision.adjustmentFactor).round(),
-        'mrv': (limits.mrv * volumeDecision.adjustmentFactor).round(),
-        'recommendedStart':
+      adjustedVolumeLimits[muscle.name] = VolumeLimits(
+        mev: (limits.mev * volumeDecision.adjustmentFactor).round(),
+        mav: (limits.mav * volumeDecision.adjustmentFactor).round(),
+        mrv: (limits.mrv * volumeDecision.adjustmentFactor).round(),
+        recommendedStartVolume:
             (limits.recommendedStartVolume * volumeDecision.adjustmentFactor)
                 .round(),
-        'originalMEV': limits.mev,
-        'originalMAV': limits.mav,
-        'adjustmentFactor': volumeDecision.adjustmentFactor,
-      };
+      );
     }
 
     decisions.add(
@@ -478,16 +476,15 @@ class TrainingProgramEngineV3 {
         description: 'Volumen ajustado con VolumeDecision',
         context: {
           'adjustmentFactor': volumeDecision.adjustmentFactor,
+          'reasoning': volumeDecision.reasoning,
           'sampleMuscle': adjustedVolumeLimits.keys.isNotEmpty
               ? adjustedVolumeLimits.keys.first
-              : null,
-          'sampleAdjusted': adjustedVolumeLimits.values.isNotEmpty
-              ? adjustedVolumeLimits.values.first
               : null,
           'features': {
             'readinessScore': features.readinessScore,
             'fatigueIndex': features.fatigueIndex,
             'overreachingRisk': features.overreachingRisk,
+            'volumeOptimalityIndex': features.volumeOptimalityIndex,
           },
         },
         timestamp: referenceDate,
@@ -495,25 +492,225 @@ class TrainingProgramEngineV3 {
     );
 
     // ════════════════════════════════════════════════════════════
-    // PHASE 4-7: Delegado a services legacy (sin cambios)
+    // PHASE 4: SPLIT DISTRIBUTION
     // ════════════════════════════════════════════════════════════
 
-    // TODO: Implementar Phases 4-7 usando services legacy
-    // Por ahora retornar plan placeholder
+    final readinessMode = readinessDecision.level == ReadinessLevel.high
+        ? 'normal'
+        : 'conservative';
 
+    final phase4Result = _phase4.buildWeeklySplit(
+      profile: profile,
+      volumeByMuscle: adjustedVolumeLimits,
+      readinessAdjustment: volumeDecision.adjustmentFactor,
+      readinessMode: readinessMode,
+    );
+
+    decisions.addAll(phase4Result.decisions);
+
+    final baseSplit = phase4Result.split;
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'TrainingProgramEngineV3',
+        category: 'split_generated',
+        description: 'Split semanal generado',
+        context: {
+          'splitId': baseSplit.splitId,
+          'daysPerWeek': baseSplit.daysPerWeek,
+          'readinessMode': readinessMode,
+        },
+        timestamp: referenceDate,
+      ),
+    );
+
+    // ════════════════════════════════════════════════════════════
+    // PHASE 5: PERIODIZATION
+    // ════════════════════════════════════════════════════════════
+
+    final phase5Result = _phase5.periodize(
+      profile: profile,
+      baseSplit: baseSplit,
+    );
+
+    decisions.addAll(phase5Result.decisions);
+
+    final periodizedWeeks = phase5Result.weeks;
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'TrainingProgramEngineV3',
+        category: 'periodization_applied',
+        description: 'Periodización aplicada',
+        context: {
+          'totalWeeks': periodizedWeeks.length,
+          'phases': periodizedWeeks
+              .map((w) => '${w.weekIndex}:${w.phase.name}')
+              .toList(),
+        },
+        timestamp: referenceDate,
+      ),
+    );
+
+    // ════════════════════════════════════════════════════════════
+    // PHASE 6: EXERCISE SELECTION
+    // ════════════════════════════════════════════════════════════
+
+    final phase6Result = _phase6.selectExercises(
+      profile: profile,
+      baseSplit: baseSplit,
+      catalog: exercises,
+      weeks: periodizedWeeks.length,
+    );
+
+    decisions.addAll(phase6Result.decisions);
+
+    final exerciseSelections = phase6Result.selections;
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'TrainingProgramEngineV3',
+        category: 'exercises_selected',
+        description: 'Ejercicios seleccionados para todas las semanas',
+        context: {
+          'totalWeeks': exerciseSelections.keys.length,
+          'totalExercises': exerciseSelections.values
+              .expand((w) => w.values)
+              .expand((d) => d.values)
+              .expand((e) => e)
+              .length,
+        },
+        timestamp: referenceDate,
+      ),
+    );
+
+    // ════════════════════════════════════════════════════════════
+    // PHASE 7: PRESCRIPTION
+    // ════════════════════════════════════════════════════════════
+
+    final phase7Result = _phase7.buildPrescriptions(
+      baseSplit: baseSplit,
+      periodization: phase5Result,
+      selections: exerciseSelections,
+      volumeLimitsByMuscle: adjustedVolumeLimits,
+      trainingLevel: profile.trainingLevel,
+      profile: profile,
+    );
+
+    decisions.addAll(phase7Result.decisions);
+
+    final prescriptions = phase7Result.weekDayPrescriptions;
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'TrainingProgramEngineV3',
+        category: 'prescriptions_generated',
+        description: 'Prescripciones generadas para todas las semanas',
+        context: {
+          'totalWeeks': prescriptions.keys.length,
+          'totalPrescriptions': prescriptions.values
+              .expand((d) => d.values)
+              .expand((p) => p)
+              .length,
+        },
+        timestamp: referenceDate,
+      ),
+    );
+
+    // ════════════════════════════════════════════════════════════
+    // ASSEMBLY: Construir TrainingPlanConfig final
+    // ════════════════════════════════════════════════════════════
+
+    final weeks = <TrainingWeek>[];
+
+    for (final periodizedWeek in periodizedWeeks) {
+      final weekIndex = periodizedWeek.weekIndex;
+      final weekPrescriptions = prescriptions[weekIndex] ?? {};
+      final sessions = <TrainingSession>[];
+
+      // Ordenar días
+      final sortedDays = weekPrescriptions.keys.toList()..sort();
+
+      for (final dayNumber in sortedDays) {
+        final dayPrescriptions = weekPrescriptions[dayNumber] ?? [];
+
+        if (dayPrescriptions.isEmpty) continue;
+
+        // Crear TrainingSession
+        final session = TrainingSession(
+          id: 'w${weekIndex}_d${dayNumber}_${DateTime.now().millisecondsSinceEpoch}',
+          dayNumber: dayNumber,
+          sessionName: _buildSessionName(
+            weekIndex: weekIndex,
+            dayNumber: dayNumber,
+            phase: periodizedWeek.phase,
+            baseSplit: baseSplit,
+          ),
+          prescriptions: dayPrescriptions,
+        );
+
+        sessions.add(session);
+      }
+
+      // Crear TrainingWeek
+      final week = TrainingWeek(
+        id: 'week_${weekIndex}_${periodizedWeek.phase.name}',
+        weekNumber: weekIndex,
+        phase: periodizedWeek.phase,
+        sessions: sessions,
+      );
+
+      weeks.add(week);
+    }
+
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'TrainingProgramEngineV3',
+        category: 'assembly_complete',
+        description: 'Plan completo ensamblado',
+        context: {
+          'totalWeeks': weeks.length,
+          'totalSessions': weeks.fold<int>(
+            0,
+            (sum, w) => sum + w.sessions.length,
+          ),
+          'totalPrescriptions': weeks
+              .expand((w) => w.sessions)
+              .expand((s) => s.prescriptions)
+              .length,
+          'mlExampleId': mlExampleId,
+        },
+        timestamp: referenceDate,
+      ),
+    );
+
+    // Crear TrainingPlanConfig final
     final plan = TrainingPlanConfig(
-      id: 'plan_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'plan_v3_${DateTime.now().millisecondsSinceEpoch}',
       name: 'Plan V3 - ${client.profile.fullName}',
       clientId: client.id,
       startDate: referenceDate,
-      phase: TrainingPhase.accumulation,
-      splitId: 'auto',
-      microcycleLengthInWeeks: 1,
-      weeks: _buildPlaceholderWeeks(context),
+      phase: periodizedWeeks.first.phase,
+      splitId: baseSplit.splitId,
+      microcycleLengthInWeeks: periodizedWeeks.length,
+      weeks: weeks,
       trainingProfileSnapshot: profile,
     );
 
     return plan;
+  }
+
+  /// Construye nombre de sesión basado en split y fase
+  String _buildSessionName({
+    required int weekIndex,
+    required int dayNumber,
+    required TrainingPhase phase,
+    required SplitTemplate baseSplit,
+  }) {
+    final dayMuscles = baseSplit.dayMuscles[dayNumber] ?? [];
+    final muscleNames = dayMuscles.take(2).join('+');
+
+    return 'S${weekIndex}D${dayNumber} - $muscleNames (${phase.name})';
   }
 
   /// Convierte TrainingContext V2 → TrainingProfile (legacy)
@@ -593,38 +790,5 @@ class TrainingProgramEngineV3 {
       clientId: clientId,
       timestamp: timestamp,
     );
-  }
-
-  /// Placeholder: genera semanas de ejemplo (reemplazar con Phases 4-7 reales)
-  List<TrainingWeek> _buildPlaceholderWeeks(TrainingContext context) {
-    // Por ahora retornar 1 semana placeholder
-    // TODO: Implementar con Phases 4-7 legacy
-
-    return [
-      TrainingWeek(
-        id: 'week-1-${TrainingPhase.accumulation.name}',
-        weekNumber: 1,
-        phase: TrainingPhase.accumulation,
-        sessions: _buildPlaceholderSessions(context),
-      ),
-    ];
-  }
-
-  /// Placeholder: genera sesiones de ejemplo
-  List<TrainingSession> _buildPlaceholderSessions(TrainingContext context) {
-    final sessions = <TrainingSession>[];
-
-    for (int day = 1; day <= context.meta.daysPerWeek; day++) {
-      sessions.add(
-        TrainingSession(
-          id: 'session-$day',
-          dayNumber: day,
-          sessionName: 'Día $day - Placeholder',
-          prescriptions: const [],
-        ),
-      );
-    }
-
-    return sessions;
   }
 }
