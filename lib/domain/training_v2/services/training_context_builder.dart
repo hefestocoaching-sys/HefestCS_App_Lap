@@ -161,29 +161,27 @@ class TrainingContextBuilder {
       // Optional PRs
       prSquatKg:
           _n.readInt(extra, const [
-                TrainingExtraKeys.prSquatKg,
+                TrainingExtraKeys.prSquat,
                 'prSquat',
               ], fallback: 0) >
               0
-          ? _n.readInt(extra, const [TrainingExtraKeys.prSquatKg], fallback: 0)
+          ? _n.readInt(extra, const [TrainingExtraKeys.prSquat], fallback: 0)
           : null,
       prBenchKg:
           _n.readInt(extra, const [
-                TrainingExtraKeys.prBenchKg,
+                TrainingExtraKeys.prBench,
                 'prBench',
               ], fallback: 0) >
               0
-          ? _n.readInt(extra, const [TrainingExtraKeys.prBenchKg], fallback: 0)
+          ? _n.readInt(extra, const [TrainingExtraKeys.prBench], fallback: 0)
           : null,
       prDeadliftKg:
           _n.readInt(extra, const [
-                TrainingExtraKeys.prDeadliftKg,
+                TrainingExtraKeys.prDeadlift,
                 'prDeadlift',
               ], fallback: 0) >
               0
-          ? _n.readInt(extra, const [
-              TrainingExtraKeys.prDeadliftKg,
-            ], fallback: 0)
+          ? _n.readInt(extra, const [TrainingExtraKeys.prDeadlift], fallback: 0)
           : null,
     );
 
