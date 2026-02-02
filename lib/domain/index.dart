@@ -127,3 +127,8 @@ export 'training_v2/models/training_context.dart';
 // Training V2 - Services
 export 'training_v2/services/training_context_builder.dart';
 export 'training_v2/services/training_context_normalizer.dart';
+
+// Training V3 - Motor Nuevo
+export 'training_v3/services/motor_v3_orchestrator.dart';
+export 'training_v3/ml_integration/hybrid_orchestrator_v3.dart';
+export 'training_v3/ml_integration/ml_config_v3.dart';
