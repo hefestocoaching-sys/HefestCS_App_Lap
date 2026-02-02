@@ -1,7 +1,6 @@
 // lib/domain/training_v3/engines/workout_log_processor.dart
 
 import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/exercise_log.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
 
 /// Procesador de logs de entrenamiento
