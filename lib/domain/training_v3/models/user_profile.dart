@@ -3,107 +3,107 @@
 import 'package:equatable/equatable.dart';
 
 /// Perfil completo del usuario para Motor V3
-/// 
+///
 /// Contiene toda la información necesaria para generar programas personalizados:
 /// - Datos demográficos (edad, género, antropometría)
 /// - Historial de entrenamiento (años, nivel, volumen previo)
 /// - Preferencias (días disponibles, duración de sesión, objetivos)
 /// - Restricciones (lesiones, equipamiento disponible)
-/// 
+///
 /// FUNDAMENTO CIENTÍFICO:
 /// - Semana 1-2: Volumen se ajusta según nivel de entrenamiento
 /// - Semana 6: Disponibilidad determina split óptimo
 /// - Semana 5: Historial de lesiones afecta selección de ejercicios
-/// 
+///
 /// Versión: 1.0.0
 class UserProfile extends Equatable {
   // ════════════════════════════════════════════════════════════
   // IDENTIFICACIÓN
   // ════════════════════════════════════════════════════════════
-  
+
   /// ID único del usuario (Firebase UID)
   final String id;
-  
+
   /// Nombre completo
   final String name;
-  
+
   /// Email
   final String email;
-  
+
   // ════════════════════════════════════════════════════════════
   // DATOS DEMOGRÁFICOS
   // ════════════════════════════════════════════════════════════
-  
+
   /// Edad en años (18-80)
   final int age;
-  
+
   /// Género ('male', 'female', 'other')
   final String gender;
-  
+
   /// Altura en cm (140-220)
   final double heightCm;
-  
+
   /// Peso en kg (40-160)
   final double weightKg;
-  
+
   // ════════════════════════════════════════════════════════════
   // HISTORIAL DE ENTRENAMIENTO
   // ════════════════════════════════════════════════════════════
-  
+
   /// Años de entrenamiento continuo (0-30)
   /// Semana 1: Determina rango de volumen (novice/intermediate/advanced)
   final double yearsTraining;
-  
+
   /// Nivel de entrenamiento ('novice', 'intermediate', 'advanced')
   /// Semana 1, Imagen 1-5: Define landmarks VME/MAV/MRV
   final String trainingLevel;
-  
+
   /// Semanas consecutivas entrenando sin pausa (0-52)
   final int consecutiveWeeks;
-  
+
   // ════════════════════════════════════════════════════════════
   // PREFERENCIAS DE ENTRENAMIENTO
   // ════════════════════════════════════════════════════════════
-  
+
   /// Días disponibles por semana (3-6)
   /// Semana 6, Imagen 64-69: Determina split (3d=FullBody, 4d=U/L, 5-6d=PPL)
   final int availableDays;
-  
+
   /// Duración de sesión en minutos (30-120)
   final int sessionDuration;
-  
+
   /// Objetivo principal ('hypertrophy', 'strength', 'endurance', 'general_fitness')
   final String primaryGoal;
-  
+
   /// Prioridades musculares (músculo -> prioridad 1-5)
   /// 5 = máxima prioridad (asignar MAV)
   /// 3 = prioridad media (punto medio VME-MAV)
   /// 1 = mínima prioridad (asignar VME)
   /// Semana 1, Imagen 11-15
   final Map<String, int> musclePriorities;
-  
+
   // ════════════════════════════════════════════════════════════
   // RESTRICCIONES
   // ════════════════════════════════════════════════════════════
-  
+
   /// Equipamiento disponible
   /// Semana 5, Imagen 44: Selección de ejercicios filtrada por equipamiento
   final List<String> availableEquipment;
-  
+
   /// Historial de lesiones (articulación -> descripción)
   /// Semana 5: Evitar ejercicios de alto riesgo para articulaciones lesionadas
   final Map<String, String> injuryHistory;
-  
+
   /// Ejercicios excluidos manualmente (IDs)
   final List<String> excludedExercises;
-  
+
   // ════════════════════════════════════════════════════════════
   // METADATA
   // ════════════════════════════════════════════════════════════
-  
+
   /// Fecha de creación del perfil
   final DateTime createdAt;
-  
+
   /// Última actualización
   final DateTime updatedAt;
 
@@ -140,7 +140,8 @@ class UserProfile extends Equatable {
     if (yearsTraining < 0 || yearsTraining > 30) return false;
     if (availableDays < 3 || availableDays > 6) return false;
     if (sessionDuration < 30 || sessionDuration > 120) return false;
-    if (!['novice', 'intermediate', 'advanced'].contains(trainingLevel)) return false;
+    if (!['novice', 'intermediate', 'advanced'].contains(trainingLevel))
+      return false;
     if (!['male', 'female', 'other'].contains(gender)) return false;
     return true;
   }
@@ -188,8 +189,12 @@ class UserProfile extends Equatable {
       primaryGoal: json['primaryGoal'] as String,
       musclePriorities: Map<String, int>.from(json['musclePriorities'] as Map),
       availableEquipment: List<String>.from(json['availableEquipment'] as List),
-      injuryHistory: Map<String, String>.from(json['injuryHistory'] as Map? ?? {}),
-      excludedExercises: List<String>.from(json['excludedExercises'] as List? ?? []),
+      injuryHistory: Map<String, String>.from(
+        json['injuryHistory'] as Map? ?? {},
+      ),
+      excludedExercises: List<String>.from(
+        json['excludedExercises'] as List? ?? [],
+      ),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
