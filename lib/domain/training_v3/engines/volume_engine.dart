@@ -107,16 +107,54 @@ class VolumeEngine {
   /// Individuos pueden variar ±20%
   static Map<String, int> _getVolumeLandmarks(String muscle, String level) {
     // Tabla científica completa basada en Israetel et al. (2020)
+    // Actualizada a 14 músculos canónicos
     final landmarksByMuscle = {
       'chest': {
         'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
         'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
         'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},
       },
-      'back': {
-        'novice': {'vme': 12, 'mav': 18, 'mrv': 24},
-        'intermediate': {'vme': 15, 'mav': 22, 'mrv': 28},
-        'advanced': {'vme': 18, 'mav': 26, 'mrv': 32},
+      // Hombros divididos en 3 cabezas
+      'deltoide_anterior': {
+        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
+        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
+        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+      },
+      'deltoide_lateral': {
+        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
+        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
+        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+      },
+      'deltoide_posterior': {
+        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
+        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
+        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+      },
+      'triceps': {
+        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
+        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
+        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
+      },
+      // Espalda dividida en 3 regiones
+      'lats': {
+        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
+        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
+        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
+      },
+      'upper_back': {
+        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
+        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
+        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+      },
+      'traps': {
+        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
+        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
+        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+      },
+      'biceps': {
+        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
+        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
+        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
       },
       'quads': {
         'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
@@ -132,21 +170,6 @@ class VolumeEngine {
         'novice': {'vme': 8, 'mav': 12, 'mrv': 16},
         'intermediate': {'vme': 10, 'mav': 15, 'mrv': 20},
         'advanced': {'vme': 12, 'mav': 18, 'mrv': 24},
-      },
-      'shoulders': {
-        'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
-        'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
-        'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},
-      },
-      'biceps': {
-        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
-        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
-      },
-      'triceps': {
-        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
-        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
       },
       'calves': {
         'novice': {'vme': 8, 'mav': 12, 'mrv': 16},
