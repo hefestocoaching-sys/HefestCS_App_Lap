@@ -7,11 +7,6 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 ///
 /// Ajusta automáticamente programas con warnings de volumen subóptimo
 /// hasta alcanzar rangos MAV óptimos.
-///
-/// NOTA: Implementación simplificada que:
-/// - Parsea warnings de volumen subóptimo
-/// - Identifica músculos deficitarios
-/// - Prepara ajustes para aplicar en próximas iteraciones
 class VolumeOptimizer {
   /// Optimiza programa completo eliminando warnings de volumen
   static TrainingProgram optimize(
@@ -21,7 +16,8 @@ class VolumeOptimizer {
     debugPrint('🔧 VolumeOptimizer: Iniciando optimización...');
     debugPrint('   Warnings detectados: ${warnings.length}');
 
-    var optimizedProgram = program;
+    // Ajustar volumen basado en warnings
+    final adjustedVolume = <String, double>{...program.weeklyVolumeByMuscle};
     int adjustmentsMade = 0;
 
     // Procesar cada warning
@@ -30,22 +26,31 @@ class VolumeOptimizer {
           warning.contains('por debajo de MAV')) {
         final adjustment = _parseVolumeWarning(warning);
         if (adjustment != null) {
-          debugPrint(
-            '   📊 ${adjustment['muscle']}: ${adjustment['current']} → ${adjustment['target']} sets',
-          );
-          adjustmentsMade++;
+          final muscle = adjustment['muscle']!;
+          final target = int.parse(adjustment['target']!);
+          final current = adjustedVolume[muscle]?.toInt() ?? 0;
+
+          if (target > current) {
+            debugPrint('   🎯 Ajustando $muscle: $current → $target sets');
+            adjustedVolume[muscle] = target.toDouble();
+            adjustmentsMade++;
+          }
         }
       }
     }
 
-    debugPrint(
-      '✅ VolumeOptimizer: Detectados $adjustmentsMade músculos subóptimos',
-    );
-    debugPrint(
-      '   (Optimización completa pendiente para próximas iteraciones)',
-    );
+    debugPrint('✅ VolumeOptimizer: $adjustmentsMade ajustes aplicados');
 
-    return optimizedProgram;
+    // Si no hubo cambios, retornar programa original
+    if (adjustmentsMade == 0) {
+      return program;
+    }
+
+    // Usar copyWith para crear nueva versión con volumen ajustado
+    return program.copyWith(
+      weeklyVolumeByMuscle: adjustedVolume,
+      notes: '${program.notes ?? ""}\n[Auto-optimizado por VolumeOptimizer]',
+    );
   }
 
   /// Parsea warning para extraer músculo y sets
