@@ -22,6 +22,9 @@ import 'package:hcs_app_lap/features/training_feature/providers/training_plan_pr
 import 'package:hcs_app_lap/features/training_feature/widgets/ml_outcome_feedback_dialog.dart';
 import 'package:hcs_app_lap/features/training_feature/widgets/training_plan_generator_v3_button.dart';
 
+// NUEVO: Import Motor V3
+import 'package:hcs_app_lap/presentation/screens/training/motor_v3_dashboard_screen.dart';
+
 // Widgets visuales
 import '../widgets/volume_range_muscle_table.dart';
 import '../widgets/series_distribution_editor.dart';
@@ -147,6 +150,85 @@ class _TrainingDashboardScreenState
 
     return Scaffold(
       backgroundColor: Colors.transparent,
+      appBar: clientsAsync.when(
+        data: (state) {
+          final client = state.activeClient;
+          if (client == null) return null;
+
+          return AppBar(
+            title: const Text('Entrenamiento'),
+            backgroundColor: kAppBarColor,
+            actions: [
+              // ═══════════════════════════════════════════
+              // NUEVO: BOTÓN MOTOR V3
+              // ═══════════════════════════════════════════
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MotorV3DashboardScreen(userId: client.id),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.science, size: 18),
+                      label: const Text('Motor V3'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00D9FF),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                    // Badge "NUEVO"
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withValues(alpha: 0.5),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'NUEVO',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+        loading: () => null,
+        error: (e, s) => null,
+      ),
       body: clientsAsync.when(
         data: (state) {
           final client = state.activeClient;
