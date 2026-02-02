@@ -25,6 +25,7 @@ import 'package:hcs_app_lap/features/training_feature/widgets/training_plan_gene
 // Widgets visuales
 import '../widgets/volume_range_muscle_table.dart';
 import '../widgets/series_distribution_editor.dart';
+import '../widgets/weekly_progress_tracker.dart';
 import '../widgets/macrocycle_overview_tab.dart';
 import '../widgets/weekly_plan_tab.dart';
 
@@ -131,7 +132,7 @@ class _TrainingDashboardScreenState
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -246,6 +247,7 @@ class _TrainingDashboardScreenState
             tabs: const [
               Tab(text: 'Volumen'),
               Tab(text: 'Distribución'),
+              Tab(text: 'Progreso'),
               Tab(text: 'Macrociclo'),
               Tab(text: 'Semanal'),
             ],
@@ -274,9 +276,11 @@ class _TrainingDashboardScreenState
                     _handleDistributionChanged(distribution);
                   },
                 ),
-                // Tab 3: Macrociclo por músculo (AA/HF) sin dependencia de días
+                // Tab 3: Progreso Semanal
+                WeeklyProgressTracker(trainingExtra: effectiveExtra),
+                // Tab 4: Macrociclo por músculo (AA/HF) sin dependencia de días
                 MacrocycleOverviewTab(trainingExtra: effectiveExtra),
-                // Tab 4: Plan semanal según días y split válido
+                // Tab 5: Plan semanal según días y split válido
                 Builder(
                   builder: (context) {
                     final planConfig = _resolveDisplayedPlanConfig(client);
