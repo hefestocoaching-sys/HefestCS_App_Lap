@@ -5,7 +5,6 @@ import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrato
 import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 
 // ═══════════════════════════════════════════════════
 // MOTOR V3 - PROVIDERS PRINCIPALES

@@ -448,25 +448,32 @@ class _TrainingDashboardScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Botón V3
-              FutureBuilder<List<Exercise>>(
-                future: ExerciseCatalogLoader.load(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Text(
-                      'Error cargando ejercicios: ${snapshot.error}',
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
-                    );
-                  }
-                  final exercises = snapshot.data ?? const <Exercise>[];
-                  return TrainingPlanGeneratorV3Button(
-                    onPlanGenerated: _onPlanGenerated,
-                    exercises: exercises,
-                  );
-                },
+              // Mensaje sobre Motor V3
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00D9FF).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF00D9FF).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline,
+                      color: Color(0xFF00D9FF),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Motor V3 disponible desde el botón "Motor V3" en el AppBar',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               // Botón legacy
