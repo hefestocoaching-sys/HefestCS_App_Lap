@@ -77,9 +77,10 @@ class ProgramGenerationNotifier extends Notifier<ProgramGenerationState> {
 }
 
 /// Provider para el estado de generación de programa
-final programGenerationStateProvider = NotifierProvider<ProgramGenerationNotifier, ProgramGenerationState>(() {
-  return ProgramGenerationNotifier();
-});
+final programGenerationStateProvider =
+    NotifierProvider<ProgramGenerationNotifier, ProgramGenerationState>(() {
+      return ProgramGenerationNotifier();
+    });
 
 // ═══════════════════════════════════════════════════
 // ACTIONS

@@ -20,7 +20,7 @@ import 'package:hcs_app_lap/domain/services/record_deletion_service_provider.dar
 import 'package:hcs_app_lap/features/common_widgets/record_deletion_dialogs.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/widgets/ml_outcome_feedback_dialog.dart';
-import 'package:hcs_app_lap/features/training_feature/widgets/training_plan_generator_v3_button.dart';
+// import 'package:hcs_app_lap/features/training_feature/widgets/training_plan_generator_v3_button.dart'; // Eliminado - Motor V3 legacy
 
 // NUEVO: Import Motor V3
 import 'package:hcs_app_lap/presentation/screens/training/motor_v3_dashboard_screen.dart';
