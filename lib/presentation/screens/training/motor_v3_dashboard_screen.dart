@@ -592,24 +592,22 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
       primaryGoal: 'hypertrophy',
       musclePriorities: {
         // PRIMARIOS (usuario dijo: quiero desarrollar pecho y espalda)
-        'chest': 5,           // → ~16-18 sets (MAV para intermedio)
-        'lats': 5,            // → ~16-18 sets
-        'upper_back': 5,      // → ~14-16 sets
-        
+        'chest': 5, // → ~16-18 sets (MAV para intermedio)
+        'lats': 5, // → ~16-18 sets
+        'upper_back': 5, // → ~14-16 sets
         // SECUNDARIOS (importante pero no objetivo principal)
-        'deltoide_anterior': 4,   // → ~12-14 sets
-        'deltoide_lateral': 4,    // → ~12-14 sets
-        'deltoide_posterior': 3,  // → ~10-12 sets
-        'quads': 4,               // → ~14-16 sets
-        'hamstrings': 4,          // → ~12-14 sets
-        'glutes': 4,              // → ~12-14 sets
-        'traps': 3,               // → ~10-12 sets
-        'biceps': 3,              // → ~10-12 sets
-        'triceps': 3,             // → ~10-12 sets
-        
+        'deltoide_anterior': 4, // → ~12-14 sets
+        'deltoide_lateral': 4, // → ~12-14 sets
+        'deltoide_posterior': 3, // → ~10-12 sets
+        'quads': 4, // → ~14-16 sets
+        'hamstrings': 4, // → ~12-14 sets
+        'glutes': 4, // → ~12-14 sets
+        'traps': 3, // → ~10-12 sets
+        'biceps': 3, // → ~10-12 sets
+        'triceps': 3, // → ~10-12 sets
         // TERCIARIOS (mantenimiento mínimo)
-        'calves': 2,              // → ~6-8 sets (MEV)
-        'abs': 2,                 // → ~8-10 sets (MEV)
+        'calves': 2, // → ~6-8 sets (MEV)
+        'abs': 2, // → ~8-10 sets (MEV)
       },
       injuryHistory: {},
       availableEquipment: [
