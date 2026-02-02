@@ -1,8 +1,6 @@
 // lib/domain/training_v3/services/analytics_service.dart
 
 import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/workout_log_processor.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/monitoring_engine.dart';
 
 /// Servicio de análisis y métricas de entrenamiento

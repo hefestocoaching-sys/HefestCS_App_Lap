@@ -157,17 +157,6 @@ class MotorV3Orchestrator {
   }) {
     final now = DateTime.now();
 
-    // PLACEHOLDER: Crear sesiones vacías por ahora
-    final sessions = List.generate(
-      split.daysPerWeek,
-      (index) => {
-        'id': 'session_${index + 1}',
-        'dayNumber': index + 1,
-        'name': 'Sesión ${index + 1}',
-        'exercises': [], // PLACEHOLDER
-      },
-    );
-
     return TrainingProgram(
       id: 'program_${now.millisecondsSinceEpoch}',
       userId: userProfile.id,

@@ -17,6 +17,7 @@ void main() {
       final userProfile = UserProfile(
         id: 'test_user',
         name: 'Test User',
+        email: 'test@example.com',
         age: 25,
         gender: 'male',
         heightCm: 175,
@@ -24,6 +25,7 @@ void main() {
         trainingLevel: 'novice',
         yearsTraining: 1,
         availableDays: 4,
+        sessionDuration: 60,
         primaryGoal: 'hypertrophy',
         musclePriorities: {
           'chest': 5,
@@ -36,6 +38,8 @@ void main() {
         },
         injuryHistory: {},
         availableEquipment: ['barbell', 'dumbbell', 'machine', 'bench', 'rack'],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
 
       // WHEN: Generar programa
@@ -66,6 +70,7 @@ void main() {
       final invalidProfile = UserProfile(
         id: 'test_user',
         name: 'Test User',
+        email: 'test@example.com',
         age: 25,
         gender: 'male',
         heightCm: 175,
@@ -73,10 +78,13 @@ void main() {
         trainingLevel: 'novice',
         yearsTraining: 1,
         availableDays: 0, // INVÁLIDO
+        sessionDuration: 60,
         primaryGoal: 'hypertrophy',
         musclePriorities: {},
         injuryHistory: {},
         availableEquipment: [],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
 
       // WHEN/THEN: Debe lanzar error
@@ -94,6 +102,7 @@ void main() {
       final userProfile = UserProfile(
         id: 'test_user',
         name: 'Test User',
+        email: 'test@example.com',
         age: 25,
         gender: 'male',
         heightCm: 175,
@@ -101,6 +110,7 @@ void main() {
         trainingLevel: 'intermediate',
         yearsTraining: 3,
         availableDays: 6,
+        sessionDuration: 60,
         primaryGoal: 'hypertrophy',
         musclePriorities: {
           'chest': 5,
@@ -111,6 +121,8 @@ void main() {
         },
         injuryHistory: {},
         availableEquipment: ['barbell', 'dumbbell'],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
 
       final result = await MotorV3Orchestrator.generateProgram(
