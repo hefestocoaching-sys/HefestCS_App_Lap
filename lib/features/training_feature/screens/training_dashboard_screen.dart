@@ -1,8 +1,8 @@
 // ignore_for_file: deprecated_member_use_from_same_package, unused_element, unused_field, prefer_final_fields
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hcs_app_lap/data/datasources/local/exercise_catalog_loader.dart';
-import 'package:hcs_app_lap/domain/entities/exercise.dart';
+// import 'package:hcs_app_lap/data/datasources/local/exercise_catalog_loader.dart'; // No usado
+// import 'package:hcs_app_lap/domain/entities/exercise.dart'; // No usado
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 
 import 'package:hcs_app_lap/utils/theme.dart';
@@ -383,118 +383,108 @@ class _TrainingDashboardScreenState
   }
 
   Widget _buildGeneratePlanSection() {
-    return ExpansionTile(
-      // Iniciar colapsado por defecto
-      initiallyExpanded: false,
-
-      // Título compacto
-      title: Row(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ExpansionTile(
+        initiallyExpanded: false,
+        backgroundColor: kCardColor.withValues(alpha: 0.5),
+        collapsedBackgroundColor: kCardColor.withValues(alpha: 0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.auto_awesome, color: kPrimaryColor, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Generar Plan de Entrenamiento',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: kTextColor,
+              ),
+            ),
+          ],
+        ),
         children: [
-          const Icon(Icons.auto_awesome, color: kPrimaryColor, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Generar Nuevo Plan',
-                  style: TextStyle(
-                    color: kTextColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                // Información
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00D9FF).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFF00D9FF).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.science, color: Color(0xFF00D9FF), size: 32),
+                      SizedBox(height: 8),
+                      Text(
+                        'Motor V3 Científico',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Basado en 151 referencias científicas',
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        '✓ VME/MAV/MRV (Israetel 2020)\n'
+                        '✓ Distribución 35/45/20 (Schoenfeld 2021)\n'
+                        '✓ RIR Óptimo (Helms 2018)\n'
+                        '✓ ML Híbrido (70% reglas + 30% ML)',
+                        style: TextStyle(fontSize: 11, color: Colors.white60),
+                        textAlign: TextAlign.left,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Botón para abrir Motor V3
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Usa el botón "Motor V3" en el AppBar'),
+                        backgroundColor: Color(0xFF00D9FF),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.arrow_upward),
+                  label: const Text('Ver botón "Motor V3" arriba ↑'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00D9FF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          // Badge de estado
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-            ),
-            child: const Text(
-              'Listo',
-              style: TextStyle(
-                color: Colors.green,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ],
       ),
-
-      // Subtítulo compacto
-      subtitle: const Text(
-        'Motor V3 (ML-Ready) - RuleBased_Israeltel_Schoenfeld_Helms',
-        style: TextStyle(color: kTextColorSecondary, fontSize: 11),
-      ),
-
-      // Color de fondo
-      backgroundColor: kAppBarColor.withValues(alpha: 0.5),
-      collapsedBackgroundColor: kAppBarColor.withValues(alpha: 0.3),
-
-      // Iconos de expansión
-      iconColor: kPrimaryColor,
-      collapsedIconColor: kTextColorSecondary,
-
-      // Contenido (todo lo que ya tienes)
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Mensaje sobre Motor V3
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF00D9FF).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFF00D9FF).withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.info_outline,
-                      color: Color(0xFF00D9FF),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Motor V3 disponible desde el botón "Motor V3" en el AppBar',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Botón legacy
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _onGeneratePlanLegacy,
-                icon: const Icon(Icons.science, size: 16),
-                label: const Text('Alternativa: Motor Legacy'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  side: BorderSide(color: kPrimaryColor.withValues(alpha: 0.3)),
-                  foregroundColor: kTextColorSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
