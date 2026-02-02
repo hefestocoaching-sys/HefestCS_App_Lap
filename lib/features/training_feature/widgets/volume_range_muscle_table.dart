@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hcs_app_lap/core/constants/muscle_labels_es.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
-import 'package:hcs_app_lap/features/training_feature/widgets/muscle_detail_modal.dart';
+import 'muscle_detail_modal.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Modelo UI para una fila de la tabla de volumen por músculo.
@@ -52,6 +51,22 @@ class VolumeRangeUiRow {
     if (pos > 0.7) return 'Alto';
     return 'Óptimo';
   }
+}
+
+class MuscleVolumeData {
+  final int vme;
+  final int vmr;
+  final int vma;
+  final int target;
+  final Map<String, dynamic>? calculations;
+
+  MuscleVolumeData({
+    required this.vme,
+    required this.vmr,
+    required this.vma,
+    required this.target,
+    this.calculations,
+  });
 }
 
 /// Mapper que convierte los datos de planJson a filas UI.
@@ -386,9 +401,23 @@ class VolumeRangeMuscleTable extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildCardHeader(),
-            _buildTableHeader(),
-            const Divider(height: 1, color: kPrimaryColor),
-            ...rows.map((row) => _buildRow(context, row)),
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(2.5),
+                1: FlexColumnWidth(1.0),
+                2: FlexColumnWidth(1.0),
+                3: FlexColumnWidth(1.2),
+                4: FlexColumnWidth(1.5),
+                5: FixedColumnWidth(70),
+              },
+              children: [
+                _buildHeaderRow(),
+                ...rows.map((row) {
+                  final data = _toMuscleVolumeData(row);
+                  return _buildMuscleRow(row.muscle, data);
+                }),
+              ],
+            ),
           ],
         ),
       ),
@@ -439,30 +468,6 @@ class VolumeRangeMuscleTable extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRoleChip(String role) {
-    final roleColor = _roleColor(role);
-    final roleLabel = _roleLabelEs(role);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: roleColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: roleColor.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        roleLabel,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: roleColor,
-        ),
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -557,26 +562,6 @@ class VolumeRangeMuscleTable extends StatelessWidget {
     return clean;
   }
 
-  /// Traduce rol al español
-  String _roleLabelEs(String role) {
-    return switch (role) {
-      'Primario' => 'Primario',
-      'Secundario' => 'Secundario',
-      'Terciario' => 'Terciario',
-      _ => 'Primario',
-    };
-  }
-
-  /// Retorna el color según rol
-  Color _roleColor(String role) {
-    return switch (role) {
-      'Primario' => Colors.green,
-      'Secundario' => Colors.orange,
-      'Terciario' => Colors.blue,
-      _ => kTextColorSecondary,
-    };
-  }
-
   /// Parsea una lista de prioridades (string CSV o List)
   Set<String> _parsePriorityList(dynamic raw) {
     if (raw == null) return {};
@@ -636,142 +621,242 @@ class VolumeRangeMuscleTable extends StatelessWidget {
     );
   }
 
-  Widget _buildTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: kPrimaryColor.withValues(alpha: 0.05)),
-      child: const Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              'Músculo',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: kTextColor,
-                fontSize: 12,
-              ),
-            ),
+  TableRow _buildHeaderRow() {
+    return TableRow(
+      decoration: BoxDecoration(
+        color: kPrimaryColor.withValues(alpha: 0.1),
+        border: Border(
+          bottom: BorderSide(
+            color: kPrimaryColor.withValues(alpha: 0.3),
+            width: 2,
           ),
-          Expanded(
-            flex: 2,
+        ),
+      ),
+      children: [
+        _buildTableCell('Músculo', isHeader: true, alignment: TextAlign.left),
+        _buildTableCell('VME', isHeader: true),
+        _buildTableCell('VMR', isHeader: true),
+        _buildTableCell('Target', isHeader: true),
+        _buildTableCell('Estado', isHeader: true),
+        _buildTableCell('Detalles', isHeader: true),
+      ],
+    );
+  }
+
+  TableRow _buildMuscleRow(String muscle, MuscleVolumeData data) {
+    Color statusColor;
+    String statusText;
+    IconData statusIcon;
+
+    if (data.target < data.vme) {
+      statusColor = Colors.red;
+      statusText = 'Bajo VME';
+      statusIcon = Icons.warning;
+    } else if (data.target >= data.vme && data.target < data.vma) {
+      statusColor = Colors.orange;
+      statusText = 'Subóptimo';
+      statusIcon = Icons.trending_down;
+    } else if (data.target >= data.vma && data.target < data.vmr) {
+      statusColor = Colors.green;
+      statusText = 'Óptimo';
+      statusIcon = Icons.check_circle;
+    } else {
+      statusColor = Colors.red;
+      statusText = 'Riesgo';
+      statusIcon = Icons.error;
+    }
+
+    return TableRow(
+      decoration: BoxDecoration(
+        color: kAppBarColor.withValues(alpha: 0.3),
+        border: Border(
+          bottom: BorderSide(
+            color: kPrimaryColor.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+      ),
+      children: [
+        _buildTableCell(
+          _formatMuscleName(muscle),
+          isHeader: false,
+          alignment: TextAlign.left,
+          fontWeight: FontWeight.w600,
+        ),
+        _buildTableCell(
+          data.vme.toString(),
+          isHeader: false,
+          color: Colors.orange.withValues(alpha: 0.7),
+        ),
+        _buildTableCell(
+          data.vmr.toString(),
+          isHeader: false,
+          color: Colors.red.withValues(alpha: 0.7),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                data.target.toString(),
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(statusIcon, size: 14, color: statusColor),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+            ),
             child: Text(
-              'Rol',
+              statusText,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: kTextColor,
-                fontSize: 12,
+                color: statusColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Text(
-              'VME',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: kTextColor,
-                fontSize: 12,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Center(
+            child: Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(
+                  Icons.analytics_outlined,
+                  size: 20,
+                  color: kPrimaryColor,
+                ),
+                tooltip: 'Ver cálculos científicos',
+                onPressed: () => _showMuscleDetails(context, muscle, data),
+                style: IconButton.styleFrom(
+                  backgroundColor: kPrimaryColor.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
             ),
           ),
-          Expanded(
-            flex: 4,
-            child: Text(
-              'Volumen Objetivo',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: kTextColor,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Text(
-              'VMR',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: kTextColor,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTableCell(
+    String text, {
+    bool isHeader = false,
+    TextAlign alignment = TextAlign.center,
+    Color? color,
+    FontWeight? fontWeight,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      child: Text(
+        text,
+        textAlign: alignment,
+        style: TextStyle(
+          color: color ?? (isHeader ? kPrimaryColor : kTextColor),
+          fontSize: isHeader ? 13 : 12,
+          fontWeight:
+              fontWeight ?? (isHeader ? FontWeight.bold : FontWeight.normal),
+        ),
       ),
     );
   }
 
-  Widget _buildRow(BuildContext context, VolumeRangeUiRow row) {
-    return InkWell(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) => MuscleDetailModal(
-            muscleName: row.muscle,
-            calculations: _buildCalculationsForRow(row),
-            trainingExtra: trainingExtra ?? const {},
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        child: Row(
-          children: [
-            // Músculo
-            Expanded(
-              flex: 3,
-              child: Text(
-                muscleLabelEs(row.muscle),
-                style: const TextStyle(
-                  color: kTextColorSecondary,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            // Rol con chip
-            Expanded(flex: 2, child: _buildRoleChip(row.role)),
-            // VME
-            Expanded(
-              flex: 1,
-              child: Text(
-                row.mev.toString(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: kTextColor, fontSize: 12),
-              ),
-            ),
-            // Barra visual con target
-            Expanded(
-              flex: 4,
-              child: row.targetSets != null
-                  ? _VolumeBarWithTarget(row: row)
-                  : const Center(
-                      child: Text(
-                        '--',
-                        style: TextStyle(
-                          color: kTextColorSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-            ),
-            // VMR
-            Expanded(
-              flex: 1,
-              child: Text(
-                row.mrv.toString(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: kTextColor, fontSize: 12),
-              ),
-            ),
-          ],
+  void _showMuscleDetails(
+    BuildContext context,
+    String muscle,
+    MuscleVolumeData data,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => MuscleDetailModal(
+        muscleName: muscle,
+        vme: data.vme,
+        vmr: data.vmr,
+        vma: data.vma,
+        target: data.target,
+        calculations: data.calculations,
+        onOverrideApplied: (vme, vmr, reason) {
+          _handleVolumeOverride(context, muscle, vme, vmr, reason);
+        },
+      ),
+    );
+  }
+
+  void _handleVolumeOverride(
+    BuildContext context,
+    String muscle,
+    int vme,
+    int vmr,
+    String reason,
+  ) {
+    debugPrint(
+      'Override aplicado a $muscle: VME=$vme, VMR=$vmr, Razón: $reason',
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Override guardado para $muscle'),
+        backgroundColor: Colors.green,
+        action: SnackBarAction(
+          label: 'Deshacer',
+          onPressed: () {
+            // TODO: Implementar undo
+          },
         ),
       ),
+    );
+  }
+
+  String _formatMuscleName(String muscle) {
+    final names = {
+      'chest': 'Pecho',
+      'lats': 'Dorsales',
+      'midBack': 'Espalda Media',
+      'lowBack': 'Lumbar',
+      'traps': 'Trapecios',
+      'frontDelts': 'Hombro Frontal',
+      'sideDelts': 'Hombro Lateral',
+      'rearDelts': 'Hombro Posterior',
+      'biceps': 'Bíceps',
+      'triceps': 'Tríceps',
+      'quads': 'Cuádriceps',
+      'hamstrings': 'Isquiosurales',
+      'glutes': 'Glúteos',
+      'calves': 'Gemelos',
+      'abs': 'Abdominales',
+    };
+    return names[muscle.toLowerCase()] ?? muscle;
+  }
+
+  MuscleVolumeData _toMuscleVolumeData(VolumeRangeUiRow row) {
+    final vme = row.mev;
+    final vmr = row.mrv;
+    final vma = ((vme + vmr) / 2).round();
+
+    return MuscleVolumeData(
+      vme: vme,
+      vmr: vmr,
+      vma: vma,
+      target: row.targetSets ?? 0,
+      calculations: _buildCalculationsForRow(row),
     );
   }
 
@@ -789,103 +874,5 @@ class VolumeRangeMuscleTable extends StatelessWidget {
       'baseVME': vme,
       'alerts': const <Map<String, dynamic>>[],
     };
-  }
-}
-
-/// Widget interno que dibuja la barra de volumen con el marker.
-class _VolumeBarWithTarget extends StatelessWidget {
-  final VolumeRangeUiRow row;
-
-  const _VolumeBarWithTarget({required this.row});
-
-  @override
-  Widget build(BuildContext context) {
-    final target = row.targetSets;
-    if (target == null) {
-      return const Center(
-        child: Text('--', style: TextStyle(color: kTextColorSecondary)),
-      );
-    }
-
-    return Tooltip(
-      message: row.percentile != null
-          ? 'Percentil utilizado: ${(row.percentile! * 100).toStringAsFixed(0)}%'
-          : 'Sin percentil',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Número del target
-          Text(
-            target.toString(),
-            style: TextStyle(
-              color: row.zoneColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 4),
-          // Barra visual
-          SizedBox(
-            height: 8,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                final markerPosition = row.positionInRange * width;
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Fondo de la barra (rango completo)
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.amber.shade800.withValues(alpha: 0.3),
-                            Colors.green.shade600.withValues(alpha: 0.3),
-                            Colors.orange.shade700.withValues(alpha: 0.3),
-                          ],
-                          stops: const [0.0, 0.55, 1.0],
-                        ),
-                      ),
-                    ),
-                    // Marker del target
-                    Positioned(
-                      left: markerPosition.clamp(2, width - 6),
-                      top: -2,
-                      child: Container(
-                        width: 4,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: row.zoneColor,
-                          borderRadius: BorderRadius.circular(2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: row.zoneColor.withValues(alpha: 0.5),
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 2),
-          // Label de zona
-          Text(
-            row.zoneLabel,
-            style: TextStyle(
-              color: row.zoneColor,
-              fontSize: 9,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
