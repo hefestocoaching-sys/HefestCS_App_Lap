@@ -5,6 +5,7 @@ import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrato
 import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 
 // ═══════════════════════════════════════════════════
 // MOTOR V3 - PROVIDERS PRINCIPALES
@@ -31,13 +32,6 @@ final mlConfigProvider = Provider<MLConfigV3>((ref) {
 // GENERATION STATE
 // ═══════════════════════════════════════════════════
 
-/// Estado de generación de programa
-final programGenerationStateProvider = StateProvider<ProgramGenerationState>((
-  ref,
-) {
-  return const ProgramGenerationState.idle();
-});
-
 /// Estados posibles de generación
 class ProgramGenerationState {
   final bool isLoading;
@@ -58,6 +52,35 @@ class ProgramGenerationState {
     : this(isLoading: false, error: error);
 }
 
+/// StateNotifier para estado de generación
+class ProgramGenerationNotifier extends Notifier<ProgramGenerationState> {
+  @override
+  ProgramGenerationState build() {
+    return const ProgramGenerationState.idle();
+  }
+
+  void setLoading() {
+    state = const ProgramGenerationState.loading();
+  }
+
+  void setSuccess(Map<String, dynamic> result) {
+    state = ProgramGenerationState.success(result);
+  }
+
+  void setError(String error) {
+    state = ProgramGenerationState.error(error);
+  }
+
+  void reset() {
+    state = const ProgramGenerationState.idle();
+  }
+}
+
+/// Provider para el estado de generación de programa
+final programGenerationStateProvider = NotifierProvider<ProgramGenerationNotifier, ProgramGenerationState>(() {
+  return ProgramGenerationNotifier();
+});
+
 // ═══════════════════════════════════════════════════
 // ACTIONS
 // ═══════════════════════════════════════════════════
@@ -71,8 +94,7 @@ Future<void> generateProgramV3({
   bool useML = true,
 }) async {
   // Set loading
-  ref.read(programGenerationStateProvider.notifier).state =
-      const ProgramGenerationState.loading();
+  ref.read(programGenerationStateProvider.notifier).setLoading();
 
   try {
     Map<String, dynamic> result;
@@ -86,9 +108,8 @@ Future<void> generateProgramV3({
         durationWeeks: durationWeeks,
       );
     } else {
-      // Usar orquestador científico puro
-      final orchestrator = ref.read(motorV3OrchestratorProvider);
-      result = await orchestrator.generateProgram(
+      // Usar orquestador científico puro (método estático)
+      result = await MotorV3Orchestrator.generateProgram(
         userProfile: userProfile,
         phase: phase,
         durationWeeks: durationWeeks,
@@ -96,11 +117,9 @@ Future<void> generateProgramV3({
     }
 
     // Set success
-    ref.read(programGenerationStateProvider.notifier).state =
-        ProgramGenerationState.success(result);
+    ref.read(programGenerationStateProvider.notifier).setSuccess(result);
   } catch (e) {
     // Set error
-    ref.read(programGenerationStateProvider.notifier).state =
-        ProgramGenerationState.error(e.toString());
+    ref.read(programGenerationStateProvider.notifier).setError(e.toString());
   }
 }

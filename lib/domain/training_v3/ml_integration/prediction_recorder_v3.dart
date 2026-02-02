@@ -209,7 +209,7 @@ class PredictionRecorderV3 {
 
       // Calcular métricas de accuracy
       double totalVolumeError = 0.0;
-      double totalReadinessError = 0.0;
+      // double totalReadinessError = 0.0; // No usado aún
       int correctReadiness = 0;
 
       for (final pred in predictions) {
@@ -219,7 +219,7 @@ class PredictionRecorderV3 {
         if (outcome == null) continue;
 
         // Error de volumen (MAE)
-        final volumeAdjustment = predicted['volume_adjustment'] as double;
+        // final volumeAdjustment = predicted['volume_adjustment'] as double; // No usado aún
         final actualAdherence = outcome['adherence'] as double;
         // Si adherencia alta → volumen fue correcto
         final volumeError = (1.0 - actualAdherence).abs();

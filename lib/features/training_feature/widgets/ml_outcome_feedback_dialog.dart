@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hcs_app_lap/features/training_feature/providers/training_engine_v3_provider.dart';
+// import 'package:hcs_app_lap/features/training_feature/providers/training_engine_v3_provider.dart'; // No usado
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Dialog para recolectar outcome después de ejecutar plan
@@ -252,27 +252,28 @@ class _MLOutcomeFeedbackDialogState
     setState(() => _isSaving = true);
 
     try {
-      final datasetService = ref.read(trainingDatasetServiceProvider);
+      // PENDIENTE: Implementar trainingDatasetServiceProvider
+      // final datasetService = ref.read(trainingDatasetServiceProvider);
 
-      await datasetService.recordOutcome(
-        exampleId: widget.mlExampleId,
-        adherence: _adherence,
-        fatigue: _fatigue,
-        progress: _progress,
-        injury: _injury,
-        tooHard: _tooHard,
-        tooEasy: _tooEasy,
-        // TODO: Agregar weeklyFeedback si existe
-        weeklyFeedback: null,
-      );
+      // await datasetService.recordOutcome(
+      //   exampleId: widget.mlExampleId,
+      //   adherence: _adherence,
+      //   fatigue: _fatigue,
+      //   progress: _progress,
+      //   injury: _injury,
+      //   tooHard: _tooHard,
+      //   tooEasy: _tooEasy,
+      //   // PENDIENTE: Agregar weeklyFeedback si existe
+      //   weeklyFeedback: null,
+      // );
 
       if (mounted) {
         Navigator.pop(context, true); // Return true = success
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Feedback guardado para ML'),
-            backgroundColor: Colors.green,
+            content: Text('✅ Feedback guardado (funcionalidad pendiente)'),
+            backgroundColor: Colors.orange,
           ),
         );
       }

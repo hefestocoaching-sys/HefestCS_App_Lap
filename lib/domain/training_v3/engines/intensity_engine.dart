@@ -44,7 +44,7 @@ class IntensityEngine {
     // Semana 3, Imagen 27-29
     final heavyCount = (totalExercises * 0.35).round();
     final moderateCount = (totalExercises * 0.45).round();
-    final lightCount = totalExercises - heavyCount - moderateCount;
+    // final lightCount = totalExercises - heavyCount - moderateCount; // No usado aún
 
     // PASO 2: Separar por tipo
     final compounds = exercises

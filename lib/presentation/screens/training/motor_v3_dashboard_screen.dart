@@ -268,7 +268,7 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
                     Expanded(
                       child: _buildProgramStat(
                         'Fin',
-                        '${program.endDate.day}/${program.endDate.month}/${program.endDate.year}',
+                        '${program.estimatedEndDate.day}/${program.estimatedEndDate.month}/${program.estimatedEndDate.year}',
                         Icons.event,
                       ),
                     ),

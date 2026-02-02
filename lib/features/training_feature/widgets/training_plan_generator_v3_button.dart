@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
-import 'package:hcs_app_lap/domain/training_v3/engine/training_program_engine_v3.dart';
+// import 'package:hcs_app_lap/domain/training_v3/engine/training_program_engine_v3.dart'; // Archivo eliminado
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_engine_v3_provider.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
