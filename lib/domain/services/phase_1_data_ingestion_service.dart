@@ -802,6 +802,7 @@ class Phase1DataIngestionService {
   // MÉTODOS LEGACY (mantener para compatibilidad)
   // ═══════════════════════════════════════════════════════════════
 
+  // ignore: unused_element
   DerivedTrainingContext _buildDerivedContext({
     required TrainingProfile profile,
     required TrainingHistory? history,
@@ -1025,6 +1026,7 @@ class Phase1DataIngestionService {
     return double.tryParse(value?.toString() ?? '') ?? 0.0;
   }
 
+  // ignore: unused_element
   void _validateRecoveryData(
     TrainingProfile profile,
     List<DecisionTrace> decisions,
@@ -1083,6 +1085,7 @@ class Phase1DataIngestionService {
     }
   }
 
+  // ignore: unused_element
   void _validateBaseVolume(
     TrainingProfile profile,
     List<DecisionTrace> decisions,

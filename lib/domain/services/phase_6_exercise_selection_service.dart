@@ -32,16 +32,16 @@ class Phase6SelectionResult {
 /// - Evita repetir dentro de la misma semana cuando hay alternativas
 ///
 /// LÍMITES DUROS (A3):
-/// - MAX_EXERCISES_PER_SESSION = 8 ejercicios máximo
-/// - MAX_PRIMARY_MUSCLE_EXERCISES = 3 ejercicios máximo para músculos primarios
-/// - MAX_SECONDARY_MUSCLE_EXERCISES = 2 ejercicios máximo para secundarios
-/// - MAX_ACCESSORY_EXERCISES = 1 ejercicio accesorio por músculo
+/// - maxExercisesPerSession = 8 ejercicios máximo
+/// - maxPrimaryMuscleExercises = 3 ejercicios máximo para músculos primarios
+/// - maxSecondaryMuscleExercises = 2 ejercicios máximo para secundarios
+/// - maxAccessoryExercises = 1 ejercicio accesorio por músculo
 class Phase6ExerciseSelectionService {
   // Límites duros por sesión (TAREA A3)
-  static const int MAX_EXERCISES_PER_SESSION = 8;
-  static const int MAX_PRIMARY_MUSCLE_EXERCISES = 3;
-  static const int MAX_SECONDARY_MUSCLE_EXERCISES = 2;
-  static const int MAX_ACCESSORY_EXERCISES = 1;
+  static const int maxExercisesPerSession = 8;
+  static const int maxPrimaryMuscleExercises = 3;
+  static const int maxSecondaryMuscleExercises = 2;
+  static const int maxAccessoryExercises = 1;
 
   // Rastrea patrón principal por músculo dentro de la semana para evitar consecutivos.
   final Map<int, Map<String, String?>> _lastPrimaryPatternForWeek = {};
@@ -441,7 +441,7 @@ class Phase6ExerciseSelectionService {
             0,
             (sum, list) => sum + list.length,
           );
-          if (totalExercisesThisDay >= MAX_EXERCISES_PER_SESSION) {
+          if (totalExercisesThisDay >= maxExercisesPerSession) {
             // Hemos alcanzado el máximo de ejercicios por sesión (8)
             // Detener selección inmediatamente
             decisions.add(
@@ -449,7 +449,7 @@ class Phase6ExerciseSelectionService {
                 phase: 'Phase6ExerciseSelection',
                 category: 'max_exercises_reached',
                 description:
-                    'Semana $w Día $d: Alcanzado límite máximo de $MAX_EXERCISES_PER_SESSION ejercicios. Deteniendo selección.',
+                    'Semana $w Día $d: Alcanzado límite máximo de $maxExercisesPerSession ejercicios. Deteniendo selección.',
                 context: {'totalExercises': totalExercisesThisDay},
               ),
             );

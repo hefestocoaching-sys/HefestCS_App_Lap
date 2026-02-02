@@ -365,7 +365,7 @@ class TrainingEngineFacade {
 
   /// Canonicaliza todas las claves de un mapa muscular.
   ///
-  /// ENTRADA: Map<String, dynamic> con claves musculares (posiblemente no canónicas)
+  /// ENTRADA: `Map<String, dynamic>` con claves musculares (posiblemente no canónicas)
   /// SALIDA: Nuevo map con claves canonicalizadas
   /// COMPORTAMIENTO: Retorna vacío si input es null o vacío
   ///

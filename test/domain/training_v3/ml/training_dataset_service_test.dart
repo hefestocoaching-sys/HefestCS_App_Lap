@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/training_dataset_service.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
 import 'package:hcs_app_lap/domain/entities/weekly_training_feedback_summary.dart';
 
 void main() {

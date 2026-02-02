@@ -731,7 +731,8 @@ class TrainingProgramEngineV3 {
     final dayMuscles = baseSplit.dayMuscles[dayNumber] ?? [];
     final muscleNames = dayMuscles.take(2).join('+');
 
-    return 'S${weekIndex}D${dayNumber} - $muscleNames (${phase.name})';
+    return 'S$weekIndex'
+        'D$dayNumber - $muscleNames (${phase.name})';
   }
 
   /// Convierte TrainingContext V2 → TrainingProfile (legacy)

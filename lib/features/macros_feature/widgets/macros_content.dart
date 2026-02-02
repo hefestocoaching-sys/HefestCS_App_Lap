@@ -1486,7 +1486,7 @@ class _MacroChartDonutState extends State<_MacroChartDonut> {
         label: 'Proteínas',
         value: widget.proteinKcal,
         gradient: RadialGradient(
-          colors: [pColorBase, pColorBase.withOpacity(0.7)],
+          colors: [pColorBase, pColorBase.withValues(alpha: 0.7)],
           stops: const [0.5, 1.0],
         ),
       ),
@@ -1494,7 +1494,7 @@ class _MacroChartDonutState extends State<_MacroChartDonut> {
         label: 'Grasas',
         value: widget.fatKcal,
         gradient: RadialGradient(
-          colors: [fColorBase, fColorBase.withOpacity(0.7)],
+          colors: [fColorBase, fColorBase.withValues(alpha: 0.7)],
           stops: const [0.5, 1.0],
         ),
       ),
@@ -1502,7 +1502,7 @@ class _MacroChartDonutState extends State<_MacroChartDonut> {
         label: 'Carbs',
         value: widget.carbKcal,
         gradient: RadialGradient(
-          colors: [cColorBase, cColorBase.withOpacity(0.7)],
+          colors: [cColorBase, cColorBase.withValues(alpha: 0.7)],
           stops: const [0.5, 1.0],
         ),
       ),
@@ -1526,19 +1526,22 @@ class _MacroChartDonutState extends State<_MacroChartDonut> {
           color: Colors.white,
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.8),
+              color: Colors.black.withValues(alpha: 0.8),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
             Shadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 4,
               offset: const Offset(0, 1),
             ),
           ],
         ),
         titlePositionPercentageOffset: 0.55,
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.15), width: 2),
+        borderSide: BorderSide(
+          color: Colors.white.withValues(alpha: 0.15),
+          width: 2,
+        ),
       );
     });
   }
@@ -1592,7 +1595,10 @@ class _MacroChartLegend extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withAlpha(40),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -1601,13 +1607,13 @@ class _MacroChartLegend extends StatelessWidget {
             height: 12,
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                colors: [color, color.withOpacity(0.7)],
+                colors: [color, color.withValues(alpha: 0.7)],
                 stops: const [0.5, 1.0],
               ),
               borderRadius: BorderRadius.circular(3),
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.3),
+                  color: color.withValues(alpha: 0.3),
                   blurRadius: 4,
                   offset: const Offset(0, 1),
                 ),
@@ -2159,10 +2165,10 @@ class _ClinicalMetricRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
+        color: Colors.black.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: statusConfig.color.withOpacity(0.3),
+          color: statusConfig.color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),

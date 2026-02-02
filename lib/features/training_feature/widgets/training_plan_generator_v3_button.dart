@@ -44,9 +44,9 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kCardColor.withOpacity(0.5),
+                color: kCardColor.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
+                border: Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -78,7 +78,7 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
                   if (strategy.isTrainable)
                     Chip(
                       label: const Text('ML', style: TextStyle(fontSize: 10)),
-                      backgroundColor: Colors.purple.withOpacity(0.3),
+                      backgroundColor: Colors.purple.withValues(alpha: 0.3),
                       padding: EdgeInsets.zero,
                     ),
                 ],
@@ -133,9 +133,9 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withOpacity(0.5)),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
                 ),
                 child: Row(
                   children: [
@@ -187,12 +187,15 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
           asOfDate: DateTime.now(),
         );
 
+    if (!context.mounted) {
+      return;
+    }
+
     final result = ref.read(trainingPlanGenerationProvider).result;
     if (result == null) {
       return;
     }
 
-    // ignore: use_build_context_synchronously
     if (result.isSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -206,7 +209,6 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
       onPlanGenerated?.call();
     } else {
       // Plan bloqueado (ej: readiness crítico)
-      // ignore: use_build_context_synchronously
       _showBlockedDialog(context, result);
     }
   }
@@ -219,9 +221,9 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.1),
+          color: Colors.orange.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.orange.withOpacity(0.5)),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,9 +285,9 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green.withOpacity(0.5)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,7 +449,7 @@ class TrainingPlanGeneratorV3Button extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(

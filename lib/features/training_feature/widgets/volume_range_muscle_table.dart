@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hcs_app_lap/core/constants/muscle_labels_es.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/features/training_feature/widgets/muscle_detail_modal.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Modelo UI para una fila de la tabla de volumen por músculo.
@@ -387,7 +388,7 @@ class VolumeRangeMuscleTable extends StatelessWidget {
             _buildCardHeader(),
             _buildTableHeader(),
             const Divider(height: 1, color: kPrimaryColor),
-            ...rows.map(_buildRow),
+            ...rows.map((row) => _buildRow(context, row)),
           ],
         ),
       ),
@@ -705,57 +706,89 @@ class VolumeRangeMuscleTable extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(VolumeRangeUiRow row) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      child: Row(
-        children: [
-          // Músculo
-          Expanded(
-            flex: 3,
-            child: Text(
-              muscleLabelEs(row.muscle),
-              style: const TextStyle(color: kTextColorSecondary, fontSize: 12),
-            ),
+  Widget _buildRow(BuildContext context, VolumeRangeUiRow row) {
+    return InkWell(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => MuscleDetailModal(
+            muscleName: row.muscle,
+            calculations: _buildCalculationsForRow(row),
+            trainingExtra: trainingExtra ?? const {},
           ),
-          // Rol con chip
-          Expanded(flex: 2, child: _buildRoleChip(row.role)),
-          // VME
-          Expanded(
-            flex: 1,
-            child: Text(
-              row.mev.toString(),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: kTextColor, fontSize: 12),
+        );
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        child: Row(
+          children: [
+            // Músculo
+            Expanded(
+              flex: 3,
+              child: Text(
+                muscleLabelEs(row.muscle),
+                style: const TextStyle(
+                  color: kTextColorSecondary,
+                  fontSize: 12,
+                ),
+              ),
             ),
-          ),
-          // Barra visual con target
-          Expanded(
-            flex: 4,
-            child: row.targetSets != null
-                ? _VolumeBarWithTarget(row: row)
-                : const Center(
-                    child: Text(
-                      '--',
-                      style: TextStyle(
-                        color: kTextColorSecondary,
-                        fontSize: 12,
+            // Rol con chip
+            Expanded(flex: 2, child: _buildRoleChip(row.role)),
+            // VME
+            Expanded(
+              flex: 1,
+              child: Text(
+                row.mev.toString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: kTextColor, fontSize: 12),
+              ),
+            ),
+            // Barra visual con target
+            Expanded(
+              flex: 4,
+              child: row.targetSets != null
+                  ? _VolumeBarWithTarget(row: row)
+                  : const Center(
+                      child: Text(
+                        '--',
+                        style: TextStyle(
+                          color: kTextColorSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                  ),
-          ),
-          // VMR
-          Expanded(
-            flex: 1,
-            child: Text(
-              row.mrv.toString(),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: kTextColor, fontSize: 12),
             ),
-          ),
-        ],
+            // VMR
+            Expanded(
+              flex: 1,
+              child: Text(
+                row.mrv.toString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: kTextColor, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Map<String, dynamic> _buildCalculationsForRow(VolumeRangeUiRow row) {
+    final vme = row.mev;
+    final vmr = row.mrv;
+    final vma = ((vme + vmr) / 2).round();
+
+    return {
+      'vme': vme,
+      'vma': vma,
+      'vmr': vmr,
+      'target': row.targetSets ?? 0,
+      'adjustments': const <String, dynamic>{},
+      'baseVME': vme,
+      'alerts': const <Map<String, dynamic>>[],
+    };
   }
 }
 

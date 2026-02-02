@@ -453,8 +453,7 @@ class TrainingProgramEngineV2Full {
         };
     }
 
-    final maxPerSession =
-        Phase6ExerciseSelectionService.MAX_EXERCISES_PER_SESSION;
+    final maxPerSession = Phase6ExerciseSelectionService.maxExercisesPerSession;
     final filtered = <int, Map<String, int>>{};
     for (final entry in framework.entries) {
       final day = entry.key;
@@ -571,8 +570,8 @@ class TrainingProgramEngineV2Full {
     TrainingCycle? activeCycle,
   }) {
     final int minExercises = (activeCycle?.frequency == 2) ? 5 : 2;
-    const int maxExercises =
-        Phase6ExerciseSelectionService.MAX_EXERCISES_PER_SESSION;
+    final int maxExercises =
+        Phase6ExerciseSelectionService.maxExercisesPerSession;
 
     for (final weekEntry in selections.entries) {
       final week = weekEntry.key;

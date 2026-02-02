@@ -1899,9 +1899,9 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: kPrimaryColor.withOpacity(0.1),
+            color: kPrimaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: kPrimaryColor.withOpacity(0.3)),
+            border: Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -1913,7 +1913,7 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
                   'Los opcionales mejoran la precisión de la prescripción.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: kTextColor.withOpacity(0.8),
+                    color: kTextColor.withValues(alpha: 0.8),
                   ),
                 ),
               ),

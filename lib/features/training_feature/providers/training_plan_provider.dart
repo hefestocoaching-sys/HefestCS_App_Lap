@@ -1396,13 +1396,13 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       );
 
       // Resetear state
-      state = const TrainingPlanState(
+      state = TrainingPlanState(
         isLoading: false,
         error: null,
         plan: null,
         blockReason: null,
         suggestions: null,
-        missingFields: const [],
+        missingFields: [],
       );
     } catch (e, stackTrace) {
       debugPrint('❌ Error en clearActivePlan: $e');

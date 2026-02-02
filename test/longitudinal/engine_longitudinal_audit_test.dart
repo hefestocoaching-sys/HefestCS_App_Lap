@@ -802,7 +802,7 @@ class LongitudinalAuditor {
   void validateFrequencies() {
     print('\n${'=' * 80}');
     print('🔢 VALIDACIÓN DE FRECUENCIAS');
-    print('${'=' * 80}');
+    print('=' * 80);
 
     for (int i = 0; i < weeks.length; i++) {
       final week = weeks[i];

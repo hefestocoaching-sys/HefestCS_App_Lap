@@ -8,11 +8,6 @@ void main() {
     // Este test NO debe fallar aunque el asset no cargue
     await service.ensureLoaded();
 
-    // Verificar estado
-    print('isLoaded: ${service.isLoaded}');
-    print('hasData: ${service.hasData}');
-    print('lastLoadError: ${service.lastLoadError}');
-
     // El test pasa independientemente del resultado de carga
     expect(true, true);
   });

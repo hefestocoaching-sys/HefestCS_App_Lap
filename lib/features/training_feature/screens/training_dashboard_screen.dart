@@ -24,7 +24,7 @@ import 'package:hcs_app_lap/features/training_feature/widgets/training_plan_gene
 
 // Widgets visuales
 import '../widgets/volume_range_muscle_table.dart';
-import '../widgets/intensity_split_table.dart';
+import '../widgets/series_distribution_editor.dart';
 import '../widgets/macrocycle_overview_tab.dart';
 import '../widgets/weekly_plan_tab.dart';
 
@@ -245,7 +245,7 @@ class _TrainingDashboardScreenState
             controller: _tabController!,
             tabs: const [
               Tab(text: 'Volumen'),
-              Tab(text: 'Perfiles'),
+              Tab(text: 'Distribución'),
               Tab(text: 'Macrociclo'),
               Tab(text: 'Semanal'),
             ],
@@ -267,8 +267,13 @@ class _TrainingDashboardScreenState
                   planJson: null,
                   planConfig: null,
                 ),
-                // Tab 2: Intensidad (Heavy / Medium / Light) - Usa efectiveExtra
-                IntensitySplitTable(trainingExtra: effectiveExtra),
+                // Tab 2: Distribución (Heavy / Medium / Light)
+                SeriesDistributionEditor(
+                  trainingExtra: effectiveExtra,
+                  onDistributionChanged: (distribution) {
+                    _handleDistributionChanged(distribution);
+                  },
+                ),
                 // Tab 3: Macrociclo por músculo (AA/HF) sin dependencia de días
                 MacrocycleOverviewTab(trainingExtra: effectiveExtra),
                 // Tab 4: Plan semanal según días y split válido
@@ -394,6 +399,28 @@ class _TrainingDashboardScreenState
     }
   }
 
+  Future<void> _handleDistributionChanged(Map<String, int> distribution) async {
+    await ref.read(clientsProvider.notifier).updateActiveClient((client) {
+      final updatedExtra = Map<String, dynamic>.from(client.training.extra);
+      updatedExtra[TrainingExtraKeys.seriesTypePercentSplit] = distribution;
+
+      final updatedProfile = client.training.copyWith(extra: updatedExtra);
+      return client.copyWith(training: updatedProfile);
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✅ Distribución actualizada: ${distribution['heavy']}% pesadas, ${distribution['medium']}% medias, ${distribution['light']}% ligeras',
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   void _showMLFeedbackDialog(String mlExampleId, String clientId) {
     showDialog(
       context: context,
@@ -479,7 +506,12 @@ class _TrainingDashboardScreenState
                 planConfig: hasV2Volume ? null : planConfigForUi,
               ),
               // Tab 2: Intensidad (Heavy / Medium / Light)
-              IntensitySplitTable(trainingExtra: trainingExtra),
+              SeriesDistributionEditor(
+                trainingExtra: trainingExtra,
+                onDistributionChanged: (distribution) {
+                  _handleDistributionChanged(distribution);
+                },
+              ),
             ],
           ),
         ),
