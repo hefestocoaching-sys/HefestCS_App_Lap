@@ -301,71 +301,108 @@ class _TrainingDashboardScreenState
   }
 
   Widget _buildGeneratePlanSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Generar Nuevo Plan',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            // Toggle motor (legacy vs V3)
-            PopupMenuButton<String>(
-              icon: Icon(Icons.settings, size: 20, color: kTextColorSecondary),
-              onSelected: (value) {
-                // TODO: Implementar switch entre motores
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Motor seleccionado: $value')),
-                );
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'v3',
-                  child: Text('Motor V3 (IA/Ciencia)'),
-                ),
-                const PopupMenuItem(
-                  value: 'legacy',
-                  child: Text('Motor Legacy'),
+    return ExpansionTile(
+      // Iniciar colapsado por defecto
+      initiallyExpanded: false,
+
+      // Título compacto
+      title: Row(
+        children: [
+          const Icon(Icons.auto_awesome, color: kPrimaryColor, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Generar Nuevo Plan',
+                  style: TextStyle(
+                    color: kTextColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          // Badge de estado
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+            ),
+            child: const Text(
+              'Listo',
+              style: TextStyle(
+                color: Colors.green,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
 
-        const SizedBox(height: 16),
+      // Subtítulo compacto
+      subtitle: const Text(
+        'Motor V3 (ML-Ready) - RuleBased_Israeltel_Schoenfeld_Helms',
+        style: TextStyle(color: kTextColorSecondary, fontSize: 11),
+      ),
 
-        // Botón V3
-        FutureBuilder<List<Exercise>>(
-          future: ExerciseCatalogLoader.load(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Text(
-                'Error cargando ejercicios: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red, fontSize: 12),
-              );
-            }
-            final exercises = snapshot.data ?? const <Exercise>[];
-            return TrainingPlanGeneratorV3Button(
-              onPlanGenerated: _onPlanGenerated,
-              exercises: exercises,
-            );
-          },
-        ),
+      // Color de fondo
+      backgroundColor: kAppBarColor.withValues(alpha: 0.5),
+      collapsedBackgroundColor: kAppBarColor.withValues(alpha: 0.3),
 
-        // Botón legacy (mantener por ahora)
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: _onGeneratePlanLegacy,
-          icon: const Icon(Icons.science),
-          label: const Text('Generar con Motor Legacy'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      // Iconos de expansión
+      iconColor: kPrimaryColor,
+      collapsedIconColor: kTextColorSecondary,
+
+      // Contenido (todo lo que ya tienes)
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Botón V3
+              FutureBuilder<List<Exercise>>(
+                future: ExerciseCatalogLoader.load(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Text(
+                      'Error cargando ejercicios: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    );
+                  }
+                  final exercises = snapshot.data ?? const <Exercise>[];
+                  return TrainingPlanGeneratorV3Button(
+                    onPlanGenerated: _onPlanGenerated,
+                    exercises: exercises,
+                  );
+                },
+              ),
+
+              // Botón legacy
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _onGeneratePlanLegacy,
+                icon: const Icon(Icons.science, size: 16),
+                label: const Text('Alternativa: Motor Legacy'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  side: BorderSide(color: kPrimaryColor.withValues(alpha: 0.3)),
+                  foregroundColor: kTextColorSecondary,
+                ),
+              ),
+            ],
           ),
         ),
       ],
