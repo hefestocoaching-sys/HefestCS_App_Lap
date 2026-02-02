@@ -591,14 +591,26 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
       sessionDuration: 90,
       primaryGoal: 'hypertrophy',
       musclePriorities: {
+        // UPPER BODY - Push
         'chest': 5,
-        'back': 5,
-        'quads': 4,
-        'hamstrings': 3,
-        'shoulders': 4,
-        'biceps': 3,
+        'deltoide_anterior': 4,
+        'deltoide_lateral': 4,
+        'deltoide_posterior': 3,
         'triceps': 3,
+        
+        // UPPER BODY - Pull
+        'lats': 5,
+        'upper_back': 4,
+        'traps': 3,
+        'biceps': 3,
+        
+        // LOWER BODY
+        'quads': 4,
+        'hamstrings': 4,
+        'glutes': 4,
         'calves': 2,
+        
+        // CORE
         'abs': 2,
       },
       injuryHistory: {},
