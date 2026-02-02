@@ -120,9 +120,6 @@ export 'training_v2/engine/phases/phase_6_exercise_selection_v2.dart';
 export 'training_v2/engine/phases/phase_7_intensification.dart';
 export 'training_v2/engine/phases/phase_8_finalize_and_learning.dart';
 
-// Training V2 - Mappers
-export 'training_v2/mappers/index.dart';
-
 // Training V2 - Models
 export 'training_v2/models/training_block_context.dart';
 export 'training_v2/models/training_context.dart';
