@@ -205,6 +205,6 @@ class ExerciseLog extends Equatable {
 
   @override
   String toString() {
-    return 'ExerciseLog($exerciseName: ${sets.length}/${plannedSets} sets, avgRPE: ${averageRpe.toStringAsFixed(1)})';
+    return 'ExerciseLog($exerciseName: ${sets.length}/$plannedSets sets, avgRPE: ${averageRpe.toStringAsFixed(1)})';
   }
 }

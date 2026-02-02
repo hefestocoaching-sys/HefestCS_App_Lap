@@ -118,8 +118,9 @@ class WorkoutLog extends Equatable {
     if (sessionRpe < 1 || sessionRpe > 10) return false;
 
     // Validar PRS razonable
-    if (perceivedRecoveryStatus < 1 || perceivedRecoveryStatus > 10)
+    if (perceivedRecoveryStatus < 1 || perceivedRecoveryStatus > 10) {
       return false;
+    }
 
     // Validar DOMS razonable
     if (muscleSoreness < 0 || muscleSoreness > 10) return false;

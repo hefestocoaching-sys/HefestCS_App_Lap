@@ -140,8 +140,9 @@ class UserProfile extends Equatable {
     if (yearsTraining < 0 || yearsTraining > 30) return false;
     if (availableDays < 3 || availableDays > 6) return false;
     if (sessionDuration < 30 || sessionDuration > 120) return false;
-    if (!['novice', 'intermediate', 'advanced'].contains(trainingLevel))
+    if (!['novice', 'intermediate', 'advanced'].contains(trainingLevel)) {
       return false;
+    }
     if (!['male', 'female', 'other'].contains(gender)) return false;
     return true;
   }

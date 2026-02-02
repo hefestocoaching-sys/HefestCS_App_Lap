@@ -112,14 +112,18 @@ class TrainingProgram extends Equatable {
     if (currentWeek < 1 || currentWeek > durationWeeks) return false;
 
     // Validar fase válida
-    if (!['accumulation', 'intensification', 'deload'].contains(phase))
+    if (!['accumulation', 'intensification', 'deload'].contains(phase)) {
       return false;
+    }
 
     // Validar duración según fase
-    if (phase == 'accumulation' && (durationWeeks < 4 || durationWeeks > 6))
+    if (phase == 'accumulation' && (durationWeeks < 4 || durationWeeks > 6)) {
       return false;
-    if (phase == 'intensification' && (durationWeeks < 2 || durationWeeks > 3))
+    }
+    if (phase == 'intensification' &&
+        (durationWeeks < 2 || durationWeeks > 3)) {
       return false;
+    }
     if (phase == 'deload' && durationWeeks != 1) return false;
 
     return true;

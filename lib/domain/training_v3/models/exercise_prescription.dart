@@ -242,6 +242,6 @@ class ExercisePrescription extends Equatable {
 
   @override
   String toString() {
-    return 'ExercisePrescription($exerciseName: ${sets}x${repsDescription} @RIR$targetRir)';
+    return 'ExercisePrescription($exerciseName: ${sets}x$repsDescription @RIR$targetRir)';
   }
 }

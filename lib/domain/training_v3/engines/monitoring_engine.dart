@@ -101,7 +101,7 @@ class MonitoringEngine {
       status = 'critical';
     } else if (alerts.length >= 3) {
       status = 'warning';
-    } else if (alerts.length >= 1) {
+    } else if (alerts.isNotEmpty) {
       status = 'caution';
     } else {
       status = 'good';

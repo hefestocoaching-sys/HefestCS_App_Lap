@@ -86,8 +86,9 @@ class TrainingSession extends Equatable {
     if (primaryMuscles.isEmpty) return false;
 
     // Validar duración razonable
-    if (estimatedDurationMinutes < 20 || estimatedDurationMinutes > 180)
+    if (estimatedDurationMinutes < 20 || estimatedDurationMinutes > 180) {
       return false;
+    }
 
     return true;
   }

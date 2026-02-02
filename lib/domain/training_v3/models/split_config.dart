@@ -91,8 +91,9 @@ class SplitConfig extends Equatable {
     // Validar que muscleDistribution tenga sentido con daysPerWeek
     // Para PPL 6x: debe tener 3 días base (Push, Pull, Legs) que se repiten
     // Para Upper/Lower 4x: debe tener 2 días base (Upper, Lower) que se repiten
-    if (type == 'push_pull_legs' && muscleDistribution.length != 3)
+    if (type == 'push_pull_legs' && muscleDistribution.length != 3) {
       return false;
+    }
     if (type == 'upper_lower' && muscleDistribution.length != 2) return false;
     if (type == 'full_body' && muscleDistribution.length != 1) return false;
 

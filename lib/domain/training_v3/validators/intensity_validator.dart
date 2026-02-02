@@ -145,7 +145,7 @@ class IntensityValidator {
         case 'heavy':
           if (maxReps > 8) {
             errors.add(
-              '$exerciseId: Heavy con ${minReps}-${maxReps} reps. '
+              '$exerciseId: Heavy con $minReps-$maxReps reps. '
               'Heavy debe ser 5-8 reps.',
             );
           }
@@ -153,7 +153,7 @@ class IntensityValidator {
         case 'moderate':
           if (maxReps < 8 || minReps > 12) {
             errors.add(
-              '$exerciseId: Moderate con ${minReps}-${maxReps} reps. '
+              '$exerciseId: Moderate con $minReps-$maxReps reps. '
               'Moderate debe ser 8-12 reps.',
             );
           }
@@ -161,7 +161,7 @@ class IntensityValidator {
         case 'light':
           if (minReps < 12) {
             errors.add(
-              '$exerciseId: Light con ${minReps}-${maxReps} reps. '
+              '$exerciseId: Light con $minReps-$maxReps reps. '
               'Light debe ser 12-20 reps.',
             );
           }
