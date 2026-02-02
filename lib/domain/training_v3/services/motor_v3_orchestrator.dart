@@ -1,5 +1,6 @@
 // lib/domain/training_v3/services/motor_v3_orchestrator.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
@@ -7,6 +8,7 @@ import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/split_generator_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/validators/volume_validator.dart';
 import 'package:hcs_app_lap/domain/training_v3/validators/configuration_validator.dart';
+import 'package:hcs_app_lap/domain/training_v3/validators/volume_optimizer.dart';
 
 /// Orquestador principal del Motor V3
 ///
@@ -103,7 +105,7 @@ class MotorV3Orchestrator {
     }
 
     // PASO 6: Construir programa (simplificado por ahora)
-    final program = _buildProgram(
+    var program = _buildProgram(
       userProfile: userProfile,
       split: split,
       phase: phase,
@@ -111,11 +113,39 @@ class MotorV3Orchestrator {
       volumeByMuscle: volumeByMuscle,
     );
 
+    // PASO 7: AUTO-OPTIMIZAR si hay warnings (volumen subóptimo)
+    var finalProgram = program;
+    var finalWarnings = warnings;
+    int optimizationsApplied = 0;
+
+    if (warnings.isNotEmpty) {
+      debugPrint('⚙️ VolumeOptimizer: Detectados ${warnings.length} warnings');
+      debugPrint('   Iniciando auto-ajuste...');
+
+      // Optimizar programa
+      finalProgram = VolumeOptimizer.optimize(program, warnings);
+
+      // Re-validar después de optimizar
+      final revalidation = VolumeValidator.validateProgram(
+        volumeByMuscle: finalProgram.weeklyVolumeByMuscle.map(
+          (k, v) => MapEntry(k, v.toInt()),
+        ),
+        trainingLevel: userProfile.trainingLevel,
+      );
+      finalWarnings = revalidation['warnings'] as List<String>;
+      optimizationsApplied = warnings.length - finalWarnings.length;
+
+      debugPrint('✅ Optimización completada:');
+      debugPrint('   - Ajustes aplicados: $optimizationsApplied');
+      debugPrint('   - Warnings restantes: ${finalWarnings.length}');
+    }
+
     return {
       'success': true,
       'errors': [],
-      'warnings': warnings,
-      'program': program,
+      'warnings': finalWarnings,
+      'program': finalProgram,
+      'optimizations_applied': optimizationsApplied,
       'volume_validation': volumeValidation,
       'config_validation': configValidation,
     };

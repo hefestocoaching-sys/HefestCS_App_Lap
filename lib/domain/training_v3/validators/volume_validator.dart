@@ -57,10 +57,10 @@ class VolumeValidator {
 
     // VALIDACIÓN 2: Volumen total
     final totalVolume = volumeByMuscle.values.fold(0, (sum, vol) => sum + vol);
-    if (totalVolume > 150) {
+    if (totalVolume > 200) {
       errors.add(
         'Volumen total muy alto ($totalVolume sets/semana). '
-        'Límite recomendado: 150 sets. Riesgo de sobreentrenamiento.',
+        'Límite recomendado: 200 sets. Riesgo de sobreentrenamiento.',
       );
     } else if (totalVolume < 40) {
       warnings.add(
@@ -73,13 +73,14 @@ class VolumeValidator {
     final balanceIssues = _checkMuscleBalance(volumeByMuscle);
     warnings.addAll(balanceIssues);
 
-    // VALIDACIÓN 4: Músculos principales incluidos
+    // VALIDACIÓN 4: Músculos principales incluidos (CANÓNICOS MOTOR V3)
     final requiredMuscles = [
       'chest',
-      'back',
+      'lats', // back superior
+      'upper_back', // back medio
+      'deltoide_anterior', // shoulders frontal
+      'deltoide_lateral', // shoulders lateral
       'quads',
-      'hamstrings',
-      'shoulders',
     ];
     final missingMuscles = requiredMuscles
         .where((m) => !volumeByMuscle.containsKey(m))

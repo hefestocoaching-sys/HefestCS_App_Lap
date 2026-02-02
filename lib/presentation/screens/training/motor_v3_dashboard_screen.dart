@@ -191,10 +191,78 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
     final program = result['program'] as TrainingProgram?;
 
     if (program == null) {
-      return const Center(
-        child: Text(
-          'No se pudo cargar el programa',
-          style: TextStyle(color: Colors.white70),
+      // Mostrar errores del resultado
+      final errors = result['errors'] as List? ?? [];
+      final warnings = result['warnings'] as List? ?? [];
+
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              const Text(
+                'No se pudo generar el programa',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (errors.isNotEmpty) ...[
+                const Text(
+                  'ERRORES CRÍTICOS:',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...errors.map(
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '• $e',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              if (warnings.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'ADVERTENCIAS:',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...warnings
+                    .take(5)
+                    .map(
+                      (w) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(
+                          '• $w',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ),
+              ],
+            ],
+          ),
         ),
       );
     }
