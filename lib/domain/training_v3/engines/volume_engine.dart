@@ -223,13 +223,17 @@ class VolumeEngine {
   static void _validateInputs(String muscle, String level, int priority) {
     final validMuscles = [
       'chest',
-      'back',
+      'deltoide_anterior',
+      'deltoide_lateral',
+      'deltoide_posterior',
+      'triceps',
+      'lats',
+      'upper_back',
+      'traps',
+      'biceps',
       'quads',
       'hamstrings',
       'glutes',
-      'shoulders',
-      'biceps',
-      'triceps',
       'calves',
       'abs',
     ];
