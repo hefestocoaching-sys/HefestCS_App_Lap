@@ -27,6 +27,7 @@ import 'package:hcs_app_lap/presentation/screens/training/motor_v3_dashboard_scr
 
 // Widgets visuales
 import '../widgets/volume_range_muscle_table.dart';
+import '../widgets/volume_capacity_scientific_view.dart';
 import '../widgets/series_distribution_editor.dart';
 import '../widgets/weekly_progress_tracker.dart';
 import '../widgets/macrocycle_overview_tab.dart';
@@ -345,11 +346,110 @@ class _TrainingDashboardScreenState
             child: TabBarView(
               controller: _tabController!,
               children: [
-                // Tab 1: Volumen - Tabla de rangos por músculo (VME/VMR/Target)
-                VolumeRangeMuscleTable(
-                  trainingExtra: trainingExtra,
-                  planJson: null,
-                  planConfig: null,
+                // Tab 1: Volumen Motor V3
+                Consumer(
+                  builder: (context, ref, _) {
+                    final clientsAsync = ref.watch(clientsProvider);
+
+                    return clientsAsync.when(
+                      data: (state) {
+                        final client = state.activeClient;
+                        if (client == null) {
+                          return Center(
+                            child: Text(
+                              'No hay cliente activo',
+                              style: TextStyle(color: kTextColorSecondary),
+                            ),
+                          );
+                        }
+
+                        // Obtener plan activo (Motor V3)
+                        final activePlanId =
+                            client.training.extra[TrainingExtraKeys
+                                    .activePlanId]
+                                as String?;
+
+                        if (activePlanId == null) {
+                          return _buildNoPlanState(
+                            title: 'Sin plan Motor V3',
+                            message:
+                                'Genera un plan científico para ver análisis volumétrico\nbasado en MEV/MAV/MRV',
+                          );
+                        }
+
+                        // Buscar plan en client.trainingPlans
+                        final plan = client.trainingPlans
+                            .cast<TrainingPlanConfig?>()
+                            .firstWhere(
+                              (p) => p?.id == activePlanId,
+                              orElse: () => null,
+                            );
+
+                        if (plan == null) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: kErrorColor,
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Plan no encontrado',
+                                  style: TextStyle(
+                                    color: kTextColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'ID: $activePlanId',
+                                  style: const TextStyle(
+                                    color: kTextColorSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // ✅ Vista científica Motor V3
+                        return VolumeCapacityScientificView(plan: plan);
+                      },
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(color: kPrimaryColor),
+                      ),
+                      error: (error, stack) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: kErrorColor,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Error al cargar datos volumétricos',
+                              style: TextStyle(color: kTextColor, fontSize: 16),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              error.toString(),
+                              style: const TextStyle(
+                                color: kTextColorSecondary,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 // Tab 2: Distribución (Heavy / Medium / Light)
                 SeriesDistributionEditor(
@@ -509,6 +609,64 @@ class _TrainingDashboardScreenState
                   SnackBar(
                     content: Text('Motor V3 en desarrollo: $e'),
                     backgroundColor: kWarningColor,
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('Generar Plan Motor V3'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoPlanState({required String title, required String message}) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.analytics, size: 64, color: Colors.white.withAlpha(60)),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: kTextColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: const TextStyle(fontSize: 13, color: kTextColorSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () async {
+              try {
+                final now = DateTime.now();
+                await ref
+                    .read(trainingPlanProvider.notifier)
+                    .generatePlanFromActiveCycle(now);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Plan Motor V3 generado correctamente'),
+                    backgroundColor: kSuccessColor,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error al generar plan: $e'),
+                    backgroundColor: kErrorColor,
                   ),
                 );
               }
