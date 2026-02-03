@@ -155,7 +155,8 @@ class _TrainingDashboardScreenState
   }
 
   PreferredSizeWidget _buildAppBar(AsyncValue clientsAsync) {
-    final clientName = clientsAsync.value?.activeClient?.name ?? 'Sin cliente';
+    final clientName =
+        clientsAsync.value?.activeClient?.profile.fullName ?? 'Sin cliente';
     final planDate = DateTime.now();
 
     return AppBar(
