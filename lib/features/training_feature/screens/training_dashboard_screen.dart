@@ -30,7 +30,7 @@ import '../widgets/volume_range_muscle_table.dart';
 import '../widgets/series_distribution_editor.dart';
 import '../widgets/weekly_progress_tracker.dart';
 import '../widgets/macrocycle_overview_tab.dart';
-import '../widgets/weekly_plan_tab.dart';
+import '../widgets/weekly_plan_detail_view.dart';
 
 class TrainingDashboardScreen extends ConsumerStatefulWidget {
   final String activeDateIso;
@@ -362,15 +362,82 @@ class _TrainingDashboardScreenState
                 WeeklyProgressTracker(trainingExtra: effectiveExtra),
                 // Tab 4: Macrociclo por músculo (AA/HF) sin dependencia de días
                 MacrocycleOverviewTab(trainingExtra: effectiveExtra),
-                // Tab 5: Plan semanal según días y split válido
-                Builder(
-                  builder: (context) {
-                    final planConfig = _resolveDisplayedPlanConfig(client);
-                    return WeeklyPlanTab(
-                      planConfig: planConfig,
-                      profile: client.training,
-                      vopByMuscle: const {},
-                      effectiveExtra: effectiveExtra,
+                // Tab 5: Plan semanal Motor V3
+                Consumer(
+                  builder: (context, ref, _) {
+                    final clientsAsync = ref.watch(clientsProvider);
+
+                    return clientsAsync.when(
+                      data: (state) {
+                        final client = state.activeClient;
+                        if (client == null) {
+                          return Center(
+                            child: Text(
+                              'No hay cliente activo',
+                              style: TextStyle(color: kTextColorSecondary),
+                            ),
+                          );
+                        }
+
+                        // Obtener plan activo desde client.training.extra
+                        final activePlanId =
+                            client.training.extra[TrainingExtraKeys
+                                    .activePlanId]
+                                as String?;
+
+                        if (activePlanId == null) {
+                          return _buildEmptyPlanState();
+                        }
+
+                        // Buscar plan en client.trainingPlans
+                        final plan = client.trainingPlans
+                            .cast<TrainingPlanConfig?>()
+                            .firstWhere(
+                              (p) => p?.id == activePlanId,
+                              orElse: () => null,
+                            );
+
+                        if (plan == null) {
+                          return Center(
+                            child: Text(
+                              'Plan no encontrado (ID: $activePlanId)',
+                              style: TextStyle(color: kTextColorSecondary),
+                            ),
+                          );
+                        }
+
+                        // ✅ Mostrar plan semana a semana
+                        return WeeklyPlanDetailView(plan: plan);
+                      },
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(color: kPrimaryColor),
+                      ),
+                      error: (error, stack) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: kErrorColor,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Error al cargar plan',
+                              style: TextStyle(color: kTextColor, fontSize: 16),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              error.toString(),
+                              style: const TextStyle(
+                                color: kTextColorSecondary,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -379,6 +446,53 @@ class _TrainingDashboardScreenState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyPlanState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.fitness_center,
+            size: 64,
+            color: Colors.white.withAlpha(60),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No hay plan activo',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: kTextColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Genera un plan con Motor V3 para verlo aquí',
+            style: TextStyle(fontSize: 13, color: kTextColorSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () async {
+              // Llamar al método de generación de plan
+              final now = DateTime.now();
+              await ref
+                  .read(trainingPlanProvider.notifier)
+                  .generatePlanFromActiveCycle(now);
+            },
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('Generar Plan Motor V3'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

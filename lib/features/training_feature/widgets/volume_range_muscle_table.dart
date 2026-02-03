@@ -648,6 +648,11 @@ class VolumeRangeMuscleTable extends StatelessWidget {
     String statusText;
     IconData statusIcon;
 
+    final double percentage = data.vma == 0
+        ? 0.0
+        : (data.target / data.vma) * 100;
+    final visualState = _VolumeRangeMuscleTableState();
+
     if (data.target < data.vme) {
       statusColor = Colors.red;
       statusText = 'Bajo VME';
@@ -695,19 +700,40 @@ class VolumeRangeMuscleTable extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-          child: Row(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                data.target.toString(),
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    data.target.toString(),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(statusIcon, size: 14, color: statusColor),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Container(
+                decoration: BoxDecoration(
+                  color: visualState._getBackgroundForPercentage(percentage),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Text(
+                  '${percentage.toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    color: visualState._getTextColorForPercentage(percentage),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
                 ),
               ),
-              const SizedBox(width: 4),
-              Icon(statusIcon, size: 14, color: statusColor),
             ],
           ),
         ),
@@ -874,5 +900,21 @@ class VolumeRangeMuscleTable extends StatelessWidget {
       'baseVME': vme,
       'alerts': const <Map<String, dynamic>>[],
     };
+  }
+}
+
+class _VolumeRangeMuscleTableState {
+  /// Retorna color de fondo según porcentaje de MAV
+  Color _getBackgroundForPercentage(double percentage) {
+    if (percentage < 80) return kWarningSubtle; // Bajo MEV
+    if (percentage > 110) return kErrorSubtle; // Sobre MRV
+    return kSuccessSubtle; // Zona óptima MAV
+  }
+
+  /// Retorna color de texto según porcentaje de MAV
+  Color _getTextColorForPercentage(double percentage) {
+    if (percentage < 80) return kWarningColor;
+    if (percentage > 110) return kErrorColor;
+    return kSuccessColor;
   }
 }

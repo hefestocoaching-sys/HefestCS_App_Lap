@@ -48,9 +48,6 @@ const kCardBackgroundColor = Color(0xFF1E1E1E);
 // Borde suave gris azulado
 const Color kBorderColor = Color(0xFF0C2C55); // Gris clínico muy suave
 
-// Éxito (carbohidratos, valores positivos, gráficos verdes)
-const Color kSuccessColor = Color(0xFF4CAF50); // Verde clínico estándar
-
 const Color kPrimaryColor = Color(
   0xFF3F51B5,
 ); // Azul para iconos seleccionados/acentos
@@ -68,6 +65,31 @@ const Color kAccentColor = Color(0xFFFFFFFF);
 const Color kTextColorSecondary = Color(0xFFA3A3A3); // Gris secundario
 const Color kGraphColor = Color(0xFF020F2B);
 const Color kGraphSelected = Color(0x779F9546);
+
+// ═══════════════════════════════════════════════════════════
+// SEMANTIC COLORS (Estados visuales para Motor V3)
+// ═══════════════════════════════════════════════════════════
+
+/// Verde - Estado óptimo (volumen en MAV, rendimiento bueno).
+/// Usar cuando: % de MAV está entre 80-110% (zona de estímulo eficaz y sostenible).
+const Color kSuccessColor = Color(0xFF4CAF50);
+
+/// Naranja - Advertencia (volumen bajo MEV o cercano a MRV).
+/// Usar cuando: % de MAV < 80% o % de MRV > 90% (estímulo subóptimo o fatiga acumulada).
+const Color kWarningColor = Color(0xFFFFA726);
+
+/// Rojo - Error/Peligro (volumen > MRV, fatiga alta, sobreentrenamiento).
+/// Usar cuando: % de MRV > 110% o señales de fatiga crítica sostenida.
+const Color kErrorColor = Color(0xFFEF5350);
+
+/// Azul - Información (estado neutral, contexto o guía).
+const Color kInfoColor = Color(0xFF42A5F5);
+
+/// Variantes con alpha para fondos sutiles (backgrounds)
+final Color kSuccessSubtle = kSuccessColor.withAlpha(40);
+final Color kWarningSubtle = kWarningColor.withAlpha(40);
+final Color kErrorSubtle = kErrorColor.withAlpha(40);
+final Color kInfoSubtle = kInfoColor.withAlpha(40);
 
 final ThemeData appThemeData = ThemeData(
   useMaterial3: true,
