@@ -53,6 +53,7 @@ class _TrainingDashboardScreenState
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedTabIndex = 0;
+  late VoidCallback _tabListener;
 
   @override
   void initState() {
@@ -62,17 +63,19 @@ class _TrainingDashboardScreenState
       vsync: this,
       initialIndex: 0,
     );
-    _tabController.addListener(() {
+    _tabListener = () {
       if (_tabController.indexIsChanging) {
         setState(() {
           _selectedTabIndex = _tabController.index;
         });
       }
-    });
+    };
+    _tabController.addListener(_tabListener);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_tabListener);
     _tabController.dispose();
     super.dispose();
   }
