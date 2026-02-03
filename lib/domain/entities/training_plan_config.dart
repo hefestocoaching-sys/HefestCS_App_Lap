@@ -12,6 +12,7 @@ class TrainingPlanConfig extends Equatable {
   final String splitId;
   final int microcycleLengthInWeeks;
   final List<TrainingWeek> weeks;
+  final Map<String, dynamic>? state;
   final TrainingProfile?
   trainingProfileSnapshot; // Foto del perfil al momento de crear el plan
 
@@ -24,6 +25,7 @@ class TrainingPlanConfig extends Equatable {
     required this.splitId,
     required this.microcycleLengthInWeeks,
     required this.weeks,
+    this.state,
     this.trainingProfileSnapshot,
   });
 
@@ -39,6 +41,7 @@ class TrainingPlanConfig extends Equatable {
       'splitId': splitId,
       'microcycleLengthInWeeks': microcycleLengthInWeeks,
       'weeks': weeks.map((x) => x.toJson()).toList(),
+      'state': state,
       'trainingProfileSnapshot': trainingProfileSnapshot?.toJson(),
     };
   }
@@ -60,6 +63,9 @@ class TrainingPlanConfig extends Equatable {
             (x) => TrainingWeek.fromJson(x as Map<String, dynamic>),
           )
           .toList(),
+      state: map['state'] is Map
+          ? Map<String, dynamic>.from(map['state'] as Map)
+          : null,
       trainingProfileSnapshot: map['trainingProfileSnapshot'] != null
           ? TrainingProfile.fromJson(
               map['trainingProfileSnapshot'] as Map<String, dynamic>,
@@ -84,6 +90,7 @@ class TrainingPlanConfig extends Equatable {
     String? splitId,
     int? microcycleLengthInWeeks,
     List<TrainingWeek>? weeks,
+    Map<String, dynamic>? state,
     TrainingProfile? trainingProfileSnapshot,
   }) {
     return TrainingPlanConfig(
@@ -96,6 +103,7 @@ class TrainingPlanConfig extends Equatable {
       microcycleLengthInWeeks:
           microcycleLengthInWeeks ?? this.microcycleLengthInWeeks,
       weeks: weeks ?? this.weeks,
+      state: state ?? this.state,
       trainingProfileSnapshot:
           trainingProfileSnapshot ?? this.trainingProfileSnapshot,
     );
@@ -111,6 +119,7 @@ class TrainingPlanConfig extends Equatable {
     splitId,
     microcycleLengthInWeeks,
     weeks,
+    state,
     trainingProfileSnapshot,
   ];
 }

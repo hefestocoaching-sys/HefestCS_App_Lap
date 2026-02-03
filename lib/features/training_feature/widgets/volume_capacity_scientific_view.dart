@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/design/hcs_glass_container.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
@@ -72,13 +73,12 @@ class VolumeCapacityScientificView extends ConsumerWidget {
   }
 
   Widget _buildScientificHeader() {
-    // Debug: Mostrar estado de plan
+    // Debug: Verificar estado de extracción
+    final capacityData = _extractCapacityData();
     final hasSnapshot = plan.trainingProfileSnapshot != null;
-    final hasExtra =
-        (plan.trainingProfileSnapshot?.extra as Map?)?.containsKey(
-          'capacityByMuscle',
-        ) ??
-        false;
+    final hasState = plan.state != null;
+    final hasPhase2 = (plan.state as Map?)?.containsKey('phase2') ?? false;
+    final musclesCount = capacityData.length;
 
     return HcsGlassContainer(
       padding: const EdgeInsets.all(16),
@@ -116,50 +116,90 @@ class VolumeCapacityScientificView extends ConsumerWidget {
               ),
             ],
           ),
-          // DEBUG INFO (TEMPORAL - REMOVER DESPUÉS)
+
+          // ✅ DEBUG INFO SIEMPRE VISIBLE
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.black.withAlpha(50),
+              color: musclesCount > 0
+                  ? Colors.green.withAlpha(30)
+                  : Colors.red.withAlpha(30),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.white.withAlpha(30)),
+              border: Border.all(
+                color: musclesCount > 0
+                    ? Colors.green.withAlpha(100)
+                    : Colors.red.withAlpha(100),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    Icon(
+                      musclesCount > 0 ? Icons.check_circle : Icons.error,
+                      size: 16,
+                      color: musclesCount > 0 ? Colors.green : Colors.red,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      musclesCount > 0
+                          ? '✅ DATOS EXTRAÍDOS CORRECTAMENTE'
+                          : '❌ ERROR: SIN DATOS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: musclesCount > 0
+                            ? Colors.green.withAlpha(255)
+                            : Colors.red.withAlpha(255),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
                 Text(
-                  '🔍 DEBUG INFO:',
+                  'plan.state exists: $hasState',
                   style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.white.withAlpha(150),
+                    fontSize: 9,
+                    color: Colors.white.withAlpha(180),
+                  ),
+                ),
+                Text(
+                  'plan.state[phase2] exists: $hasPhase2',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.white.withAlpha(180),
+                  ),
+                ),
+                Text(
+                  'Músculos extraídos: $musclesCount',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: musclesCount > 0
+                        ? Colors.green.withAlpha(200)
+                        : Colors.red.withAlpha(200),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'trainingProfileSnapshot exists: $hasSnapshot',
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: Colors.white.withAlpha(120),
-                  ),
-                ),
-                Text(
-                  'snapshot.extra[capacityByMuscle] exists: $hasExtra',
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: Colors.white.withAlpha(120),
-                  ),
-                ),
-                if (hasSnapshot && hasExtra) ...[
+                if (musclesCount > 0) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    'capacityByMuscle keys: ${_extractCapacityData().keys.take(3).join(", ")}...',
+                    'Músculos: ${capacityData.keys.take(5).join(", ")}${capacityData.length > 5 ? "..." : ""}',
                     style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.white.withAlpha(120),
+                      fontSize: 8,
+                      color: Colors.white.withAlpha(150),
                     ),
                   ),
                 ],
+                const SizedBox(height: 6),
+                Text(
+                  '💡 Revisa console para logs detallados (debugPrint)',
+                  style: TextStyle(
+                    fontSize: 8,
+                    color: Colors.amber.withAlpha(200),
+                  ),
+                ),
               ],
             ),
           ),
@@ -393,36 +433,126 @@ class VolumeCapacityScientificView extends ConsumerWidget {
   }
 
   Map<String, dynamic> _extractCapacityData() {
-    // Buscar en trainingProfileSnapshot.extra['capacityByMuscle'] (Motor V3)
-    final snapshot = plan.trainingProfileSnapshot;
-    if (snapshot == null) return {};
+    // ✅ CORRECCIÓN: Motor V3 guarda en plan.state['phase2']['capacityByMuscle']
+    debugPrint(
+      '🔍 VolumeCapacityScientificView: Iniciando extracción de datos',
+    );
 
-    final snapshotExtra = snapshot.extra as Map<String, dynamic>?;
-    if (snapshotExtra == null) return {};
+    final state = plan.state as Map<String, dynamic>?;
 
-    final capacityByMuscle =
-        snapshotExtra['capacityByMuscle'] as Map<String, dynamic>? ?? {};
-    final currentVolumeByMuscle =
-        snapshotExtra['currentVolumeByMuscle'] as Map<String, dynamic>? ?? {};
-
-    if (capacityByMuscle.isEmpty) return {};
-
-    // Construir resultado desde datos disponibles
-    final result = <String, dynamic>{};
-
-    for (final muscle in capacityByMuscle.keys) {
-      final muscleData = capacityByMuscle[muscle] as Map<String, dynamic>?;
-      if (muscleData == null) continue;
-
-      final mev = muscleData['mev'] as int? ?? 0;
-      final mrv = muscleData['mrv'] as int? ?? mev;
-      final mav = muscleData['mav'] as int? ?? ((mev + mrv) / 2).round();
-      final current = currentVolumeByMuscle[muscle] as int? ?? mav;
-
-      result[muscle] = {'mev': mev, 'mav': mav, 'mrv': mrv, 'current': current};
+    if (state == null) {
+      debugPrint('❌ VolumeCapacityScientificView: plan.state is NULL');
+      debugPrint('   plan.id: ${plan.id}');
+      debugPrint('   plan.weeks.length: ${plan.weeks.length}');
+      return {};
     }
 
+    debugPrint('✅ plan.state exists, keys: ${state.keys.toList()}');
+
+    final phase2 = state['phase2'] as Map<String, dynamic>?;
+
+    if (phase2 == null) {
+      debugPrint(
+        '❌ VolumeCapacityScientificView: phase2 NOT FOUND in plan.state',
+      );
+      debugPrint('   Available state keys: ${state.keys.toList()}');
+      return {};
+    }
+
+    debugPrint('✅ phase2 exists, keys: ${phase2.keys.toList()}');
+
+    final capacityByMuscle =
+        phase2['capacityByMuscle'] as Map<String, dynamic>?;
+
+    if (capacityByMuscle == null || capacityByMuscle.isEmpty) {
+      debugPrint(
+        '❌ VolumeCapacityScientificView: capacityByMuscle is EMPTY or NULL',
+      );
+      debugPrint('   phase2 keys: ${phase2.keys.toList()}');
+      return {};
+    }
+
+    debugPrint(
+      '✅ capacityByMuscle found with ${capacityByMuscle.length} muscles',
+    );
+
+    // ✅ Convertir formato Motor V3 a formato esperado por widget
+    final result = <String, dynamic>{};
+
+    for (final entry in capacityByMuscle.entries) {
+      final muscle = entry.key;
+      final capacityData = entry.value as Map<String, dynamic>?;
+
+      if (capacityData == null) {
+        debugPrint('⚠️ Muscle $muscle has NULL capacity data');
+        continue;
+      }
+
+      final mev = (capacityData['mev'] as num?)?.toInt() ?? 0;
+      final mrv = (capacityData['mrv'] as num?)?.toInt() ?? 0;
+      final mav = (capacityData['mav'] as num?)?.toInt() ?? 0;
+
+      debugPrint('   Muscle $muscle: MEV=$mev, MAV=$mav, MRV=$mrv');
+
+      // Solo incluir si tiene datos válidos
+      if (mev > 0 || mrv > 0 || mav > 0) {
+        // Obtener volumen actual desde phase3 si existe
+        final currentVolume = _getCurrentVolume(muscle);
+
+        result[muscle] = {
+          'mev': mev,
+          'mav': mav,
+          'mrv': mrv,
+          'current': currentVolume > 0 ? currentVolume : mav,
+        };
+
+        debugPrint('✅ Added $muscle to result (current: $currentVolume)');
+      } else {
+        debugPrint('⚠️ Muscle $muscle has INVALID data (all zeros)');
+      }
+    }
+
+    debugPrint('✅ FINAL: Extracted ${result.length} muscles with valid data');
+    debugPrint('   Muscles: ${result.keys.toList()}');
+
     return result;
+  }
+
+  int _getCurrentVolume(String muscle) {
+    // Intentar obtener volumen target desde phase3
+    final state = plan.state as Map<String, dynamic>?;
+    if (state == null) {
+      debugPrint('   _getCurrentVolume($muscle): state is null');
+      return 0;
+    }
+
+    final phase3 = state['phase3'] as Map<String, dynamic>?;
+    if (phase3 == null) {
+      debugPrint('   _getCurrentVolume($muscle): phase3 not found');
+      return 0;
+    }
+
+    final targetWeeklySetsByMuscle =
+        phase3['targetWeeklySetsByMuscle'] as Map<String, dynamic>?;
+    if (targetWeeklySetsByMuscle == null) {
+      debugPrint(
+        '   _getCurrentVolume($muscle): targetWeeklySetsByMuscle not found',
+      );
+      return 0;
+    }
+
+    final volume = targetWeeklySetsByMuscle[muscle] as num?;
+    final currentVolume = volume?.toInt() ?? 0;
+
+    if (currentVolume > 0) {
+      debugPrint(
+        '   ✅ Current volume for $muscle from phase3: $currentVolume sets',
+      );
+    } else {
+      debugPrint('   ⚠️ No current volume for $muscle in phase3');
+    }
+
+    return currentVolume;
   }
 
   String _formatMuscleName(String muscle) {
