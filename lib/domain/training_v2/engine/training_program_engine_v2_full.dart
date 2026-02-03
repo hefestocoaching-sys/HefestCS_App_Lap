@@ -882,6 +882,73 @@ class TrainingProgramEngineV2Full {
       );
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // CONSTRUIR PLAN.STATE CON RESULTADOS DE TODAS LAS FASES
+    // Necesario para UI (VolumeCapacityScientificView, etc.)
+    // ═══════════════════════════════════════════════════════════════════════
+    // CONSTRUIR PLAN.STATE JSON-SERIALIZABLE
+    // ✅ SOLO tipos primitivos (String, int, double, bool, Map, List)
+    // ═══════════════════════════════════════════════════════════════════════
+    final planState = <String, dynamic>{};
+
+    // Phase 1 - Data Ingestion
+    planState['phase1'] = {'contextBuilt': true};
+
+    // Phase 2 - Readiness Evaluation (ALIAS: "phase2" en UI para retrocompatibilidad)
+    // ✅ Convertir readinessByMuscle a Map<String, dynamic> para JSON serialization
+    final readinessByMuscleMap = <String, dynamic>{};
+    r2.readinessByMuscle.forEach((muscle, readiness) {
+      // muscle es MuscleGroup (enum), convertir a String con name
+      readinessByMuscleMap[muscle.name] =
+          readiness.name; // Convertir ambos enums a String
+    });
+
+    planState['phase2'] = {
+      'readinessLevel': r2.readinessLevel.name,
+      'volumeAdjustmentFactor': r2.volumeAdjustmentFactor,
+      'readinessByMuscle': readinessByMuscleMap,
+    };
+
+    // Phase 3 - Volume Capacity Model (CRÍTICO: VolumeCapacityScientificView lo busca aquí)
+    // ✅ Convertir a Map<String, dynamic> para JSON serialization
+    final capacityByMuscleMap = <String, dynamic>{};
+    r3.volumeLimitsByMuscle.forEach((muscle, limits) {
+      capacityByMuscleMap[muscle] = {
+        'mev': limits.mev,
+        'mav': limits.mav,
+        'mrv': limits.mrv,
+        'recommendedStartVolume': limits.recommendedStartVolume,
+      };
+    });
+
+    planState['phase3'] = {'capacityByMuscle': capacityByMuscleMap};
+
+    // Phase 4 - Split Distribution
+    planState['phase4'] = {
+      'splitId': r4.split.splitId.toString(), // ✅ Convertir a String
+      'daysPerWeek': r4.split.daysPerWeek,
+    };
+
+    // Phase 5 - Periodization (solo datos primitivos)
+    planState['phase5'] = {
+      'weeksCount': r5.weeks.length,
+      'firstPhase': r5.weeks.first.phase.toString(), // ✅ Convertir a String
+    };
+
+    // Phase 7 - Prescriptions summary
+    planState['phase7'] = {
+      'prescriptionsCount': r7.weekDayPrescriptions.values.fold<int>(
+        0,
+        (sum, day) => sum + day.length,
+      ),
+    };
+
+    // Phase 8 - Adaptation summary
+    planState['phase8'] = {
+      'adapted': true,
+      'sessionCount': weeks.length * r4.split.daysPerWeek,
+    };
+
     final plan = TrainingPlanConfig(
       id: planId,
       name: planName,
@@ -893,15 +960,19 @@ class TrainingProgramEngineV2Full {
       weeks: weeks,
       trainingProfileSnapshot: profile,
       state:
-          profile.extra, // ✅ CRÍTICO: Pasar state con plan.extra para Motor V3
+          planState, // ✅ CRÍTICO: Pasar state con resultados de TODAS las fases Motor V3
     );
 
-    // ✅ AUDIT LOG
-    debugPrint('🔍 [AUDIT] TrainingPlanConfig creado');
-    debugPrint('🔍 [AUDIT] plan.state: ${plan.state}');
+    // ✅ AUDIT LOG - Motor V3 FULL con State
+    debugPrint('🔍 [AUDIT] TrainingPlanConfig creado con Motor V3 FULL');
+    debugPrint('🔍 [AUDIT] plan.state keys: ${plan.state?.keys.toList()}');
     debugPrint('🔍 [AUDIT] plan.state[phase2]: ${plan.state?['phase2']}');
+    debugPrint('🔍 [AUDIT] plan.state[phase3]: ${plan.state?['phase3']}');
     debugPrint(
-      '🔍 [AUDIT] plan.state[phase2][capacityByMuscle]: ${(plan.state?['phase2'] as Map?)?['capacityByMuscle']}',
+      '🔍 [AUDIT] plan.state[phase3][capacityByMuscle] keys: ${((plan.state?['phase3'] as Map?)?['capacityByMuscle'] as Map?)?.keys.toList()}',
+    );
+    debugPrint(
+      '🔍 [AUDIT] plan.state[phase3][capacityByMuscle][chest]: ${((plan.state?['phase3'] as Map?)?['capacityByMuscle'] as Map?)?['chest']}',
     );
 
     lastDecisions.add(

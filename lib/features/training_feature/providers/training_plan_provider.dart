@@ -19,8 +19,9 @@ import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart'
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 import 'package:hcs_app_lap/utils/date_helpers.dart';
-// Facade (SSOT motor)
-import 'package:hcs_app_lap/domain/training/facade/training_engine_facade.dart';
+// ✅ MOTOR V3 REAL - Generación con pipeline científico
+import 'package:hcs_app_lap/domain/training_v2/engine/training_program_engine_v2_full.dart';
+import 'package:hcs_app_lap/domain/training_v2/services/training_context_builder.dart';
 // VopSnapshot SSOT
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
@@ -539,8 +540,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
-      // Generar plan VÍA FACADE (persistencia obligatoria dentro)
-      final facade = TrainingEngineFacade();
+      // Generar plan vía Motor V3 (persistencia obligatoria dentro)
       final exercises = await ExerciseCatalogLoader.load();
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -564,21 +564,47 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final planIdDeterministic =
           'tp_${clientId}_${startDate.year}${startDate.month.toString().padLeft(2, '0')}${startDate.day.toString().padLeft(2, '0')}';
 
-      final planConfig = await facade.generatePlan(
+      // Motor V3: Crear contexto y generar plan
+      final engineV3 = TrainingProgramEngineV2Full();
+      final contextBuilder = TrainingContextBuilder();
+      final contextBuild = contextBuilder.build(
+        client: freshClient,
+        asOfDate: startDate,
+      );
+
+      if (!contextBuild.isOk || contextBuild.context == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: contextBuild.error?.message ?? 'No se pudo construir contexto',
+        );
+        return;
+      }
+
+      final planConfig = engineV3.generatePlan(
         planId: planIdDeterministic,
         clientId: clientId,
         planName: 'Plan $activeDateIso',
         startDate: startDate,
-        profile: trainingProfile,
-        client: freshClient, // ← Pasar cliente para persistencia
-        repository: ref.read(clientRepositoryProvider), // ← Pasar repositorio
+        context: contextBuild.context!,
+        client: freshClient,
         exercises: exercises,
       );
+
+      // Persistir plan en repositorio
+      final clientWithPlan = freshClient.copyWith(
+        trainingPlans: [
+          ...freshClient.trainingPlans.where(
+            (p) => p.id != planIdDeterministic,
+          ),
+          planConfig,
+        ],
+      );
+      await ref.read(clientRepositoryProvider).saveClient(clientWithPlan);
 
       // Mapper de compatibilidad para UI legacy (GeneratedPlan derivado)
       final plan = TrainingPlanMapper.toGeneratedPlan(planConfig);
 
-      // Recargar cliente después de persistencia en facade
+      // Recargar cliente después de persistencia
       final client = await ref
           .read(clientRepositoryProvider)
           .getClientById(clientId);
@@ -806,7 +832,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
         // ═══════════════════════════════════════════════════════════════════════
         // ACTUALIZACIÓN DE CLIENTE SOLO PARA EXTRA (mapas UI, metadata)
-        // El plan YA FUE persistido en trainingPlans por la FACADE
+        // El plan YA FUE persistido en trainingPlans por Motor V3
         // ═══════════════════════════════════════════════════════════════════════
         return current.copyWith(
           training: current.training.copyWith(extra: extra),
@@ -866,7 +892,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
     const dbTimeout = Duration(seconds: 6);
     const catalogTimeout = Duration(seconds: 8);
-    const engineTimeout = Duration(seconds: 15);
 
     // ─────────────────────────────────────────────
     // FORZAR INVALIDACIÓN DE ESTADO (REGENERACIÓN)
@@ -924,7 +949,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
-      // 2. Cargar catálogo de ejercicios (necesario para bootstrap Y facade)
+      // 2. Cargar catálogo de ejercicios (necesario para bootstrap Y Motor V3)
       debugPrint('🧭 [Motor V2][Step] 2.5/6 loading exercise catalog...');
       final exercises = await ExerciseCatalogLoader.load().timeout(
         catalogTimeout,
@@ -1120,43 +1145,70 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       // PARTE 4 A6: Validación VOP se hace POST-plan (requiere ejercicios reales)
-      debugPrint('🧭 [Motor V2][Step] 4/6 VOP validate (post-plan)');
+      debugPrint('🧭 [Motor V3][Step] 4/6 VOP validate (post-plan)');
       final vopContext = VopContext.ensure(workingClient.training.extra);
       final vopMap = vopContext?.snapshot.setsByMuscle ?? {};
 
-      // 4. Ejecutar Motor V2 via Facade
+      // 4. Ejecutar Motor V3 (TrainingProgramEngineV2Full)
       debugPrint(
-        '🧪 [Motor V2] Regenerando plan desde cero — timestamp: ${DateTime.now()}',
+        '🚀 [Motor V3] Regenerando plan con pipeline científico — timestamp: ${DateTime.now()}',
       );
-      final facade = TrainingEngineFacade();
+
+      final engineV3 = TrainingProgramEngineV2Full();
 
       final planId =
           'tp_${clientId}_${selectedDate.year}${selectedDate.month.toString().padLeft(2, '0')}${selectedDate.day.toString().padLeft(2, '0')}';
 
-      debugPrint('🧭 [Motor V2][Step] 6/6 running facade.generatePlan...');
+      debugPrint('🧭 [Motor V3][Step] 6/6 Ejecutando pipeline V3...');
 
-      final planConfig = await facade
-          .generatePlan(
-            planId: planId,
-            clientId: clientId,
-            planName: 'Plan ${selectedDate.toIso8601String().split('T')[0]}',
-            startDate: selectedDate,
-            profile: workingClient.training,
-            client: workingClient,
-            repository: ref.read(clientRepositoryProvider),
-            exercises: exercises,
-          )
-          .timeout(
-            engineTimeout,
-            onTimeout: () {
-              throw Exception(
-                'TIMEOUT facade.generatePlan() after ${engineTimeout.inSeconds}s',
-              );
-            },
-          );
+      // Crear TrainingContext desde client
+      final contextBuilder = TrainingContextBuilder();
+      final contextBuild = contextBuilder.build(
+        client: workingClient,
+        asOfDate: selectedDate,
+      );
+
+      if (!contextBuild.isOk || contextBuild.context == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error:
+              contextBuild.error?.message ??
+              'No se pudo construir contexto de entrenamiento',
+        );
+        debugPrint(
+          '❌ [Motor V3] Error al construir contexto: ${contextBuild.error?.message}',
+        );
+        return;
+      }
+
+      final trainingContext = contextBuild.context!;
+
+      // Ejecutar Motor V3 completo
+      TrainingPlanConfig planConfig;
+      try {
+        planConfig = engineV3.generatePlan(
+          planId: planId,
+          clientId: clientId,
+          planName: 'Plan ${selectedDate.toIso8601String().split('T')[0]}',
+          startDate: selectedDate,
+          context: trainingContext,
+          client: workingClient,
+          history: null,
+          exercises: exercises,
+        );
+      } catch (e, stackTrace) {
+        debugPrint('❌ [Motor V3] Error durante generación: $e');
+        debugPrint('Stack trace: $stackTrace');
+
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Error en Motor V3: $e',
+        );
+        return;
+      }
 
       debugPrint(
-        '✅ [Motor V2] Plan generado: ${planConfig.weeks.length} semanas, '
+        '✅ [Motor V3] Plan generado: ${planConfig.weeks.length} semanas, '
         '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
       );
 
@@ -1170,6 +1222,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final mevRaw =
           planConfig.trainingProfileSnapshot?.extra[TrainingExtraKeys
               .mevByMuscle] ??
+          planConfig.state?['phase3']?['capacityByMuscle'] ??
           workingClient.training.extra[TrainingExtraKeys.mevByMuscle];
 
       if (mevRaw is Map) {
@@ -1237,7 +1290,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       );
 
       debugPrint(
-        '🎉 [Motor V2] Plan persistido con activePlanId=${planConfig.id}',
+        '🎉 [Motor V3] Plan persistido con activePlanId=${planConfig.id}',
       );
 
       // 6. Refrescar clientsProvider para que UI refleje el plan persistido
