@@ -1455,7 +1455,7 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
             ],
           ),
           const SizedBox(height: 24),
-          _buildIntensitySlider(
+          _buildIndependentIntensitySlider(
             label: 'PESADA (75-85% 1RM)',
             value: _heavyPercentage,
             min: 15,
@@ -1465,13 +1465,12 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
             onChanged: (value) {
               setState(() {
                 _heavyPercentage = value;
-                _adjustOtherPercentages('heavy');
                 _hasUnsavedChanges = true;
               });
             },
           ),
           const SizedBox(height: 24),
-          _buildIntensitySlider(
+          _buildIndependentIntensitySlider(
             label: 'MODERADA (65-75% 1RM)',
             value: _moderatePercentage,
             min: 40,
@@ -1481,13 +1480,12 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
             onChanged: (value) {
               setState(() {
                 _moderatePercentage = value;
-                _adjustOtherPercentages('moderate');
                 _hasUnsavedChanges = true;
               });
             },
           ),
           const SizedBox(height: 24),
-          _buildIntensitySlider(
+          _buildIndependentIntensitySlider(
             label: 'LIGERA (50-65% 1RM)',
             value: _lightPercentage,
             min: 15,
@@ -1497,7 +1495,6 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
             onChanged: (value) {
               setState(() {
                 _lightPercentage = value;
-                _adjustOtherPercentages('light');
                 _hasUnsavedChanges = true;
               });
             },
@@ -1508,12 +1505,12 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
             decoration: BoxDecoration(
               color: _getTotalPercentage() == 100
                   ? Colors.green.withValues(alpha: 0.2)
-                  : Colors.orange.withValues(alpha: 0.2),
+                  : Colors.red.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: _getTotalPercentage() == 100
                     ? Colors.green.withValues(alpha: 0.4)
-                    : Colors.orange.withValues(alpha: 0.4),
+                    : Colors.red.withValues(alpha: 0.4),
               ),
             ),
             child: Row(
@@ -1521,17 +1518,25 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
                 Icon(
                   _getTotalPercentage() == 100
                       ? Icons.check_circle
-                      : Icons.warning,
+                      : Icons.error,
                   color: _getTotalPercentage() == 100
                       ? Colors.green
-                      : Colors.orange,
+                      : Colors.red,
                   size: 18,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Total: ${_getTotalPercentage().toStringAsFixed(0)}%',
-                    style: const TextStyle(fontSize: 14, color: Colors.white),
+                    _getTotalPercentage() == 100
+                        ? 'Total: 100% ✓ Listo para aplicar'
+                        : 'Total: ${_getTotalPercentage().toInt()}% ✗ Debe sumar exactamente 100%',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: _getTotalPercentage() == 100
+                          ? Colors.green
+                          : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -1573,6 +1578,8 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00D9FF),
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.withValues(alpha: 0.3),
+                    disabledForegroundColor: Colors.grey,
                   ),
                 ),
               ),
@@ -1583,7 +1590,7 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
     );
   }
 
-  Widget _buildIntensitySlider({
+  Widget _buildIndependentIntensitySlider({
     required String label,
     required double value,
     required double min,
@@ -1615,7 +1622,7 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
                 border: Border.all(color: color.withValues(alpha: 0.4)),
               ),
               child: Text(
-                '${value.round()}%',
+                '${value.toInt()}%',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1633,13 +1640,18 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
             thumbColor: color,
             overlayColor: color.withValues(alpha: 0.2),
             trackHeight: 6,
+            valueIndicatorColor: color,
+            valueIndicatorTextStyle: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           child: Slider(
             value: value,
             min: min,
             max: max,
-            divisions: ((max - min) ~/ 1),
-            label: '${value.round()}%',
+            divisions: ((max - min) / 5).toInt(),
+            label: '${value.toInt()}%',
             onChanged: onChanged,
           ),
         ),
@@ -1948,41 +1960,21 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
     return _heavyPercentage + _moderatePercentage + _lightPercentage;
   }
 
-  void _adjustOtherPercentages(String changed) {
-    final total = _getTotalPercentage();
-    if (total == 100) return;
-
-    final diff = total - 100;
-
-    if (changed == 'heavy') {
-      final ratio =
-          _moderatePercentage / (_moderatePercentage + _lightPercentage);
-      _moderatePercentage = (_moderatePercentage - diff * ratio).clamp(
-        40.0,
-        70.0,
-      );
-      _lightPercentage = (100 - _heavyPercentage - _moderatePercentage).clamp(
-        15.0,
-        30.0,
-      );
-    } else if (changed == 'moderate') {
-      final ratio = _heavyPercentage / (_heavyPercentage + _lightPercentage);
-      _heavyPercentage = (_heavyPercentage - diff * ratio).clamp(15.0, 30.0);
-      _lightPercentage = (100 - _heavyPercentage - _moderatePercentage).clamp(
-        15.0,
-        30.0,
-      );
-    } else {
-      final ratio = _heavyPercentage / (_heavyPercentage + _moderatePercentage);
-      _heavyPercentage = (_heavyPercentage - diff * ratio).clamp(15.0, 30.0);
-      _moderatePercentage = (100 - _heavyPercentage - _lightPercentage).clamp(
-        40.0,
-        70.0,
-      );
-    }
-  }
-
   Future<void> _applyChanges() async {
+    if (_getTotalPercentage() != 100) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✗ No se puede aplicar. Total debe ser 100% (actual: ${_getTotalPercentage().toInt()}%)',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _hasUnsavedChanges = false;
     });
@@ -1990,9 +1982,12 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✓ Cambios aplicados. Regenerando programa...'),
+      SnackBar(
+        content: Text(
+          '✓ Cambios aplicados: ${_heavyPercentage.toInt()}/${_moderatePercentage.toInt()}/${_lightPercentage.toInt()}. Regenerando programa...',
+        ),
         backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
