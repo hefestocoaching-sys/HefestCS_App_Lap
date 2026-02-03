@@ -99,22 +99,25 @@ class _TrainingDashboardScreenState
             return _buildNoClientState();
           }
 
-          // Obtener plan Motor V3 activo
-          final activePlanId =
-              client.training.extra[TrainingExtraKeys.activePlanId] as String?;
-
-          if (activePlanId == null) {
+          // ✅ P0-4: SSOT - Último plan Motor V3 por fecha (más reciente)
+          if (client.trainingPlans.isEmpty) {
+            debugPrint('❌ P0-4 TrainingDashboard: No hay planes Motor V3');
             return _buildNoPlanState(client);
           }
 
-          final plan = client.trainingPlans
-              .cast<TrainingPlanConfig?>()
-              .firstWhere((p) => p?.id == activePlanId, orElse: () => null);
+          // Ordenar por fecha de inicio (más reciente primero)
+          final sortedPlans = client.trainingPlans.toList()
+            ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
-          if (plan == null) {
-            return _buildPlanNotFoundState(activePlanId);
-          }
+          final plan = sortedPlans.first; // Plan más reciente
 
+          debugPrint('✅ P0-4 TrainingDashboard: Plan activo Motor V3:');
+          debugPrint('   ID: ${plan.id}');
+          debugPrint('   Inicio: ${plan.startDate}');
+          debugPrint('   Semanas: ${plan.weeks.length}');
+
+          // ✅ NO LEER de training.extra['activePlanId'] (stale)
+          // ✅ Usar plan.id directamente (ya tenemos objeto completo)
           // ✅ RENDERIZAR TABS MOTOR V3
           return _buildMotorV3Workspace(plan, client);
         },

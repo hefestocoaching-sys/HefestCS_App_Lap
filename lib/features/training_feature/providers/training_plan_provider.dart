@@ -1029,17 +1029,43 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           workingClient.training.extra[TrainingExtraKeys.activePlanId] != null;
       if (workingClient.trainingPlans.isNotEmpty || hasActivePlanId) {
         debugPrint(
-          '♻️ [Motor V2] Forzando regeneración del plan: limpiando semanas previas',
+          '♻️ [Motor V3 P0-2] Regeneración: LIMPIEZA TOTAL datos legacy',
         );
 
         final updatedExtra = Map<String, dynamic>.from(
           workingClient.training.extra,
-        )..remove(TrainingExtraKeys.activePlanId);
+        );
+
+        // ✅ P0-2: ELIMINAR TODAS LAS CLAVES MOTOR V2 LEGACY
+        const legacyV2Keys = [
+          'activePlanId', // Motor V2 plan ID
+          'mevByMuscle', // Motor V2 volumen output
+          'mrvByMuscle', // Motor V2 volumen output
+          'mavByMuscle', // Motor V2 volumen output
+          'targetSetsByMuscle', // Motor V2 distribución
+          'intensityDistribution', // Motor V2 intensidad
+          'mevTable', // Motor V2 metadata
+          'seriesTypePercentSplit', // Motor V2 metadata
+          'weeklyPlanId', // Motor V2 semanas
+          'finalTargetSetsByMuscleUi', // Motor V2 UI cache
+        ];
+
+        for (final key in legacyV2Keys) {
+          if (updatedExtra.containsKey(key)) {
+            updatedExtra.remove(key);
+            debugPrint('  🗑️ P0-2: Eliminada clave legacy: $key');
+          }
+        }
 
         workingClient = workingClient.copyWith(
           training: workingClient.training.copyWith(extra: updatedExtra),
           trainingPlans: const [],
+          trainingWeeks: const [], // ✅ Limpiar semanas legacy
+          trainingSessions: const [], // ✅ Limpiar sesiones legacy
         );
+
+        debugPrint('✅ P0-2: training.extra limpiado completamente');
+        debugPrint('   Claves restantes: ${updatedExtra.keys.toList()}');
 
         await ref.read(clientRepositoryProvider).saveClient(workingClient);
 

@@ -651,7 +651,6 @@ class VolumeRangeMuscleTable extends StatelessWidget {
     final double percentage = data.vma == 0
         ? 0.0
         : (data.target / data.vma) * 100;
-    final visualState = _VolumeRangeMuscleTableState();
 
     if (data.target < data.vme) {
       statusColor = Colors.red;

@@ -8,7 +8,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:hcs_app_lap/domain/entities/client.dart';
-import 'package:hcs_app_lap/utils/deep_merge.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -128,51 +127,19 @@ class DatabaseHelper {
   Future<void> upsertClient(Client client) async {
     final db = await database;
 
-    // BLINDAJE CRÍTICO: Hacer merge de extra antes de guardar
-    // Esto asegura que NO se pierdan datos clínicos en actualizaciones parciales
-    Client clientToSave = client;
-
-    // Intentar obtener cliente previo para hacer merge de extra
-    try {
-      final clientId = client.id;
-      if (clientId.isNotEmpty) {
-        final existing = await getClientById(clientId);
-        if (existing != null) {
-          // Hacer DEEP merge: preservar existing.extra, sobrescribir con client.extra nuevo
-          // Esto preserva Maps anidados como mevByMuscle, mrvByMuscle, targetSetsByMuscle
-          final mergedExtra = deepMerge(
-            existing.training.extra,
-            client.training.extra,
-          );
-
-          // Importante: conservar el training NUEVO (client.training) y solo mergear el extra
-          final mergedTraining = client.training.copyWith(extra: mergedExtra);
-
-          // Crear Client con Training actualizado
-          clientToSave = client.copyWith(training: mergedTraining);
-
-          // 🔍 VALIDACIÓN: Confirmar merge
-          debugPrint('💾 SQLite upsert - training.extra merge:');
-          debugPrint(
-            '   yearsTrainingContinuous: ${mergedExtra['yearsTrainingContinuous']}',
-          );
-          debugPrint(
-            '   sessionDurationMinutes: ${mergedExtra['sessionDurationMinutes']}',
-          );
-          debugPrint(
-            '   restBetweenSetsSeconds: ${mergedExtra['restBetweenSetsSeconds']}',
-          );
-          debugPrint('   avgSleepHours: ${mergedExtra['avgSleepHours']}');
-        }
-      }
-    } catch (_) {
-      // Si falla la lectura, usar cliente tal como viene (no es crítico)
-    }
+    // ✅ CORRECCIÓN P0-1: Guardar cliente TAL COMO VIENE
+    // ✅ NO hacer merge automático — Provider controla limpieza
+    // ✅ training.extra del client entrante es la verdad absoluta
+    // ✅ Esto permite que training_plan_provider limpie datos Motor V2 legacy
 
     await db.insert(
       'clients',
-      _wrapClientJson(clientToSave),
+      _wrapClientJson(client),
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+
+    debugPrint(
+      '✅ DatabaseHelper P0-1: Cliente guardado SIN merge automático (SSOT puro)',
     );
   }
 

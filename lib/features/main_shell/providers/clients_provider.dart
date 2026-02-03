@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
@@ -171,6 +172,30 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
           persisted.training.extra,
         );
         mergedTrainingExtra.addAll(updated.training.extra);
+
+        // ✅ P0-3: ELIMINAR claves legacy Motor V2 después de merge
+        const legacyV2Keys = [
+          'activePlanId',
+          'mevByMuscle',
+          'mrvByMuscle',
+          'mavByMuscle',
+          'targetSetsByMuscle',
+          'intensityDistribution',
+          'mevTable',
+          'seriesTypePercentSplit',
+          'weeklyPlanId',
+          'finalTargetSetsByMuscleUi',
+        ];
+
+        for (final key in legacyV2Keys) {
+          if (mergedTrainingExtra.containsKey(key)) {
+            mergedTrainingExtra.remove(key);
+            debugPrint('🗑️ P0-3 clients_provider: Removed legacy key $key');
+          }
+        }
+
+        debugPrint('✅ P0-3: training.extra limpiado en updateActiveClient');
+        debugPrint('   Claves finales: ${mergedTrainingExtra.keys.toList()}');
 
         final mergedNutrition = persisted.nutrition.copyWith(
           extra: mergedNutritionExtra,

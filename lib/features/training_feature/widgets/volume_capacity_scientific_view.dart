@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/design/hcs_glass_container.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
@@ -75,7 +74,6 @@ class VolumeCapacityScientificView extends ConsumerWidget {
   Widget _buildScientificHeader() {
     // Debug: Verificar estado de extracción
     final capacityData = _extractCapacityData();
-    final hasSnapshot = plan.trainingProfileSnapshot != null;
     final hasState = plan.state != null;
     final hasPhase2 = (plan.state as Map?)?.containsKey('phase2') ?? false;
     final musclesCount = capacityData.length;
@@ -433,47 +431,41 @@ class VolumeCapacityScientificView extends ConsumerWidget {
   }
 
   Map<String, dynamic> _extractCapacityData() {
-    // ✅ CORRECCIÓN: Motor V3 guarda en plan.state['phase2']['capacityByMuscle']
-    debugPrint(
-      '🔍 VolumeCapacityScientificView: Iniciando extracción de datos',
-    );
+    // ✅ P0-5: Motor V3 guarda en plan.state['phase2']['capacityByMuscle']
+    debugPrint('🔍 P0-5 VolumeCapacityScientificView: Iniciando extracción');
 
-    final state = plan.state as Map<String, dynamic>?;
+    final state = plan.state;
 
-    if (state == null) {
-      debugPrint('❌ VolumeCapacityScientificView: plan.state is NULL');
+    if (state is! Map<String, dynamic>) {
+      debugPrint('❌ P0-5: plan.state is NULL');
       debugPrint('   plan.id: ${plan.id}');
       debugPrint('   plan.weeks.length: ${plan.weeks.length}');
       return {};
     }
 
-    debugPrint('✅ plan.state exists, keys: ${state.keys.toList()}');
+    debugPrint('✅ P0-5: plan.state exists, keys: ${state.keys.toList()}');
 
     final phase2 = state['phase2'] as Map<String, dynamic>?;
 
     if (phase2 == null) {
-      debugPrint(
-        '❌ VolumeCapacityScientificView: phase2 NOT FOUND in plan.state',
-      );
+      debugPrint('❌ P0-5: phase2 NOT FOUND in plan.state');
       debugPrint('   Available state keys: ${state.keys.toList()}');
       return {};
     }
 
-    debugPrint('✅ phase2 exists, keys: ${phase2.keys.toList()}');
+    debugPrint('✅ P0-5: phase2 exists, keys: ${phase2.keys.toList()}');
 
     final capacityByMuscle =
         phase2['capacityByMuscle'] as Map<String, dynamic>?;
 
     if (capacityByMuscle == null || capacityByMuscle.isEmpty) {
-      debugPrint(
-        '❌ VolumeCapacityScientificView: capacityByMuscle is EMPTY or NULL',
-      );
+      debugPrint('❌ P0-5: capacityByMuscle EMPTY or NULL');
       debugPrint('   phase2 keys: ${phase2.keys.toList()}');
       return {};
     }
 
     debugPrint(
-      '✅ capacityByMuscle found with ${capacityByMuscle.length} muscles',
+      '✅ P0-5: capacityByMuscle found with ${capacityByMuscle.length} muscles',
     );
 
     // ✅ Convertir formato Motor V3 a formato esperado por widget
@@ -484,7 +476,7 @@ class VolumeCapacityScientificView extends ConsumerWidget {
       final capacityData = entry.value as Map<String, dynamic>?;
 
       if (capacityData == null) {
-        debugPrint('⚠️ Muscle $muscle has NULL capacity data');
+        debugPrint('⚠️ P0-5: Muscle $muscle has NULL capacity data');
         continue;
       }
 
@@ -492,11 +484,9 @@ class VolumeCapacityScientificView extends ConsumerWidget {
       final mrv = (capacityData['mrv'] as num?)?.toInt() ?? 0;
       final mav = (capacityData['mav'] as num?)?.toInt() ?? 0;
 
-      debugPrint('   Muscle $muscle: MEV=$mev, MAV=$mav, MRV=$mrv');
+      debugPrint('   P0-5 Muscle $muscle: MEV=$mev, MAV=$mav, MRV=$mrv');
 
-      // Solo incluir si tiene datos válidos
       if (mev > 0 || mrv > 0 || mav > 0) {
-        // Obtener volumen actual desde phase3 si existe
         final currentVolume = _getCurrentVolume(muscle);
 
         result[muscle] = {
@@ -506,53 +496,31 @@ class VolumeCapacityScientificView extends ConsumerWidget {
           'current': currentVolume > 0 ? currentVolume : mav,
         };
 
-        debugPrint('✅ Added $muscle to result (current: $currentVolume)');
+        debugPrint('✅ P0-5: Added $muscle (current: $currentVolume)');
       } else {
-        debugPrint('⚠️ Muscle $muscle has INVALID data (all zeros)');
+        debugPrint('⚠️ P0-5: Muscle $muscle has INVALID data (all zeros)');
       }
     }
 
-    debugPrint('✅ FINAL: Extracted ${result.length} muscles with valid data');
+    debugPrint('✅ P0-5 FINAL: Extracted ${result.length} muscles');
     debugPrint('   Muscles: ${result.keys.toList()}');
 
     return result;
   }
 
   int _getCurrentVolume(String muscle) {
-    // Intentar obtener volumen target desde phase3
-    final state = plan.state as Map<String, dynamic>?;
-    if (state == null) {
-      debugPrint('   _getCurrentVolume($muscle): state is null');
-      return 0;
-    }
+    final state = plan.state;
+    if (state is! Map<String, dynamic>) return 0;
 
-    final phase3 = state['phase3'] as Map<String, dynamic>?;
-    if (phase3 == null) {
-      debugPrint('   _getCurrentVolume($muscle): phase3 not found');
-      return 0;
-    }
+    final phase3 = state['phase3'];
+    if (phase3 is! Map<String, dynamic>) return 0;
 
-    final targetWeeklySetsByMuscle =
-        phase3['targetWeeklySetsByMuscle'] as Map<String, dynamic>?;
-    if (targetWeeklySetsByMuscle == null) {
-      debugPrint(
-        '   _getCurrentVolume($muscle): targetWeeklySetsByMuscle not found',
-      );
-      return 0;
-    }
+    final targetWeeklySetsByMuscle = phase3['targetWeeklySetsByMuscle'];
+    if (targetWeeklySetsByMuscle is! Map) return 0;
 
-    final volume = targetWeeklySetsByMuscle[muscle] as num?;
-    final currentVolume = volume?.toInt() ?? 0;
-
-    if (currentVolume > 0) {
-      debugPrint(
-        '   ✅ Current volume for $muscle from phase3: $currentVolume sets',
-      );
-    } else {
-      debugPrint('   ⚠️ No current volume for $muscle in phase3');
-    }
-
-    return currentVolume;
+    final volume = targetWeeklySetsByMuscle[muscle];
+    if (volume is! num) return 0;
+    return volume.toInt();
   }
 
   String _formatMuscleName(String muscle) {
