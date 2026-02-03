@@ -962,7 +962,7 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
         Row(
           children: [
             Text(
-              '$repsRange',
+              repsRange,
               style: const TextStyle(fontSize: 11, color: Colors.white54),
             ),
             const Spacer(),
