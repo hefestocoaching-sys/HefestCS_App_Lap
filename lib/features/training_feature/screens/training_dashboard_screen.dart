@@ -11,8 +11,6 @@ import 'package:intl/intl.dart';
 // IMPORTS DE WIDGETS LEGACY (deprecados, mantener por compatibilidad temporal)
 import '../widgets/volume_capacity_scientific_view.dart';
 import '../widgets/series_distribution_editor.dart';
-import '../widgets/weekly_progress_tracker.dart';
-import '../widgets/macrocycle_overview_tab.dart';
 import '../widgets/weekly_plan_detail_view.dart';
 
 /// Pantalla unificada de entrenamiento Motor V3
@@ -539,14 +537,20 @@ class _TrainingDashboardScreenState
             style: TextStyle(fontSize: 13, color: kTextColorSecondary),
           ),
           SizedBox(height: 32),
-          ElevatedButton.extended(
+          ElevatedButton(
             onPressed: () => _generarPlan(),
-            icon: Icon(Icons.auto_awesome),
-            label: Text('Generar Plan Motor V3'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF00D9FF),
               foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.auto_awesome),
+                SizedBox(width: 8),
+                Text('Generar Plan Motor V3'),
+              ],
             ),
           ),
         ],
@@ -579,13 +583,20 @@ class _TrainingDashboardScreenState
             ),
           ),
           SizedBox(height: 32),
-          ElevatedButton.extended(
+          ElevatedButton(
             onPressed: () => _generarPlan(),
-            icon: Icon(Icons.refresh),
-            label: Text('Regenerar Plan'),
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
               foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.refresh),
+                SizedBox(width: 8),
+                Text('Regenerar Plan'),
+              ],
             ),
           ),
         ],
