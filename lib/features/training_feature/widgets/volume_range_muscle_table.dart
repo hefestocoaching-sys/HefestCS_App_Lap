@@ -719,21 +719,7 @@ class VolumeRangeMuscleTable extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Container(
-                decoration: BoxDecoration(
-                  color: visualState._getBackgroundForPercentage(percentage),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(
-                  '${percentage.toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    color: visualState._getTextColorForPercentage(percentage),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
+              _buildPercentageCell(percentage),
             ],
           ),
         ),
@@ -800,6 +786,32 @@ class VolumeRangeMuscleTable extends StatelessWidget {
           fontSize: isHeader ? 13 : 12,
           fontWeight:
               fontWeight ?? (isHeader ? FontWeight.bold : FontWeight.normal),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPercentageCell(double percentage) {
+    final visualState = _VolumeRangeMuscleTableState();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: visualState._getBackgroundForPercentage(percentage),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            '${percentage.toStringAsFixed(0)}%',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: visualState._getTextColorForPercentage(percentage),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
         ),
       ),
     );

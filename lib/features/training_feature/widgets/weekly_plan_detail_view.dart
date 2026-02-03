@@ -39,6 +39,15 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
       );
     }
 
+    if (_selectedWeekIndex < 0 || _selectedWeekIndex >= totalWeeks) {
+      return Center(
+        child: Text(
+          'Error: semana fuera de rango',
+          style: TextStyle(color: kTextColorSecondary),
+        ),
+      );
+    }
+
     final week = widget.plan.weeks[_selectedWeekIndex];
     final sessions = week.sessions;
 
@@ -75,7 +84,7 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
       decoration: BoxDecoration(
         color: kCardColor.withAlpha(40),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withAlpha(15)),
+        border: Border.all(color: Colors.white.withAlpha(25)),
       ),
       child: Row(
         children: [
@@ -96,7 +105,8 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: kTextColor,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
           ),
@@ -144,7 +154,7 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
       decoration: BoxDecoration(
         color: color.withAlpha(40),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withAlpha(90)),
+        border: Border.all(color: color),
       ),
       child: Row(
         children: [
@@ -182,6 +192,20 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
       final dynamic json = (p as dynamic).toJson();
       return (json as Map).cast<String, dynamic>();
     }).toList();
+
+    if (prescriptions.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: HcsGlassContainer(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          borderRadius: 12,
+          child: Text(
+            'Sin ejercicios configurados',
+            style: TextStyle(color: kTextColorSecondary),
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -228,7 +252,10 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
   }
 
   Widget _buildExerciseRow(Map<String, dynamic> prescription, int order) {
-    final name = prescription['exerciseName']?.toString() ?? 'Ejercicio';
+    final exercise = prescription['exercise'];
+    final name = (exercise is Map && exercise['name'] != null)
+        ? exercise['name'].toString()
+        : (prescription['exerciseName']?.toString() ?? 'Ejercicio');
     final sets = prescription['sets']?.toString() ?? '0';
     final reps =
         prescription['reps']?.toString() ??
@@ -267,7 +294,11 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
           Expanded(
             child: Text(
               name,
-              style: const TextStyle(color: kTextColor, fontSize: 12),
+              style: const TextStyle(
+                color: kTextColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           Container(
@@ -279,8 +310,8 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
             child: Text(
               '$sets x $reps @ RIR $rir',
               style: const TextStyle(
-                color: kTextColor,
-                fontSize: 10,
+                color: kPrimaryColor,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
             ),

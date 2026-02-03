@@ -399,9 +399,31 @@ class _TrainingDashboardScreenState
 
                         if (plan == null) {
                           return Center(
-                            child: Text(
-                              'Plan no encontrado (ID: $activePlanId)',
-                              style: TextStyle(color: kTextColorSecondary),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: kErrorColor,
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Plan no encontrado',
+                                  style: TextStyle(
+                                    color: kTextColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'ID: $activePlanId',
+                                  style: const TextStyle(
+                                    color: kTextColorSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         }
@@ -477,11 +499,19 @@ class _TrainingDashboardScreenState
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () async {
-              // Llamar al método de generación de plan
-              final now = DateTime.now();
-              await ref
-                  .read(trainingPlanProvider.notifier)
-                  .generatePlanFromActiveCycle(now);
+              try {
+                final now = DateTime.now();
+                await ref
+                    .read(trainingPlanProvider.notifier)
+                    .generatePlanFromActiveCycle(now);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Motor V3 en desarrollo: $e'),
+                    backgroundColor: kWarningColor,
+                  ),
+                );
+              }
             },
             icon: const Icon(Icons.auto_awesome),
             label: const Text('Generar Plan Motor V3'),
