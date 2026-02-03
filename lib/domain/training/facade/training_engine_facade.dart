@@ -84,7 +84,7 @@ class TrainingEngineFacade {
       exercises: exerciseList,
     );
 
-    debugPrint('✅ [TrainingEngineFacade] Plan generado:');
+    debugPrint('✅ [TrainingEngineFacade] Plan generado correctamente');
     debugPrint('   Plan ID: ${planConfig.id}');
     debugPrint('   Semanas: ${planConfig.weeks.length}');
     debugPrint('   plan.state keys: ${planConfig.state?.keys.toList()}');
@@ -105,22 +105,32 @@ class TrainingEngineFacade {
     // PASO 2: Añadir plan a client.trainingPlans
     // ═══════════════════════════════════════════════════════════════════════
 
+    debugPrint(
+      '💾 [TrainingEngineFacade] Añadiendo plan a client.trainingPlans...',
+    );
+
     // Obtener lista actual de planes (evitar duplicados)
     final currentPlans = List<TrainingPlanConfig>.from(client.trainingPlans);
 
     // Remover plan con mismo ID si existe (regeneración)
     currentPlans.removeWhere((p) => p.id == planConfig.id);
 
+    debugPrint('   Planes antes de añadir: ${currentPlans.length}');
+
     // Añadir nuevo plan
     currentPlans.add(planConfig);
 
-    debugPrint('🔍 [TrainingEngineFacade] Planes después de añadir:');
-    debugPrint('   Total planes: ${currentPlans.length}');
-    debugPrint('   Plan IDs: ${currentPlans.map((p) => p.id).toList()}');
+    debugPrint('✅ [TrainingEngineFacade] Plan añadido a lista');
+    debugPrint('   Planes después de añadir: ${currentPlans.length}');
+    debugPrint(
+      '   Plan IDs en lista: ${currentPlans.map((p) => p.id).toList()}',
+    );
 
     // ═══════════════════════════════════════════════════════════════════════
     // PASO 3: Actualizar client.training.extra['activePlanId']
     // ═══════════════════════════════════════════════════════════════════════
+
+    debugPrint('🔧 [TrainingEngineFacade] Actualizando activePlanId...');
 
     final updatedExtra = Map<String, dynamic>.from(client.training.extra);
     updatedExtra['activePlanId'] = planConfig.id;
@@ -141,21 +151,24 @@ class TrainingEngineFacade {
           currentPlans, // ✅ CRÍTICO: Lista actualizada con nuevo plan
     );
 
+    debugPrint('📊 [TrainingEngineFacade] Cliente actualizado:');
+    debugPrint(
+      '   client.trainingPlans.length: ${updatedClient.trainingPlans.length}',
+    );
+    debugPrint(
+      '   client.training.extra[activePlanId]: ${updatedClient.training.extra['activePlanId']}',
+    );
+
     // ═══════════════════════════════════════════════════════════════════════
     // PASO 5: Persistir cliente en repositorio
     // ═══════════════════════════════════════════════════════════════════════
 
-    debugPrint('💾 [TrainingEngineFacade] Guardando cliente con plan...');
+    debugPrint('💾 [TrainingEngineFacade] Guardando cliente con plan en BD...');
 
     await repository.saveClient(updatedClient);
 
-    debugPrint('✅ [TrainingEngineFacade] Cliente guardado correctamente');
-    debugPrint(
-      '   trainingPlans.length: ${updatedClient.trainingPlans.length}',
-    );
-    debugPrint(
-      '   activePlanId: ${updatedClient.training.extra['activePlanId']}',
-    );
+    debugPrint('✅ [TrainingEngineFacade] Cliente guardado exitosamente');
+    debugPrint('   Plan persistido en DB con ID: ${planConfig.id}');
 
     // ═══════════════════════════════════════════════════════════════════════
     // PASO 6: Retornar plan generado
