@@ -86,7 +86,11 @@ class _TrainingDashboardScreenState
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      appBar: _buildAppBar(clientsAsync),
+      appBar: clientsAsync.when(
+        data: (_) => _buildAppBar(clientsAsync),
+        loading: () => _buildLoadingAppBar(),
+        error: (_, __) => _buildErrorAppBar(),
+      ),
       floatingActionButton: _buildFloatingActionButton(clientsAsync),
       body: clientsAsync.when(
         data: (state) {
@@ -192,6 +196,64 @@ class _TrainingDashboardScreenState
         ),
         SizedBox(width: 8),
       ],
+    );
+  }
+
+  PreferredSizeWidget _buildLoadingAppBar() {
+    return AppBar(
+      backgroundColor: kAppBarColor,
+      elevation: 0,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Plan de Entrenamiento Motor V3',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: kTextColor,
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            'Cargando...',
+            style: TextStyle(
+              fontSize: 11,
+              color: kTextColorSecondary,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildErrorAppBar() {
+    return AppBar(
+      backgroundColor: kAppBarColor,
+      elevation: 0,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Plan de Entrenamiento Motor V3',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: kTextColor,
+            ),
+          ),
+          SizedBox(height: 2),
+          Text(
+            'Error al cargar datos',
+            style: TextStyle(
+              fontSize: 11,
+              color: kErrorColor,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
