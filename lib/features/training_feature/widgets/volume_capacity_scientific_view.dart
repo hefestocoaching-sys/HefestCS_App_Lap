@@ -351,7 +351,7 @@ class VolumeCapacityScientificView extends ConsumerWidget {
       final mev = mevByMuscle[muscle] as int? ?? 0;
       final mrv = mrvByMuscle[muscle] as int? ?? mev;
       // MAV es aprox. 75% del camino entre MEV y MRV
-      final mav = ((mev + mrv) / 2).round() as int;
+      final mav = ((mev + mrv) / 2).round();
       // Volumen actual: usar MAV como baseline
       final current = mav;
 
