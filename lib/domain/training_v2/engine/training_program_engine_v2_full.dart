@@ -892,13 +892,23 @@ class TrainingProgramEngineV2Full {
       microcycleLengthInWeeks: r5.weeks.length,
       weeks: weeks,
       trainingProfileSnapshot: profile,
+      state:
+          profile.extra, // ✅ CRÍTICO: Pasar state con plan.extra para Motor V3
+    );
+
+    // ✅ AUDIT LOG
+    debugPrint('🔍 [AUDIT] TrainingPlanConfig creado');
+    debugPrint('🔍 [AUDIT] plan.state: ${plan.state}');
+    debugPrint('🔍 [AUDIT] plan.state[phase2]: ${plan.state?['phase2']}');
+    debugPrint(
+      '🔍 [AUDIT] plan.state[phase2][capacityByMuscle]: ${(plan.state?['phase2'] as Map?)?['capacityByMuscle']}',
     );
 
     lastDecisions.add(
       DecisionTrace.info(
         phase: 'TrainingProgramEngineV2Full',
         category: 'summary',
-        description: 'Plan v2-full generado 1→8',
+        description: 'Plan v2-full generado 1→8 CON STATE',
         context: {
           'planId': planId,
           'clientId': clientId,
