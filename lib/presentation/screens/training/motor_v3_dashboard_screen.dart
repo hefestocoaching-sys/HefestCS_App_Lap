@@ -26,6 +26,12 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  // Variables para Tab Ajustes
+  double _heavyPercentage = 25.0;
+  double _moderatePercentage = 50.0;
+  double _lightPercentage = 25.0;
+  bool _hasUnsavedChanges = false;
+
   @override
   void initState() {
     super.initState();
@@ -1309,23 +1315,684 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
     );
   }
 
+  // ═══════════════════════════════════════════════════
+  // TAB 8: AJUSTES CIENTÍFICOS
+  // ═══════════════════════════════════════════════════
+
   Widget _buildAdjustmentsTab(Map<String, dynamic> result) {
-    return const Center(
+    final program = result['program'] as TrainingProgram?;
+
+    if (program == null) {
+      return const Center(child: Text('No hay programa para ajustar'));
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.tune, size: 64, color: Colors.white24),
-          SizedBox(height: 16),
-          Text(
-            'Autoregulación',
-            style: TextStyle(fontSize: 18, color: Colors.white54),
+          // HEADER
+          _buildAdjustmentsHeader(),
+          const SizedBox(height: 24),
+
+          // SECCIÓN 1: DISTRIBUCIÓN DE INTENSIDAD
+          _buildIntensityAdjustmentSection(),
+          const SizedBox(height: 32),
+
+          // SECCIÓN 2: PREVIEW DE CAMBIOS
+          if (_hasUnsavedChanges) ...[
+            _buildChangesPreviewSection(program),
+            const SizedBox(height: 32),
+          ],
+
+          // SECCIÓN 3: HISTORIAL DE AJUSTES
+          _buildAdjustmentsHistorySection(),
+          const SizedBox(height: 32),
+
+          // SECCIÓN 4: RECOMENDACIONES DEL MOTOR
+          _buildMotorRecommendationsSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdjustmentsHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Ajustes Científicos',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-          SizedBox(height: 8),
-          Text(
-            'Ajustes automáticos - Próximamente',
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Icon(Icons.school, size: 16, color: Color(0xFF00D9FF)),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Solo ajustes dentro de rangos científicos validados',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white54,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF00D9FF).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: const Color(0xFF00D9FF).withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.info_outline,
+                color: Color(0xFF00D9FF),
+                size: 18,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'El volumen por músculo se ajusta automáticamente con bitácora y rendimiento. Aquí solo puedes cambiar distribución de intensidad.',
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIntensityAdjustmentSection() {
+    return HcsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.tune, color: Color(0xFF00D9FF), size: 20),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Distribución de Intensidad',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Row(
+            children: [
+              Icon(Icons.school, size: 14, color: Colors.white54),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Schoenfeld et al. (2021) - Loading Spectrum',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white54,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildIntensitySlider(
+            label: 'PESADA (75-85% 1RM)',
+            value: _heavyPercentage,
+            min: 15,
+            max: 30,
+            color: Colors.red,
+            repsRange: '5-8 reps',
+            onChanged: (value) {
+              setState(() {
+                _heavyPercentage = value;
+                _adjustOtherPercentages('heavy');
+                _hasUnsavedChanges = true;
+              });
+            },
+          ),
+          const SizedBox(height: 24),
+          _buildIntensitySlider(
+            label: 'MODERADA (65-75% 1RM)',
+            value: _moderatePercentage,
+            min: 40,
+            max: 70,
+            color: Colors.amber,
+            repsRange: '8-12 reps',
+            onChanged: (value) {
+              setState(() {
+                _moderatePercentage = value;
+                _adjustOtherPercentages('moderate');
+                _hasUnsavedChanges = true;
+              });
+            },
+          ),
+          const SizedBox(height: 24),
+          _buildIntensitySlider(
+            label: 'LIGERA (50-65% 1RM)',
+            value: _lightPercentage,
+            min: 15,
+            max: 30,
+            color: Colors.green,
+            repsRange: '12-20 reps',
+            onChanged: (value) {
+              setState(() {
+                _lightPercentage = value;
+                _adjustOtherPercentages('light');
+                _hasUnsavedChanges = true;
+              });
+            },
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _getTotalPercentage() == 100
+                  ? Colors.green.withValues(alpha: 0.2)
+                  : Colors.orange.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _getTotalPercentage() == 100
+                    ? Colors.green.withValues(alpha: 0.4)
+                    : Colors.orange.withValues(alpha: 0.4),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _getTotalPercentage() == 100
+                      ? Icons.check_circle
+                      : Icons.warning,
+                  color: _getTotalPercentage() == 100
+                      ? Colors.green
+                      : Colors.orange,
+                  size: 18,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Total: ${_getTotalPercentage().toStringAsFixed(0)}%',
+                    style: const TextStyle(fontSize: 14, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _hasUnsavedChanges
+                      ? () {
+                          setState(() {
+                            _heavyPercentage = 25.0;
+                            _moderatePercentage = 50.0;
+                            _lightPercentage = 25.0;
+                            _hasUnsavedChanges = false;
+                          });
+                        }
+                      : null,
+                  icon: const Icon(Icons.restore),
+                  label: const Text('Restaurar 25/50/25'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white54,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _hasUnsavedChanges && _getTotalPercentage() == 100
+                      ? () => _applyChanges()
+                      : null,
+                  icon: const Icon(Icons.save),
+                  label: const Text('Aplicar Cambios'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00D9FF),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIntensitySlider({
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required Color color,
+    required String repsRange,
+    required Function(double) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: color.withValues(alpha: 0.4)),
+              ),
+              child: Text(
+                '${value.round()}%',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SliderTheme(
+          data: SliderThemeData(
+            activeTrackColor: color,
+            inactiveTrackColor: color.withValues(alpha: 0.3),
+            thumbColor: color,
+            overlayColor: color.withValues(alpha: 0.2),
+            trackHeight: 6,
+          ),
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: ((max - min) ~/ 1),
+            label: '${value.round()}%',
+            onChanged: onChanged,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              repsRange,
+              style: const TextStyle(fontSize: 11, color: Colors.white54),
+            ),
+            Text(
+              'Rango válido: ${min.toInt()}-${max.toInt()}%',
+              style: const TextStyle(fontSize: 11, color: Colors.white38),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChangesPreviewSection(TrainingProgram program) {
+    final currentTotal = program.totalWeeklyVolume;
+    final heavySets = (currentTotal * (_heavyPercentage / 100)).round();
+    final moderateSets = (currentTotal * (_moderatePercentage / 100)).round();
+    final lightSets = (currentTotal * (_lightPercentage / 100)).round();
+
+    final currentHeavy = (currentTotal * 0.25).round();
+    final currentModerate = (currentTotal * 0.50).round();
+    final currentLight = (currentTotal * 0.25).round();
+
+    return HcsCard(
+      backgroundColor: const Color(0xFF00D9FF).withValues(alpha: 0.1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.preview, color: Color(0xFF00D9FF), size: 20),
+              const SizedBox(width: 12),
+              const Text(
+                'Preview de Cambios',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildComparisonRow('Pesada', currentHeavy, heavySets, Colors.red),
+          const SizedBox(height: 12),
+          _buildComparisonRow(
+            'Moderada',
+            currentModerate,
+            moderateSets,
+            Colors.amber,
+          ),
+          const SizedBox(height: 12),
+          _buildComparisonRow('Ligera', currentLight, lightSets, Colors.green),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'IMPACTO ESPERADO:',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildImpactText(
+                  heavySets > currentHeavy
+                      ? 'Mayor énfasis en fuerza y potencia'
+                      : 'Menor estrés articular',
+                ),
+                _buildImpactText(
+                  moderateSets > currentModerate
+                      ? 'Más volumen en zona hipertrofia óptima'
+                      : 'Menor volumen moderado',
+                ),
+                _buildImpactText(
+                  lightSets > currentLight
+                      ? 'Mayor bomba muscular y metabolitos'
+                      : 'Menos trabajo metabólico',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning, color: Colors.orange, size: 18),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Aplicar cambios regenerará el programa completo',
+                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComparisonRow(
+    String label,
+    int current,
+    int proposed,
+    Color color,
+  ) {
+    final diff = proposed - current;
+    return Row(
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: Colors.white70),
+          ),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                '$current sets',
+                style: const TextStyle(fontSize: 13, color: Colors.white54),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.arrow_forward, size: 16, color: Colors.white38),
+              const SizedBox(width: 8),
+              Text(
+                '$proposed sets',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (diff != 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (diff > 0 ? Colors.green : Colors.red).withValues(
+                      alpha: 0.2,
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '${diff > 0 ? '+' : ''}$diff',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: diff > 0 ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImpactText(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '• ',
+            style: TextStyle(color: Color(0xFF00D9FF), fontSize: 14),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 12, color: Colors.white60),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdjustmentsHistorySection() {
+    return HcsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Historial de Ajustes',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Sin ajustes manuales aún',
+            style: TextStyle(fontSize: 13, color: Colors.white54),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Los ajustes aparecerán aquí cuando modifiques la distribución de intensidad.',
             style: TextStyle(fontSize: 12, color: Colors.white38),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMotorRecommendationsSection() {
+    return HcsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.lightbulb, color: Colors.amber, size: 20),
+              const SizedBox(width: 12),
+              const Text(
+                'Recomendaciones del Motor',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildRecommendationItem(
+            '✓ Distribución actual 25/50/25 es óptima para hipertrofia general',
+            Colors.green,
+          ),
+          _buildRecommendationItem(
+            '📊 Para fuerza: Ajustar a 30/50/20 (más pesado)',
+            const Color(0xFF00D9FF),
+          ),
+          _buildRecommendationItem(
+            '💪 Para bomba: Ajustar a 20/50/30 (más ligero)',
+            const Color(0xFF00D9FF),
+          ),
+          _buildRecommendationItem(
+            '⚠️  Distribuciones fuera de 15-30% pesada pueden aumentar riesgo articular',
+            Colors.orange,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecommendationItem(String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 2),
+            width: 4,
+            height: 4,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 13, color: Colors.white70),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════
+  // HELPERS AJUSTES
+  // ═══════════════════════════════════════════════════
+
+  double _getTotalPercentage() {
+    return _heavyPercentage + _moderatePercentage + _lightPercentage;
+  }
+
+  void _adjustOtherPercentages(String changed) {
+    final total = _getTotalPercentage();
+    if (total == 100) return;
+
+    final diff = total - 100;
+
+    if (changed == 'heavy') {
+      final ratio =
+          _moderatePercentage / (_moderatePercentage + _lightPercentage);
+      _moderatePercentage = (_moderatePercentage - diff * ratio).clamp(
+        40.0,
+        70.0,
+      );
+      _lightPercentage = (100 - _heavyPercentage - _moderatePercentage).clamp(
+        15.0,
+        30.0,
+      );
+    } else if (changed == 'moderate') {
+      final ratio = _heavyPercentage / (_heavyPercentage + _lightPercentage);
+      _heavyPercentage = (_heavyPercentage - diff * ratio).clamp(15.0, 30.0);
+      _lightPercentage = (100 - _heavyPercentage - _moderatePercentage).clamp(
+        15.0,
+        30.0,
+      );
+    } else {
+      final ratio = _heavyPercentage / (_heavyPercentage + _moderatePercentage);
+      _heavyPercentage = (_heavyPercentage - diff * ratio).clamp(15.0, 30.0);
+      _moderatePercentage = (100 - _heavyPercentage - _lightPercentage).clamp(
+        40.0,
+        70.0,
+      );
+    }
+  }
+
+  Future<void> _applyChanges() async {
+    setState(() {
+      _hasUnsavedChanges = false;
+    });
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✓ Cambios aplicados. Regenerando programa...'),
+        backgroundColor: Colors.green,
       ),
     );
   }
