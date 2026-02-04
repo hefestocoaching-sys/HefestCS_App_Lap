@@ -85,7 +85,7 @@ export 'training/services/volume_budget_balancer.dart';
 export 'training/services/volume_swap_service.dart';
 
 export 'training/training_plan_generator.dart';
-export 'training/training_plan_model.dart';
+export 'training/training_plan_model.dart' hide TrainingPlan;
 export 'training/vop_snapshot.dart';
 
 // Training Engine - Phases
@@ -96,3 +96,4 @@ export 'training_v3/services/motor_v3_orchestrator.dart';
 export 'training_v3/ml_integration/hybrid_orchestrator_v3.dart';
 export 'training_v3/ml_integration/ml_config_v3.dart';
 export 'training_v3/converters/v3_to_v2_converter.dart';
+export 'entities/training_plan.dart';

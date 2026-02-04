@@ -2,6 +2,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/core/enums/training_phase.dart';
+import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
@@ -202,8 +203,20 @@ class TrainingOrchestratorV3 {
       }
     }
 
+    // Normalizar claves a canónicas (14 músculos) para el Motor V3
+    final normalizedMusclePrioritiesMap = normalizeLegacyVopToCanonical(
+      musclePrioritiesMap,
+    );
+
+    // Clamp de prioridades a rango válido (1-5)
+    final clampedMusclePrioritiesMap = <String, int>{};
+    normalizedMusclePrioritiesMap.forEach((key, value) {
+      final clamped = value.clamp(1, 5).toInt();
+      clampedMusclePrioritiesMap[key] = clamped;
+    });
+
     // Extraer días disponibles
-    final availableDays = training.extra['daysPerWeek'] as int? ?? 4;
+    final availableDays = _parseInt(training.extra['daysPerWeek']) ?? 4;
 
     // Extraer duración de sesión (en minutos)
     final sessionDuration =
@@ -230,13 +243,17 @@ class TrainingOrchestratorV3 {
       injuryHistory[injury] = 'active';
     }
 
+    // Normalizar género al formato esperado por UserProfile
+    final genderValue = training.gender ?? profile.gender ?? _defaultGender;
+    final normalizedGender = _normalizeGender(genderValue);
+
     // Crear UserProfile con todos los parámetros requeridos
     return UserProfile(
       id: client.id,
       name: profile.fullName,
       email: profile.email,
       age: training.age ?? profile.age ?? _defaultAge,
-      gender: (training.gender ?? profile.gender ?? _defaultGender).toString(),
+      gender: normalizedGender,
       heightCm: heightCm,
       weightKg: weightKg,
       yearsTraining: yearsTraining,
@@ -245,7 +262,7 @@ class TrainingOrchestratorV3 {
       availableDays: availableDays,
       sessionDuration: sessionDuration,
       primaryGoal: goal,
-      musclePriorities: musclePrioritiesMap,
+      musclePriorities: clampedMusclePrioritiesMap,
       availableEquipment: _getAvailableEquipment(training.extra),
       injuryHistory: injuryHistory,
       excludedExercises: const [],
@@ -263,7 +280,7 @@ class TrainingOrchestratorV3 {
     if (levelStr.contains('principiante') ||
         levelStr.contains('beginner') ||
         levelStr.contains('novice')) {
-      return 'beginner';
+      return 'novice';
     }
 
     if (levelStr.contains('intermedio') || levelStr.contains('intermediate')) {
@@ -275,6 +292,42 @@ class TrainingOrchestratorV3 {
     }
 
     return 'intermediate'; // Default
+  }
+
+  /// Normaliza género al formato requerido por UserProfile (male/female/other)
+  String _normalizeGender(dynamic gender) {
+    if (gender is String) {
+      final normalized = gender.toLowerCase().trim();
+      if (normalized.contains('male') ||
+          normalized.contains('hombre') ||
+          normalized == 'm') {
+        return 'male';
+      }
+      if (normalized.contains('female') ||
+          normalized.contains('mujer') ||
+          normalized == 'f') {
+        return 'female';
+      }
+      if (normalized.contains('other') || normalized.contains('otro')) {
+        return 'other';
+      }
+    }
+
+    // Enums: usar name cuando aplique (Gender.male -> "male")
+    if (gender is Enum) {
+      final name = gender.name;
+      if (name == 'male' || name == 'female' || name == 'other') {
+        return name;
+      }
+    }
+
+    return _defaultGender;
+  }
+
+  int? _parseInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '');
   }
 
   /// Extrae músculos prioritarios del perfil
@@ -353,13 +406,10 @@ class TrainingOrchestratorV3 {
     }
 
     // Plan generado exitosamente
-    // NOTA: HybridOrchestratorV3 retorna TrainingProgram (modelo V3),
-    // pero el provider espera TrainingPlanConfig (entidad de dominio)
-    // Por ahora, retornamos un TrainingPlanConfig básico
-    // TODO: Implementar conversión TrainingProgram → TrainingPlanConfig
-
-    // Crear TrainingPlanConfig básico
-    final planConfig = _createBasicPlanConfig(client, asOfDate);
+    // Si HybridOrchestratorV3 ya incluye planConfig, usarlo directamente.
+    final planConfig = (result['planConfig'] is TrainingPlanConfig)
+        ? (result['planConfig'] as TrainingPlanConfig)
+        : _createBasicPlanConfig(client, asOfDate);
 
     // Crear trace para debugging
     final trace = _createDecisionTrace(result);

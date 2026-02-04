@@ -73,7 +73,22 @@ class HybridOrchestratorV3 {
       };
     }
 
-    final scientificProgram = scientificResult['program'] as TrainingProgram;
+    final scientificProgram = scientificResult['program'];
+    final scientificPlanConfig = scientificResult['planConfig'];
+
+    if (scientificProgram is! TrainingProgram) {
+      // Motor científico retornó planConfig en lugar de TrainingProgram.
+      // En este caso, saltamos ML y retornamos el plan directo.
+      return {
+        'success': true,
+        'errors': [],
+        'warnings': scientificResult['warnings'] ?? [],
+        'program': null,
+        'planConfig': scientificPlanConfig,
+        'ml': {'applied': false, 'reason': 'scientific_program_missing'},
+        'scientific': scientificResult,
+      };
+    }
 
     print('✅ Programa científico generado: ${scientificProgram.id}');
     print(
