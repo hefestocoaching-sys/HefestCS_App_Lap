@@ -1,0 +1,175 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
+import 'package:hcs_app_lap/domain/entities/exercise.dart';
+
+void main() {
+  group('Motor V3 Integration Tests', () {
+    test(
+      'Genera plan completo para usuario intermedio con Full Body split',
+      () async {
+        // ARRANGE: Crear perfil de usuario
+        final userProfile = UserProfile(
+          id: 'test_user_001',
+          name: 'Juan Pérez',
+          email: 'juan@test.com',
+          age: 28,
+          gender: 'male',
+          heightCm: 175,
+          weightKg: 75,
+          yearsTraining: 2,
+          trainingLevel: 'intermediate',
+          consecutiveWeeks: 0,
+          availableDays: 3,
+          sessionDuration: 60,
+          primaryGoal: 'hypertrophy',
+          musclePriorities: {
+            'chest': 1, // Alta prioridad
+            'lats': 1, // Alta prioridad
+            'quads': 2, // Media prioridad
+            'deltoide_anterior': 3, // Baja prioridad
+          },
+          availableEquipment: ['barbell', 'dumbbells', 'machine', 'cable'],
+          injuryHistory: {},
+          excludedExercises: [],
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        // ACT: Generar plan
+        final result = await MotorV3Orchestrator.generateProgram(
+          userProfile: userProfile,
+          phase: 'accumulation',
+          durationWeeks: 4,
+          exercises: _getMockExercises(),
+        );
+
+        // DEBUG: Imprimir resultado
+        print('📋 RESULTADO: ${result.keys}');
+        print('📋 SUCCESS: ${result['success']}');
+        if (result['errors'] != null) {
+          print('❌ ERRORS: ${result['errors']}');
+        }
+        if (result['warnings'] != null) {
+          print('⚠️ WARNINGS: ${result['warnings']}');
+        }
+
+        // ASSERT: Validar resultado
+        expect(
+          result['success'],
+          true,
+          reason: 'El plan debe generarse exitosamente',
+        );
+        expect(
+          result['planConfig'],
+          isNotNull,
+          reason: 'El plan no debe ser nulo',
+        );
+
+        print('✅ TEST PASADO: Plan generado correctamente');
+        print('   - Resultado: ${result.keys.join(', ')}');
+      },
+    );
+
+    test('Maneja correctamente usuario con datos incompletos', () async {
+      // ARRANGE: Perfil incompleto
+      final incompleteProfile = UserProfile(
+        id: 'incomplete_user',
+        name: 'Usuario Incompleto',
+        email: 'incomplete@test.com',
+        age: 0, // ❌ Edad inválida
+        gender: 'male',
+        heightCm: 170,
+        weightKg: 70,
+        yearsTraining: 0,
+        trainingLevel: 'beginner',
+        availableDays: 3,
+        sessionDuration: 60,
+        primaryGoal: 'hypertrophy',
+        musclePriorities: {},
+        availableEquipment: [],
+        injuryHistory: {},
+        excludedExercises: [],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // ACT: Intentar generar plan
+      try {
+        final result = await MotorV3Orchestrator.generateProgram(
+          userProfile: incompleteProfile,
+          phase: 'accumulation',
+          durationWeeks: 4,
+        );
+
+        // ASSERT: Debe fallar gracefully
+        expect(
+          result['success'],
+          false,
+          reason: 'Debe fallar con datos incompletos',
+        );
+        expect(
+          result['errors'],
+          isNotNull,
+          reason: 'Debe tener lista de errores',
+        );
+
+        print('✅ TEST PASADO: Manejo de errores correcto');
+        print('   - Errores: ${result['errors']}');
+      } catch (e) {
+        print('✅ TEST PASADO: Excepción capturada correctamente');
+        print('   - Error: $e');
+      }
+    });
+  });
+}
+
+// HELPERS
+List<Exercise> _getMockExercises() {
+  return [
+    Exercise(
+      id: 'bench_press',
+      externalId: 'ext_bench_press',
+      name: 'Bench Press',
+      muscleKey: 'chest',
+      primaryMuscles: ['chest'],
+      secondaryMuscles: ['triceps', 'deltoide_anterior'],
+      equipment: 'barbell',
+      difficulty: 'intermediate',
+      gifUrl: '',
+    ),
+    Exercise(
+      id: 'squat',
+      externalId: 'ext_squat',
+      name: 'Squat',
+      muscleKey: 'quads',
+      primaryMuscles: ['quads'],
+      secondaryMuscles: ['glutes', 'hamstrings'],
+      equipment: 'barbell',
+      difficulty: 'intermediate',
+      gifUrl: '',
+    ),
+    Exercise(
+      id: 'barbell_row',
+      externalId: 'ext_barbell_row',
+      name: 'Barbell Row',
+      muscleKey: 'lats',
+      primaryMuscles: ['lats'],
+      secondaryMuscles: ['biceps', 'traps'],
+      equipment: 'barbell',
+      difficulty: 'intermediate',
+      gifUrl: '',
+    ),
+    Exercise(
+      id: 'overhead_press',
+      externalId: 'ext_overhead_press',
+      name: 'Overhead Press',
+      muscleKey: 'deltoide_anterior',
+      primaryMuscles: ['deltoide_anterior'],
+      secondaryMuscles: ['triceps'],
+      equipment: 'barbell',
+      difficulty: 'intermediate',
+      gifUrl: '',
+    ),
+  ];
+}

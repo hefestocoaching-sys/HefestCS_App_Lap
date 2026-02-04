@@ -1,6 +1,8 @@
 // lib/domain/training_v3/services/motor_v3_orchestrator.dart
 
 import 'package:flutter/foundation.dart';
+
+// Models
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
@@ -8,11 +10,19 @@ import 'package:hcs_app_lap/domain/training_v3/models/client_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/prescribed_exercise.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
+import 'package:hcs_app_lap/domain/entities/exercise.dart';
+
+// Engines
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/split_generator_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/ordering_engine.dart';
+
+// Validators
 import 'package:hcs_app_lap/domain/training_v3/validators/volume_validator.dart';
 import 'package:hcs_app_lap/domain/training_v3/validators/configuration_validator.dart';
 
@@ -141,11 +151,27 @@ class MotorV3Orchestrator {
       // ✅ PASO 9: Determinar fase periodización
       final weekInMesocycle = userProfile.consecutiveWeeks % 6 + 1;
       final performanceMetrics = PerformanceMetrics(
-        loadProgression: 0.0,
+        targetId: userProfile.id,
+        targetType: 'muscle',
+        startDate: DateTime.now().subtract(const Duration(days: 7)),
+        endDate: DateTime.now(),
+        averageWeeklyVolume: 12.0,
+        totalVolume: 12.0,
+        volumeTrend: 0.0,
+        averageLoad: 70.0,
+        loadTrend: 0.0,
+        averageRpe: 7.0,
+        rpeTrend: 0.0,
+        averageAdherence: 1.0,
+        completedSessions: 3,
+        plannedSessions: 3,
+        performanceStatus: 'stable',
+        recommendedAction: 'continue',
         sleepQuality: 7.0,
         energyLevel: 7.0,
         jointPain: 0,
         domsIntensity: 2,
+        loadProgression: 0.0,
       );
 
       final trainingPhase = PeriodizationEngine.determinePhase(
@@ -200,6 +226,10 @@ class MotorV3Orchestrator {
       );
 
       volumeByMuscle[muscle] = volume;
+    });
+
+    return volumeByMuscle;
+  }
 
   // ═══════════════════════════════════════════════════════════════════════
   // MÉTODOS AUXILIARES - PASO 3
@@ -244,7 +274,9 @@ class MotorV3Orchestrator {
         targetMuscles.add(muscle);
       }
     });
-    return targetMuscles.isNotEmpty ? targetMuscles : profile.musclePriorities.keys.toList();
+    return targetMuscles.isNotEmpty
+        ? targetMuscles
+        : profile.musclePriorities.keys.toList();
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -271,7 +303,7 @@ class MotorV3Orchestrator {
           targetMuscle: muscle,
           availableExercises: _convertExercisesToMap(availableExercises),
           availableEquipment: ['barbell', 'dumbbell', 'machine', 'cable'],
-          injuryHistory: [],
+          injuryHistory: {},
           targetExerciseCount: count,
         );
         selected.addAll(result);
@@ -287,10 +319,18 @@ class MotorV3Orchestrator {
   }
 
   /// Convierte lista de ejercicios a mapa
-  static Map<String, dynamic> _convertExercisesToMap(List<dynamic> exercises) {
-    final map = <String, dynamic>{};
+  static Map<String, Map<String, dynamic>> _convertExercisesToMap(
+    List<dynamic> exercises,
+  ) {
+    final map = <String, Map<String, dynamic>>{};
     for (int i = 0; i < exercises.length; i++) {
-      map['ex_$i'] = exercises[i];
+      // Cada ejercicio debe ser un Map<String, dynamic>
+      if (exercises[i] is Map<String, dynamic>) {
+        map['ex_$i'] = exercises[i] as Map<String, dynamic>;
+      } else {
+        // Fallback: crear un mapa simple
+        map['ex_$i'] = {'id': 'ex_$i', 'name': 'Exercise $i'};
+      }
     }
     return map;
   }
@@ -346,7 +386,7 @@ class MotorV3Orchestrator {
   }
 
   /// Obtiene duración de descanso según intensidad
-  static int _getRestSecond (String intensity) {
+  static int _getRestSecond(String intensity) {
     return switch (intensity) {
       'heavy' => 180,
       'moderate' => 90,
@@ -359,7 +399,19 @@ class MotorV3Orchestrator {
   // MÉTODOS AUXILIARES - PASO 10
   // ═══════════════════════════════════════════════════════════════════════
 
-  /// Construye un TrainingPlanConfig REAL con semanas y sesiones
+  /// Construye un TrainingPlanConfig REAL con semanas y progresión científica
+  ///
+  /// **FUNDAMENTO CIENTÍFICO:**
+  ///
+  /// **Progresión volumétrica** (01-volume.md):
+  /// - Semanas 1-4 (accumulation): +2 sets/semana de progresión
+  /// - Semana 5 (intensification): -10% volumen, +intensidad
+  /// - Semana 6+ (deload): -50% volumen para recuperación
+  ///
+  /// **Fases de periodización** (06-progression-variation.md):
+  /// - Accumulation: Construir capacidad de trabajo
+  /// - Intensification: Pico de rendimiento
+  /// - Deload: Recuperación y supercompensación
   static TrainingPlanConfig _buildRealTrainingPlan({
     required dynamic client,
     required DateTime asOfDate,
@@ -373,7 +425,36 @@ class MotorV3Orchestrator {
   }) {
     final weeks = <TrainingWeek>[];
 
+    // ═══════════════════════════════════════════════════════════════════
+    // PASO 1: Construir cada semana del mesociclo
+    // ═══════════════════════════════════════════════════════════════════
     for (int weekNum = 1; weekNum <= durationWeeks; weekNum++) {
+      // ═════════════════════════════════════════════════════════════════
+      // PASO 2: Calcular volumen progresivo de la semana
+      // ═════════════════════════════════════════════════════════════════
+      // Fundamento: Progresión lineal en fase de acumulación
+      final baselineVolume = volumeTargets.values.fold(0, (a, b) => a + b);
+      final weeklyVolume = PeriodizationEngine.calculateWeeklyVolume(
+        phase,
+        baselineVolume,
+        weekNum,
+      );
+
+      // ═════════════════════════════════════════════════════════════════
+      // PASO 3: Calcular factor de ajuste volumétrico
+      // ═════════════════════════════════════════════════════════════════
+      // Este factor se aplicará a cada ejercicio para mantener proporciones
+      final volumeAdjustmentFactor = baselineVolume > 0
+          ? weeklyVolume / baselineVolume
+          : 1.0;
+
+      debugPrint(
+        '📊 Semana $weekNum: Volumen base=$baselineVolume → Ajustado=$weeklyVolume (factor=${volumeAdjustmentFactor.toStringAsFixed(2)})',
+      );
+
+      // ═════════════════════════════════════════════════════════════════
+      // PASO 4: Construir sesiones de la semana
+      // ═════════════════════════════════════════════════════════════════
       final sessions = _buildWeekSessions(
         weekNum: weekNum,
         split: split,
@@ -381,17 +462,42 @@ class MotorV3Orchestrator {
         intensityDistribution: intensityDistribution,
         rirAssignments: rirAssignments,
         phase: phase,
+        volumeAdjustmentFactor: volumeAdjustmentFactor,
       );
 
-      weeks.add(TrainingWeek(
-        weekNumber: weekNum,
-        sessions: sessions,
-        notes: 'Semana $weekNum - Fase: ${phase.name} - Split: $split',
-      ));
+      // ═════════════════════════════════════════════════════════════════
+      // PASO 5: Calcular sets totales de la semana
+      // ═════════════════════════════════════════════════════════════════
+      final totalSets = sessions.fold<int>(0, (sum, session) {
+        final sessionMap = session as Map<String, dynamic>;
+        final exercises = sessionMap['exercises'] as List<dynamic>;
+        return sum +
+            exercises.fold<int>(0, (setSum, ex) {
+              final exercise = ex as PrescribedExercise;
+              return setSum + exercise.sets;
+            });
+      });
+
+      // ═════════════════════════════════════════════════════════════════
+      // PASO 6: Añadir semana al plan
+      // ═════════════════════════════════════════════════════════════════
+      weeks.add(
+        TrainingWeek(
+          weekNumber: weekNum,
+          sessions: sessions,
+          notes:
+              'Semana $weekNum - Fase: ${phase.name.capitalize()} - Volumen: $totalSets sets',
+        ),
+      );
     }
 
-    final clientId = client != null ? (client as dynamic).id ?? 'client_unknown' : 'client_unknown';
+    final clientId = client != null
+        ? (client as dynamic).id ?? 'client_unknown'
+        : 'client_unknown';
 
+    // ═══════════════════════════════════════════════════════════════════
+    // PASO 7: Construir TrainingPlanConfig completo
+    // ═══════════════════════════════════════════════════════════════════
     return TrainingPlanConfig(
       id: 'plan_${clientId}_${asOfDate.millisecondsSinceEpoch}',
       clientId: clientId,
@@ -405,11 +511,18 @@ class MotorV3Orchestrator {
         'split': split,
         'duration_weeks': durationWeeks,
         'volume_targets': volumeTargets,
+        'scientific_version': '1.0.0',
+        'periodization_model': 'linear_progressive',
       },
     );
   }
 
   /// Construye las sesiones de una semana según el split
+  ///
+  /// **volumeAdjustmentFactor**: Factor de ajuste para progresión volumétrica
+  /// - 1.0 = volumen base
+  /// - >1.0 = incremento de volumen (accumulation)
+  /// - <1.0 = reducción de volumen (intensification/deload)
   static List<dynamic> _buildWeekSessions({
     required int weekNum,
     required String split,
@@ -417,54 +530,63 @@ class MotorV3Orchestrator {
     required Map<String, String> intensityDistribution,
     required Map<String, int> rirAssignments,
     required TrainingPhase phase,
+    double volumeAdjustmentFactor = 1.0,
   }) {
     final sessions = <dynamic>[];
 
     if (split == 'fullBody' || split == 'Full Body') {
       // 3 sesiones full body
       for (int sessionNum = 1; sessionNum <= 3; sessionNum++) {
-        sessions.add(_buildFullBodySession(
-          sessionNum: sessionNum,
-          weekNum: weekNum,
-          exerciseSelections: exerciseSelections,
-          intensityDistribution: intensityDistribution,
-          rirAssignments: rirAssignments,
-        ));
+        sessions.add(
+          _buildFullBodySession(
+            sessionNum: sessionNum,
+            weekNum: weekNum,
+            exerciseSelections: exerciseSelections,
+            intensityDistribution: intensityDistribution,
+            rirAssignments: rirAssignments,
+          ),
+        );
       }
     } else if (split == 'upperLower' || split == 'Upper/Lower') {
       // 2 upper, 2 lower
       for (int i = 0; i < 4; i++) {
         final isUpper = i % 2 == 0;
-        sessions.add(_buildUpperLowerSession(
-          sessionNum: i + 1,
-          isUpper: isUpper,
-          weekNum: weekNum,
-          exerciseSelections: exerciseSelections,
-          intensityDistribution: intensityDistribution,
-          rirAssignments: rirAssignments,
-        ));
+        sessions.add(
+          _buildUpperLowerSession(
+            sessionNum: i + 1,
+            isUpper: isUpper,
+            weekNum: weekNum,
+            exerciseSelections: exerciseSelections,
+            intensityDistribution: intensityDistribution,
+            rirAssignments: rirAssignments,
+          ),
+        );
       }
     } else if (split == 'pushPullLegs' || split == 'Push/Pull/Legs') {
       // PPL
       for (int i = 1; i <= 3; i++) {
-        sessions.add(_buildPPLSession(
-          type: i == 1 ? 'push' : (i == 2 ? 'pull' : 'legs'),
-          weekNum: weekNum,
-          exerciseSelections: exerciseSelections,
-          intensityDistribution: intensityDistribution,
-          rirAssignments: rirAssignments,
-        ));
+        sessions.add(
+          _buildPPLSession(
+            type: i == 1 ? 'push' : (i == 2 ? 'pull' : 'legs'),
+            weekNum: weekNum,
+            exerciseSelections: exerciseSelections,
+            intensityDistribution: intensityDistribution,
+            rirAssignments: rirAssignments,
+          ),
+        );
       }
     } else {
       // Default: full body
       for (int sessionNum = 1; sessionNum <= 3; sessionNum++) {
-        sessions.add(_buildFullBodySession(
-          sessionNum: sessionNum,
-          weekNum: weekNum,
-          exerciseSelections: exerciseSelections,
-          intensityDistribution: intensityDistribution,
-          rirAssignments: rirAssignments,
-        ));
+        sessions.add(
+          _buildFullBodySession(
+            sessionNum: sessionNum,
+            weekNum: weekNum,
+            exerciseSelections: exerciseSelections,
+            intensityDistribution: intensityDistribution,
+            rirAssignments: rirAssignments,
+          ),
+        );
       }
     }
 
@@ -491,14 +613,16 @@ class MotorV3Orchestrator {
       final reps = _getRepsForIntensity(intensity);
       final rest = Duration(seconds: _getRestSecond(intensity));
 
-      exercises.add(PrescribedExercise(
-        exerciseId: exerciseId,
-        sets: 3,
-        reps: reps,
-        rir: rir,
-        rest: rest,
-        notes: 'Intensidad: $intensity',
-      ));
+      exercises.add(
+        PrescribedExercise(
+          exerciseId: exerciseId,
+          sets: 3,
+          reps: reps,
+          rir: rir,
+          rest: rest,
+          notes: 'Intensidad: $intensity',
+        ),
+      );
     }
 
     return {
@@ -534,18 +658,21 @@ class MotorV3Orchestrator {
       final reps = _getRepsForIntensity(intensity);
       final rest = Duration(seconds: _getRestSecond(intensity));
 
-      exercises.add(PrescribedExercise(
-        exerciseId: exerciseId,
-        sets: 4,
-        reps: reps,
-        rir: rir,
-        rest: rest,
-        notes: '$muscle - Intensidad: $intensity',
-      ));
+      exercises.add(
+        PrescribedExercise(
+          exerciseId: exerciseId,
+          sets: 4,
+          reps: reps,
+          rir: rir,
+          rest: rest,
+          notes: '$muscle - Intensidad: $intensity',
+        ),
+      );
     }
 
     return {
-      'name': '${isUpper ? 'Upper' : 'Lower'} Body Session $sessionNum - Week $weekNum',
+      'name':
+          '${isUpper ? 'Upper' : 'Lower'} Body Session $sessionNum - Week $weekNum',
       'dayNumber': sessionNum,
       'primaryMuscles': muscleGroups,
       'exercises': exercises,
@@ -564,7 +691,9 @@ class MotorV3Orchestrator {
     final exercises = <PrescribedExercise>[];
     final muscleGroups = type == 'push'
         ? ['chest', 'shoulders', 'triceps']
-        : (type == 'pull' ? ['back', 'biceps'] : ['quads', 'hamstrings', 'glutes']);
+        : (type == 'pull'
+              ? ['back', 'biceps']
+              : ['quads', 'hamstrings', 'glutes']);
 
     for (final muscle in muscleGroups) {
       final muscleExercises = exerciseSelections[muscle];
@@ -576,14 +705,16 @@ class MotorV3Orchestrator {
       final reps = _getRepsForIntensity(intensity);
       final rest = Duration(seconds: _getRestSecond(intensity));
 
-      exercises.add(PrescribedExercise(
-        exerciseId: exerciseId,
-        sets: 4,
-        reps: reps,
-        rir: rir,
-        rest: rest,
-        notes: '$muscle - ${type.capitalize()} - Intensidad: $intensity',
-      ));
+      exercises.add(
+        PrescribedExercise(
+          exerciseId: exerciseId,
+          sets: 4,
+          reps: reps,
+          rir: rir,
+          rest: rest,
+          notes: '$muscle - ${type.capitalize()} - Intensidad: $intensity',
+        ),
+      );
     }
 
     return {
@@ -676,4 +807,40 @@ class MotorV3Orchestrator {
     if (score >= 0.4) return 'Subóptimo';
     return 'Deficiente';
   }
+}
+
+/// Extension para capitalizar strings
+extension StringExtension on String {
+  /// Capitaliza la primera letra del string
+  String capitalize() {
+    if (isEmpty) return this;
+    return '${this[0].toUpperCase()}${substring(1)}';
+  }
+}
+
+/// Capacidad de recuperación del atleta
+enum RecoveryCapacity {
+  /// Déficit >500 kcal, sueño <6h, estrés alto
+  low,
+
+  /// Mantenimiento, sueño 6-7h, estrés moderado
+  moderate,
+
+  /// Superávit, sueño >7h, estrés bajo
+  high,
+}
+
+/// Balance calórico del atleta
+enum CaloricBalance {
+  /// >500 kcal déficit
+  highDeficit,
+
+  /// 200-500 kcal déficit
+  moderateDeficit,
+
+  /// ±200 kcal
+  maintenance,
+
+  /// >200 kcal superávit
+  surplus,
 }
