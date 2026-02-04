@@ -661,7 +661,7 @@ class VolumeCapacityScientificView extends ConsumerWidget {
       debugPrint('✅ P0-5: capacityByMuscle encontrado en phase3');
       debugPrint('   Músculos: ${capacityByMuscle.keys.toList()}');
     } else {
-      // Fallback: Intentar phase2 (legacy Motor V2)
+      // Fallback: Intentar phase2 (legacy data structure)
       debugPrint(
         '⚠️ P0-5: capacityByMuscle NO en phase3, intentando phase2 (legacy)...',
       );

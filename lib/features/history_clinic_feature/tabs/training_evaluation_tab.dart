@@ -1909,7 +1909,7 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Los campos marcados con * son OBLIGATORIOS para el Motor V2. '
+                  'Los campos marcados con * son OBLIGATORIOS para el Motor de entrenamiento. '
                   'Los opcionales mejoran la precisión de la prescripción.',
                   style: TextStyle(
                     fontSize: 13,
