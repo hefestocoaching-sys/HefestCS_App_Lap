@@ -256,16 +256,16 @@ enum Goal {
 
 /// Balance calórico actual
 enum CaloricBalance {
-  /// Déficit severo (>-500 kcal)
+  /// Déficit severo (≤-500 kcal/día)
   deficitSevere,
 
-  /// Déficit moderado (-200 a -500 kcal)
+  /// Déficit moderado (>-500 a -200 kcal/día)
   deficitModerate,
 
-  /// Mantenimiento (-200 a +200 kcal)
+  /// Mantenimiento (-200 a +200 kcal/día)
   maintenance,
 
-  /// Superávit (+200 kcal o más)
+  /// Superávit (+200 kcal/día o más)
   surplus,
 }
 

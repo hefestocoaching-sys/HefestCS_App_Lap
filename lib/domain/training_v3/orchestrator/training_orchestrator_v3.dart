@@ -8,6 +8,7 @@ import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrator_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
+// DecisionTrace is defined in training_program_v3_result.dart, already imported above
 
 /// Orquestador principal del Motor V3
 ///
@@ -27,6 +28,43 @@ import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 ///
 /// Versión: 1.0.0
 class TrainingOrchestratorV3 {
+  // ════════════════════════════════════════════════════════════════
+  // CONFIGURACIÓN POR DEFECTO
+  // ════════════════════════════════════════════════════════════════
+  
+  /// Fase de periodización por defecto
+  /// TODO: Obtener del ciclo activo del cliente
+  static const String _defaultPhase = 'accumulation';
+  
+  /// Duración en semanas por defecto
+  /// TODO: Obtener del ciclo activo del cliente
+  static const int _defaultDurationWeeks = 4;
+  
+  /// Edad por defecto para perfiles incompletos
+  static const int _defaultAge = 30;
+  
+  /// Género por defecto para perfiles incompletos
+  static const String _defaultGender = 'male';
+  
+  /// Altura por defecto en cm para perfiles incompletos
+  static const double _defaultHeightCm = 170.0;
+  
+  /// Peso por defecto en kg para perfiles incompletos
+  static const double _defaultWeightKg = 75.0;
+  
+  /// Años de entrenamiento por defecto para usuarios nuevos
+  static const double _defaultYearsTraining = 1.0;
+  
+  /// Sesión de duración por defecto en minutos
+  static const int _defaultSessionDuration = 60;
+  
+  /// Semanas consecutivas de entrenamiento inicial (valor inicial)
+  static const int _initialConsecutiveWeeks = 0;
+  
+  // ════════════════════════════════════════════════════════════════
+  // MIEMBROS DE INSTANCIA
+  // ════════════════════════════════════════════════════════════════
+  
   /// Estrategia de decisión a utilizar
   final DecisionStrategy strategy;
 
@@ -106,10 +144,10 @@ class TrainingOrchestratorV3 {
       // ═══════════════════════════════════════════════════════════════
 
       // Determinar fase y duración
-      // Por ahora usamos valores por defecto, pero esto debería venir
-      // del ciclo activo del cliente
-      final phase = 'accumulation'; // TODO: Obtener del ciclo activo
-      final durationWeeks = 4; // TODO: Obtener del ciclo activo
+      // Nota: Por ahora usamos valores por defecto definidos en constantes.
+      // Estos deberían reemplazarse con valores del ciclo activo del cliente.
+      final phase = _defaultPhase;
+      final durationWeeks = _defaultDurationWeeks;
 
       final result = await _hybridOrchestrator.generateHybridProgram(
         userProfile: userProfile,
@@ -150,36 +188,72 @@ class TrainingOrchestratorV3 {
     // Convertir nivel de experiencia
     final trainingLevel = _convertTrainingLevel(training.extra['level']);
 
-    // Extraer músculos prioritarios
+    // Extraer músculos prioritarios (para musclePriorities map)
     final priorityMuscles = _extractPriorityMuscles(training.extra);
+    final musclePrioritiesMap = <String, int>{};
+    
+    // Assign priority scores if muscles exist
+    // Score decreases from list length to 1, ensuring all scores are positive
+    if (priorityMuscles.isNotEmpty) {
+      for (int i = 0; i < priorityMuscles.length; i++) {
+        // First muscle gets highest score, last gets 1
+        // Example: 8 muscles → [8, 7, 6, 5, 4, 3, 2, 1]
+        final descendingPriorityScore = (priorityMuscles.length - i);
+        musclePrioritiesMap[priorityMuscles[i]] = descendingPriorityScore;
+      }
+    }
 
     // Extraer días disponibles
-    final daysPerWeek = training.extra['daysPerWeek'] as int? ?? 4;
+    final availableDays = training.extra['daysPerWeek'] as int? ?? 4;
+
+    // Extraer duración de sesión (en minutos)
+    final sessionDuration = 
+        training.extra['sessionDuration'] as int? ?? _defaultSessionDuration;
 
     // Extraer objetivo
     final goal = training.extra['goal'] as String? ?? 'hypertrophy';
 
-    // Crear UserProfile
+    // Extraer años de entrenamiento
+    final yearsTraining = 
+        training.extra['yearsTraining'] as double? ?? _defaultYearsTraining;
+
+    // Extraer altura y peso (con valores por defecto)
+    final heightCm = 
+        training.extra['heightCm'] as double? ?? _defaultHeightCm;
+    final weightKg = 
+        training.extra['weightKg'] as double? ?? _defaultWeightKg;
+
+    // Crear mapa de historial de lesiones
+    // TODO: Extract actual injury status from client data (active/healed/recovered)
+    final injuries = _getInjuries(training.extra);
+    final injuryHistory = <String, String>{};
+    for (final injury in injuries) {
+      // Currently assume all listed injuries are active
+      // In the future, retrieve actual status from injury tracking data
+      injuryHistory[injury] = 'active';
+    }
+
+    // Crear UserProfile con todos los parámetros requeridos
     return UserProfile(
       id: client.id,
       name: profile.name,
-      age: training.age ?? profile.age ?? 30,
-      gender: training.gender ?? profile.gender ?? 'male',
+      email: profile.email ?? '',
+      age: training.age ?? profile.age ?? _defaultAge,
+      gender: training.gender ?? profile.gender ?? _defaultGender,
+      heightCm: heightCm,
+      weightKg: weightKg,
+      yearsTraining: yearsTraining,
       trainingLevel: trainingLevel,
-      daysPerWeek: daysPerWeek,
+      consecutiveWeeks: _initialConsecutiveWeeks,
+      availableDays: availableDays,
+      sessionDuration: sessionDuration,
       primaryGoal: goal,
-      priorityMuscles: priorityMuscles,
+      musclePriorities: musclePrioritiesMap,
       availableEquipment: _getAvailableEquipment(training.extra),
-      injuries: _getInjuries(training.extra),
-      // Factores de recuperación
-      sleepQuality: training.extra['sleepQuality'] as int? ?? 7,
-      stressLevel: training.extra['stressLevel'] as int? ?? 5,
-      energyLevel: training.extra['energyLevel'] as int? ?? 7,
-      // Factores metabólicos
-      caloricDeficit: training.extra['caloricDeficit'] as int? ?? 0,
-      // Metadata
+      injuryHistory: injuryHistory,
+      excludedExercises: const [],
       createdAt: DateTime.now(),
-      lastUpdated: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
   }
 
