@@ -1,5 +1,6 @@
 // lib/domain/training_v3/orchestrator/training_orchestrator_v3.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/core/enums/training_phase.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
@@ -159,8 +160,8 @@ class TrainingOrchestratorV3 {
 
       return _convertMapToResult(result, client, asOfDate);
     } catch (e, stackTrace) {
-      print('❌ [TrainingOrchestratorV3] Error generando plan: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ [TrainingOrchestratorV3] Error generando plan: $e');
+      debugPrint('Stack trace: $stackTrace');
 
       return TrainingProgramV3Result.blocked(
         reason: 'Error técnico: ${e.toString()}',
@@ -316,6 +317,7 @@ class TrainingOrchestratorV3 {
   /// Convierte Map (resultado de HybridOrchestrator) a TrainingProgramV3Result
   ///
   /// ESTRUCTURA DEL MAP:
+  /// ```
   /// {
   ///   'success': bool,
   ///   'program': TrainingProgram?,
@@ -324,6 +326,7 @@ class TrainingOrchestratorV3 {
   ///   'ml': { ... },
   ///   'scientific': { ... },
   /// }
+  /// ```
   TrainingProgramV3Result _convertMapToResult(
     Map<String, dynamic> result,
     Client client,
@@ -405,7 +408,7 @@ class TrainingOrchestratorV3 {
         phaseRationale: 'Fase determinada por ciclo de entrenamiento',
       );
     } catch (e) {
-      print('⚠️  No se pudo crear DecisionTrace: $e');
+      debugPrint('⚠️  No se pudo crear DecisionTrace: $e');
       return null;
     }
   }

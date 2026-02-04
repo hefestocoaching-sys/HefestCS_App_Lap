@@ -1504,6 +1504,190 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     }
   }
 
+  /// ═══════════════════════════════════════════════════════════════════════
+  /// NUEVO: Generación de plan con Motor V3 (puente de migración)
+  /// ═══════════════════════════════════════════════════════════════════════
+  ///
+  /// Genera plan de entrenamiento usando TrainingOrchestratorV3 directamente,
+  /// sin la complejidad de bootstrap de ciclos de generatePlanFromActiveCycle.
+  ///
+  /// DIFERENCIAS CON generatePlanFromActiveCycle:
+  /// - ✅ Usa TrainingOrchestratorV3 directamente (no wrapper)
+  /// - ✅ Retorna TrainingProgramV3Result tipado (no Map)
+  /// - ✅ Convierte V3 → V2 para compatibilidad con UI actual
+  /// - ✅ Más simple: no maneja bootstrap de ciclos
+  ///
+  /// WORKFLOW:
+  /// 1. Obtener cliente activo y catálogo de ejercicios
+  /// 2. Crear TrainingOrchestratorV3 con RuleBasedStrategy
+  /// 3. Generar plan científico
+  /// 4. Convertir TrainingPlanConfig → GeneratedPlan (V2)
+  /// 5. Persistir en repositorio
+  /// 6. Actualizar state y notifyListeners()
+  ///
+  /// USO:
+  /// ```dart
+  /// await ref.read(trainingPlanProvider.notifier).generatePlanV3(
+  ///   selectedDate: DateTime.now(),
+  /// );
+  /// ```
+  Future<void> generatePlanV3({required DateTime selectedDate}) async {
+    debugPrint('🚀 [generatePlanV3] Iniciando generación Motor V3...');
+
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      blockReason: null,
+      suggestions: null,
+    );
+
+    try {
+      // ─────────────────────────────────────────────
+      // PASO 1: OBTENER CLIENTE ACTIVO
+      // ─────────────────────────────────────────────
+      final clientId = ref.read(clientsProvider).value?.activeClient?.id;
+      if (clientId == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'No hay cliente activo',
+        );
+        return;
+      }
+
+      final client = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+
+      if (client == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Cliente no encontrado',
+        );
+        return;
+      }
+
+      debugPrint(
+        '✅ [generatePlanV3] Cliente cargado: ${client.profile.fullName}',
+      );
+
+      // ─────────────────────────────────────────────
+      // PASO 2: CARGAR CATÁLOGO DE EJERCICIOS
+      // ─────────────────────────────────────────────
+      final exercises = await ExerciseCatalogLoader.load();
+      debugPrint(
+        '✅ [generatePlanV3] Catálogo cargado: ${exercises.length} ejercicios',
+      );
+
+      // ─────────────────────────────────────────────
+      // PASO 3: CREAR MOTOR V3 Y GENERAR PLAN
+      // ─────────────────────────────────────────────
+      final motorV3 = TrainingOrchestratorV3(
+        strategy: RuleBasedStrategy(),
+        recordPredictions: false,
+      );
+
+      debugPrint('🔬 [generatePlanV3] Llamando Motor V3...');
+
+      final resultV3 = await motorV3.generatePlan(
+        client: client,
+        exercises: exercises,
+        asOfDate: selectedDate,
+        recordPrediction: false,
+      );
+
+      // ─────────────────────────────────────────────
+      // PASO 4: VALIDAR RESULTADO
+      // ─────────────────────────────────────────────
+      if (resultV3.isBlocked) {
+        debugPrint(
+          '❌ [generatePlanV3] Plan bloqueado: ${resultV3.blockReason}',
+        );
+
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Plan bloqueado',
+          blockReason: resultV3.blockReason,
+          suggestions: resultV3.suggestions,
+        );
+        return;
+      }
+
+      final planConfigV3 = resultV3.plan;
+      if (planConfigV3 == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Motor V3 no generó plan',
+        );
+        return;
+      }
+
+      debugPrint(
+        '✅ [generatePlanV3] Plan V3 generado: ${planConfigV3.weeks.length} semanas, '
+        '${planConfigV3.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
+      );
+
+      // ─────────────────────────────────────────────
+      // PASO 5: PERSISTIR PLAN V3 EN REPOSITORIO
+      // ─────────────────────────────────────────────
+      debugPrint('💾 [generatePlanV3] Persistiendo TrainingPlanConfig V3...');
+
+      final updatedPlans = [
+        ...client.trainingPlans.where((p) => p.id != planConfigV3.id),
+        planConfigV3,
+      ];
+
+      final updatedExtra = Map<String, dynamic>.from(client.training.extra);
+      updatedExtra[TrainingExtraKeys.activePlanId] = planConfigV3.id;
+
+      final updatedClient = client.copyWith(
+        trainingPlans: updatedPlans,
+        training: client.training.copyWith(extra: updatedExtra),
+      );
+
+      await ref.read(clientRepositoryProvider).saveClient(updatedClient);
+
+      debugPrint('✅ [generatePlanV3] TrainingPlanConfig V3 persistido');
+      debugPrint('   Plan ID: ${planConfigV3.id}');
+      debugPrint('   Semanas: ${planConfigV3.weeks.length}');
+
+      // ═══════════════════════════════════════════════════════════════
+      // TODO: CONVERTIR TrainingPlanConfig (V3) → GeneratedPlan (V2)
+      // ═══════════════════════════════════════════════════════════════
+      //
+      // PENDIENTE: Implementar conversor externo que transforme:
+      //   - TrainingPlanConfig.weeks → GeneratedPlan.weeks
+      //   - TrainingWeek V3 → TrainingWeek V2
+      //   - TrainingSession V3 → TrainingSession V2
+      //   - Prescription V3 → Exercise V2
+      //
+      // Por ahora, usar TrainingPlanMapper.toGeneratedPlan() como workaround:
+      final generatedPlanV2 = TrainingPlanMapper.toGeneratedPlan(planConfigV3);
+
+      debugPrint('✅ [generatePlanV3] Conversión V3→V2 completada (mapper)');
+
+      // ─────────────────────────────────────────────
+      // PASO 6: ACTUALIZAR STATE CON PLAN V2
+      // ─────────────────────────────────────────────
+      state = state.copyWith(
+        isLoading: false,
+        error: null,
+        plan: generatedPlanV2,
+        blockReason: null,
+        suggestions: null,
+      );
+
+      debugPrint('✅ [generatePlanV3] State actualizado con GeneratedPlan V2');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [generatePlanV3] Error: $e');
+      debugPrint('Stack trace: $stackTrace');
+
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Error generando plan V3: $e',
+      );
+    }
+  }
+
   /// Borra el plan activo Y ciclos para forzar regeneración completa
   ///
   /// PROPÓSITO: Invalidar caché cuando el usuario quiere regenerar
