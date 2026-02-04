@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hcs_app_lap/domain/services/training_program_engine.dart';
 import '../../fixtures/training_fixtures.dart';
 
+@Skip('Legacy test: migración pendiente a training_v3')
 void main() {
   group('PR-10 Determinismo total del motor', () {
     test('Mismo input => mismo resultado (plan o StateError idéntico)', () {

@@ -7,6 +7,7 @@ import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/services/training_program_engine.dart';
 import 'package:path/path.dart' as p;
 
+@Deprecated('Legacy script: migrar a TrainingOrchestratorV3')
 Future<void> main() async {
   final engine = TrainingProgramEngine();
   final profile = TrainingProfile(

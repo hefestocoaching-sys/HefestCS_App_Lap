@@ -7,10 +7,15 @@ class TrainingProgramEngine {
   const TrainingProgramEngine();
 
   @Deprecated('Legacy. Migrar a TrainingOrchestratorV3.')
-  dynamic generateProgram({required Map<String, Object?> input}) {
+  dynamic generatePlan({required Map<String, Object?> input}) {
     throw UnimplementedError(
-      'TrainingProgramEngine (legacy) no está implementado. '
+      'TrainingProgramEngine.generatePlan (legacy) no está implementado. '
       'Migrar tests a training_v3.',
     );
+  }
+
+  @Deprecated('Legacy. Migrar a TrainingOrchestratorV3.')
+  dynamic generateProgram({required Map<String, Object?> input}) {
+    return generatePlan(input: input);
   }
 }

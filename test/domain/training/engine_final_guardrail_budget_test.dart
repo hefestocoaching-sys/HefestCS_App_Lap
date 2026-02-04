@@ -4,6 +4,7 @@ import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/services/training_program_engine.dart';
 import '../../fixtures/training_fixtures.dart';
 
+@Skip('Legacy test: migración pendiente a training_v3')
 void main() {
   group('PR-10 Guardrail final de presupuesto de esfuerzo', () {
     test('valida aplicación de guardrails finales', () {

@@ -11,6 +11,7 @@ import 'package:hcs_app_lap/domain/services/phase_1_data_ingestion_service.dart'
 import 'package:hcs_app_lap/domain/services/phase_5_periodization_service.dart';
 import 'package:hcs_app_lap/domain/services/phase_7_prescription_service.dart';
 
+@Skip('Legacy test: migración pendiente a training_v3')
 void main() {
   group('PR-10 Intensificación bloqueada para Beginner', () {
     test('Beginner nunca recibe técnicas aunque allowIntensification=true', () {

@@ -6,6 +6,7 @@ import 'package:hcs_app_lap/domain/entities/exercise_catalog.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/services/training_program_engine.dart';
 
+@Deprecated('Legacy script: migrar a TrainingOrchestratorV3')
 void main() {
   final engine = TrainingProgramEngine();
   final profile = TrainingProfile(

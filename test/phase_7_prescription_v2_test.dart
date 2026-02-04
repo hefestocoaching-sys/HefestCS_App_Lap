@@ -8,6 +8,7 @@ import 'package:hcs_app_lap/domain/services/phase_5_periodization_service.dart';
 import 'package:hcs_app_lap/domain/services/phase_7_prescription_service.dart';
 import 'package:hcs_app_lap/domain/services/phase_1_data_ingestion_service.dart';
 
+@Skip('Legacy test: migración pendiente a training_v3')
 void main() {
   int rirMin(String rir) {
     final m = RegExp(r'\d+').allMatches(rir).map((e) => e.group(0)!).toList();

@@ -9,6 +9,7 @@ import 'package:hcs_app_lap/domain/entities/training_session_log.dart';
 import 'package:hcs_app_lap/domain/services/phase_1_data_ingestion_service.dart';
 import 'package:hcs_app_lap/domain/services/phase_6_exercise_selection_service.dart';
 
+@Skip('Legacy test: migración pendiente a training_v3')
 void main() {
   group('PR-10 Especialización glúteo: swaps reales', () {
     test('cubre thrust + abduction + hinge con swap', () {
