@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uuid/uuid.dart';
 import 'package:csv/csv.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
@@ -369,7 +368,6 @@ class TrainingExample {
 /// - Optimización de queries con aggregation
 class TrainingDatasetService {
   final FirebaseFirestore _firestore;
-  final Uuid _uuid = const Uuid();
 
   /// Nombre de la colección en Firestore
   static const String collectionName = 'ml_training_data';
@@ -588,10 +586,5 @@ class TrainingDatasetService {
       'readyForTraining': withLabels,
       'pendingOutcome': total - withOutcome,
     };
-  }
-
-  /// ✅ CORREGIDO: UUID v4 real
-  String _generateUUID() {
-    return _uuid.v4();
   }
 }

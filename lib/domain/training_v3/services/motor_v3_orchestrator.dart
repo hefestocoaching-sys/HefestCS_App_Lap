@@ -5,22 +5,17 @@ import 'package:flutter/foundation.dart';
 // Models
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/client_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/prescribed_exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
-import 'package:hcs_app_lap/domain/entities/exercise.dart';
 
 // Engines
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/split_generator_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/ordering_engine.dart';
 
 // Validators
 import 'package:hcs_app_lap/domain/training_v3/validators/volume_validator.dart';
@@ -263,20 +258,6 @@ class MotorV3Orchestrator {
       default:
         return 0.0;
     }
-  }
-
-  /// Extrae los grupos musculares objetivo del perfil
-  static List<String> _extractTargetMuscles(UserProfile profile) {
-    final targetMuscles = <String>[];
-    profile.musclePriorities.forEach((muscle, priority) {
-      if (priority > 2) {
-        // Prioridad > 2 = objetivo
-        targetMuscles.add(muscle);
-      }
-    });
-    return targetMuscles.isNotEmpty
-        ? targetMuscles
-        : profile.musclePriorities.keys.toList();
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -724,39 +705,6 @@ class MotorV3Orchestrator {
       'exercises': exercises,
       'estimatedDurationMinutes': (exercises.length * 12) + 30,
     };
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // MÉTODOS ANTIGUOS (MANTENIDOS PARA COMPATIBILIDAD)
-  // ═══════════════════════════════════════════════════════════════════════
-
-  /// Construye el programa completo (compatibilidad)
-  static TrainingProgram _buildProgram({
-    required UserProfile userProfile,
-    required SplitConfig split,
-    required String phase,
-    required int durationWeeks,
-    required Map<String, int> volumeByMuscle,
-  }) {
-    final now = DateTime.now();
-
-    return TrainingProgram(
-      id: 'program_${now.millisecondsSinceEpoch}',
-      userId: userProfile.id,
-      name: '${split.name} - ${_capitalize(phase)} - ${durationWeeks}w',
-      split: split,
-      phase: phase,
-      durationWeeks: durationWeeks,
-      currentWeek: 1,
-      sessions: [],
-      weeklyVolumeByMuscle: volumeByMuscle.map(
-        (k, v) => MapEntry(k, v.toDouble()),
-      ),
-      startDate: now,
-      estimatedEndDate: now.add(Duration(days: durationWeeks * 7)),
-      createdAt: now,
-      notes: 'Generado por Motor V3 - Versión mejorada',
-    );
   }
 
   static String _capitalize(String text) {

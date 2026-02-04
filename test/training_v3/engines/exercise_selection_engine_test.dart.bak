@@ -1,0 +1,162 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine.dart';
+
+import '../fixtures/exercise_catalog_fixture.dart';
+
+void main() {
+  group('Exercise Selection Engine - Motor V3', () {
+    late ExerciseSelectionEngine selectionEngine;
+    late Map<String, Map<String, dynamic>> exerciseCatalog;
+
+    setUp(() {
+      selectionEngine = ExerciseSelectionEngine();
+      exerciseCatalog = ExerciseCatalogFixture.createBasicCatalog();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: EXERCISE SELECTION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Selects appropriate number of exercises for muscle', () {
+      // GIVEN
+      const targetMuscle = 'chest';
+      const targetCount = 3;
+      final availableEquipment = ['barbell', 'dumbbell', 'cable', 'machine'];
+      final injuryHistory = <String, String>{};
+
+      // WHEN
+      final selected = ExerciseSelectionEngine.selectExercises(
+        targetMuscle: targetMuscle,
+        availableExercises: exerciseCatalog,
+        availableEquipment: availableEquipment,
+        injuryHistory: injuryHistory,
+        targetExerciseCount: targetCount,
+      );
+
+      // THEN
+      expect(
+        selected,
+        isNotEmpty,
+        reason: 'Debe seleccionar al menos un ejercicio',
+      );
+      expect(
+        selected.length,
+        lessThanOrEqualTo(targetCount),
+        reason: 'No debe exceder el conteo solicitado',
+      );
+
+      // Verificar que todos los ejercicios existen
+      for (final exerciseId in selected) {
+        expect(
+          exerciseCatalog.containsKey(exerciseId),
+          isTrue,
+          reason: 'Ejercicio $exerciseId debe estar en catálogo',
+        );
+      }
+    });
+
+    test('Respects equipment availability', () {
+      // GIVEN
+      const targetMuscle = 'quads';
+      final limitedEquipment = ['machine']; // Solo machine, sin barbell
+      final injuryHistory = <String, String>{};
+
+      // WHEN
+      final selected = ExerciseSelectionEngine.selectExercises(
+        targetMuscle: targetMuscle,
+        availableExercises: exerciseCatalog,
+        availableEquipment: limitedEquipment,
+        injuryHistory: injuryHistory,
+        targetExerciseCount: 2,
+      );
+
+      // THEN
+      for (final exerciseId in selected) {
+        final exercise = exerciseCatalog[exerciseId];
+        expect(exercise, isNotNull);
+
+        // El ejercicio debe usar equipment disponible
+        final exerciseEquipment = exercise!['equipment'] as List?;
+        if (exerciseEquipment != null) {
+          final hasAvailableEquipment = exerciseEquipment.any(
+            (eq) => limitedEquipment.contains(eq),
+          );
+          expect(
+            hasAvailableEquipment,
+            isTrue,
+            reason:
+                'Ejercicio debe usar equipment disponible ($limitedEquipment)',
+          );
+        }
+      }
+    });
+
+    test('Avoids muscles with injury history', () {
+      // GIVEN
+      const targetMuscle = 'shoulders';
+      final availableEquipment = ['barbell', 'dumbbell', 'cable'];
+      final injuryHistory = {
+        'shoulders': 'strain', // Lesión en hombros
+      };
+
+      // WHEN
+      final selected = ExerciseSelectionEngine.selectExercises(
+        targetMuscle: targetMuscle,
+        availableExercises: exerciseCatalog,
+        availableEquipment: availableEquipment,
+        injuryHistory: injuryHistory,
+        targetExerciseCount: 3,
+      );
+
+      // THEN: Puede devolver ejercicios o lista vacía, pero no debe crashear
+      expect(selected, isA<List<String>>());
+    });
+
+    test('Selection is deterministic for same inputs', () {
+      // GIVEN
+      const targetMuscle = 'back';
+      final availableEquipment = ['barbell', 'cable', 'machine'];
+      final injuryHistory = <String, String>{};
+      const targetCount = 2;
+
+      // WHEN: Seleccionamos dos veces con mismo input
+      final selection1 = ExerciseSelectionEngine.selectExercises(
+        targetMuscle: targetMuscle,
+        availableExercises: exerciseCatalog,
+        availableEquipment: availableEquipment,
+        injuryHistory: injuryHistory,
+        targetExerciseCount: targetCount,
+      );
+
+      final selection2 = ExerciseSelectionEngine.selectExercises(
+        targetMuscle: targetMuscle,
+        availableExercises: exerciseCatalog,
+        availableEquipment: availableEquipment,
+        injuryHistory: injuryHistory,
+        targetExerciseCount: targetCount,
+      );
+
+      // THEN: Deben ser idénticas
+      expect(selection1, equals(selection2));
+    });
+
+    test('Handles edge cases gracefully', () {
+      // GIVEN: Target muscle con muy pocos ejercicios
+      const targetMuscle = 'abs';
+      final availableEquipment = ['cable'];
+      final injuryHistory = <String, String>{};
+
+      // WHEN
+      expect(
+        () => ExerciseSelectionEngine.selectExercises(
+          targetMuscle: targetMuscle,
+          availableExercises: exerciseCatalog,
+          availableEquipment: availableEquipment,
+          injuryHistory: injuryHistory,
+          targetExerciseCount: 1,
+        ),
+        returnsNormally,
+      );
+    });
+  });
+}

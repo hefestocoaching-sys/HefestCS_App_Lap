@@ -1,10 +1,5 @@
 // NOTE: TrainingContext class was never implemented - ML dataset feature incomplete
 // import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
-import 'package:hcs_app_lap/core/enums/training_level.dart';
-import 'package:hcs_app_lap/core/enums/gender.dart';
-import 'package:hcs_app_lap/core/enums/training_goal.dart';
-import 'package:hcs_app_lap/core/enums/training_focus.dart';
-import 'package:hcs_app_lap/core/enums/performance_trend.dart';
 
 /// Vector de características normalizado para ML.
 ///

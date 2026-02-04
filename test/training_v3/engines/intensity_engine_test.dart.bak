@@ -1,0 +1,201 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hcs_app_lap/core/enums/training_level.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_phase.dart';
+
+void main() {
+  group('Intensity Engine - Motor V3', () {
+    late IntensityEngine intensityEngine;
+
+    setUp(() {
+      intensityEngine = IntensityEngine();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: RIR ASSIGNMENT
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Beginner receives higher RIR (more conservative)', () {
+      // GIVEN
+      const beginnerLevel = TrainingLevel.beginner;
+      const advancedLevel = TrainingLevel.advanced;
+      const phase = TrainingPhase.accumulation;
+
+      // WHEN
+      final beginnerRIR = intensityEngine.assignRir(
+        phase,
+        beginnerLevel,
+        exerciseOrder: 1,
+        sessionExerciseCount: 5,
+      );
+
+      final advancedRIR = intensityEngine.assignRir(
+        phase,
+        advancedLevel,
+        exerciseOrder: 1,
+        sessionExerciseCount: 5,
+      );
+
+      // THEN: Beginner más conservador (RIR más alto)
+      expect(
+        beginnerRIR,
+        greaterThan(advancedRIR),
+        reason: 'Principiante debe entrenar más lejos del fallo (RIR más alto)',
+      );
+    });
+
+    test('Accumulation phase uses moderate RIR', () {
+      // GIVEN
+      const phase = TrainingPhase.accumulation;
+      const level = TrainingLevel.intermediate;
+
+      // WHEN
+      final rir = intensityEngine.assignRir(
+        phase,
+        level,
+        exerciseOrder: 1,
+        sessionExerciseCount: 4,
+      );
+
+      // THEN: RIR debe estar en rango moderado (2-3)
+      expect(rir, greaterThanOrEqualTo(2));
+      expect(rir, lessThanOrEqualTo(4));
+    });
+
+    test('Intensification phase uses lower RIR', () {
+      // GIVEN
+      const phase = TrainingPhase.intensification;
+      const level = TrainingLevel.advanced;
+
+      // WHEN
+      final rir = intensityEngine.assignRir(
+        phase,
+        level,
+        exerciseOrder: 1,
+        sessionExerciseCount: 4,
+      );
+
+      // THEN: RIR debe ser bajo (0-2)
+      expect(rir, greaterThanOrEqualTo(0));
+      expect(rir, lessThanOrEqualTo(2));
+    });
+
+    test('RIR decreases for subsequent exercises in session', () {
+      // GIVEN
+      const phase = TrainingPhase.accumulation;
+      const level = TrainingLevel.intermediate;
+
+      // WHEN: Primer vs último ejercicio
+      final firstExerciseRIR = intensityEngine.assignRir(
+        phase,
+        level,
+        exerciseOrder: 1,
+        sessionExerciseCount: 5,
+      );
+
+      final lastExerciseRIR = intensityEngine.assignRir(
+        phase,
+        level,
+        exerciseOrder: 5,
+        sessionExerciseCount: 5,
+      );
+
+      // THEN: Último ejercicio debe tener RIR más alto (menos intenso)
+      expect(
+        lastExerciseRIR,
+        greaterThanOrEqualTo(firstExerciseRIR),
+        reason:
+            'Ejercicios posteriores deben ser menos intensos para recuperación',
+      );
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: REP RANGE SELECTION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Beginner receives higher reps (lower intensity)', () {
+      // GIVEN
+      const beginnerLevel = TrainingLevel.beginner;
+      const advancedLevel = TrainingLevel.advanced;
+
+      // WHEN
+      final beginnerReps = intensityEngine.selectRepRange(
+        phase: TrainingPhase.accumulation,
+        trainingLevel: beginnerLevel,
+        rir: 3,
+      );
+
+      final advancedReps = intensityEngine.selectRepRange(
+        phase: TrainingPhase.accumulation,
+        trainingLevel: advancedLevel,
+        rir: 1,
+      );
+
+      // THEN
+      expect(
+        beginnerReps,
+        greaterThan(advancedReps),
+        reason: 'Principiante debe usar más reps',
+      );
+    });
+
+    test('Selected reps are in valid range (6-15 for hypertrophy)', () {
+      // GIVEN & WHEN
+      final reps = intensityEngine.selectRepRange(
+        phase: TrainingPhase.accumulation,
+        trainingLevel: TrainingLevel.intermediate,
+        rir: 2,
+      );
+
+      // THEN
+      expect(reps, greaterThanOrEqualTo(6));
+      expect(reps, lessThanOrEqualTo(15));
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: REST DURATION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Rest duration increases with exercise intensity', () {
+      // GIVEN
+      const level = TrainingLevel.intermediate;
+
+      // WHEN: Comparamos descanso para RIR bajo (intenso) vs alto (menos intenso)
+      final restForHighIntensity = intensityEngine.calculateRestDuration(
+        trainingLevel: level,
+        rir: 0, // Muy cercano al fallo
+        estimatedLoad: 0.9,
+      );
+
+      final restForLowIntensity = intensityEngine.calculateRestDuration(
+        trainingLevel: level,
+        rir: 4, // Lejos del fallo
+        estimatedLoad: 0.6,
+      );
+
+      // THEN
+      expect(
+        restForHighIntensity.inSeconds,
+        greaterThan(restForLowIntensity.inSeconds),
+        reason: 'Ejercicios intensos necesitan más descanso',
+      );
+    });
+
+    test('Rest duration is always positive and reasonable', () {
+      // GIVEN & WHEN
+      final rest = intensityEngine.calculateRestDuration(
+        trainingLevel: TrainingLevel.beginner,
+        rir: 3,
+        estimatedLoad: 0.7,
+      );
+
+      // THEN
+      expect(rest.inSeconds, greaterThan(0));
+      expect(
+        rest.inSeconds,
+        lessThanOrEqualTo(300),
+        reason: 'Descanso no debe exceder 5 minutos',
+      );
+    });
+  });
+}

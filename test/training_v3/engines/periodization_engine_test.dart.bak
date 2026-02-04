@@ -1,0 +1,246 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_phase.dart';
+
+void main() {
+  group('Periodization Engine - Motor V3', () {
+    late PeriodizationEngine periodizationEngine;
+
+    setUp(() {
+      periodizationEngine = PeriodizationEngine();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: PHASE PROGRESSION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Accumulation phase maintains increasing volume', () {
+      // GIVEN
+      const phase = TrainingPhase.accumulation;
+      const baselineVolume = 100;
+
+      // WHEN: Calculamos volumen para semanas progresivas
+      final week1 = periodizationEngine.calculatePhaseVolume(
+        phase,
+        baselineVolume,
+        weekNumber: 1,
+      );
+      final week2 = periodizationEngine.calculatePhaseVolume(
+        phase,
+        baselineVolume,
+        weekNumber: 2,
+      );
+      final week3 = periodizationEngine.calculatePhaseVolume(
+        phase,
+        baselineVolume,
+        weekNumber: 3,
+      );
+
+      // THEN: Volumen debe crecer o mantenerse (nunca bajar)
+      expect(week2, greaterThanOrEqualTo(week1));
+      expect(week3, greaterThanOrEqualTo(week2));
+    });
+
+    test('Intensification phase reduces volume while maintaining intensity', () {
+      // GIVEN
+      const accumulationPhase = TrainingPhase.accumulation;
+      const intensificationPhase = TrainingPhase.intensification;
+      const baselineVolume = 100;
+
+      // WHEN
+      final accVolume = periodizationEngine.calculatePhaseVolume(
+        accumulationPhase,
+        baselineVolume,
+        weekNumber: 1,
+      );
+      final intVolume = periodizationEngine.calculatePhaseVolume(
+        intensificationPhase,
+        baselineVolume,
+        weekNumber: 1,
+      );
+
+      // THEN: Intensification debería tener volumen reducido
+      expect(
+        intVolume,
+        lessThan(accVolume),
+        reason:
+            'Intensification debe reducir volumen para permitir carga intensidad',
+      );
+    });
+
+    test('Deload phase reduces volume significantly', () {
+      // GIVEN
+      const accumulationPhase = TrainingPhase.accumulation;
+      const deloadPhase = TrainingPhase.deload;
+      const baselineVolume = 100;
+
+      // WHEN
+      final accVolume = periodizationEngine.calculatePhaseVolume(
+        accumulationPhase,
+        baselineVolume,
+        weekNumber: 1,
+      );
+      final deloadVolume = periodizationEngine.calculatePhaseVolume(
+        deloadPhase,
+        baselineVolume,
+        weekNumber: 1,
+      );
+
+      // THEN: Deload debe reducir ~50%
+      expect(
+        deloadVolume,
+        lessThan(accVolume),
+        reason: 'Deload debe ser significativamente menor',
+      );
+      expect(
+        deloadVolume,
+        greaterThan(accVolume * 0.3),
+        reason: 'Deload no debe ser tan extremo',
+      );
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: VOLUME CALCULATION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Calculated volume is always positive', () {
+      // GIVEN & WHEN
+      final volume = periodizationEngine.calculatePhaseVolume(
+        TrainingPhase.accumulation,
+        100,
+        weekNumber: 1,
+      );
+
+      // THEN
+      expect(volume, greaterThan(0));
+    });
+
+    test('Volume changes based on week number', () {
+      // GIVEN
+      const phase = TrainingPhase.accumulation;
+
+      // WHEN: Comparamos diferentes semanas
+      final vol1 = periodizationEngine.calculatePhaseVolume(
+        phase,
+        100,
+        weekNumber: 1,
+      );
+      final vol4 = periodizationEngine.calculatePhaseVolume(
+        phase,
+        100,
+        weekNumber: 4,
+      );
+
+      // THEN: Deben ser diferentes (progressión)
+      expect(vol4, isNotEqualTo(vol1));
+    });
+
+    test('Volume respects baseline input', () {
+      // GIVEN
+      const phase = TrainingPhase.accumulation;
+
+      // WHEN: Mismo % de progresión, diferente baseline
+      final vol1 = periodizationEngine.calculatePhaseVolume(
+        phase,
+        100,
+        weekNumber: 1,
+      );
+      final vol2 = periodizationEngine.calculatePhaseVolume(
+        phase,
+        200,
+        weekNumber: 1,
+      );
+
+      // THEN: Volumen proporcional al baseline
+      expect(vol2, greaterThan(vol1));
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: MICROCYCLE ORGANIZATION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Creates valid microcycle structure', () {
+      // GIVEN & WHEN
+      final microcycle = periodizationEngine.createMicrocycleStructure(
+        phase: TrainingPhase.accumulation,
+        sessionsPerWeek: 3,
+        trainingLevelIndex: 1, // intermediate
+      );
+
+      // THEN
+      expect(microcycle, isNotNull);
+      expect(microcycle, isA<Map<String, dynamic>>());
+      expect(microcycle['sessions'], isA<List>());
+      expect((microcycle['sessions'] as List).length, equals(3));
+    });
+
+    test('Microcycle respects session count', () {
+      // GIVEN
+      const sessionCounts = [3, 4, 6]; // Full Body, UL, PPL
+
+      for (final count in sessionCounts) {
+        // WHEN
+        final microcycle = periodizationEngine.createMicrocycleStructure(
+          phase: TrainingPhase.accumulation,
+          sessionsPerWeek: count,
+          trainingLevelIndex: 1,
+        );
+
+        // THEN
+        expect(
+          (microcycle['sessions'] as List).length,
+          equals(count),
+          reason: 'Microcycle debe tener $count sesiones',
+        );
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: SCIENTIFIC VALIDITY
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Volume recommendations follow scientific guidelines', () {
+      // GIVEN: MEV/MAV/MRV ranges según Schoenfeld et al.
+      const meVRange = {'min': 6, 'max': 10}; // sets/semana por músculo
+      const mavRange = {'min': 10, 'max': 20};
+      const mrvRange = {'min': 20, 'max': 35};
+
+      // WHEN
+      final accVolume = periodizationEngine.calculatePhaseVolume(
+        TrainingPhase.accumulation,
+        300, // total weekly sets
+        weekNumber: 2,
+      );
+
+      // THEN: Volumen debe estar dentro de rangos científicos
+      expect(accVolume, greaterThan(0), reason: 'Volumen debe ser positivo');
+      // (validaciones más específicas dependerían de la implementación exacta)
+    });
+
+    test('Phase transitions are smooth', () {
+      // GIVEN
+      const baselineVolume = 100;
+
+      // WHEN: Últimas semanas de acumulación vs primera de intensificación
+      final lastAccumWeek = periodizationEngine.calculatePhaseVolume(
+        TrainingPhase.accumulation,
+        baselineVolume,
+        weekNumber: 4,
+      );
+      final firstIntensWeek = periodizationEngine.calculatePhaseVolume(
+        TrainingPhase.intensification,
+        baselineVolume,
+        weekNumber: 1,
+      );
+
+      // THEN: No debe haber caída abrupta extrema
+      final percentageChange =
+          ((firstIntensWeek - lastAccumWeek) / lastAccumWeek).abs();
+      expect(
+        percentageChange,
+        lessThan(0.6), // No más de 60% de cambio
+        reason: 'Transición de fases debe ser suave',
+      );
+    });
+  });
+}

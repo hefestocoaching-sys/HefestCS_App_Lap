@@ -5,6 +5,6 @@ extension ClientProfileNameX on ClientProfile {
   String get name {
     // ClientProfile no tiene firstName/lastName, usamos el campo 'experience' como placeholder
     // En producción esto debería conectar con el modelo real de cliente
-    return 'Cliente ${experience}';
+    return 'Cliente $experience';
   }
 }

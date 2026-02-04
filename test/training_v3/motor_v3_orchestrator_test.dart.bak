@@ -1,0 +1,432 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hcs_app_lap/domain/training_v3/orchestrator/training_orchestrator_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
+
+import 'fixtures/training_context_v3_fixture.dart';
+import 'fixtures/exercise_catalog_fixture.dart';
+
+void main() {
+  group('Motor V3 Orchestrator - Canonical Test Suite', () {
+    late TrainingOrchestratorV3 orchestrator;
+    late Map<String, Map<String, dynamic>> exerciseCatalog;
+
+    setUp(() {
+      orchestrator = TrainingOrchestratorV3();
+      exerciseCatalog = ExerciseCatalogFixture.createBasicCatalog();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST 1: VALIDACIÓN BÁSICA DE INPUTS/OUTPUTS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test(
+      'Orchestrator generates valid training plan for beginner client',
+      () async {
+        // GIVEN: Un contexto valido de cliente principiante
+        final context = TrainingContextV3Fixture.createBasicBeginnerContext();
+        final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+        // WHEN: Generamos el plan
+        final plan = await orchestrator.generateTrainingPlan(
+          clientId: context.clientId,
+          profile: context.profile,
+          split: SplitConfig.fullBody,
+          phase: 'accumulation',
+          durationWeeks: 4,
+          exerciseCatalog: catalog,
+        );
+
+        // THEN:
+        expect(plan, isNotNull, reason: 'Plan no debería ser null');
+        expect(plan.id, isNotEmpty, reason: 'Plan debe tener ID');
+        expect(plan.weeks, isNotEmpty, reason: 'Plan debe tener semanas');
+        expect(
+          plan.weeks.length,
+          4,
+          reason: 'Plan debe tener 4 semanas (coincide con durationWeeks)',
+        );
+      },
+    );
+
+    test('Each training session contains valid exercises', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createBasicBeginnerContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN
+      final plan = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.fullBody,
+        phase: 'accumulation',
+        durationWeeks: 4,
+        exerciseCatalog: catalog,
+      );
+
+      // THEN
+      for (final week in plan.weeks) {
+        expect(week.sessions, isNotEmpty, reason: 'Semana debe tener sesiones');
+
+        for (final session in week.sessions) {
+          final exercises = session.exercises;
+          expect(
+            exercises,
+            isNotEmpty,
+            reason: 'Sesión debe tener al menos un ejercicio',
+          );
+
+          // Validar cada ejercicio
+          for (final exercise in exercises) {
+            expect(
+              exercise.exerciseId,
+              isNotEmpty,
+              reason: 'Ejercicio debe tener ID',
+            );
+            expect(
+              exercise.sets,
+              greaterThan(0),
+              reason: 'Ejercicio debe tener sets > 0',
+            );
+            expect(
+              exercise.reps,
+              greaterThan(0),
+              reason: 'Ejercicio debe tener reps > 0',
+            );
+            expect(
+              exercise.rir,
+              greaterThanOrEqualTo(0),
+              reason: 'RIR debe ser >= 0',
+            );
+            expect(
+              exercise.rest.inSeconds,
+              greaterThan(0),
+              reason: 'Descanso debe ser > 0 segundos',
+            );
+          }
+        }
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST 2: DETERMINISMO
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Same input produces identical output (deterministic)', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createBasicBeginnerContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN: Generamos el plan DOS veces con MISMO input
+      final plan1 = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.fullBody,
+        phase: 'accumulation',
+        durationWeeks: 4,
+        exerciseCatalog: catalog,
+      );
+
+      final plan2 = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.fullBody,
+        phase: 'accumulation',
+        durationWeeks: 4,
+        exerciseCatalog: catalog,
+      );
+
+      // THEN: Los planes deben ser idénticos en estructura
+      expect(plan1.weeks.length, equals(plan2.weeks.length));
+
+      for (int i = 0; i < plan1.weeks.length; i++) {
+        final week1 = plan1.weeks[i];
+        final week2 = plan2.weeks[i];
+
+        expect(
+          week1.sessions.length,
+          equals(week2.sessions.length),
+          reason: 'Semana $i debe tener mismo número de sesiones',
+        );
+
+        for (int j = 0; j < week1.sessions.length; j++) {
+          final session1 = week1.sessions[j];
+          final session2 = week2.sessions[j];
+
+          expect(
+            session1.exercises.length,
+            equals(session2.exercises.length),
+            reason: 'Sesión $i-$j debe tener mismo número de ejercicios',
+          );
+        }
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST 3: COHERENCIA CIENTÍFICA BÁSICA
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Beginner receives appropriate volume and intensity', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createBasicBeginnerContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN
+      final plan = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.fullBody,
+        phase: 'accumulation',
+        durationWeeks: 4,
+        exerciseCatalog: catalog,
+      );
+
+      // THEN: Un principiante debe recibir:
+      // - Volumen moderado (3-4 sets por ejercicio típicamente)
+      // - RIR moderado (2-3 reps in reserve)
+      // - Descansos típicos (60-120 segundos)
+
+      int totalSets = 0;
+      int exerciseCount = 0;
+      int totalRIR = 0;
+
+      for (final week in plan.weeks) {
+        for (final session in week.sessions) {
+          for (final exercise in session.exercises) {
+            totalSets += exercise.sets;
+            totalRIR += exercise.rir;
+            exerciseCount++;
+
+            // Para principiante:
+            expect(
+              exercise.sets,
+              lessThanOrEqualTo(4),
+              reason: 'Principiante no debe exceder 4 sets por ejercicio',
+            );
+            expect(
+              exercise.rir,
+              lessThanOrEqualTo(4),
+              reason: 'Principiante no debe entrenar muy cerca del fallo',
+            );
+          }
+        }
+      }
+
+      // Validaciones globales
+      expect(
+        exerciseCount,
+        greaterThan(0),
+        reason: 'Plan debe tener ejercicios',
+      );
+
+      final avgRIR = totalRIR / exerciseCount;
+      expect(
+        avgRIR,
+        greaterThanOrEqualTo(1.5),
+        reason: 'RIR promedio debe ser conservador para principiante',
+      );
+      expect(
+        avgRIR,
+        lessThanOrEqualTo(3.5),
+        reason: 'RIR promedio debe estar en rango adecuado',
+      );
+    });
+
+    test('Advanced receives higher volume and intensity', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createAdvancedContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN
+      final plan = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.pushPullLegs,
+        phase: 'intensification',
+        durationWeeks: 8,
+        exerciseCatalog: catalog,
+      );
+
+      // THEN: Un avanzado debe recibir:
+      // - Volumen alto (4-5+ sets por ejercicio)
+      // - RIR bajo (0-2 reps in reserve, entrenar cerca del fallo)
+      // - Más sesiones y ejercicios
+
+      int totalSets = 0;
+      int exerciseCount = 0;
+      int totalRIR = 0;
+
+      for (final week in plan.weeks) {
+        for (final session in week.sessions) {
+          for (final exercise in session.exercises) {
+            totalSets += exercise.sets;
+            totalRIR += exercise.rir;
+            exerciseCount++;
+          }
+        }
+      }
+
+      // Para avanzado, volumen debe ser significativamente mayor
+      final avgSetsPerExercise = totalSets / exerciseCount;
+      expect(
+        avgSetsPerExercise,
+        greaterThanOrEqualTo(3.0),
+        reason: 'Avanzado debe recibir volumen alto',
+      );
+
+      final avgRIR = totalRIR / exerciseCount;
+      expect(
+        avgRIR,
+        lessThanOrEqualTo(2.0),
+        reason: 'Avanzado debe entrenar más intenso (RIR bajo)',
+      );
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST 4: VALIDACIÓN DE SPLITS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Full Body split generates 3 sessions per week', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createBasicBeginnerContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN
+      final plan = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.fullBody,
+        phase: 'accumulation',
+        durationWeeks: 4,
+        exerciseCatalog: catalog,
+      );
+
+      // THEN
+      for (final week in plan.weeks) {
+        expect(
+          week.sessions.length,
+          equals(3),
+          reason: 'Full Body debe tener 3 sesiones/semana',
+        );
+      }
+    });
+
+    test('Upper/Lower split generates 4 sessions per week', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createIntermediateContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN
+      final plan = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.upperLower,
+        phase: 'accumulation',
+        durationWeeks: 6,
+        exerciseCatalog: catalog,
+      );
+
+      // THEN
+      for (final week in plan.weeks) {
+        expect(
+          week.sessions.length,
+          equals(4),
+          reason: 'Upper/Lower debe tener 4 sesiones/semana',
+        );
+      }
+    });
+
+    test('Push/Pull/Legs generates 6 sessions per week', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createAdvancedContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN
+      final plan = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.pushPullLegs,
+        phase: 'accumulation',
+        durationWeeks: 8,
+        exerciseCatalog: catalog,
+      );
+
+      // THEN
+      for (final week in plan.weeks) {
+        expect(
+          week.sessions.length,
+          equals(6),
+          reason: 'PPL debe tener 6 sesiones/semana',
+        );
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST 5: NO-REGRESSION TESTS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Plan generation never throws exceptions', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createBasicBeginnerContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN & THEN: No debe lanzar excepciones
+      expect(
+        () async => await orchestrator.generateTrainingPlan(
+          clientId: context.clientId,
+          profile: context.profile,
+          split: SplitConfig.fullBody,
+          phase: 'accumulation',
+          durationWeeks: 4,
+          exerciseCatalog: catalog,
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('All exercise muscle targets are valid', () async {
+      // GIVEN
+      final context = TrainingContextV3Fixture.createBasicBeginnerContext();
+      final catalog = ExerciseCatalogFixture.createBasicCatalog();
+
+      // WHEN
+      final plan = await orchestrator.generateTrainingPlan(
+        clientId: context.clientId,
+        profile: context.profile,
+        split: SplitConfig.fullBody,
+        phase: 'accumulation',
+        durationWeeks: 4,
+        exerciseCatalog: catalog,
+      );
+
+      // THEN
+      final validMuscles = {
+        'chest',
+        'lats',
+        'upper_back',
+        'traps',
+        'deltoide_anterior',
+        'deltoide_lateral',
+        'deltoide_posterior',
+        'biceps',
+        'triceps',
+        'quads',
+        'hamstrings',
+        'glutes',
+        'calves',
+        'abs',
+      };
+
+      for (final week in plan.weeks) {
+        for (final session in week.sessions) {
+          for (final exercise in session.exercises) {
+            expect(
+              catalog.containsKey(exercise.exerciseId),
+              isTrue,
+              reason: 'Ejercicio ${exercise.exerciseId} debe estar en catálogo',
+            );
+          }
+        }
+      }
+    });
+  });
+}
