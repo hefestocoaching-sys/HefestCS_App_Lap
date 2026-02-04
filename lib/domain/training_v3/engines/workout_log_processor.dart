@@ -304,6 +304,11 @@ class WorkoutLogProcessor {
       plannedSessions: logs.length,
       performanceStatus: status,
       recommendedAction: action,
+      sleepQuality: 7.0, // Default: buen sueño
+      energyLevel: 7.0, // Default: buena energía
+      jointPain: 0, // Default: sin dolor
+      domsIntensity: 2, // Default: DOMS leve
+      loadProgression: 0.0, // Default: progresión neutra
     );
   }
 

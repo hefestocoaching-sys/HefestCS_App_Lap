@@ -1,5 +1,6 @@
 // lib/domain/training_v3/orchestrator/training_orchestrator_v3.dart
 
+import 'package:hcs_app_lap/core/enums/training_phase.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
@@ -31,40 +32,40 @@ class TrainingOrchestratorV3 {
   // ════════════════════════════════════════════════════════════════
   // CONFIGURACIÓN POR DEFECTO
   // ════════════════════════════════════════════════════════════════
-  
+
   /// Fase de periodización por defecto
   /// TODO: Obtener del ciclo activo del cliente
   static const String _defaultPhase = 'accumulation';
-  
+
   /// Duración en semanas por defecto
   /// TODO: Obtener del ciclo activo del cliente
   static const int _defaultDurationWeeks = 4;
-  
+
   /// Edad por defecto para perfiles incompletos
   static const int _defaultAge = 30;
-  
+
   /// Género por defecto para perfiles incompletos
   static const String _defaultGender = 'male';
-  
+
   /// Altura por defecto en cm para perfiles incompletos
   static const double _defaultHeightCm = 170.0;
-  
+
   /// Peso por defecto en kg para perfiles incompletos
   static const double _defaultWeightKg = 75.0;
-  
+
   /// Años de entrenamiento por defecto para usuarios nuevos
   static const double _defaultYearsTraining = 1.0;
-  
+
   /// Sesión de duración por defecto en minutos
   static const int _defaultSessionDuration = 60;
-  
+
   /// Semanas consecutivas de entrenamiento inicial (valor inicial)
   static const int _initialConsecutiveWeeks = 0;
-  
+
   // ════════════════════════════════════════════════════════════════
   // MIEMBROS DE INSTANCIA
   // ════════════════════════════════════════════════════════════════
-  
+
   /// Estrategia de decisión a utilizar
   final DecisionStrategy strategy;
 
@@ -79,10 +80,7 @@ class TrainingOrchestratorV3 {
     this.recordPredictions = false,
   }) {
     // Crear configuración ML basada en estrategia
-    final config = MLConfigV3(
-      strategy: strategy,
-      recordPredictions: recordPredictions,
-    );
+    final config = MLConfigV3(enablePredictionLogging: recordPredictions);
 
     // Inicializar orquestador híbrido
     _hybridOrchestrator = HybridOrchestratorV3(config: config);
@@ -191,7 +189,7 @@ class TrainingOrchestratorV3 {
     // Extraer músculos prioritarios (para musclePriorities map)
     final priorityMuscles = _extractPriorityMuscles(training.extra);
     final musclePrioritiesMap = <String, int>{};
-    
+
     // Assign priority scores if muscles exist
     // Score decreases from list length to 1, ensuring all scores are positive
     if (priorityMuscles.isNotEmpty) {
@@ -207,21 +205,19 @@ class TrainingOrchestratorV3 {
     final availableDays = training.extra['daysPerWeek'] as int? ?? 4;
 
     // Extraer duración de sesión (en minutos)
-    final sessionDuration = 
+    final sessionDuration =
         training.extra['sessionDuration'] as int? ?? _defaultSessionDuration;
 
     // Extraer objetivo
     final goal = training.extra['goal'] as String? ?? 'hypertrophy';
 
     // Extraer años de entrenamiento
-    final yearsTraining = 
+    final yearsTraining =
         training.extra['yearsTraining'] as double? ?? _defaultYearsTraining;
 
     // Extraer altura y peso (con valores por defecto)
-    final heightCm = 
-        training.extra['heightCm'] as double? ?? _defaultHeightCm;
-    final weightKg = 
-        training.extra['weightKg'] as double? ?? _defaultWeightKg;
+    final heightCm = training.extra['heightCm'] as double? ?? _defaultHeightCm;
+    final weightKg = training.extra['weightKg'] as double? ?? _defaultWeightKg;
 
     // Crear mapa de historial de lesiones
     // TODO: Extract actual injury status from client data (active/healed/recovered)
@@ -236,10 +232,10 @@ class TrainingOrchestratorV3 {
     // Crear UserProfile con todos los parámetros requeridos
     return UserProfile(
       id: client.id,
-      name: profile.name,
-      email: profile.email ?? '',
+      name: profile.fullName,
+      email: profile.email,
       age: training.age ?? profile.age ?? _defaultAge,
-      gender: training.gender ?? profile.gender ?? _defaultGender,
+      gender: (training.gender ?? profile.gender ?? _defaultGender).toString(),
       heightCm: heightCm,
       weightKg: weightKg,
       yearsTraining: yearsTraining,
@@ -269,8 +265,7 @@ class TrainingOrchestratorV3 {
       return 'beginner';
     }
 
-    if (levelStr.contains('intermedio') ||
-        levelStr.contains('intermediate')) {
+    if (levelStr.contains('intermedio') || levelStr.contains('intermediate')) {
       return 'intermediate';
     }
 
@@ -344,10 +339,9 @@ class TrainingOrchestratorV3 {
       final errorMessages = errors.map((e) => e.toString()).toList();
       final warningMessages = warnings.map((e) => e.toString()).toList();
 
-      final blockReason =
-          errorMessages.isNotEmpty
-              ? errorMessages.join('. ')
-              : 'No se pudo generar el plan';
+      final blockReason = errorMessages.isNotEmpty
+          ? errorMessages.join('. ')
+          : 'No se pudo generar el plan';
 
       return TrainingProgramV3Result.blocked(
         reason: blockReason,
@@ -383,23 +377,20 @@ class TrainingOrchestratorV3 {
   ///
   /// NOTA: Esto es un placeholder temporal.
   /// Debería convertir TrainingProgram (V3) → TrainingPlanConfig (domain).
-  TrainingPlanConfig _createBasicPlanConfig(
-    Client client,
-    DateTime asOfDate,
-  ) {
+  TrainingPlanConfig _createBasicPlanConfig(Client client, DateTime asOfDate) {
     // Por ahora, retornar un plan vacío con estructura básica
     // TODO: Implementar conversión real
 
     return TrainingPlanConfig(
       id: 'plan_${client.id}_${asOfDate.millisecondsSinceEpoch}',
+      name: 'Plan ${client.profile.fullName}',
       clientId: client.id,
       startDate: asOfDate,
+      phase: TrainingPhase.accumulation,
+      splitId: 'ul_ul', // Default Upper/Lower
+      microcycleLengthInWeeks: 4,
       weeks: [], // TODO: Convertir desde TrainingProgram
-      createdAt: DateTime.now(),
-      extra: {
-        'generated_by': 'motor_v3',
-        'strategy': strategy.name,
-      },
+      state: {'generated_by': 'motor_v3', 'strategy': strategy.name},
     );
   }
 
@@ -434,9 +425,7 @@ class TrainingOrchestratorV3 {
   }
 
   /// Obtiene precisión del sistema ML
-  Future<Map<String, dynamic>> getMLAccuracy({
-    required String userId,
-  }) async {
+  Future<Map<String, dynamic>> getMLAccuracy({required String userId}) async {
     return await _hybridOrchestrator.getMLAccuracy(userId: userId);
   }
 }
