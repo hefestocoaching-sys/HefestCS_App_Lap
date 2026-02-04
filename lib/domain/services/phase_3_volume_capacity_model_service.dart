@@ -1394,14 +1394,22 @@ class Phase3VolumeCapacityModelService {
     muscles.addAll(priorities.tertiary);
 
     if (muscles.isEmpty) {
-      // Fallback: full-body balanceado
+      // Fallback: full-body balanceado usando 14 músculos canónicos
       muscles.addAll([
         'chest',
-        'back',
-        'shoulders',
+        'lats',
+        'upper_back',
+        'traps',
+        'deltoide_anterior',
+        'deltoide_lateral',
+        'deltoide_posterior',
+        'biceps',
+        'triceps',
         'quads',
         'hamstrings',
         'glutes',
+        'calves',
+        'abs',
       ]);
 
       decisions.add(
