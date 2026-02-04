@@ -555,7 +555,7 @@ class VolumeCapacityScientificView extends ConsumerWidget {
     const muscleNames = {
       'chest': 'Pecho',
       'lats': 'Dorsales',
-      'upper_back': 'Espalda Media',
+      'upper_back': 'Espalda Alta',
       'traps': 'Trapecios',
       'deltoide_anterior': 'Deltoides Anterior',
       'deltoide_lateral': 'Deltoides Lateral',
