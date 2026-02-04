@@ -19,9 +19,10 @@ import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart'
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 import 'package:hcs_app_lap/utils/date_helpers.dart';
-// ✅ MOTOR V3 REAL - Generación con pipeline científico
-import 'package:hcs_app_lap/domain/training_v2/engine/training_program_engine_v2_full.dart';
-import 'package:hcs_app_lap/domain/training_v2/services/training_context_builder.dart';
+// ✅ MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO
+import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrator_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
 // VopSnapshot SSOT
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
@@ -560,35 +561,54 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
-      // Generar planId determinístico: tp_{clientId}_{YYYYMMDD(startDate)}
-      final planIdDeterministic =
-          'tp_${clientId}_${startDate.year}${startDate.month.toString().padLeft(2, '0')}${startDate.day.toString().padLeft(2, '0')}';
+      // ═══════════════════════════════════════════════════════════════════════
+      // MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO (7 MDs)
+      // ═══════════════════════════════════════════════════════════════════════
+      debugPrint('🚀 [Motor V3] Generando plan con pipeline científico...');
 
-      // Motor V3: Crear contexto y generar plan
-      final engineV3 = TrainingProgramEngineV2Full();
-      final contextBuilder = TrainingContextBuilder();
-      final contextBuild = contextBuilder.build(
-        client: freshClient,
-        asOfDate: startDate,
+      // Crear Motor V3 con estrategia científica pura (RuleBasedStrategy)
+      final motorV3 = HybridOrchestratorV3(
+        config: MLConfigV3(
+          strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
+          recordPredictions: false, // No guardar predicciones ML
+        ),
       );
 
-      if (!contextBuild.isOk || contextBuild.context == null) {
+      // Generar plan con Motor V3 REAL
+      TrainingProgramV3Result resultV3;
+      try {
+        resultV3 = await motorV3.generatePlan(
+          client: freshClient,
+          exercises: exercises,
+          asOfDate: startDate,
+          recordPrediction: false, // No ML logging
+        );
+      } catch (e, stackTrace) {
+        debugPrint('❌ [Motor V3] Error durante generación: $e');
+        debugPrint('Stack trace: $stackTrace');
+
         state = state.copyWith(
           isLoading: false,
-          error: contextBuild.error?.message ?? 'No se pudo construir contexto',
+          error: 'Error en Motor V3: $e',
         );
         return;
       }
 
-      final planConfig = engineV3.generatePlan(
-        planId: planIdDeterministic,
-        clientId: clientId,
-        planName: 'Plan $activeDateIso',
-        startDate: startDate,
-        context: contextBuild.context!,
-        client: freshClient,
-        exercises: exercises,
-      );
+      // Validar resultado Motor V3
+      if (resultV3.isBlocked) {
+        debugPrint('❌ [Motor V3] Plan bloqueado: ${resultV3.blockReason}');
+
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Plan bloqueado: ${resultV3.blockReason}',
+          blockReason: resultV3.blockReason,
+          suggestions: resultV3.suggestions,
+        );
+        return;
+      }
+
+      // Extraer plan generado
+      final planConfig = resultV3.plan!;
 
       debugPrint(
         '✅ [Motor V3] Plan generado: ${planConfig.weeks.length} semanas, '
@@ -1193,52 +1213,32 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final vopContext = VopContext.ensure(workingClient.training.extra);
       final vopMap = vopContext?.snapshot.setsByMuscle ?? {};
 
-      // 4. Ejecutar Motor V3 (TrainingProgramEngineV2Full)
+      // 4. Ejecutar Motor V3 (HybridOrchestratorV3)
       debugPrint(
         '🚀 [Motor V3] Regenerando plan con pipeline científico — timestamp: ${DateTime.now()}',
       );
 
-      final engineV3 = TrainingProgramEngineV2Full();
+      // ═══════════════════════════════════════════════════════════════════════
+      // MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO
+      // ═══════════════════════════════════════════════════════════════════════
+      debugPrint('🚀 [Motor V3] Generando plan con pipeline científico...');
 
-      final planId =
-          'tp_${clientId}_${selectedDate.year}${selectedDate.month.toString().padLeft(2, '0')}${selectedDate.day.toString().padLeft(2, '0')}';
-
-      debugPrint('🧭 [Motor V3][Step] 6/6 Ejecutando pipeline V3...');
-
-      // Crear TrainingContext desde client
-      final contextBuilder = TrainingContextBuilder();
-      final contextBuild = contextBuilder.build(
-        client: workingClient,
-        asOfDate: selectedDate,
+      // Crear Motor V3 con estrategia científica pura (sin ML)
+      final motorV3 = HybridOrchestratorV3(
+        config: MLConfigV3(
+          strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
+          recordPredictions: false, // No guardar predicciones ML (no hay ML)
+        ),
       );
 
-      if (!contextBuild.isOk || contextBuild.context == null) {
-        state = state.copyWith(
-          isLoading: false,
-          error:
-              contextBuild.error?.message ??
-              'No se pudo construir contexto de entrenamiento',
-        );
-        debugPrint(
-          '❌ [Motor V3] Error al construir contexto: ${contextBuild.error?.message}',
-        );
-        return;
-      }
-
-      final trainingContext = contextBuild.context!;
-
-      // Ejecutar Motor V3 completo
-      TrainingPlanConfig planConfig;
+      // Generar plan con Motor V3 REAL
+      TrainingProgramV3Result resultV3;
       try {
-        planConfig = engineV3.generatePlan(
-          planId: planId,
-          clientId: clientId,
-          planName: 'Plan ${selectedDate.toIso8601String().split('T')[0]}',
-          startDate: selectedDate,
-          context: trainingContext,
+        resultV3 = await motorV3.generatePlan(
           client: workingClient,
-          history: null,
           exercises: exercises,
+          asOfDate: selectedDate,
+          recordPrediction: false, // No ML logging
         );
       } catch (e, stackTrace) {
         debugPrint('❌ [Motor V3] Error durante generación: $e');
@@ -1251,10 +1251,29 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
+      // Validar resultado Motor V3
+      if (resultV3.isBlocked) {
+        debugPrint('❌ [Motor V3] Plan bloqueado: ${resultV3.blockReason}');
+
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Plan bloqueado: ${resultV3.blockReason}',
+          blockReason: resultV3.blockReason,
+          suggestions: resultV3.suggestions,
+        );
+        return;
+      }
+
+      // Extraer plan generado
+      final planConfig = resultV3.plan!;
+
       debugPrint(
         '✅ [Motor V3] Plan generado: ${planConfig.weeks.length} semanas, '
         '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
       );
+
+      // Obtener ID del plan
+      final planId = planConfig.id;
 
       // ═══════════════════════════════════════════════════════════════════════
       // CRÍTICO P0-BLOQUEANTE: Persistir plan en client.trainingPlans
