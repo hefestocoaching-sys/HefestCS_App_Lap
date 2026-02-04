@@ -6,7 +6,7 @@ import 'package:hcs_app_lap/domain/entities/training_session.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Tab 4 — Plan Semanal según días y split válido
-/// Lee directamente desde plan persistido (Motor V2)
+/// Lee directamente desde plan persistido (Motor V3)
 /// No genera planes legacy
 class WeeklyPlanTab extends StatefulWidget {
   final TrainingPlanConfig? planConfig;

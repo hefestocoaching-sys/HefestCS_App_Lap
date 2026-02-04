@@ -3,7 +3,8 @@ import 'package:uuid/uuid.dart';
 import 'package:csv/csv.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
-import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
+// NOTE: TrainingContext class was never implemented - ML dataset feature incomplete
+// import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
 import 'package:hcs_app_lap/domain/entities/weekly_training_feedback_summary.dart';
 
 /// Ejemplo de entrenamiento para ML
@@ -376,6 +377,12 @@ class TrainingDatasetService {
   TrainingDatasetService({required FirebaseFirestore firestore})
     : _firestore = firestore;
 
+  /// COMMENTED OUT: recordPrediction method depends on non-existent TrainingContext
+  /// This method was planned for ML dataset feature but TrainingContext class doesn't exist.
+  /// Keeping code commented for future reference.
+  ///
+  /// TODO: Implement TrainingContext class and uncomment this method if ML dataset feature is needed
+  /*
   /// Registra una predicción cuando se genera un plan
   ///
   /// Llamar desde TrainingProgramEngineV3 después de generar plan.
@@ -407,6 +414,7 @@ class TrainingDatasetService {
 
     return exampleId;
   }
+  */
 
   /// ✅ ACTUALIZADO: Incluye weeklyFeedback
   ///

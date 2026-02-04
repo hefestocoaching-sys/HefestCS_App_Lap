@@ -1,4 +1,5 @@
-import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
+// NOTE: TrainingContext class was never implemented - ML dataset feature incomplete
+// import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/core/enums/training_goal.dart';
@@ -345,6 +346,12 @@ class FeatureVector {
     };
   }
 
+  /// COMMENTED OUT: TrainingContext class was never implemented
+  /// This factory method was planned for ML dataset feature but TrainingContext
+  /// class doesn't exist. Keeping code commented for future reference.
+  ///
+  /// TODO: Implement TrainingContext class if ML dataset feature is needed
+  /*
   /// Crea desde TrainingContext V2
   factory FeatureVector.fromContext(
     TrainingContext context, {
@@ -552,6 +559,7 @@ class FeatureVector {
       schemaVersion: 2,
     );
   }
+  */
 
   /// Feature importance weights (para debugging/explicabilidad)
   /// Basado en consenso científico Israetel/Schoenfeld/Helms

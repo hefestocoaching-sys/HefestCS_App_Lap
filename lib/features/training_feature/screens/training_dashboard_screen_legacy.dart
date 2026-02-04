@@ -316,7 +316,7 @@ class _TrainingDashboardScreenState
 
     return Column(
       children: [
-        // TAREA A5 PARTE 1: Botón de generación Motor V2
+        // TAREA A5 PARTE 1: Botón de generación Motor V3
         Container(
           color: kAppBarColor,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

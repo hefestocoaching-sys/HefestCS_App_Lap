@@ -130,7 +130,7 @@ class DatabaseHelper {
     // ✅ CORRECCIÓN P0-1: Guardar cliente TAL COMO VIENE
     // ✅ NO hacer merge automático — Provider controla limpieza
     // ✅ training.extra del client entrante es la verdad absoluta
-    // ✅ Esto permite que training_plan_provider limpie datos Motor V2 legacy
+    // ✅ Esto permite que training_plan_provider limpie datos legacy
 
     await db.insert(
       'clients',

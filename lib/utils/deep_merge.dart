@@ -2,7 +2,7 @@
 ///
 /// El merge shallow `{...oldExtra, ...newExtra}` pierde Maps anidados
 /// como `mevByMuscle`, `mrvByMuscle`, `targetSetsByMuscle` cuando el
-/// Motor V2 los genera.
+/// Motor de entrenamiento los genera.
 ///
 /// Esta función hace merge recursivo:
 /// - Si un valor es Map en ambos, hace merge recursivo.

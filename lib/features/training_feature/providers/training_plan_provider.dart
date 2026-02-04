@@ -40,7 +40,7 @@ class TrainingPlanState {
   final List<String> missingFields;
 
   /// PARTE 3 A6: VOP Map como SSOT (claves canónicas, valores en series/semana)
-  /// Motor V2 usa este mismo Map sin copias
+  /// Motor V3 usa este mismo Map sin copias
   final Map<String, int> vopByMuscle;
 
   const TrainingPlanState({
@@ -489,7 +489,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
       if (missingCritical.isNotEmpty) {
         state = TrainingPlanState.blocked(
-          reason: 'Faltan datos críticos para generar el plan (Motor V2)',
+          reason: 'Faltan datos críticos para generar el plan (Motor V3)',
           suggestions: missingCritical,
           missingFields: missingCritical,
         );
@@ -943,16 +943,16 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     );
   }
 
-  /// TAREA A5: Genera plan desde ciclo activo (Motor V2)
+  /// TAREA A5: Genera plan desde ciclo activo (Motor V3)
   ///
   /// WORKFLOW:
   /// 1. Obtiene cliente + ciclo activo
-  /// 2. Ejecuta Motor V2 con TrainingCycle como SSOT
+  /// 2. Ejecuta Motor V3 con TrainingCycle como SSOT
   /// 3. Persiste TrainingPlan en client.trainingPlans
   /// 4. Setea activePlanId en training.extra
   /// 5. notifyListeners() para UI
   Future<void> generatePlanFromActiveCycle(DateTime selectedDate) async {
-    debugPrint('🎯 [Motor V2] Generando plan desde ciclo activo...');
+    debugPrint('🎯 [Motor V3] Generando plan desde ciclo activo...');
 
     const dbTimeout = Duration(seconds: 6);
     const catalogTimeout = Duration(seconds: 8);
@@ -977,7 +977,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
     try {
       // 1. Obtener cliente activo
-      debugPrint('🧭 [Motor V2][Step] 1/6 read active clientId...');
+      debugPrint('🧭 [Motor V3][Step] 1/6 read active clientId...');
       final clientId = ref.read(clientsProvider).value?.activeClient?.id;
       if (clientId == null) {
         state = state.copyWith(
@@ -988,7 +988,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       debugPrint(
-        '🧭 [Motor V2][Step] 2/6 loading client from repository (DB)...',
+        '🧭 [Motor V3][Step] 2/6 loading client from repository (DB)...',
       );
       final client = await ref
           .read(clientRepositoryProvider)
@@ -1002,7 +1002,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
             },
           );
       debugPrint(
-        '✅ [Motor V2][Step] 2/6 client loaded. cycles=${client?.trainingCycles.length ?? 0}, activeCycleId=${client?.activeCycleId}',
+        '✅ [Motor V3][Step] 2/6 client loaded. cycles=${client?.trainingCycles.length ?? 0}, activeCycleId=${client?.activeCycleId}',
       );
 
       if (client == null) {
@@ -1014,7 +1014,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       // 2. Cargar catálogo de ejercicios (necesario para bootstrap Y Motor V3)
-      debugPrint('🧭 [Motor V2][Step] 2.5/6 loading exercise catalog...');
+      debugPrint('🧭 [Motor V3][Step] 2.5/6 loading exercise catalog...');
       final exercises = await ExerciseCatalogLoader.load().timeout(
         catalogTimeout,
         onTimeout: () {
@@ -1024,7 +1024,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         },
       );
       debugPrint(
-        '✅ [Motor V2][Step] 2.5/6 catalog loaded. exercises=${exercises.length}',
+        '✅ [Motor V3][Step] 2.5/6 catalog loaded. exercises=${exercises.length}',
       );
 
       // 🔴 FORZAR CICLO ACTIVO NO VACÍO
@@ -1083,7 +1083,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         );
       }
 
-      debugPrint('🧭 [Motor V2][Step] 3/6 resolving active cycle...');
+      debugPrint('🧭 [Motor V3][Step] 3/6 resolving active cycle...');
 
       // Fail-fast si después de bootstrap aún no hay ciclo
       if (workingClient.trainingCycles.isEmpty ||
@@ -1108,7 +1108,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       debugPrint(
-        '✅ [Motor V2][Step] 3/6 activeCycle found. muscles=${activeCycle.baseExercisesByMuscle.keys.toList()}',
+        '✅ [Motor V3][Step] 3/6 activeCycle found. muscles=${activeCycle.baseExercisesByMuscle.keys.toList()}',
       );
 
       // ─────────────────────────────────────────────
@@ -1125,21 +1125,21 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           workingClient.training.extra,
         );
 
-        // ✅ P0-2: ELIMINAR TODAS LAS CLAVES MOTOR V2 LEGACY
-        const legacyV2Keys = [
-          'activePlanId', // Motor V2 plan ID
-          'mevByMuscle', // Motor V2 volumen output
-          'mrvByMuscle', // Motor V2 volumen output
-          'mavByMuscle', // Motor V2 volumen output
-          'targetSetsByMuscle', // Motor V2 distribución
-          'intensityDistribution', // Motor V2 intensidad
-          'mevTable', // Motor V2 metadata
-          'seriesTypePercentSplit', // Motor V2 metadata
-          'weeklyPlanId', // Motor V2 semanas
-          'finalTargetSetsByMuscleUi', // Motor V2 UI cache
+        // ✅ P0-2: ELIMINAR TODAS LAS CLAVES LEGACY DE MOTORES ANTERIORES
+        const legacyKeys = [
+          'activePlanId', // Legacy plan ID
+          'mevByMuscle', // Legacy volumen output
+          'mrvByMuscle', // Legacy volumen output
+          'mavByMuscle', // Legacy volumen output
+          'targetSetsByMuscle', // Legacy distribución
+          'intensityDistribution', // Legacy intensidad
+          'mevTable', // Legacy metadata
+          'seriesTypePercentSplit', // Legacy metadata
+          'weeklyPlanId', // Legacy semanas
+          'finalTargetSetsByMuscleUi', // Legacy UI cache
         ];
 
-        for (final key in legacyV2Keys) {
+        for (final key in legacyKeys) {
           if (updatedExtra.containsKey(key)) {
             updatedExtra.remove(key);
             debugPrint('  🗑️ P0-2: Eliminada clave legacy: $key');
@@ -1389,7 +1389,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       );
 
       debugPrint(
-        '✅ [Motor V2] Validación VOP: '
+        '✅ [Motor V3] Validación VOP: '
         '${activeCycle.baseExercisesByMuscle.keys.length} músculos OK',
       );
 
@@ -1419,28 +1419,28 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           .read(clientRepositoryProvider)
           .getClientById(clientId);
       debugPrint(
-        '[Motor V2] after refresh trainingPlans=${refreshedClient?.trainingPlans.length ?? 0}, activePlanId=${refreshedClient?.training.extra[TrainingExtraKeys.activePlanId]}',
+        '[Motor V3] after refresh trainingPlans=${refreshedClient?.trainingPlans.length ?? 0}, activePlanId=${refreshedClient?.training.extra[TrainingExtraKeys.activePlanId]}',
       );
     } on VopValidationException catch (e) {
-      debugPrint('❌ [Motor V2] Validación VOP fallida: ${e.reason}');
+      debugPrint('❌ [Motor V3] Validación VOP fallida: ${e.reason}');
       state = TrainingPlanState.blocked(
         reason: 'Validación VOP',
         suggestions: [e.reason],
         missingFields: e.muscles,
       );
     } on TrainingPlanBlockedException catch (blocked) {
-      debugPrint('🚫 [Motor V2] Bloqueado: ${blocked.reason}');
+      debugPrint('🚫 [Motor V3] Bloqueado: ${blocked.reason}');
       state = TrainingPlanState.blocked(
         reason: blocked.reason,
         suggestions: blocked.suggestions,
         missingFields: const [],
       );
     } catch (e, s) {
-      debugPrint('❌ [Motor V2] Error: $e');
+      debugPrint('❌ [Motor V3] Error: $e');
       debugPrint('Stack: $s');
       state = state.copyWith(
         isLoading: false,
-        error: 'Motor V2 falló: ${e.toString()}',
+        error: 'Motor V3 falló: ${e.toString()}',
       );
     }
   }

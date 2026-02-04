@@ -5,7 +5,7 @@ import 'package:equatable/equatable.dart';
 /// RESPONSABILIDAD:
 /// - Fuente única de verdad (SSOT) para un ciclo de entrenamiento
 /// - Define estructura base: split, ejercicios, objetivos
-/// - El Motor V2 NO puede cambiar estructura del ciclo
+/// - El Motor de entrenamiento NO puede cambiar estructura del ciclo
 /// - Solo puede ajustar: volumen, series, intensidad, rol
 ///
 /// INVARIANTE:

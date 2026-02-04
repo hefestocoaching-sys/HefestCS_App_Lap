@@ -18,7 +18,7 @@ import '../widgets/weekly_plan_detail_view.dart';
 /// ARQUITECTURA:
 /// - Patrón: Workspace full-screen (similar a Historia Clínica)
 /// - Contenido: 8 tabs científicas de Motor V3
-/// - Reemplaza: TrainingDashboardScreen legacy (5 tabs Motor V2)
+/// - Reemplaza: TrainingDashboardScreen legacy (5 tabs de versiones anteriores)
 ///
 /// TABS:
 /// 1. Overview: Resumen ejecutivo del plan

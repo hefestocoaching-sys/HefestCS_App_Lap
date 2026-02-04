@@ -173,8 +173,8 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
         );
         mergedTrainingExtra.addAll(updated.training.extra);
 
-        // ✅ P0-3: ELIMINAR claves legacy Motor V2 después de merge
-        const legacyV2Keys = [
+        // ✅ P0-3: ELIMINAR claves legacy de motores anteriores después de merge
+        const legacyKeys = [
           'activePlanId',
           'mevByMuscle',
           'mrvByMuscle',
@@ -187,7 +187,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
           'finalTargetSetsByMuscleUi',
         ];
 
-        for (final key in legacyV2Keys) {
+        for (final key in legacyKeys) {
           if (mergedTrainingExtra.containsKey(key)) {
             mergedTrainingExtra.remove(key);
             debugPrint('🗑️ P0-3 clients_provider: Removed legacy key $key');
