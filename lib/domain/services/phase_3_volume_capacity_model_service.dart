@@ -637,10 +637,12 @@ class Phase3VolumeCapacityModelService {
     // (0) Canon de 14 músculos (SSOT para Phase 3)
     const canonicalMuscles = <String>[
       'chest',
-      'back',
       'lats',
+      'upper_back',
       'traps',
-      'shoulders',
+      'deltoide_anterior',
+      'deltoide_lateral',
+      'deltoide_posterior',
       'biceps',
       'triceps',
       'quads',
@@ -648,8 +650,6 @@ class Phase3VolumeCapacityModelService {
       'glutes',
       'calves',
       'abs',
-      'deltoide_anterior',
-      'deltoide_lateral',
     ];
     muscles.addAll(canonicalMuscles);
     sources.add('canonical_14');
@@ -721,12 +721,12 @@ class Phase3VolumeCapacityModelService {
       // Fallback por músculo canónico (P0-5)
       const canonicalFallback = <String, Map<String, int>>{
         'chest': {'mev': 6, 'mav': 16, 'mrv': 22},
-        'back': {'mev': 8, 'mav': 14, 'mrv': 20},
         'lats': {'mev': 8, 'mav': 14, 'mrv': 22},
+        'upper_back': {'mev': 8, 'mav': 14, 'mrv': 20},
         'traps': {'mev': 6, 'mav': 10, 'mrv': 14},
-        'shoulders': {'mev': 8, 'mav': 12, 'mrv': 20},
         'deltoide_anterior': {'mev': 6, 'mav': 10, 'mrv': 16},
         'deltoide_lateral': {'mev': 6, 'mav': 10, 'mrv': 16},
+        'deltoide_posterior': {'mev': 6, 'mav': 10, 'mrv': 16},
         'biceps': {'mev': 6, 'mav': 14, 'mrv': 18},
         'triceps': {'mev': 6, 'mav': 14, 'mrv': 18},
         'quads': {'mev': 8, 'mav': 14, 'mrv': 20},

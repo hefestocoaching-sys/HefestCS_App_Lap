@@ -39,6 +39,14 @@ class MuscleKeys {
   /// Valida si una key es canónica (14 músculos individuales)
   static bool isCanonical(String k) => all.contains(k);
 
+  /// Validación estricta: DEBE ser exactamente 14 músculos canónicos
+  static void validate() {
+    assert(
+      all.length == 14,
+      'MuscleKeys.all debe contener EXACTAMENTE 14 músculos canónicos, tiene ${all.length}',
+    );
+  }
+
   /// Expande un grupo a músculos canónicos
   static Set<String> expandGroup(String groupName) {
     switch (groupName) {

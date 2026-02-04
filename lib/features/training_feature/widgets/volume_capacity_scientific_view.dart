@@ -554,10 +554,9 @@ class VolumeCapacityScientificView extends ConsumerWidget {
   String _getMuscleDisplayName(String muscleKey) {
     const muscleNames = {
       'chest': 'Pecho',
-      'back': 'Espalda',
       'lats': 'Dorsales',
+      'upper_back': 'Espalda Media',
       'traps': 'Trapecios',
-      'shoulders': 'Hombros',
       'deltoide_anterior': 'Deltoides Anterior',
       'deltoide_lateral': 'Deltoides Lateral',
       'deltoide_posterior': 'Deltoides Posterior',
@@ -568,7 +567,9 @@ class VolumeCapacityScientificView extends ConsumerWidget {
       'glutes': 'Glúteos',
       'calves': 'Gemelos',
       'abs': 'Abdomen',
-      'upper_back': 'Espalda Media',
+      // Legacy compatibility
+      'back': 'Espalda',
+      'shoulders': 'Hombros',
       'upper_traps': 'Trapecios',
       'back_mid_upper': 'Espalda Media',
     };
