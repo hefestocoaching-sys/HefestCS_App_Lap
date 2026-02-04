@@ -20,8 +20,8 @@ import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.d
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 import 'package:hcs_app_lap/utils/date_helpers.dart';
 // ✅ MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO
-import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrator_v3.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/orchestrator/training_orchestrator_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
 // VopSnapshot SSOT
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
@@ -567,11 +567,9 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       debugPrint('🚀 [Motor V3] Generando plan con pipeline científico...');
 
       // Crear Motor V3 con estrategia científica pura (RuleBasedStrategy)
-      final motorV3 = HybridOrchestratorV3(
-        config: MLConfigV3(
-          strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
-          recordPredictions: false, // No guardar predicciones ML
-        ),
+      final motorV3 = TrainingOrchestratorV3(
+        strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
+        recordPredictions: false, // No guardar predicciones ML
       );
 
       // Generar plan con Motor V3 REAL
@@ -1224,11 +1222,9 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       debugPrint('🚀 [Motor V3] Generando plan con pipeline científico...');
 
       // Crear Motor V3 con estrategia científica pura (sin ML)
-      final motorV3 = HybridOrchestratorV3(
-        config: MLConfigV3(
-          strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
-          recordPredictions: false, // No guardar predicciones ML (no hay ML)
-        ),
+      final motorV3 = TrainingOrchestratorV3(
+        strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
+        recordPredictions: false, // No guardar predicciones ML (no hay ML)
       );
 
       // Generar plan con Motor V3 REAL
