@@ -590,16 +590,60 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         exercises: exercises,
       );
 
-      // Persistir plan en repositorio
+      debugPrint(
+        '✅ [Motor V3] Plan generado: ${planConfig.weeks.length} semanas, '
+        '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
+      );
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // P0-BLOQUEANTE: PERSISTIR PLAN EN client.trainingPlans
+      // ═══════════════════════════════════════════════════════════════════════
+
+      debugPrint(
+        '💾 [Motor V3][Persistence] Añadiendo plan a client.trainingPlans...',
+      );
+
+      // 1. Crear lista actualizada de planes (sin duplicados)
+      final updatedPlans = [
+        ...freshClient.trainingPlans.where((p) => p.id != planConfig.id),
+        planConfig,
+      ];
+
+      debugPrint('   Planes antes: ${freshClient.trainingPlans.length}');
+      debugPrint('   Planes después: ${updatedPlans.length}');
+      debugPrint('   Plan ID: ${planConfig.id}');
+
+      // 2. Actualizar activePlanId en training.extra
+      final updatedExtra = Map<String, dynamic>.from(
+        freshClient.training.extra,
+      );
+      updatedExtra[TrainingExtraKeys.activePlanId] = planConfig.id;
+
+      debugPrint(
+        '✅ [Motor V3][Persistence] activePlanId actualizado: ${planConfig.id}',
+      );
+
+      // 3. Crear cliente actualizado con plan persistido
       final clientWithPlan = freshClient.copyWith(
-        trainingPlans: [
-          ...freshClient.trainingPlans.where(
-            (p) => p.id != planIdDeterministic,
-          ),
-          planConfig,
-        ],
+        trainingPlans: updatedPlans,
+        training: freshClient.training.copyWith(extra: updatedExtra),
+      );
+
+      // 4. Guardar en repositorio
+      debugPrint(
+        '💾 [Motor V3][Persistence] Guardando cliente en repositorio...',
       );
       await ref.read(clientRepositoryProvider).saveClient(clientWithPlan);
+
+      debugPrint('✅ [Motor V3][Persistence] Cliente guardado exitosamente');
+      debugPrint(
+        '   trainingPlans.length: ${clientWithPlan.trainingPlans.length}',
+      );
+      debugPrint(
+        '   activePlanId: ${clientWithPlan.training.extra[TrainingExtraKeys.activePlanId]}',
+      );
+
+      // ═══════════════════════════════════════════════════════════════════════
 
       // Mapper de compatibilidad para UI legacy (GeneratedPlan derivado)
       final plan = TrainingPlanMapper.toGeneratedPlan(planConfig);
@@ -1202,57 +1246,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
         state = state.copyWith(
           isLoading: false,
-        // ═══════════════════════════════════════════════════════════════════════
-        // CRÍTICO P0-BLOQUEANTE: Persistir plan en client.trainingPlans
-        // ═══════════════════════════════════════════════════════════════════════
-
-        debugPrint(
-          '💾 [Motor V3][Persistence] Añadiendo plan a client.trainingPlans...',
-        );
-
-        // 1. Crear lista actualizada de planes (sin duplicados)
-        final updatedPlans = [
-          ...workingClient.trainingPlans.where((p) => p.id != planConfig.id),
-          planConfig,
-        ];
-
-        debugPrint('   Planes antes: ${workingClient.trainingPlans.length}');
-        debugPrint('   Planes después: ${updatedPlans.length}');
-        debugPrint('   Plan ID: ${planConfig.id}');
-
-        // 2. Actualizar activePlanId en training.extra
-        final updatedExtra = Map<String, dynamic>.from(workingClient.training.extra);
-        updatedExtra[TrainingExtraKeys.activePlanId] = planConfig.id;
-
-        debugPrint(
-          '✅ [Motor V3][Persistence] activePlanId actualizado: ${planConfig.id}',
-        );
-
-        // 3. Crear cliente actualizado con plan persistido
-        final clientWithPlan = workingClient.copyWith(
-          trainingPlans: updatedPlans,
-          training: workingClient.training.copyWith(extra: updatedExtra),
-        );
-
-        // 4. Guardar en repositorio
-        debugPrint('💾 [Motor V3][Persistence] Guardando cliente en repositorio...');
-        await ref.read(clientRepositoryProvider).saveClient(clientWithPlan);
-
-        debugPrint('✅ [Motor V3][Persistence] Cliente guardado exitosamente');
-        debugPrint(
-          '   trainingPlans.length: ${clientWithPlan.trainingPlans.length}',
-        );
-        debugPrint(
-          '   activePlanId: ${clientWithPlan.training.extra[TrainingExtraKeys.activePlanId]}',
-        );
-
-        // 5. Actualizar workingClient para validaciones siguientes
-        workingClient = clientWithPlan;
-
-        // ═══════════════════════════════════════════════════════════════════════
-        // CONTINUAR CON VALIDACIONES VOP
-        // ═══════════════════════════════════════════════════════════════════════
-
           error: 'Error en Motor V3: $e',
         );
         return;
@@ -1262,6 +1255,61 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         '✅ [Motor V3] Plan generado: ${planConfig.weeks.length} semanas, '
         '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
       );
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // CRÍTICO P0-BLOQUEANTE: Persistir plan en client.trainingPlans
+      // ═══════════════════════════════════════════════════════════════════════
+
+      debugPrint(
+        '💾 [Motor V3][Persistence] Añadiendo plan a client.trainingPlans...',
+      );
+
+      // 1. Crear lista actualizada de planes (sin duplicados)
+      final updatedPlans = [
+        ...workingClient.trainingPlans.where((p) => p.id != planConfig.id),
+        planConfig,
+      ];
+
+      debugPrint('   Planes antes: ${workingClient.trainingPlans.length}');
+      debugPrint('   Planes después: ${updatedPlans.length}');
+      debugPrint('   Plan ID: ${planConfig.id}');
+
+      // 2. Actualizar activePlanId en training.extra
+      final updatedExtra = Map<String, dynamic>.from(
+        workingClient.training.extra,
+      );
+      updatedExtra[TrainingExtraKeys.activePlanId] = planConfig.id;
+
+      debugPrint(
+        '✅ [Motor V3][Persistence] activePlanId actualizado: ${planConfig.id}',
+      );
+
+      // 3. Crear cliente actualizado con plan persistido
+      final clientWithPlan = workingClient.copyWith(
+        trainingPlans: updatedPlans,
+        training: workingClient.training.copyWith(extra: updatedExtra),
+      );
+
+      // 4. Guardar en repositorio
+      debugPrint(
+        '💾 [Motor V3][Persistence] Guardando cliente en repositorio...',
+      );
+      await ref.read(clientRepositoryProvider).saveClient(clientWithPlan);
+
+      debugPrint('✅ [Motor V3][Persistence] Cliente guardado exitosamente');
+      debugPrint(
+        '   trainingPlans.length: ${clientWithPlan.trainingPlans.length}',
+      );
+      debugPrint(
+        '   activePlanId: ${clientWithPlan.training.extra[TrainingExtraKeys.activePlanId]}',
+      );
+
+      // 5. Actualizar workingClient para validaciones siguientes
+      workingClient = clientWithPlan;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // CONTINUAR CON VALIDACIONES VOP
+      // ═══════════════════════════════════════════════════════════════════════
 
       // 4.1 Validar VOP con cobertura indirecta (post-plan)
       final directVopByMuscle = <String, double>{};
