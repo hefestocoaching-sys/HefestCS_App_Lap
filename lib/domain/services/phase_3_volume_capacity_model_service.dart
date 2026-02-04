@@ -634,6 +634,26 @@ class Phase3VolumeCapacityModelService {
     final muscles = <String>{};
     final sources = <String>[];
 
+    // (0) Canon de 14 músculos (SSOT para Phase 3)
+    const canonicalMuscles = <String>[
+      'chest',
+      'back',
+      'lats',
+      'traps',
+      'shoulders',
+      'biceps',
+      'triceps',
+      'quads',
+      'hamstrings',
+      'glutes',
+      'calves',
+      'abs',
+      'deltoide_anterior',
+      'deltoide_lateral',
+    ];
+    muscles.addAll(canonicalMuscles);
+    sources.add('canonical_14');
+
     // (1) Agregar músculos de baseVolumePerMuscle (entrevista)
     if (profile.baseVolumePerMuscle.isNotEmpty) {
       muscles.addAll(profile.baseVolumePerMuscle.keys);
@@ -653,53 +673,19 @@ class Phase3VolumeCapacityModelService {
       sources.add('priorities');
     }
 
-    // (3) Fallback canónico MÍNIMO solo si no hay músculos
-    if (muscles.isEmpty) {
-      // Sistema de 12 músculos canónicos alineado con el resto del sistema
-      const fallbackMinimal = <String>[
-        'chest',
-        'lats',
-        'back_mid_upper',
-        'upper_traps',
-        'shoulders',
-        'quads',
-        'hamstrings',
-        'glutes',
-        'biceps',
-        'triceps',
-        'calves',
-        'abs',
-      ];
-      muscles.addAll(fallbackMinimal);
-      sources.add('fallback_canonical');
-
-      decisions.add(
-        DecisionTrace.warning(
-          phase: 'Phase3VolumeCapacity',
-          category: 'muscle_selection',
-          description:
-              'Sin prioridades ni baseVolumePerMuscle: usando grupos musculares estándar',
-          context: {
-            'muscleCount': muscles.length,
-            'daysPerWeek': profile.daysPerWeek,
-          },
-        ),
-      );
-    } else {
-      decisions.add(
-        DecisionTrace.info(
-          phase: 'Phase3VolumeCapacity',
-          category: 'muscle_selection',
-          description:
-              'Músculos a programar determinados desde: ${sources.join(", ")}',
-          context: {
-            'muscleCount': muscles.length,
-            'sources': sources,
-            'daysPerWeek': profile.daysPerWeek,
-          },
-        ),
-      );
-    }
+    decisions.add(
+      DecisionTrace.info(
+        phase: 'Phase3VolumeCapacity',
+        category: 'muscle_selection',
+        description:
+            'Músculos a programar determinados desde: ${sources.join(", ")}',
+        context: {
+          'muscleCount': muscles.length,
+          'sources': sources,
+          'daysPerWeek': profile.daysPerWeek,
+        },
+      ),
+    );
 
     return muscles.toList();
   }
@@ -732,27 +718,54 @@ class Phase3VolumeCapacityModelService {
       recommendedStart = VolumeLandmarks.getRecommendedStart(muscle, levelName);
       source = 'VolumeLandmarks (Israetel 2024 + Ramos-Campo 2024)';
     } catch (e) {
-      // Fallback conservador para músculos no reconocidos
-      switch (level) {
-        case TrainingLevel.beginner:
-          mev = 6;
-          mav = 10;
-          mrv = 14;
-          break;
-        case TrainingLevel.intermediate:
-          mev = 8;
-          mav = 12;
-          mrv = 18; // Conservador
-          break;
-        case TrainingLevel.advanced:
-          mev = 10;
-          mav = 14;
-          mrv = 20; // Conservador
-          break;
-      }
+      // Fallback por músculo canónico (P0-5)
+      const canonicalFallback = <String, Map<String, int>>{
+        'chest': {'mev': 6, 'mav': 16, 'mrv': 22},
+        'back': {'mev': 8, 'mav': 14, 'mrv': 20},
+        'lats': {'mev': 8, 'mav': 14, 'mrv': 22},
+        'traps': {'mev': 6, 'mav': 10, 'mrv': 14},
+        'shoulders': {'mev': 8, 'mav': 12, 'mrv': 20},
+        'deltoide_anterior': {'mev': 6, 'mav': 10, 'mrv': 16},
+        'deltoide_lateral': {'mev': 6, 'mav': 10, 'mrv': 16},
+        'biceps': {'mev': 6, 'mav': 14, 'mrv': 18},
+        'triceps': {'mev': 6, 'mav': 14, 'mrv': 18},
+        'quads': {'mev': 8, 'mav': 14, 'mrv': 20},
+        'hamstrings': {'mev': 6, 'mav': 12, 'mrv': 18},
+        'glutes': {'mev': 8, 'mav': 15, 'mrv': 22},
+        'calves': {'mev': 8, 'mav': 12, 'mrv': 16},
+        'abs': {'mev': 6, 'mav': 14, 'mrv': 20},
+      };
 
-      recommendedStart = mev + ((mav - mev) * 0.3).round();
-      source = 'fallback_conservative';
+      final fallback = canonicalFallback[muscle];
+      if (fallback != null) {
+        mev = fallback['mev']!;
+        mav = fallback['mav']!;
+        mrv = fallback['mrv']!;
+        recommendedStart = (mav * 0.8).round();
+        source = 'canonical_fallback_table';
+      } else {
+        // Fallback conservador para músculos no reconocidos
+        switch (level) {
+          case TrainingLevel.beginner:
+            mev = 6;
+            mav = 10;
+            mrv = 14;
+            break;
+          case TrainingLevel.intermediate:
+            mev = 8;
+            mav = 12;
+            mrv = 18; // Conservador
+            break;
+          case TrainingLevel.advanced:
+            mev = 10;
+            mav = 14;
+            mrv = 20; // Conservador
+            break;
+        }
+
+        recommendedStart = mev + ((mav - mev) * 0.3).round();
+        source = 'fallback_conservative';
+      }
 
       decisions.add(
         DecisionTrace.warning(
