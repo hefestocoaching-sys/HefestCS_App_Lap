@@ -538,13 +538,7 @@ final features = FeatureVector.fromContext(
   context,
   clientId: 'client_123',
 );
-
-print('Age normalized: ${features.ageYearsNorm}');
-print('Readiness score: ${features.readinessScore}');
-print('Fatigue index: ${features.fatigueIndex}');
-```
-
-#### Methods
+---
 
 ##### `toTensor()`
 
@@ -634,29 +628,34 @@ TrainingDatasetService({
 
 #### Methods
 
-##### `recordPrediction()`
+##### `recordPrediction()` **[NOT IMPLEMENTED]**
+
+> ⚠️ **Note**: This method is currently commented out in the codebase because the `TrainingContext` class has not been implemented. This is part of a planned ML dataset feature that is incomplete.
 
 ```dart
+// COMMENTED OUT - TrainingContext class not implemented
 Future<String> recordPrediction({
   required String clientId,
-  required TrainingContextV2 context,
+  required TrainingContext context,
   required VolumeDecision volumeDecision,
   required ReadinessDecision readinessDecision,
   required String strategyUsed,
 })
 ```
 
-Records prediction when a training plan is generated.
+~~Records prediction when a training plan is generated.~~
+
+**Status**: Planned for future ML dataset feature
 
 **Parameters:**
 - `clientId` (String) - Client identifier.
-- `context` (TrainingContextV2) - Full context used for prediction.
+- ~~`context` (TrainingContext) - Full context used for prediction.~~
 - `volumeDecision` (VolumeDecision) - Volume adjustment decision.
 - `readinessDecision` (ReadinessDecision) - Readiness assessment.
 - `strategyUsed` (String) - Name of strategy (e.g., "RuleBased", "Hybrid").
 
 **Returns:**  
-- `Future<String>` - Unique example ID (UUID v4) for tracking.
+- ~~`Future<String>` - Unique example ID (UUID v4) for tracking.~~
 
 **Firestore Document Structure:**
 ```json

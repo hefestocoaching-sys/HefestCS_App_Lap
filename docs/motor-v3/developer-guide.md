@@ -201,9 +201,10 @@ class TrainingProgramEngineV3 {
 
 **Pipeline Stages**:
 
-1. **Context Building** (`_buildContext`)
-   - Transforms `Client` → `TrainingContextV2`
-   - Aggregates 30 fields from multiple sources
+1. **Context Building** (`_buildContext`) **[Planned Feature]**
+   - ⚠️ *Note: TrainingContext class not yet implemented*
+   - Planned: Transforms `Client` → `TrainingContext`
+   - Planned: Aggregates 30 fields from multiple sources
 
 2. **Feature Engineering** (`_engineerFeatures`)
    - Derives 38 features from context
@@ -260,14 +261,28 @@ class FeatureVector with _$FeatureVector {
     // ... 26 more features (see full file)
   }) = _FeatureVector;
 
-  // Factory: Build from TrainingContextV2
-  factory FeatureVector.fromContext(TrainingContextV2 context) {
+  // Factory: Build from TrainingContext [NOT IMPLEMENTED]
+  // TODO: Implement TrainingContext class
+  /*
+  factory FeatureVector.fromContext(TrainingContext context) {
     // Normalization logic
     final age = (context.athlete.ageYears - 18.0) / (80.0 - 18.0);
     final height = (context.athlete.heightCm - 140.0) / (220.0 - 140.0);
     // ... etc
     
     return FeatureVector(
+      ...
+    );
+  }
+  */
+}
+```
+
+---
+
+### Adding New Features
+
+> ⚠️ **Note**: The ML dataset collection feature (TrainingContext, FeatureVector.fromContext, TrainingDatasetService.recordPrediction) is currently incomplete and commented out in the codebase. If you need to implement these features, you'll need to first create the TrainingContext class.
       ageYearsNorm: age.clamp(0.0, 1.0),
       heightCmNorm: height.clamp(0.0, 1.0),
       // ...
