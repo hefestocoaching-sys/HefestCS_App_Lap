@@ -88,6 +88,30 @@ class PerformanceMetrics extends Equatable {
   /// 'continue', 'increase_volume', 'increase_load', 'deload', 'vary_stimulus'
   final String recommendedAction;
 
+  // ════════════════════════════════════════════════════════════
+  // MÉTRICAS DE FATIGA Y RECUPERACIÓN
+  // ════════════════════════════════════════════════════════════
+
+  /// Calidad de sueño promedio (0-10)
+  /// 0 = pésimo, 10 = excelente
+  final double sleepQuality;
+
+  /// Nivel de energía percibido (0-10)
+  /// 0 = agotado, 10 = lleno de energía
+  final double energyLevel;
+
+  /// Dolor articular (0-10)
+  /// 0 = sin dolor, 10 = dolor severo
+  final int jointPain;
+
+  /// Intensidad de DOMS (Delayed Onset Muscle Soreness) (0-10)
+  /// 0 = sin dolor muscular, 10 = dolor muscular extremo
+  final int domsIntensity;
+
+  /// Progresión de carga normalizada (-1.0 a +1.0)
+  /// Útil para cálculos de deload
+  final double loadProgression;
+
   const PerformanceMetrics({
     required this.targetId,
     required this.targetType,
@@ -105,6 +129,11 @@ class PerformanceMetrics extends Equatable {
     required this.plannedSessions,
     required this.performanceStatus,
     required this.recommendedAction,
+    required this.sleepQuality,
+    required this.energyLevel,
+    required this.jointPain,
+    required this.domsIntensity,
+    required this.loadProgression,
   });
 
   /// Validar que las métricas sean coherentes
@@ -157,6 +186,45 @@ class PerformanceMetrics extends Equatable {
     return true;
   }
 
+  /// Determina si se requiere un deload inmediato por fatiga acumulada
+  ///
+  /// **FUNDAMENTO CIENTÍFICO** (06-progression-variation.md, líneas 60-85):
+  ///
+  /// **Señales de fatiga acumulada que requieren deload:**
+  ///
+  /// 1. **Sueño deficiente + Baja energía:**
+  ///    - Sueño <6h Y energía <5/10
+  ///    - Indica recuperación sistémica insuficiente
+  ///    - El SNC no se está recuperando adecuadamente
+  ///
+  /// 2. **Dolor articular elevado:**
+  ///    - Dolor >6/10 en articulaciones
+  ///    - Señal de inflamación crónica
+  ///    - Riesgo de lesión por sobreuso
+  ///
+  /// 3. **Caída de rendimiento:**
+  ///    - Progresión de carga <-10%
+  ///    - Indica fatiga neuromuscular acumulada
+  ///    - El cuerpo no puede mantener la intensidad
+  ///
+  /// **Acción:** Si cualquiera se cumple → Deload inmediato (1 semana)
+  ///
+  /// Retorna:
+  /// - `true` si se requiere deload inmediato
+  /// - `false` si se puede continuar con el plan actual
+  bool get requiresImmediateDeload {
+    // Criterio 1: Sueño deficiente Y baja energía (recuperación sistémica)
+    final poorRecovery = sleepQuality < 6 && energyLevel < 5;
+
+    // Criterio 2: Dolor articular elevado (inflamación/sobreuso)
+    final highJointPain = jointPain > 6;
+
+    // Criterio 3: Caída significativa de rendimiento (fatiga neuromuscular)
+    final performanceDropoff = loadProgression < -0.10;
+
+    return poorRecovery || highJointPain || performanceDropoff;
+  }
+
   /// Serialización a JSON
   Map<String, dynamic> toJson() {
     return {
@@ -176,6 +244,11 @@ class PerformanceMetrics extends Equatable {
       'plannedSessions': plannedSessions,
       'performanceStatus': performanceStatus,
       'recommendedAction': recommendedAction,
+      'sleepQuality': sleepQuality,
+      'energyLevel': energyLevel,
+      'jointPain': jointPain,
+      'domsIntensity': domsIntensity,
+      'loadProgression': loadProgression,
     };
   }
 
@@ -198,6 +271,11 @@ class PerformanceMetrics extends Equatable {
       plannedSessions: json['plannedSessions'] as int,
       performanceStatus: json['performanceStatus'] as String,
       recommendedAction: json['recommendedAction'] as String,
+      sleepQuality: (json['sleepQuality'] as num).toDouble(),
+      energyLevel: (json['energyLevel'] as num).toDouble(),
+      jointPain: json['jointPain'] as int,
+      domsIntensity: json['domsIntensity'] as int,
+      loadProgression: (json['loadProgression'] as num).toDouble(),
     );
   }
 
@@ -219,6 +297,11 @@ class PerformanceMetrics extends Equatable {
     plannedSessions,
     performanceStatus,
     recommendedAction,
+    sleepQuality,
+    energyLevel,
+    jointPain,
+    domsIntensity,
+    loadProgression,
   ];
 
   @override
