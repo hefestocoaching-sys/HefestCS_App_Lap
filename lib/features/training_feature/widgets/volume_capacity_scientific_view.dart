@@ -445,22 +445,47 @@ class VolumeCapacityScientificView extends ConsumerWidget {
 
     debugPrint('✅ P0-5: plan.state exists, keys: ${state.keys.toList()}');
 
-    final phase2 = state['phase2'] as Map<String, dynamic>?;
+    // ═══════════════════════════════════════════════════════════════════════
+    // P0-5 FIX: capacityByMuscle está en phase3, NO en phase2
+    // ═══════════════════════════════════════════════════════════════════════
 
-    if (phase2 == null) {
-      debugPrint('❌ P0-5: phase2 NOT FOUND in plan.state');
-      debugPrint('   Available state keys: ${state.keys.toList()}');
-      return {};
+    debugPrint(
+      '🔍 P0-5 VolumeCapacityScientificView: Buscando capacityByMuscle...',
+    );
+
+    // Intentar phase3 PRIMERO (Motor V3 correcto)
+    final phase3 = state['phase3'] as Map<String, dynamic>?;
+    Map<String, dynamic>? capacityByMuscle =
+        phase3?['capacityByMuscle'] as Map<String, dynamic>?;
+
+    if (capacityByMuscle != null && capacityByMuscle.isNotEmpty) {
+      debugPrint('✅ P0-5: capacityByMuscle encontrado en phase3');
+      debugPrint('   Músculos: ${capacityByMuscle.keys.toList()}');
+    } else {
+      // Fallback: Intentar phase2 (legacy Motor V2)
+      debugPrint(
+        '⚠️ P0-5: capacityByMuscle NO en phase3, intentando phase2 (legacy)...',
+      );
+      final phase2 = state['phase2'] as Map<String, dynamic>?;
+      capacityByMuscle = phase2?['capacityByMuscle'] as Map<String, dynamic>?;
+
+      if (capacityByMuscle != null && capacityByMuscle.isNotEmpty) {
+        debugPrint('✅ P0-5: capacityByMuscle encontrado en phase2 (legacy)');
+      } else {
+        debugPrint(
+          '❌ P0-5: capacityByMuscle NO encontrado en phase3 ni phase2',
+        );
+        debugPrint('   plan.state keys: ${state.keys.toList()}');
+        debugPrint('   phase3 keys: ${phase3?.keys.toList()}');
+      }
     }
 
-    debugPrint('✅ P0-5: phase2 exists, keys: ${phase2.keys.toList()}');
-
-    final capacityByMuscle =
-        phase2['capacityByMuscle'] as Map<String, dynamic>?;
+    // ═══════════════════════════════════════════════════════════════════════
 
     if (capacityByMuscle == null || capacityByMuscle.isEmpty) {
       debugPrint('❌ P0-5: capacityByMuscle EMPTY or NULL');
-      debugPrint('   phase2 keys: ${phase2.keys.toList()}');
+      final phase2Keys = (state['phase2'] as Map?)?.keys.toList();
+      debugPrint('   phase2 keys: $phase2Keys');
       return {};
     }
 
