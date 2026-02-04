@@ -59,14 +59,7 @@ export 'services/exercise_selector.dart';
 export 'services/failure_policy_service.dart';
 export 'services/latest_record_resolver.dart';
 export 'services/macrocycle_template_service.dart';
-export 'services/phase_1_data_ingestion_service.dart';
-export 'services/phase_2_readiness_evaluation_service.dart';
-export 'services/phase_3_volume_capacity_model_service.dart';
-export 'services/phase_4_split_distribution_service.dart';
-export 'services/phase_5_periodization_service.dart';
-export 'services/phase_6_exercise_selection_service.dart';
-export 'services/phase_7_prescription_service.dart';
-export 'services/phase_8_adaptation_service.dart';
+// Phase services removed - migrated to V3
 export 'services/record_deletion_service.dart';
 export 'services/record_deletion_service_provider.dart';
 export 'services/series_adjustment.dart';
@@ -75,7 +68,7 @@ export 'services/training_adaptation_service.dart';
 export 'services/training_feedback_aggregator_service.dart';
 export 'services/training_log_aggregator.dart';
 export 'services/training_plan_mapper.dart';
-export 'services/training_program_engine.dart';
+// training_program_engine removed - migrated to V3
 export 'services/volume_by_muscle_derivation_service.dart';
 
 // Services - V2 (estratégicos/inactivos)
@@ -84,7 +77,7 @@ export 'services/v2/training_engine_v2.dart';
 export 'services/v2/training_evidence_extractor.dart';
 
 // Training - Core
-export 'training/facade/training_engine_facade.dart';
+// training_engine_facade removed - migrated to V3
 export 'training/intensity_split_utils.dart';
 export 'training/macrocycle_calculator.dart';
 export 'training/macrocycle_week.dart';
@@ -103,30 +96,11 @@ export 'training/vop_snapshot.dart';
 // Training Engine - Phases
 export 'training_engine/phases/phase4_priority_cap_service.dart';
 
-// Training V2 - Errors
-export 'training_v2/errors/training_context_error.dart';
-
-// Training V2 - Engine
-export 'training_v2/engine/training_program_engine_v2.dart';
-export 'training_v2/engine/training_program_engine_v2_full.dart';
-
-// Training V2 - Engine Phases
-export 'training_v2/engine/phases/phase_1_intake_gate.dart';
-export 'training_v2/engine/phases/phase_2_volume_capacity.dart';
-export 'training_v2/engine/phases/phase_3_target_volume.dart';
-
-export 'training_v2/engine/phases/phase_5_intensity_rir.dart';
-export 'training_v2/engine/phases/phase_6_exercise_selection_v2.dart';
-export 'training_v2/engine/phases/phase_7_intensification.dart';
-export 'training_v2/engine/phases/phase_8_finalize_and_learning.dart';
-
-// Training V2 - Models
-export 'training_v2/models/training_block_context.dart';
-export 'training_v2/models/training_context.dart';
-
-// Training V2 - Services
-export 'training_v2/services/training_context_builder.dart';
-export 'training_v2/services/training_context_normalizer.dart';
+// ═══════════════════════════════════════════════════════════════════════
+// MOTOR V2 LEGACY - ELIMINADO
+// ═══════════════════════════════════════════════════════════════════════
+// All training_v2 files have been removed and migrated to V3
+// See: lib/domain/training_v3/ for the new architecture
 
 // Training V3 - Motor Nuevo
 export 'training_v3/services/motor_v3_orchestrator.dart';

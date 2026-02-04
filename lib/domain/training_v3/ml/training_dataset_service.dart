@@ -3,7 +3,8 @@ import 'package:uuid/uuid.dart';
 import 'package:csv/csv.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
-import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
+// TODO: TrainingContext removed with V2 cleanup - need to create V3 equivalent
+// import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
 import 'package:hcs_app_lap/domain/entities/weekly_training_feedback_summary.dart';
 
 /// Ejemplo de entrenamiento para ML

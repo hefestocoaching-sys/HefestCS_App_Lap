@@ -19,9 +19,13 @@ import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart'
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 import 'package:hcs_app_lap/utils/date_helpers.dart';
-// ✅ MOTOR V3 REAL - Generación con pipeline científico
-import 'package:hcs_app_lap/domain/training_v2/engine/training_program_engine_v2_full.dart';
-import 'package:hcs_app_lap/domain/training_v2/services/training_context_builder.dart';
+// ═══════════════════════════════════════════════════════════════════════
+// MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO (7 MDs)
+// ═══════════════════════════════════════════════════════════════════════
+import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrator_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 // VopSnapshot SSOT
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
@@ -564,36 +568,31 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final planIdDeterministic =
           'tp_${clientId}_${startDate.year}${startDate.month.toString().padLeft(2, '0')}${startDate.day.toString().padLeft(2, '0')}';
 
-      // Motor V3: Crear contexto y generar plan
-      final engineV3 = TrainingProgramEngineV2Full();
-      final contextBuilder = TrainingContextBuilder();
-      final contextBuild = contextBuilder.build(
-        client: freshClient,
-        asOfDate: startDate,
-      );
+      // ═══════════════════════════════════════════════════════════════════════
+      // TODO: MOTOR V3 INTEGRATION BLOCKED
+      // ═══════════════════════════════════════════════════════════════════════
+      // Motor V3 (lib/domain/training_v3/) uses incompatible API:
+      // - V3 uses: UserProfile, TrainingProgram, TrainingSession
+      // - Current system uses: Client, TrainingPlanConfig, TrainingWeek
+      //
+      // Need to create adapter layer to bridge these models before V3 can be used.
+      // For now, blocking plan generation until adapters are implemented.
+      // ═══════════════════════════════════════════════════════════════════════
 
-      if (!contextBuild.isOk || contextBuild.context == null) {
-        state = state.copyWith(
-          isLoading: false,
-          error: contextBuild.error?.message ?? 'No se pudo construir contexto',
-        );
-        return;
-      }
-
-      final planConfig = engineV3.generatePlan(
-        planId: planIdDeterministic,
-        clientId: clientId,
-        planName: 'Plan $activeDateIso',
-        startDate: startDate,
-        context: contextBuild.context!,
-        client: freshClient,
-        exercises: exercises,
+      debugPrint('❌ [Motor V3] Motor V2 eliminado, V3 requiere adaptadores');
+      
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Motor V3 requiere capa de adaptadores (Client → UserProfile). '
+               'Migración en progreso.',
       );
+      return;
 
-      debugPrint(
-        '✅ [Motor V3] Plan generado: ${planConfig.weeks.length} semanas, '
-        '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
-      );
+      // LEGACY V2 CODE (REMOVED):
+      // final engineV3 = TrainingProgramEngineV2Full();
+      // final contextBuilder = TrainingContextBuilder();
+      // final contextBuild = contextBuilder.build(...);
+      // final planConfig = engineV3.generatePlan(...);
 
       // ═══════════════════════════════════════════════════════════════════════
       // P0-BLOQUEANTE: PERSISTIR PLAN EN client.trainingPlans

@@ -1,4 +1,5 @@
-import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
+// TODO: TrainingContext removed with V2 cleanup - need to create V3 equivalent
+// import 'package:hcs_app_lap/domain/training_v2/models/training_context.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/core/enums/training_goal.dart';
