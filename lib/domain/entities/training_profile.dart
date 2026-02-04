@@ -753,25 +753,27 @@ class TrainingProfile extends Equatable {
     if (key.isEmpty) return '';
 
     const map = {
-      // Pecho / espalda / hombro
+      // Pecho
       'pecho': 'chest',
       'pectorales': 'chest',
-      'espalda': 'back',
-      'espalda alta': 'back',
-      'dorsales': 'back',
-      'dorsal': 'back',
-      'dorsal ancho': 'back',
-      'hombros': 'shoulders',
-      'deltoides': 'shoulders',
-      'deltoide': 'shoulders',
+
+      // Espalda (mapear a músculos específicos)
+      'espalda': 'lats', // Por defecto, espalda → lats (más común)
+      'espalda alta': 'upper_back',
+      'dorsales': 'lats',
+      'dorsal': 'lats',
+      'dorsal ancho': 'lats',
+
+      // Hombros (mapear a deltoides específicos)
+      'hombros': 'deltoide_lateral', // Por defecto, hombros → deltoides lateral
+      'deltoides': 'deltoide_lateral',
+      'deltoide': 'deltoide_lateral',
 
       // Brazos
       'biceps': 'biceps',
       'bíceps': 'biceps',
       'triceps': 'triceps',
       'tríceps': 'triceps',
-      'antebrazo': 'forearms',
-      'antebrazos': 'forearms',
 
       // Piernas
       'cuadriceps': 'quads',
@@ -803,16 +805,19 @@ class TrainingProfile extends Equatable {
       'laterales': 'lats',
     };
 
-    // Si ya es clave conocida, mantenerla
+    // ═══════════════════════════════════════════════════════════════════════
+    // SSOT: 14 MÚSCULOS CANÓNICOS (sin legacy 'back', 'shoulders', 'forearms')
+    // ═══════════════════════════════════════════════════════════════════════
     const canonical = {
       'chest',
-      'back',
       'lats',
+      'upper_back',
       'traps',
-      'shoulders',
+      'deltoide_anterior',
+      'deltoide_lateral',
+      'deltoide_posterior',
       'biceps',
       'triceps',
-      'forearms',
       'quads',
       'hamstrings',
       'glutes',
