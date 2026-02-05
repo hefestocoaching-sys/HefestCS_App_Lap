@@ -406,10 +406,19 @@ class MotorV3Orchestrator {
   }) {
     final weeks = <TrainingWeek>[];
 
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    debugPrint('🏗️ [_buildRealTrainingPlan] Iniciando construcción de plan:');
+    debugPrint('   - durationWeeks: $durationWeeks');
+    debugPrint('   - split: "$split"');
+    debugPrint('   - phase: ${phase.name}');
+    debugPrint('   - volumeTargets: ${volumeTargets.keys.length} músculos');
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     // ═══════════════════════════════════════════════════════════════════
     // PASO 1: Construir cada semana del mesociclo
     // ═══════════════════════════════════════════════════════════════════
     for (int weekNum = 1; weekNum <= durationWeeks; weekNum++) {
+      debugPrint('  📅 Construyendo semana $weekNum/$durationWeeks...');
       // ═════════════════════════════════════════════════════════════════
       // PASO 2: Calcular volumen progresivo de la semana
       // ═════════════════════════════════════════════════════════════════
@@ -470,7 +479,17 @@ class MotorV3Orchestrator {
               'Semana $weekNum - Fase: ${phase.name.capitalize()} - Volumen: $totalSets sets',
         ),
       );
+
+      debugPrint(
+        '  ✅ Semana $weekNum agregada: ${sessions.length} sesiones, $totalSets sets totales',
+      );
     }
+
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    debugPrint(
+      '✅ [_buildRealTrainingPlan] Plan construido: ${weeks.length} semanas',
+    );
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     final clientId = client != null
         ? (client as dynamic).id ?? 'client_unknown'

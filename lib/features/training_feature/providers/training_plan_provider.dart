@@ -1273,6 +1273,10 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // ═══════════════════════════════════════════════════════════════════════
 
       debugPrint('🔒 [VALIDACIÓN P0] Validando plan antes de persistir...');
+      debugPrint('  📊 Estado planConfig:');
+      debugPrint('     - weeks.length: ${planConfig.weeks.length}');
+      debugPrint('     - volumePerMuscle: ${planConfig.volumePerMuscle}');
+      debugPrint('     - splitId: ${planConfig.splitId}');
 
       // ❌ Validación 1: weeks no puede estar vacío
       if (planConfig.weeks.isEmpty) {
