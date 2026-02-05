@@ -14,11 +14,16 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_session.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/exercise_prescription.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
+import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 
 // Engines
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/resolvers/muscle_to_catalog_resolver.dart'
+    as resolver;
 
 // Validators
 import 'package:hcs_app_lap/domain/training_v3/validators/volume_validator.dart';
@@ -108,6 +113,8 @@ class MotorV3Orchestrator {
         '📊 Volumen por músculo calculado: ${volumeTargets.length} grupos',
       );
 
+      await ExerciseCatalogV3.ensureLoaded();
+
       // ✅ PASO 5: Resolver split efectivo (UI → Motor V3)
       final daysPerWeek = trainingDaysPerWeek ?? userProfile.availableDays;
       final resolvedSplit = _resolveSplit(
@@ -159,9 +166,23 @@ class MotorV3Orchestrator {
         phase: trainingPhase,
         durationWeeks: durationWeeks,
         daysPerWeek: daysPerWeek,
-        availableExercises: exercises,
         userProfile: userProfile,
+        clientProfile: clientProfile,
       );
+
+      final generatedWeeks = planConfig.weeks
+          .whereType<TrainingWeek>()
+          .toList();
+      final hasInvalidSessions = generatedWeeks.any(
+        (w) =>
+            w.sessions.isEmpty ||
+            w.sessions.any((s) => (s as TrainingSession).exercises.isEmpty),
+      );
+      if (generatedWeeks.isEmpty || hasInvalidSessions) {
+        throw StateError(
+          '[Motor V3] Plan inválido: no se generaron sesiones reales',
+        );
+      }
 
       final totalSessions = planConfig.weeks.fold<int>(0, (sum, week) {
         final w = week as TrainingWeek;
@@ -252,77 +273,6 @@ class MotorV3Orchestrator {
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  // MÉTODOS AUXILIARES - PASO 6
-  // ═══════════════════════════════════════════════════════════════════════
-
-  /// Convierte lista de ejercicios a mapa
-  static Map<String, Map<String, dynamic>> _convertExercisesToMap(
-    List<dynamic> exercises,
-  ) {
-    final map = <String, Map<String, dynamic>>{};
-    for (int i = 0; i < exercises.length; i++) {
-      final item = exercises[i];
-
-      if (item is Exercise) {
-        map[item.id] = {
-          'id': item.id,
-          'name': item.name,
-          'primary_muscles': item.primaryMuscles,
-          'secondary_muscles': item.secondaryMuscles,
-          'equipment': item.equipment,
-          'type': 'compound',
-        };
-        continue;
-      }
-
-      // Cada ejercicio puede ser un Map<String, dynamic>
-      if (item is Map<String, dynamic>) {
-        final id = (item['id'] ?? item['exerciseId'] ?? 'ex_$i').toString();
-        final name = (item['name'] ?? 'Exercise $i').toString();
-        final primary =
-            (item['primary_muscles'] ??
-                    item['primaryMuscles'] ??
-                    item['muscleKey'] ??
-                    item['group'])
-                as dynamic;
-        final secondary =
-            (item['secondary_muscles'] ?? item['secondaryMuscles']) as dynamic;
-
-        map[id] = {
-          'id': id,
-          'name': name,
-          'primary_muscles': _normalizeMuscleList(primary),
-          'secondary_muscles': _normalizeMuscleList(secondary),
-          'equipment': item['equipment']?.toString() ?? '',
-          'type': item['type']?.toString() ?? 'compound',
-        };
-        continue;
-      }
-
-      // Fallback: crear un mapa simple
-      map['ex_$i'] = {
-        'id': 'ex_$i',
-        'name': 'Exercise $i',
-        'primary_muscles': const <String>[],
-        'secondary_muscles': const <String>[],
-        'equipment': '',
-        'type': 'compound',
-      };
-    }
-    return map;
-  }
-
-  static List<String> _normalizeMuscleList(dynamic value) {
-    if (value is List) {
-      return value.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
-    }
-    if (value is String && value.isNotEmpty) {
-      return [value];
-    }
-    return const <String>[];
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
   // MÉTODOS AUXILIARES - PASO 10
   // ═══════════════════════════════════════════════════════════════════════
 
@@ -347,8 +297,8 @@ class MotorV3Orchestrator {
     required TrainingPhase phase,
     required int durationWeeks,
     required int daysPerWeek,
-    required List<dynamic> availableExercises,
     required UserProfile userProfile,
+    required ClientProfile clientProfile,
   }) {
     final weeks = _buildWeeks(
       durationWeeks: durationWeeks,
@@ -356,8 +306,8 @@ class MotorV3Orchestrator {
       split: split,
       daysPerWeek: daysPerWeek,
       volumePerMuscle: volumeTargets,
-      availableExercises: availableExercises,
       userProfile: userProfile,
+      clientProfile: clientProfile,
     );
 
     final clientId = client != null
@@ -399,20 +349,20 @@ class MotorV3Orchestrator {
     required TrainingSplit split,
     required int daysPerWeek,
     required Map<String, int> volumePerMuscle,
-    required List<dynamic> availableExercises,
     required UserProfile userProfile,
+    required ClientProfile clientProfile,
   }) {
     final weeks = <TrainingWeek>[];
 
     for (int weekNum = 1; weekNum <= durationWeeks; weekNum++) {
       final sessions = _buildDays(
         userProfile: userProfile,
+        clientProfile: clientProfile,
         weekNumber: weekNum,
         phase: phase.name,
         split: split,
         daysPerWeek: daysPerWeek,
         volumePerMuscle: volumePerMuscle,
-        availableExercises: availableExercises,
       );
 
       final totalSets = sessions.fold<int>(
@@ -435,101 +385,117 @@ class MotorV3Orchestrator {
 
   static List<TrainingSession> _buildDays({
     required UserProfile userProfile,
+    required ClientProfile clientProfile,
     required int weekNumber,
     required String phase,
     required TrainingSplit split,
     required int daysPerWeek,
     required Map<String, int> volumePerMuscle,
-    required List<dynamic> availableExercises,
   }) {
     final sessions = <TrainingSession>[];
-    final exerciseCatalog = _convertExercisesToMap(availableExercises);
+    final dayGroups = _resolveDayGroups(split, daysPerWeek);
 
-    final dayTypes = switch (split) {
-      TrainingSplit.upperLower => ['upper', 'lower', 'upper', 'lower'],
-      TrainingSplit.fullBody => List<String>.filled(
-        daysPerWeek < 4 ? 3 : daysPerWeek,
-        'fullBody',
-      ),
-      TrainingSplit.pushPullLegs => [
-        'push',
-        'pull',
-        'legs',
-        'push',
-        'pull',
-        'legs',
-      ],
-    };
+    if (dayGroups.isEmpty) {
+      throw StateError(
+        '[Motor V3] No se pudieron resolver grupos para split $split',
+      );
+    }
 
-    for (int i = 0; i < dayTypes.length; i++) {
-      final dayType = dayTypes[i];
+    for (int i = 0; i < dayGroups.length; i++) {
+      final groups = dayGroups[i];
       final dayNumber = i + 1;
-      final targetMuscles = _resolveTargetMuscles(dayType);
-      final exercises = <ExercisePrescription>[];
 
-      for (final muscle in targetMuscles) {
-        final targetSets = max(
-          2,
-          ((volumePerMuscle[muscle] ?? 6) ~/ max(1, daysPerWeek)),
+      final exerciseById = <String, Exercise>{};
+      final setsById = <String, int>{};
+
+      for (final group in groups) {
+        final weeklySets = _calculateGroupWeeklySets(
+          group: group,
+          volumePerMuscle: volumePerMuscle,
+          userProfile: userProfile,
+        );
+        final targetSets = max(1, (weeklySets / daysPerWeek).round());
+
+        final selected = ExerciseSelectionEngine.selectExercisesByGroups(
+          groups: [group],
+          targetSets: targetSets,
+          profile: clientProfile,
         );
 
-        List<String> selectedIds = const [];
-        try {
-          selectedIds = ExerciseSelectionEngine.selectExercises(
-            targetMuscle: muscle,
-            availableExercises: exerciseCatalog,
-            availableEquipment: userProfile.availableEquipment,
-            injuryHistory: userProfile.injuryHistory,
-            targetExerciseCount: 1,
-          );
-        } catch (e) {
-          _logger.warn(
-            '[Motor V3] Error seleccionando ejercicios para $muscle: $e',
-          );
-          selectedIds = const [];
+        final selectedCount = max(
+          1,
+          min(selected.length, (targetSets / 3).ceil()),
+        );
+        final selectedExercises = selected.take(selectedCount).toList();
+        final setsPerExercise = max(
+          1,
+          (targetSets / selectedExercises.length).round(),
+        );
+
+        for (final ex in selectedExercises) {
+          exerciseById[ex.id] = ex;
+          setsById[ex.id] = (setsById[ex.id] ?? 0) + setsPerExercise;
         }
-
-        if (selectedIds.isEmpty) {
-          _logger.warn(
-            '[Motor V3] Sin ejercicios para $muscle, usando placeholder',
-          );
-          exercises.add(_placeholderExercise(muscle, targetSets));
-          continue;
-        }
-
-        final exerciseId = selectedIds.first;
-        final exerciseName = _resolveExerciseNameById(
-          exerciseCatalog,
-          exerciseId,
-        );
-
-        exercises.add(
-          ExercisePrescription(
-            exerciseId: exerciseId,
-            exerciseName: exerciseName,
-            orderInSession: exercises.length + 1,
-            sets: targetSets,
-            repRange: const [8, 12],
-            targetRir: 2,
-            intensityZone: 'moderate',
-            restSeconds: 90,
-            notes: 'MVP $phase - $dayType',
-          ),
-        );
       }
 
-      if (exercises.isEmpty) {
-        exercises.add(_placeholderExercise('fullBody', 2));
+      if (exerciseById.isEmpty) {
+        throw StateError('[Motor V3] Día $dayNumber sin ejercicios');
+      }
+
+      final exerciseIds = exerciseById.values.toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
+      final orderedIds = exerciseIds.map((e) => e.id).toList();
+      final exerciseTypes = <String, String>{};
+      for (final id in orderedIds) {
+        exerciseTypes[id] = ExerciseCatalogV3.getTypeById(id);
+      }
+
+      final intensities = IntensityEngine.distributeIntensities(
+        exercises: orderedIds,
+        exerciseTypes: exerciseTypes,
+      );
+
+      final prescriptions = <ExercisePrescription>[];
+      for (final id in orderedIds) {
+        final ex = exerciseById[id]!;
+        final intensity = intensities[id] ?? 'moderate';
+        final repRange = IntensityEngine.getRepRangeForIntensity(intensity);
+        final restSeconds = IntensityEngine.getRestSecondsForIntensity(
+          intensity,
+        );
+        final baseRir = EffortEngine.assignRir(
+          exerciseId: id,
+          intensity: intensity,
+          exerciseType: exerciseTypes[id] ?? 'compound',
+        );
+        final targetRir = EffortEngine.adjustRirForPhase(
+          baseRir: baseRir,
+          phase: phase,
+        );
+
+        prescriptions.add(
+          ExercisePrescription(
+            exerciseId: id,
+            exerciseName: ex.name,
+            orderInSession: prescriptions.length + 1,
+            sets: setsById[id] ?? 1,
+            repRange: repRange,
+            targetRir: targetRir,
+            intensityZone: intensity,
+            restSeconds: restSeconds,
+            notes: 'Motor V3 $phase',
+          ),
+        );
       }
 
       sessions.add(
         TrainingSession(
           id: 'w${weekNumber}d$dayNumber',
           dayNumber: dayNumber,
-          name: _resolveSessionName(dayType, dayNumber),
-          primaryMuscles: targetMuscles,
-          estimatedDurationMinutes: (exercises.length * 10) + 30,
-          exercises: exercises,
+          name: 'Day $dayNumber',
+          primaryMuscles: groups.map((g) => g.name).toList(),
+          estimatedDurationMinutes: (prescriptions.length * 10) + 30,
+          exercises: prescriptions,
         ),
       );
     }
@@ -537,75 +503,93 @@ class MotorV3Orchestrator {
     return sessions;
   }
 
-  static List<String> _resolveTargetMuscles(String dayType) {
-    switch (dayType) {
-      case 'upper':
-        return [
-          'chest',
-          'lats',
-          'upper_back',
-          'traps',
-          'deltoide_lateral',
-          'deltoide_posterior',
-          'biceps',
-          'triceps',
+  static List<List<resolver.MuscleGroup>> _resolveDayGroups(
+    TrainingSplit split,
+    int daysPerWeek,
+  ) {
+    switch (split) {
+      case TrainingSplit.upperLower:
+        final pattern = [
+          [
+            resolver.MuscleGroup.chest,
+            resolver.MuscleGroup.back,
+            resolver.MuscleGroup.deltoids,
+            resolver.MuscleGroup.arms,
+          ],
+          [
+            resolver.MuscleGroup.legs,
+            resolver.MuscleGroup.glutes,
+            resolver.MuscleGroup.calves,
+            resolver.MuscleGroup.core,
+          ],
         ];
-      case 'lower':
-        return ['quads', 'hamstrings', 'glutes', 'calves', 'abs'];
-      case 'push':
-        return ['chest', 'deltoide_anterior', 'deltoide_lateral', 'triceps'];
-      case 'pull':
-        return ['lats', 'upper_back', 'traps', 'biceps'];
-      case 'legs':
-        return ['quads', 'hamstrings', 'glutes', 'calves', 'abs'];
-      case 'fullBody':
-      default:
-        return [
-          'chest',
-          'lats',
-          'upper_back',
-          'deltoide_lateral',
-          'quads',
-          'hamstrings',
-          'glutes',
-          'biceps',
-          'triceps',
+        final out = <List<resolver.MuscleGroup>>[];
+        for (int i = 0; i < daysPerWeek; i++) {
+          out.add(pattern[i % pattern.length]);
+        }
+        return out;
+      case TrainingSplit.fullBody:
+        final full = [
+          resolver.MuscleGroup.chest,
+          resolver.MuscleGroup.back,
+          resolver.MuscleGroup.deltoids,
+          resolver.MuscleGroup.arms,
+          resolver.MuscleGroup.legs,
+          resolver.MuscleGroup.glutes,
+          resolver.MuscleGroup.calves,
+          resolver.MuscleGroup.core,
         ];
+        return List<List<resolver.MuscleGroup>>.generate(
+          daysPerWeek,
+          (_) => full,
+        );
+      case TrainingSplit.pushPullLegs:
+        throw StateError('[Motor V3] Split pushPullLegs no implementado');
     }
   }
 
-  static String _resolveSessionName(String dayType, int dayNumber) {
-    return switch (dayType) {
-      'upper' => 'Upper Day $dayNumber',
-      'lower' => 'Lower Day $dayNumber',
-      'push' => 'Push Day $dayNumber',
-      'pull' => 'Pull Day $dayNumber',
-      'legs' => 'Legs Day $dayNumber',
-      'fullBody' => 'Full Body Day $dayNumber',
-      _ => 'Session $dayNumber',
-    };
+  static int _calculateGroupWeeklySets({
+    required resolver.MuscleGroup group,
+    required Map<String, int> volumePerMuscle,
+    required UserProfile userProfile,
+  }) {
+    final muscles = _canonicalMusclesForGroup(group);
+    var total = 0;
+    for (final muscle in muscles) {
+      var sets = volumePerMuscle[muscle];
+      if (sets == null) {
+        final priority = userProfile.musclePriorities[muscle] ?? 3;
+        sets = VolumeEngine.calculateOptimalVolume(
+          muscle: muscle,
+          trainingLevel: userProfile.trainingLevel,
+          priority: priority,
+          currentVolume: null,
+        );
+      }
+      total += sets;
+    }
+    return total;
   }
 
-  static ExercisePrescription _placeholderExercise(String muscle, int sets) {
-    return ExercisePrescription(
-      exerciseId: 'placeholder_$muscle',
-      exerciseName: 'Ejercicio pendiente ($muscle)',
-      orderInSession: 1,
-      sets: sets,
-      repRange: const [8, 12],
-      targetRir: 2,
-      intensityZone: 'moderate',
-      restSeconds: 90,
-      notes: 'Fallback: catálogo sin coincidencias para $muscle',
-    );
-  }
-
-  static String _resolveExerciseNameById(
-    Map<String, Map<String, dynamic>> exerciseCatalog,
-    String exerciseId,
-  ) {
-    final name = exerciseCatalog[exerciseId]?['name'];
-    return name?.toString() ?? exerciseId;
+  static List<String> _canonicalMusclesForGroup(resolver.MuscleGroup group) {
+    switch (group) {
+      case resolver.MuscleGroup.chest:
+        return ['chest'];
+      case resolver.MuscleGroup.back:
+        return ['lats', 'upper_back', 'traps'];
+      case resolver.MuscleGroup.deltoids:
+        return ['deltoide_anterior', 'deltoide_lateral', 'deltoide_posterior'];
+      case resolver.MuscleGroup.arms:
+        return ['biceps', 'triceps'];
+      case resolver.MuscleGroup.legs:
+        return ['quads', 'hamstrings'];
+      case resolver.MuscleGroup.glutes:
+        return ['glutes'];
+      case resolver.MuscleGroup.calves:
+        return ['calves'];
+      case resolver.MuscleGroup.core:
+        return ['abs'];
+    }
   }
 
   static TrainingSplit _resolveSplit({

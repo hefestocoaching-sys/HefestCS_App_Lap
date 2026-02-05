@@ -1,6 +1,13 @@
 // lib/domain/training_v3/engines/exercise_selection_engine.dart
 
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/domain/entities/exercise.dart';
+import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/client_profile.dart';
+import 'package:hcs_app_lap/domain/training_v3/resolvers/muscle_to_catalog_resolver.dart'
+    as resolver;
 
 /// Motor de selección inteligente de ejercicios
 ///
@@ -21,60 +28,43 @@ import 'package:flutter/foundation.dart';
 ///
 /// Versión: 2.0.0 - Con normalización de músculos compuestos
 class ExerciseSelectionEngine {
-  /// Selecciona los mejores ejercicios para un músculo
+  /// Selecciona ejercicios reales del catálogo por grupos musculares
   ///
-  /// ALGORITMO:
-  /// 1. Filtrar por equipamiento disponible
-  /// 2. Filtrar por historial de lesiones
-  /// 3. Scoring con 6 criterios científicos
-  /// 4. Ordenar por score descendente
-  /// 5. Balancear compounds/isolation
-  ///
-  /// PARÁMETROS:
-  /// - [targetMuscle]: Músculo objetivo ('chest', 'quads', etc.)
-  /// - [availableExercises]: Pool de ejercicios disponibles
-  /// - [availableEquipment]: Equipamiento disponible
-  /// - [injuryHistory]: Historial de lesiones (articulación → descripción)
-  /// - [targetExerciseCount]: Número de ejercicios a seleccionar
-  ///
-  /// RETORNA:
-  /// - List<String>: IDs de ejercicios seleccionados
-  static List<String> selectExercises({
-    required String targetMuscle,
-    required Map<String, Map<String, dynamic>> availableExercises,
-    required List<String> availableEquipment,
-    required Map<String, String> injuryHistory,
-    required int targetExerciseCount,
+  /// CONTRATO:
+  /// - Resuelve grupos lógicos a keys reales del JSON
+  /// - Retorna ejercicios reales del catálogo
+  /// - Si no hay ejercicios, lanza StateError
+  static List<Exercise> selectExercisesByGroups({
+    required List<resolver.MuscleGroup> groups,
+    required int targetSets,
+    required ClientProfile profile,
   }) {
-    // PASO 1: Filtrar por músculo y equipamiento
-    final candidateExercises = availableExercises.entries
-        .where((e) => _isExerciseForMuscle(e.value, targetMuscle))
-        .where((e) => _hasRequiredEquipment(e.value, availableEquipment))
-        .toList();
+    final keys = <String>{};
+    for (final group in groups) {
+      keys.addAll(resolver.MuscleToCatalogResolver.resolve(group));
+    }
 
-    // PASO 2: Filtrar por lesiones
-    final safeExercises = candidateExercises
-        .where((e) => !_isContraindicatedByInjury(e.value, injuryHistory))
-        .toList();
+    if (keys.isEmpty) {
+      debugPrint('[ExerciseSelection] No hay keys para grupos: $groups');
+      throw StateError('No hay keys de catálogo para grupos: $groups');
+    }
 
-    // PASO 3: Scoring científico (6 criterios)
-    final scoredExercises = safeExercises.map((e) {
-      final score = _calculateExerciseScore(e.value, targetMuscle);
-      return {'id': e.key, 'score': score, 'data': e.value};
-    }).toList();
+    final exercises = ExerciseCatalogV3.getByMuscleKeys(keys.toList());
+    if (exercises.isEmpty) {
+      debugPrint('[ExerciseSelection] Sin ejercicios para keys: $keys');
+      throw StateError('No se encontraron ejercicios para keys: $keys');
+    }
 
-    // PASO 4: Ordenar por score
-    scoredExercises.sort(
-      (a, b) => (b['score'] as double).compareTo(a['score'] as double),
-    );
+    final unique = <String, Exercise>{};
+    for (final ex in exercises) {
+      unique[ex.id] = ex;
+    }
 
-    // PASO 5: Balancear compounds/isolation
-    final selected = _balanceCompoundsAndIsolation(
-      scoredExercises,
-      targetExerciseCount,
-    );
+    final ordered = unique.values.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
 
-    return selected.map((e) => e['id'] as String).toList();
+    final exerciseCount = max(1, min(ordered.length, (targetSets / 3).ceil()));
+    return ordered.take(exerciseCount).toList();
   }
 
   /// Calcula score científico del ejercicio (0.0-10.0)
