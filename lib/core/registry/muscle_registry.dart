@@ -77,6 +77,7 @@ String? normalize(String rawKey) {
     'romboides': 'upper_back',
 
     'traps': 'traps',
+    'trapecios': 'traps',
     'trapecio': 'traps',
     'trapezius': 'traps',
     'trapezio': 'traps',
@@ -96,6 +97,7 @@ String? normalize(String rawKey) {
     'deltoides anterior': 'deltoide_anterior',
     'front delt anterior': 'deltoide_anterior',
     'hombro anterior': 'deltoide_anterior',
+    'deltoide frontal': 'deltoide_anterior',
 
     'deltoide lateral': 'deltoide_lateral',
     'deltoide_lateral': 'deltoide_lateral',

@@ -69,6 +69,11 @@ class ExerciseCatalogV3 {
     return out;
   }
 
+  static List<Exercise> getByMuscle(String muscleKey) {
+    final k = muscleKey.trim().toLowerCase();
+    return _exercisesByMuscle[k] ?? const <Exercise>[];
+  }
+
   static String getTypeById(String exerciseId) {
     return _exerciseTypeById[exerciseId] ?? 'compound';
   }

@@ -8,6 +8,7 @@ import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/client_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/resolvers/muscle_to_catalog_resolver.dart'
     as resolver;
+import 'package:hcs_app_lap/domain/training_v3/utils/muscle_key_adapter_v3.dart';
 
 /// Motor de selección inteligente de ejercicios
 ///
@@ -49,19 +50,31 @@ class ExerciseSelectionEngine {
       throw StateError('No hay keys de catálogo para grupos: $groups');
     }
 
-    final exercises = ExerciseCatalogV3.getByMuscleKeys(keys.toList());
-    if (exercises.isEmpty) {
-      debugPrint('[ExerciseSelection] Sin ejercicios para keys: $keys');
-      throw StateError('No se encontraron ejercicios para keys: $keys');
+    final catalogKeys = <String>{};
+    for (final key in keys) {
+      catalogKeys.addAll(MuscleKeyAdapterV3.toCatalogKeys(key));
     }
 
-    final unique = <String, Exercise>{};
-    for (final ex in exercises) {
-      unique[ex.id] = ex;
+    final all = <Exercise>[];
+    for (final ck in catalogKeys) {
+      final list = ExerciseCatalogV3.getByMuscle(ck);
+      if (list.isNotEmpty) all.addAll(list);
     }
 
-    final ordered = unique.values.toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+    if (all.isEmpty) {
+      debugPrint(
+        '[ExerciseSelection] No exercises for motorKeys=$keys catalogKeys=$catalogKeys',
+      );
+      throw StateError('No se encontraron ejercicios para keys: $catalogKeys');
+    }
+
+    final seen = <String>{};
+    final deduped = <Exercise>[];
+    for (final e in all) {
+      if (seen.add(e.id)) deduped.add(e);
+    }
+
+    final ordered = deduped..sort((a, b) => a.name.compareTo(b.name));
 
     final exerciseCount = max(1, min(ordered.length, (targetSets / 3).ceil()));
     return ordered.take(exerciseCount).toList();
