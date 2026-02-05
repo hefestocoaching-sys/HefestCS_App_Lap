@@ -8,6 +8,7 @@ import 'package:hcs_app_lap/core/enums/training_goal.dart';
 import 'package:hcs_app_lap/core/enums/training_focus.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
 import 'package:hcs_app_lap/core/enums/training_interview_enums.dart';
+import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 import 'package:hcs_app_lap/domain/entities/volume_tolerance_profile.dart';
 import 'package:hcs_app_lap/utils/deep_merge.dart';
 
@@ -749,88 +750,9 @@ class TrainingProfile extends Equatable {
   }
 
   static String _normalizeMuscleKey(String raw) {
-    final key = raw.toLowerCase().trim();
-    if (key.isEmpty) return '';
-
-    const map = {
-      // Pecho
-      'pecho': 'chest',
-      'pectorales': 'chest',
-
-      // Espalda (mapear a músculos específicos)
-      'espalda': 'lats', // Por defecto, espalda → lats (más común)
-      'espalda alta': 'upper_back',
-      'dorsales': 'lats',
-      'dorsal': 'lats',
-      'dorsal ancho': 'lats',
-
-      // Hombros (mapear a deltoides específicos)
-      'hombros': 'deltoide_lateral', // Por defecto, hombros → deltoides lateral
-      'deltoides': 'deltoide_lateral',
-      'deltoide': 'deltoide_lateral',
-
-      // Brazos
-      'biceps': 'biceps',
-      'bíceps': 'biceps',
-      'triceps': 'triceps',
-      'tríceps': 'triceps',
-
-      // Piernas
-      'cuadriceps': 'quads',
-      'cuádriceps': 'quads',
-      'quads': 'quads',
-      'isquios': 'hamstrings',
-      'isquiotibiales': 'hamstrings',
-      'femorales': 'hamstrings',
-      'gluteos': 'glutes',
-      'glúteos': 'glutes',
-      'gluteo': 'glutes',
-      'glúteo': 'glutes',
-      'pantorrillas': 'calves',
-      'pantorrilla': 'calves',
-      'gemelos': 'calves',
-
-      // Core
-      'abs': 'abs',
-      'abdomen': 'abs',
-      'abdominales': 'abs',
-      'core': 'abs',
-
-      // Traps
-      'trapecio': 'traps',
-      'trapecios': 'traps',
-
-      // Lats
-      'lats': 'lats',
-      'laterales': 'lats',
-    };
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // SSOT: 14 MÚSCULOS CANÓNICOS (sin legacy 'back', 'shoulders', 'forearms')
-    // ═══════════════════════════════════════════════════════════════════════
-    const canonical = {
-      'chest',
-      'lats',
-      'upper_back',
-      'traps',
-      'deltoide_anterior',
-      'deltoide_lateral',
-      'deltoide_posterior',
-      'biceps',
-      'triceps',
-      'quads',
-      'hamstrings',
-      'glutes',
-      'calves',
-      'abs',
-    };
-
-    if (canonical.contains(key)) {
-      return key;
-    }
-    final mapped = map[key];
-    return mapped ??
-        ''; // NO fallback: devolver vacío para claves no soportadas
+    /// Delegate al SSOT: muscle_key_normalizer.dart (FASE A — MUS-001)
+    /// No mantener reglas locales. Toda normalización pasa por el normalizador central.
+    return normalizeMuscleKey(raw);
   }
 
   TrainingProfile copyWith({
