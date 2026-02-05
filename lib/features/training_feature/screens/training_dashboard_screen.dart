@@ -99,24 +99,41 @@ class _TrainingDashboardScreenState
             return _buildNoClientState();
           }
 
-          // ✅ P0-4: SSOT - Último plan Motor V3 por fecha (más reciente)
+          // ✅ ACT-001: SSOT - Plan activo por activePlanId (con fallback a más reciente)
           if (client.trainingPlans.isEmpty) {
-            debugPrint('❌ P0-4 TrainingDashboard: No hay planes Motor V3');
+            debugPrint('❌ TrainingDashboard: No hay planes Motor V3');
             return _buildNoPlanState(client);
           }
 
-          // Ordenar por fecha de inicio (más reciente primero)
-          final sortedPlans = client.trainingPlans.toList()
-            ..sort((a, b) => b.startDate.compareTo(a.startDate));
+          final plans = client.trainingPlans;
+          TrainingPlanConfig? plan;
 
-          final plan = sortedPlans.first; // Plan más reciente
+          // 1) Intentar usar activePlanId (SSOT)
+          final activePlanId = client.training.extra[TrainingExtraKeys.activePlanId] as String?;
 
-          debugPrint('✅ P0-4 TrainingDashboard: Plan activo Motor V3:');
+          if (activePlanId != null) {
+            try {
+              plan = plans.firstWhere(
+                (p) => p.id == activePlanId,
+              );
+              debugPrint('✅ TrainingDashboard: Plan activo encontrado por activePlanId');
+            } on StateError {
+              debugPrint('⚠️ TrainingDashboard: activePlanId no coincide con ningún plan, usando fallback');
+            }
+          }
+
+          // 2) Fallback: plan más reciente por startDate
+          plan ??= (plans.toList()
+                ..sort((a, b) => b.startDate.compareTo(a.startDate)))
+              .first;
+
+          debugPrint('✅ TrainingDashboard: Renderizando plan Motor V3:');
           debugPrint('   ID: ${plan.id}');
           debugPrint('   Inicio: ${plan.startDate}');
           debugPrint('   Semanas: ${plan.weeks.length}');
+          debugPrint('   Fuente: ${activePlanId != null ? "activePlanId (SSOT)" : "fallback (más reciente)"}');
 
-          // ✅ NO LEER de training.extra['activePlanId'] (stale)
+          // ✅ activePlanId es SSOT del plan activo (post FASE B)
           // ✅ Usar plan.id directamente (ya tenemos objeto completo)
           // ✅ RENDERIZAR TABS MOTOR V3
           return _buildMotorV3Workspace(plan, client);
@@ -724,16 +741,12 @@ class _TrainingDashboardScreenState
   Future<void> _generarPlan() async {
     try {
       final now = DateTime.now();
-      final newPlan = await ref
+      await ref
           .read(trainingPlanProvider.notifier)
           .generatePlanFromActiveCycle(now);
 
-      // FASE B.3: Si generación exitosa, activar el plan
-      if (newPlan != null) {
-        await ref
-            .read(trainingPlanProvider.notifier)
-            .updateActivePlanId(newPlan.id);
-      }
+      // ✅ ACT-001: El provider ya actualiza activePlanId internamente
+      // No duplicar escritura aquí (UI solo consume, no decide)
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
