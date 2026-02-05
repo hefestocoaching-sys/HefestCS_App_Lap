@@ -1,21 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
-const List<String> allMuscles = [
-  'Pecho',
-  'Espalda',
-  'Trapecios',
-  'Deltoide Lateral',
-  'Deltoide Frontal',
-  'Deltoide Posterior',
-  'Bíceps',
-  'Tríceps',
-  'Abdominales',
-  'Cuádriceps',
-  'Isquiotibiales',
-  'Glúteos',
-  'Pantorrillas',
+/// Mapeo de keys canónicas Motor V3 → Labels UI en español
+class MuscleOption {
+  final String key; // Key canónica para el motor (p.ej. 'lats', 'upper_back')
+  final String label; // Label en español para UI
+
+  const MuscleOption(this.key, this.label);
+}
+
+/// Lista completa de músculos con keys canónicas V3 (14 músculos SSOT)
+const List<MuscleOption> allMuscles = [
+  MuscleOption('chest', 'Pecho'),
+  MuscleOption('lats', 'Dorsal ancho (Lats)'),
+  MuscleOption('upper_back', 'Espalda alta / Escápulas (Upper back)'),
+  MuscleOption('traps', 'Trapecios'),
+  MuscleOption('deltoide_anterior', 'Deltoide Anterior'),
+  MuscleOption('deltoide_lateral', 'Deltoide Lateral'),
+  MuscleOption('deltoide_posterior', 'Deltoide Posterior'),
+  MuscleOption('biceps', 'Bíceps'),
+  MuscleOption('triceps', 'Tríceps'),
+  MuscleOption('quads', 'Cuádriceps'),
+  MuscleOption('hamstrings', 'Isquiotibiales'),
+  MuscleOption('glutes', 'Glúteos'),
+  MuscleOption('calves', 'Pantorrillas'),
+  MuscleOption('abs', 'Abdominales'),
 ];
+
+/// Helper: Expand legacy 'back' → ['lats', 'upper_back', 'traps']
+/// Mantiene backward compatibility con datos viejos de entrevista.
+List<String> _expandLegacyKeys(List<String> keys) {
+  final expanded = <String>[];
+  for (final k in keys) {
+    if (k == 'back') {
+      // COMPAT LEGACY: back → lats/upper_back/traps
+      // Split científico por defecto:
+      // - lats: 45% (volumen principal)
+      // - upper_back: 35% (romboides, redondo menor)
+      // - traps: 20% (estabilización)
+      // Nota: UI no maneja % aún, solo expande a 3 keys.
+      expanded.addAll(['lats', 'upper_back', 'traps']);
+    } else {
+      expanded.add(k);
+    }
+  }
+  return expanded.toSet().toList(); // elimina duplicados
+}
 
 class MuscleSelectionGroup extends StatefulWidget {
   final List<String> primarySelection;
@@ -48,13 +78,14 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
   @override
   void initState() {
     super.initState();
-    _primary = List.from(widget.primarySelection);
-    _secondary = List.from(widget.secondarySelection);
-    _tertiary = List.from(widget.tertiarySelection);
+    // Expandir legacy keys si existen (p.ej. 'back' -> ['lats', 'upper_back', 'traps'])
+    _primary = _expandLegacyKeys(widget.primarySelection);
+    _secondary = _expandLegacyKeys(widget.secondarySelection);
+    _tertiary = _expandLegacyKeys(widget.tertiarySelection);
   }
 
   void _updateSelections(
-    String muscle,
+    String muscleKey,
     bool isSelected,
     List<String> currentList,
   ) {
@@ -62,22 +93,22 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
       if (isSelected) {
         // Remove from other lists first to ensure exclusivity.
         if (currentList != _primary) {
-          _primary.remove(muscle);
+          _primary.remove(muscleKey);
         }
         if (currentList != _secondary) {
-          _secondary.remove(muscle);
+          _secondary.remove(muscleKey);
         }
         if (currentList != _tertiary) {
-          _tertiary.remove(muscle);
+          _tertiary.remove(muscleKey);
         }
 
         // Then, add to the current list if it's not already there.
-        if (!currentList.contains(muscle)) {
-          currentList.add(muscle);
+        if (!currentList.contains(muscleKey)) {
+          currentList.add(muscleKey);
         }
       } else {
         // If deselected, just remove it from its current list.
-        currentList.remove(muscle);
+        currentList.remove(muscleKey);
       }
       widget.onUpdate(_primary, _secondary, _tertiary);
     });
@@ -85,43 +116,43 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
 
   @override
   Widget build(BuildContext context) {
-    // Músculos que no están seleccionados en NINGUNA lista.
-    final unselectedMuscles = allMuscles.where((m) {
-      return !_primary.contains(m) &&
-          !_secondary.contains(m) &&
-          !_tertiary.contains(m);
+    // Músculos (keys) que no están seleccionados en NINGUNA lista.
+    final unselectedMuscleKeys = allMuscles.map((m) => m.key).where((k) {
+      return !_primary.contains(k) &&
+          !_secondary.contains(k) &&
+          !_tertiary.contains(k);
     }).toList();
 
     // Las opciones para cada lista son sus propios elementos seleccionados MÁS los no seleccionados.
-    final primaryOptions = [..._primary, ...unselectedMuscles]..sort();
-    final secondaryOptions = [..._secondary, ...unselectedMuscles]..sort();
-    final tertiaryOptions = [..._tertiary, ...unselectedMuscles]..sort();
+    final primaryOptions = [..._primary, ...unselectedMuscleKeys];
+    final secondaryOptions = [..._secondary, ...unselectedMuscleKeys];
+    final tertiaryOptions = [..._tertiary, ...unselectedMuscleKeys];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _MuscleChecklist(
           title: 'Músculos Primarios',
-          allOptions: primaryOptions,
-          selectedOptions: _primary,
-          onChanged: (muscle, isSelected) =>
-              _updateSelections(muscle, isSelected, _primary),
+          allOptionKeys: primaryOptions,
+          selectedKeys: _primary,
+          onChanged: (muscleKey, isSelected) =>
+              _updateSelections(muscleKey, isSelected, _primary),
         ),
         const SizedBox(height: 24),
         _MuscleChecklist(
           title: 'Músculos Secundarios',
-          allOptions: secondaryOptions,
-          selectedOptions: _secondary,
-          onChanged: (muscle, isSelected) =>
-              _updateSelections(muscle, isSelected, _secondary),
+          allOptionKeys: secondaryOptions,
+          selectedKeys: _secondary,
+          onChanged: (muscleKey, isSelected) =>
+              _updateSelections(muscleKey, isSelected, _secondary),
         ),
         const SizedBox(height: 24),
         _MuscleChecklist(
           title: 'Músculos Terciarios',
-          allOptions: tertiaryOptions,
-          selectedOptions: _tertiary,
-          onChanged: (muscle, isSelected) =>
-              _updateSelections(muscle, isSelected, _tertiary),
+          allOptionKeys: tertiaryOptions,
+          selectedKeys: _tertiary,
+          onChanged: (muscleKey, isSelected) =>
+              _updateSelections(muscleKey, isSelected, _tertiary),
         ),
       ],
     );
@@ -130,19 +161,32 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
 
 class _MuscleChecklist extends StatelessWidget {
   final String title;
-  final List<String> allOptions;
-  final List<String> selectedOptions;
-  final Function(String, bool) onChanged;
+  final List<String> allOptionKeys; // Keys canónicas
+  final List<String> selectedKeys; // Keys seleccionadas
+  final Function(String, bool) onChanged; // (key, isSelected)
 
   const _MuscleChecklist({
     required this.title,
-    required this.allOptions,
-    required this.selectedOptions,
+    required this.allOptionKeys,
+    required this.selectedKeys,
     required this.onChanged,
   });
 
+  /// Helper: Obtiene el label en español para una key canónica
+  String _getLabelForKey(String key) {
+    final option = allMuscles.firstWhere(
+      (m) => m.key == key,
+      orElse: () => MuscleOption(key, key), // fallback: usa la key como label
+    );
+    return option.label;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Ordenar alfabéticamente por label (español)
+    final sortedKeys = List<String>.from(allOptionKeys)
+      ..sort((a, b) => _getLabelForKey(a).compareTo(_getLabelForKey(b)));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -156,12 +200,13 @@ class _MuscleChecklist extends StatelessWidget {
         Wrap(
           spacing: 8.0,
           runSpacing: 4.0,
-          children: allOptions.map((muscle) {
-            final isSelected = selectedOptions.contains(muscle);
+          children: sortedKeys.map((key) {
+            final isSelected = selectedKeys.contains(key);
+            final label = _getLabelForKey(key);
             return FilterChip(
-              label: Text(muscle),
+              label: Text(label),
               selected: isSelected,
-              onSelected: (selected) => onChanged(muscle, selected),
+              onSelected: (selected) => onChanged(key, selected),
               backgroundColor: kInputFillColor,
               selectedColor: kPrimaryColor.withAlpha(100),
               checkmarkColor: kTextColor,

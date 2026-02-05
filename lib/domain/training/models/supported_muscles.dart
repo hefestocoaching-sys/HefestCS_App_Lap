@@ -24,5 +24,27 @@ class SupportedMuscles {
     MuscleKeys.abs,
   ];
 
+  /// Mapeo de keys canónicas → Labels en español para UI
+  static const Map<String, String> displayLabels = {
+    MuscleKeys.chest: 'Pecho',
+    MuscleKeys.lats: 'Dorsal ancho (Lats)',
+    'upper_back': 'Espalda alta / Escápulas (Upper back)',
+    MuscleKeys.traps: 'Trapecios',
+    'deltoide_anterior': 'Deltoide Anterior',
+    'deltoide_lateral': 'Deltoide Lateral',
+    'deltoide_posterior': 'Deltoide Posterior',
+    MuscleKeys.biceps: 'Bíceps',
+    MuscleKeys.triceps: 'Tríceps',
+    MuscleKeys.quads: 'Cuádriceps',
+    MuscleKeys.hamstrings: 'Isquiotibiales',
+    MuscleKeys.glutes: 'Glúteos',
+    MuscleKeys.calves: 'Pantorrillas',
+    MuscleKeys.abs: 'Abdominales',
+  };
+
   static bool isSupported(String key) => keys.contains(key);
+
+  /// Obtiene el label en español para una key canónica
+  static String getDisplayLabel(String key) =>
+      displayLabels[key] ?? key.toUpperCase();
 }

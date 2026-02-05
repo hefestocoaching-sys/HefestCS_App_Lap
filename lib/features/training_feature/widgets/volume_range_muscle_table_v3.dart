@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/domain/training/models/supported_muscles.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Motor V3 - Tabla de volumen semanal por músculo
@@ -260,27 +261,8 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
     }
   }
 
-  /// Obtiene nombre legible del músculo
+  /// Obtiene nombre legible del músculo (usando SSOT)
   String _getMuscleName(String key) {
-    const names = {
-      'chest': 'Pecho',
-      'lats': 'Dorsales',
-      'upper_back': 'Espalda Alta',
-      'traps': 'Trapecios',
-      'deltoide_anterior': 'Deltoides Ant.',
-      'deltoide_lateral': 'Deltoides Lat.',
-      'deltoide_posterior': 'Deltoides Post.',
-      'biceps': 'Bíceps',
-      'triceps': 'Tríceps',
-      'quads': 'Cuádriceps',
-      'hamstrings': 'Isquios',
-      'glutes': 'Glúteos',
-      'calves': 'Gemelos',
-      'gastrocnemio': 'Gastrocnemio',
-      'soleo': 'Sóleo',
-      'abs': 'Abdomen',
-    };
-
-    return names[key] ?? key.toUpperCase();
+    return SupportedMuscles.getDisplayLabel(key);
   }
 }
