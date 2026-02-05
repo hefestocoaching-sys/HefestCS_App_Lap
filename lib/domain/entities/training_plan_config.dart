@@ -12,20 +12,20 @@ class TrainingPlanConfig extends Equatable {
   final String splitId;
   final int microcycleLengthInWeeks;
   final List<TrainingWeek> weeks;
-  
+
   /// @deprecated Usar volumePerMuscle, weeklyVolumeTarget, landmarks en su lugar
   final Map<String, dynamic>? state;
-  
+
   final TrainingProfile?
   trainingProfileSnapshot; // Foto del perfil al momento de crear el plan
 
   // ✨ PROPIEDADES TIPADAS MOTOR V3 (reemplazo de state['phase3'])
   /// Volumen por músculo (reemplaza state['phase3']['targetWeeklySetsByMuscle'])
   final Map<String, int>? volumePerMuscle;
-  
+
   /// Target de volumen semanal total (opcional)
   final int? weeklyVolumeTarget;
-  
+
   /// Hitos del plan (semana deload, etc.)
   final Map<String, dynamic>? landmarks;
 
@@ -143,16 +143,18 @@ class TrainingPlanConfig extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        clientId,
-        startDate,
-        phase,
-        splitId,
-        microcycleLengthInWeeks,
-        weeks,
-        state,
-        trainingProfileSnapshot,
-        volumePerMuscle,
-        weeklyVolumeTarget,
-        landmarks,
+    id,
+    name,
+    clientId,
+    startDate,
+    phase,
+    splitId,
+    microcycleLengthInWeeks,
+    weeks,
+    state,
+    trainingProfileSnapshot,
+    volumePerMuscle,
+    weeklyVolumeTarget,
+    landmarks,
+  ];
+}

@@ -1268,20 +1268,17 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
       );
 
-      // Obtener ID del plan
-      final planId = planConfig.id;
-
       // ═══════════════════════════════════════════════════════════════════════
       // 🔴 MOVIMIENTO 4: VALIDACIONES DURAS PRE-PERSISTENCIA (P0-BLOQUEANTE)
       // ═══════════════════════════════════════════════════════════════════════
-      
+
       debugPrint('🔒 [VALIDACIÓN P0] Validando plan antes de persistir...');
-      
+
       // ❌ Validación 1: weeks no puede estar vacío
       if (planConfig.weeks.isEmpty) {
         const errorMsg = 'CRÍTICO: Plan generado sin semanas (weeks.isEmpty)';
         debugPrint('❌ $errorMsg');
-        
+
         state = state.copyWith(
           isLoading: false,
           error: errorMsg,
@@ -1291,20 +1288,20 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
             'Contacta soporte si el problema persiste',
           ],
         );
-        
+
         throw StateError(errorMsg);
       }
-      
+
       debugPrint('  ✅ Validación weeks: ${planConfig.weeks.length} semanas');
-      
+
       // ❌ Validación 2: volumePerMuscle no puede estar vacío (Motor V3)
-      final volumePerMuscle = planConfig.volumePerMuscle ?? 
-                               planConfig.extra['volume_targets'] as Map<String, int>?;
-      
+      final volumePerMuscle = planConfig.volumePerMuscle;
+
       if (volumePerMuscle == null || volumePerMuscle.isEmpty) {
-        const errorMsg = 'CRÍTICO: Plan sin volumen por músculo (volumePerMuscle.isEmpty)';
+        const errorMsg =
+            'CRÍTICO: Plan sin volumen por músculo (volumePerMuscle.isEmpty)';
         debugPrint('❌ $errorMsg');
-        
+
         state = state.copyWith(
           isLoading: false,
           error: errorMsg,
@@ -1314,19 +1311,21 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
             'Configura al menos un músculo prioritario',
           ],
         );
-        
+
         throw StateError(errorMsg);
       }
-      
-      debugPrint('  ✅ Validación volumePerMuscle: ${volumePerMuscle.length} músculos');
-      
+
+      debugPrint(
+        '  ✅ Validación volumePerMuscle: ${volumePerMuscle.length} músculos',
+      );
+
       // ❌ Validación 3: split no puede ser null (Motor V3)
-      final split = planConfig.split ?? planConfig.extra['split'] as String?;
-      
-      if (split == null || split.isEmpty) {
+      final split = planConfig.splitId;
+
+      if (split.isEmpty) {
         const errorMsg = 'CRÍTICO: Plan sin split definido (split == null)';
         debugPrint('❌ $errorMsg');
-        
+
         state = state.copyWith(
           isLoading: false,
           error: errorMsg,
@@ -1336,13 +1335,15 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
             'El split debe ser fullBody, upperLower o pushPullLegs',
           ],
         );
-        
+
         throw StateError(errorMsg);
       }
-      
+
       debugPrint('  ✅ Validación split: $split');
-      debugPrint('✅ [VALIDACIÓN P0] Todas las validaciones pasaron. Plan válido para persistir.');
-      
+      debugPrint(
+        '✅ [VALIDACIÓN P0] Todas las validaciones pasaron. Plan válido para persistir.',
+      );
+
       // ═══════════════════════════════════════════════════════════════════════
       // CRÍTICO P0-BLOQUEANTE: Persistir plan en client.trainingPlans
       // ═══════════════════════════════════════════════════════════════════════

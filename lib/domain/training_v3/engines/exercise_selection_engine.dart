@@ -154,7 +154,7 @@ class ExerciseSelectionEngine {
   }
 
   /// Verifica si el ejercicio entrena el músculo objetivo
-  /// 
+  ///
   /// Soporta nombres compuestos:
   /// - 'deltoide anterior'/'deltoide frontal' → 'deltoide_anterior'
   /// - 'deltoide lateral' → 'deltoide_lateral'
@@ -169,46 +169,52 @@ class ExerciseSelectionEngine {
         (exercise['primary_muscles'] as List?)?.cast<String>() ?? [];
     final secondaryMuscles =
         (exercise['secondary_muscles'] as List?)?.cast<String>() ?? [];
-    
+
     // Normalizar músculo objetivo
     final normalizedTarget = _normalizeMuscleNameForExercise(muscle);
-    
+
     // Buscar coincidencias (directo o normalizado)
     for (final pm in primaryMuscles) {
       if (_muscleMatches(pm, normalizedTarget, muscle)) return true;
     }
-    
+
     for (final sm in secondaryMuscles) {
       if (_muscleMatches(sm, normalizedTarget, muscle)) return true;
     }
 
     return false;
   }
-  
+
   /// Verifica si un músculo del ejercicio coincide con el target
-  static bool _muscleMatches(String exerciseMuscle, String normalizedTarget, String originalTarget) {
+  static bool _muscleMatches(
+    String exerciseMuscle,
+    String normalizedTarget,
+    String originalTarget,
+  ) {
     // Comparación directa
-    if (exerciseMuscle == normalizedTarget || exerciseMuscle == originalTarget) {
+    if (exerciseMuscle == normalizedTarget ||
+        exerciseMuscle == originalTarget) {
       return true;
     }
-    
+
     // Normalizar el músculo del ejercicio también
     final normalizedExercise = _normalizeMuscleNameForExercise(exerciseMuscle);
     if (normalizedExercise == normalizedTarget) {
       return true;
     }
-    
+
     // Coincidencia parcial para grupos musculares compuestos
     // Ej: ejercicio='deltoide_anterior', target='deltoids' → true
-    if (exerciseMuscle.contains(normalizedTarget) || normalizedTarget.contains(exerciseMuscle)) {
+    if (exerciseMuscle.contains(normalizedTarget) ||
+        normalizedTarget.contains(exerciseMuscle)) {
       return true;
     }
-    
+
     return false;
   }
-  
+
   /// Normaliza nombres de músculos a formato canónico
-  /// 
+  ///
   /// MAPEO COMPLETO:
   /// - 'deltoide frontal', 'deltoide anterior' → 'deltoide_anterior'
   /// - 'deltoide lateral', 'deltoide medio' → 'deltoide_lateral'
@@ -218,97 +224,120 @@ class ExerciseSelectionEngine {
   /// - Nombres en español → inglés canónico
   static String _normalizeMuscleNameForExercise(String muscle) {
     final normalized = muscle.toLowerCase().trim();
-    
+
     // === DELTOIDE COMPUESTO (3 porciones) ===
     if (normalized.contains('deltoide')) {
-      if (normalized.contains('anterior') || normalized.contains('frontal') || normalized.contains('front')) {
+      if (normalized.contains('anterior') ||
+          normalized.contains('frontal') ||
+          normalized.contains('front')) {
         return 'deltoide_anterior';
       }
-      if (normalized.contains('lateral') || normalized.contains('medio') || normalized.contains('lateral')) {
+      if (normalized.contains('lateral') ||
+          normalized.contains('medio') ||
+          normalized.contains('lateral')) {
         return 'deltoide_lateral';
       }
-      if (normalized.contains('posterior') || normalized.contains('trasero') || normalized.contains('rear')) {
+      if (normalized.contains('posterior') ||
+          normalized.contains('trasero') ||
+          normalized.contains('rear')) {
         return 'deltoide_posterior';
       }
       // Genérico 'deltoide' → 'deltoids' (padre)
       return 'deltoids';
     }
-    
+
     if (normalized.contains('shoulder') || normalized.contains('hombro')) {
-      if (normalized.contains('front') || normalized.contains('anterior') || normalized.contains('frontal')) {
+      if (normalized.contains('front') ||
+          normalized.contains('anterior') ||
+          normalized.contains('frontal')) {
         return 'deltoide_anterior';
       }
-      if (normalized.contains('lateral') || normalized.contains('side') || normalized.contains('medio')) {
+      if (normalized.contains('lateral') ||
+          normalized.contains('side') ||
+          normalized.contains('medio')) {
         return 'deltoide_lateral';
       }
-      if (normalized.contains('rear') || normalized.contains('posterior') || normalized.contains('trasero')) {
+      if (normalized.contains('rear') ||
+          normalized.contains('posterior') ||
+          normalized.contains('trasero')) {
         return 'deltoide_posterior';
       }
       return 'deltoids';
     }
-    
+
     // === PECTORAL COMPUESTO ===
-    if (normalized.contains('pectoral') || normalized.contains('pecho') || normalized.contains('chest')) {
-      if (normalized.contains('superior') || normalized.contains('upper') || normalized.contains('clavicular')) {
+    if (normalized.contains('pectoral') ||
+        normalized.contains('pecho') ||
+        normalized.contains('chest')) {
+      if (normalized.contains('superior') ||
+          normalized.contains('upper') ||
+          normalized.contains('clavicular')) {
         return 'chest'; // Mapear a grupo padre por ahora
       }
       return 'chest';
     }
-    
+
     // === TRAPECIO COMPUESTO ===
     if (normalized.contains('trapecio') || normalized.contains('trap')) {
       // Todas las porciones → 'traps' (padre)
       return 'traps';
     }
-    
+
     // === ESPALDA ===
     if (normalized.contains('dorsal') || normalized.contains('lat')) {
       return 'lats';
     }
-    
-    if (normalized.contains('espalda alta') || normalized.contains('upper back')) {
+
+    if (normalized.contains('espalda alta') ||
+        normalized.contains('upper back')) {
       return 'upper_back';
     }
-    
+
     // === PIERNAS ===
     if (normalized.contains('cuadriceps') || normalized.contains('quad')) {
       return 'quads';
     }
-    
+
     if (normalized.contains('femoral') || normalized.contains('hamstring')) {
       return 'hamstrings';
     }
-    
+
     if (normalized.contains('gluteo') || normalized.contains('glute')) {
       return 'glutes';
     }
-    
-    if (normalized.contains('pantorrilla') || normalized.contains('calf') || normalized.contains('calve')) {
+
+    if (normalized.contains('pantorrilla') ||
+        normalized.contains('calf') ||
+        normalized.contains('calve')) {
       return 'calves';
     }
-    
+
     // === BRAZOS ===
     if (normalized.contains('bicep') || normalized.contains('bícep')) {
       return 'biceps';
     }
-    
+
     if (normalized.contains('tricep') || normalized.contains('trícep')) {
       return 'triceps';
     }
-    
+
     // === CORE ===
-    if (normalized.contains('abdomen') || normalized.contains('abs') || normalized.contains('core')) {
+    if (normalized.contains('abdomen') ||
+        normalized.contains('abs') ||
+        normalized.contains('core')) {
       return 'abs';
     }
-    
+
     // Si no se reconoce, registrar warning y mapear a grupo genérico si es posible
     if (!_isCanonicalMuscle(normalized)) {
-      debugPrint('⚠️ [ExerciseSelection] Músculo no reconocido: "$muscle" → usando nombre original');
+      debugPrint(
+        '⚠️ [ExerciseSelection] Músculo no reconocido: "$muscle" → usando nombre original',
+      );
     }
-    
+
     return normalized;
   }
-  
+
   /// Verifica si el músculo está en la lista de 14 canónicos
   static bool _isCanonicalMuscle(String muscle) {
     const canonicalMuscles = {
@@ -319,7 +348,7 @@ class ExerciseSelectionEngine {
       'quads', 'hamstrings', 'glutes', 'calves',
       'abs',
     };
-    
+
     return canonicalMuscles.contains(muscle);
   }
 
