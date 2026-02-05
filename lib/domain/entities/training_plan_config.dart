@@ -12,9 +12,22 @@ class TrainingPlanConfig extends Equatable {
   final String splitId;
   final int microcycleLengthInWeeks;
   final List<TrainingWeek> weeks;
+  
+  /// @deprecated Usar volumePerMuscle, weeklyVolumeTarget, landmarks en su lugar
   final Map<String, dynamic>? state;
+  
   final TrainingProfile?
   trainingProfileSnapshot; // Foto del perfil al momento de crear el plan
+
+  // ✨ PROPIEDADES TIPADAS MOTOR V3 (reemplazo de state['phase3'])
+  /// Volumen por músculo (reemplaza state['phase3']['targetWeeklySetsByMuscle'])
+  final Map<String, int>? volumePerMuscle;
+  
+  /// Target de volumen semanal total (opcional)
+  final int? weeklyVolumeTarget;
+  
+  /// Hitos del plan (semana deload, etc.)
+  final Map<String, dynamic>? landmarks;
 
   const TrainingPlanConfig({
     required this.id,
@@ -27,6 +40,9 @@ class TrainingPlanConfig extends Equatable {
     required this.weeks,
     this.state,
     this.trainingProfileSnapshot,
+    this.volumePerMuscle,
+    this.weeklyVolumeTarget,
+    this.landmarks,
   });
 
   // --- SERIALIZACIÓN (Lo que faltaba) ---
@@ -43,6 +59,9 @@ class TrainingPlanConfig extends Equatable {
       'weeks': weeks.map((x) => x.toJson()).toList(),
       'state': state,
       'trainingProfileSnapshot': trainingProfileSnapshot?.toJson(),
+      'volumePerMuscle': volumePerMuscle,
+      'weeklyVolumeTarget': weeklyVolumeTarget,
+      'landmarks': landmarks,
     };
   }
 
@@ -71,6 +90,13 @@ class TrainingPlanConfig extends Equatable {
               map['trainingProfileSnapshot'] as Map<String, dynamic>,
             )
           : null,
+      volumePerMuscle: map['volumePerMuscle'] != null
+          ? Map<String, int>.from(map['volumePerMuscle'])
+          : null,
+      weeklyVolumeTarget: map['weeklyVolumeTarget'] as int?,
+      landmarks: map['landmarks'] != null
+          ? Map<String, dynamic>.from(map['landmarks'])
+          : null,
     );
   }
 
@@ -92,6 +118,9 @@ class TrainingPlanConfig extends Equatable {
     List<TrainingWeek>? weeks,
     Map<String, dynamic>? state,
     TrainingProfile? trainingProfileSnapshot,
+    Map<String, int>? volumePerMuscle,
+    int? weeklyVolumeTarget,
+    Map<String, dynamic>? landmarks,
   }) {
     return TrainingPlanConfig(
       id: id ?? this.id,
@@ -106,20 +135,24 @@ class TrainingPlanConfig extends Equatable {
       state: state ?? this.state,
       trainingProfileSnapshot:
           trainingProfileSnapshot ?? this.trainingProfileSnapshot,
+      volumePerMuscle: volumePerMuscle ?? this.volumePerMuscle,
+      weeklyVolumeTarget: weeklyVolumeTarget ?? this.weeklyVolumeTarget,
+      landmarks: landmarks ?? this.landmarks,
     );
   }
 
   @override
   List<Object?> get props => [
-    id,
-    name,
-    clientId,
-    startDate,
-    phase,
-    splitId,
-    microcycleLengthInWeeks,
-    weeks,
-    state,
-    trainingProfileSnapshot,
-  ];
-}
+        id,
+        name,
+        clientId,
+        startDate,
+        phase,
+        splitId,
+        microcycleLengthInWeeks,
+        weeks,
+        state,
+        trainingProfileSnapshot,
+        volumePerMuscle,
+        weeklyVolumeTarget,
+        landmarks,

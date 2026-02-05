@@ -477,7 +477,7 @@ class MotorV3Orchestrator {
         : 'client_unknown';
 
     // ═══════════════════════════════════════════════════════════════════
-    // PASO 7: Construir TrainingPlanConfig completo
+    // PASO 7: Construir TrainingPlanConfig completo con propiedades tipadas
     // ═══════════════════════════════════════════════════════════════════
     return TrainingPlanConfig(
       id: 'plan_${clientId}_${asOfDate.millisecondsSinceEpoch}',
@@ -485,6 +485,13 @@ class MotorV3Orchestrator {
       startDate: asOfDate,
       weeks: weeks,
       createdAt: DateTime.now(),
+
+      // ✅ PROPIEDADES TIPADAS (reemplazo de extra)
+      volumePerMuscle: volumeTargets,
+      phase: phase.name,
+      split: split,
+
+      // Mantener extra para compatibilidad legacy (deprecado)
       extra: {
         'generated_by': 'motor_v3_scientific',
         'strategy': 'v3_orchestrator',
@@ -492,7 +499,7 @@ class MotorV3Orchestrator {
         'split': split,
         'duration_weeks': durationWeeks,
         'volume_targets': volumeTargets,
-        'scientific_version': '1.0.0',
+        'scientific_version': '2.0.0',
         'periodization_model': 'linear_progressive',
       },
     );
@@ -504,6 +511,11 @@ class MotorV3Orchestrator {
   /// - 1.0 = volumen base
   /// - >1.0 = incremento de volumen (accumulation)
   /// - <1.0 = reducción de volumen (intensification/deload)
+  ///
+  /// IMPLEMENTACIÓN CIENTÍFICA:
+  /// - fullBody → 3 días (todas las sesiones entrenan todos los músculos)
+  /// - upperLower → 4 días (upper, lower, upper, lower)
+  /// - pushPullLegs → 6 días (push, pull, legs, push, pull, legs)
   static List<dynamic> _buildWeekSessions({
     required int weekNum,
     required String split,
@@ -515,8 +527,16 @@ class MotorV3Orchestrator {
   }) {
     final sessions = <dynamic>[];
 
-    if (split == 'fullBody' || split == 'Full Body') {
-      // 3 sesiones full body
+    // Normalizar nombre del split (soportar múltiples formatos)
+    final normalizedSplit = split
+        .toLowerCase()
+        .replaceAll('/', '')
+        .replaceAll(' ', '')
+        .replaceAll('_', '');
+
+    if (normalizedSplit.contains('fullbody') ||
+        normalizedSplit == 'full_body_3x') {
+      // ✅ FULL BODY → 3 sesiones (cada sesión entrena todos los músculos)
       for (int sessionNum = 1; sessionNum <= 3; sessionNum++) {
         sessions.add(
           _buildFullBodySession(
@@ -528,8 +548,9 @@ class MotorV3Orchestrator {
           ),
         );
       }
-    } else if (split == 'upperLower' || split == 'Upper/Lower') {
-      // 2 upper, 2 lower
+    } else if (normalizedSplit.contains('upperlower') ||
+        normalizedSplit == 'upper_lower_4x') {
+      // ✅ UPPER/LOWER → 4 sesiones (upper, lower, upper, lower)
       for (int i = 0; i < 4; i++) {
         final isUpper = i % 2 == 0;
         sessions.add(
@@ -543,12 +564,15 @@ class MotorV3Orchestrator {
           ),
         );
       }
-    } else if (split == 'pushPullLegs' || split == 'Push/Pull/Legs') {
-      // PPL
-      for (int i = 1; i <= 3; i++) {
+    } else if (normalizedSplit.contains('pushpulllegs') ||
+        normalizedSplit == 'ppl_6x') {
+      // ✅ PUSH/PULL/LEGS → 6 sesiones (push, pull, legs x2)
+      final cycle = ['push', 'pull', 'legs'];
+      for (int i = 0; i < 6; i++) {
+        final type = cycle[i % 3];
         sessions.add(
           _buildPPLSession(
-            type: i == 1 ? 'push' : (i == 2 ? 'pull' : 'legs'),
+            type: type,
             weekNum: weekNum,
             exerciseSelections: exerciseSelections,
             intensityDistribution: intensityDistribution,
@@ -557,19 +581,23 @@ class MotorV3Orchestrator {
         );
       }
     } else {
-      // Default: full body
-      for (int sessionNum = 1; sessionNum <= 3; sessionNum++) {
-        sessions.add(
-          _buildFullBodySession(
-            sessionNum: sessionNum,
-            weekNum: weekNum,
-            exerciseSelections: exerciseSelections,
-            intensityDistribution: intensityDistribution,
-            rirAssignments: rirAssignments,
-          ),
-        );
-      }
+      // ❌ Split no reconocido → FORZAR ERROR
+      throw StateError(
+        'Split no soportado: "$split". '
+        'Los splits válidos son: fullBody, upperLower, pushPullLegs. '
+        'NO SE PUEDE GENERAR un plan sin materializar sesiones.',
+      );
     }
+
+    // ✅ VALIDACIÓN CRÍTICA: NO retornar lista vacía
+    if (sessions.isEmpty) {
+      throw StateError(
+        'CRÍTICO: No se generaron sesiones para split "$split". '
+        'Esto es un error de implementación.',
+      );
+    }
+
+    debugPrint('✅ Sesiones generadas: ${sessions.length} para split "$split"');
 
     return sessions;
   }

@@ -1272,6 +1272,78 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final planId = planConfig.id;
 
       // ═══════════════════════════════════════════════════════════════════════
+      // 🔴 MOVIMIENTO 4: VALIDACIONES DURAS PRE-PERSISTENCIA (P0-BLOQUEANTE)
+      // ═══════════════════════════════════════════════════════════════════════
+      
+      debugPrint('🔒 [VALIDACIÓN P0] Validando plan antes de persistir...');
+      
+      // ❌ Validación 1: weeks no puede estar vacío
+      if (planConfig.weeks.isEmpty) {
+        const errorMsg = 'CRÍTICO: Plan generado sin semanas (weeks.isEmpty)';
+        debugPrint('❌ $errorMsg');
+        
+        state = state.copyWith(
+          isLoading: false,
+          error: errorMsg,
+          blockReason: 'Plan inválido: 0 semanas generadas',
+          suggestions: const [
+            'Verifica que el split esté configurado correctamente',
+            'Contacta soporte si el problema persiste',
+          ],
+        );
+        
+        throw StateError(errorMsg);
+      }
+      
+      debugPrint('  ✅ Validación weeks: ${planConfig.weeks.length} semanas');
+      
+      // ❌ Validación 2: volumePerMuscle no puede estar vacío (Motor V3)
+      final volumePerMuscle = planConfig.volumePerMuscle ?? 
+                               planConfig.extra['volume_targets'] as Map<String, int>?;
+      
+      if (volumePerMuscle == null || volumePerMuscle.isEmpty) {
+        const errorMsg = 'CRÍTICO: Plan sin volumen por músculo (volumePerMuscle.isEmpty)';
+        debugPrint('❌ $errorMsg');
+        
+        state = state.copyWith(
+          isLoading: false,
+          error: errorMsg,
+          blockReason: 'Plan inválido: Sin distribución de volumen',
+          suggestions: const [
+            'Verifica las prioridades musculares',
+            'Configura al menos un músculo prioritario',
+          ],
+        );
+        
+        throw StateError(errorMsg);
+      }
+      
+      debugPrint('  ✅ Validación volumePerMuscle: ${volumePerMuscle.length} músculos');
+      
+      // ❌ Validación 3: split no puede ser null (Motor V3)
+      final split = planConfig.split ?? planConfig.extra['split'] as String?;
+      
+      if (split == null || split.isEmpty) {
+        const errorMsg = 'CRÍTICO: Plan sin split definido (split == null)';
+        debugPrint('❌ $errorMsg');
+        
+        state = state.copyWith(
+          isLoading: false,
+          error: errorMsg,
+          blockReason: 'Plan inválido: Split no determinado',
+          suggestions: const [
+            'Verifica días disponibles de entrenamiento',
+            'El split debe ser fullBody, upperLower o pushPullLegs',
+          ],
+        );
+        
+        throw StateError(errorMsg);
+      }
+      
+      debugPrint('  ✅ Validación split: $split');
+      debugPrint('✅ [VALIDACIÓN P0] Todas las validaciones pasaron. Plan válido para persistir.');
+      
+      // ═══════════════════════════════════════════════════════════════════════
       // CRÍTICO P0-BLOQUEANTE: Persistir plan en client.trainingPlans
       // ═══════════════════════════════════════════════════════════════════════
 

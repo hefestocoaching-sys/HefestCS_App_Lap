@@ -14,6 +14,9 @@ import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 
 /// Orquestador Híbrido del Motor V3
 ///
+/// @deprecated Este orquestador ha sido reemplazado por MotorV3Orchestrator directo.
+/// No debe usarse en flujos de producción.
+///
 /// Combina generación científica pura + refinamientos ML:
 ///
 /// PIPELINE COMPLETO:
@@ -23,7 +26,8 @@ import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 /// 4. PredictionRecorderV3 → Registra para aprendizaje
 /// 5. Retorna programa final + metadata completa
 ///
-/// Versión: 1.0.0
+/// Versión: 1.0.0 (DEPRECADO)
+@Deprecated('Usar MotorV3Orchestrator directamente')
 class HybridOrchestratorV3 {
   final MLConfigV3 config;
   final MotorV3MLAdapter _mlAdapter;

@@ -8,28 +8,26 @@ import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrator_v3.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 // DecisionTrace is defined in training_program_v3_result.dart, already imported above
 
 /// Orquestador principal del Motor V3
 ///
-/// Envuelve HybridOrchestratorV3 para proporcionar una interfaz simplificada
-/// que retorna resultados tipados (TrainingProgramV3Result) en lugar de Maps.
+/// Proporciona una interfaz simplificada que retorna resultados tipados
+/// (TrainingProgramV3Result) en lugar de Maps.
 ///
 /// RESPONSABILIDADES:
 /// 1. Convertir Client → UserProfile
-/// 2. Delegar generación a HybridOrchestratorV3
+/// 2. Delegar generación a MotorV3Orchestrator (científico puro)
 /// 3. Convertir Map → TrainingProgramV3Result
 /// 4. Proporcionar interfaz clara para el provider
 ///
 /// ARQUITECTURA:
 /// - TrainingOrchestratorV3 (este archivo): API pública
-/// - HybridOrchestratorV3: Implementación del pipeline científico + ML
-/// - MotorV3Orchestrator: Generación científica pura
+/// - MotorV3Orchestrator: Generación científica pura (VME/MAV/MRV)
 ///
-/// Versión: 1.0.0
+/// Versión: 2.0.0 - Sin HybridOrchestratorV3
 class TrainingOrchestratorV3 {
   // ════════════════════════════════════════════════════════════════
   // CONFIGURACIÓN POR DEFECTO
@@ -68,25 +66,13 @@ class TrainingOrchestratorV3 {
   // MIEMBROS DE INSTANCIA
   // ════════════════════════════════════════════════════════════════
 
-  /// Estrategia de decisión a utilizar
+  /// Estrategia de decisión a utilizar (deprecada, se mantiene por compatibilidad)
   final DecisionStrategy strategy;
-
-  /// Si se deben registrar predicciones ML
-  final bool recordPredictions;
-
-  /// Orquestador híbrido interno
-  late final HybridOrchestratorV3 _hybridOrchestrator;
 
   TrainingOrchestratorV3({
     required this.strategy,
-    this.recordPredictions = false,
-  }) {
-    // Crear configuración ML basada en estrategia
-    final config = MLConfigV3(enablePredictionLogging: recordPredictions);
-
-    // Inicializar orquestador híbrido
-    _hybridOrchestrator = HybridOrchestratorV3(config: config);
-  }
+    bool recordPredictions = false, // Ignorado en v2.0.0
+  });
 
   /// Genera plan de entrenamiento completo
   ///
@@ -140,7 +126,7 @@ class TrainingOrchestratorV3 {
       final userProfile = _convertClientToUserProfile(client);
 
       // ═══════════════════════════════════════════════════════════════
-      // PASO 3: DELEGAR A HybridOrchestratorV3
+      // PASO 3: DELEGAR A MotorV3Orchestrator (CIENTÍFICO PURO)
       // ═══════════════════════════════════════════════════════════════
 
       // Determinar fase y duración
@@ -149,10 +135,12 @@ class TrainingOrchestratorV3 {
       final phase = _defaultPhase;
       final durationWeeks = _defaultDurationWeeks;
 
-      final result = await _hybridOrchestrator.generateHybridProgram(
+      final result = await MotorV3Orchestrator.generateProgram(
         userProfile: userProfile,
         phase: phase,
         durationWeeks: durationWeeks,
+        client: client,
+        exercises: exercises,
       );
 
       // ═══════════════════════════════════════════════════════════════
@@ -464,21 +452,20 @@ class TrainingOrchestratorV3 {
   }
 
   /// Registra el resultado de un programa completado
+  @Deprecated('ML features removidos en v2.0.0')
   Future<void> recordProgramOutcome({
     required String predictionId,
     required dynamic completedLogs,
     bool injuryOccurred = false,
   }) async {
-    // Delegar a HybridOrchestratorV3
-    await _hybridOrchestrator.recordProgramOutcome(
-      predictionId: predictionId,
-      completedLogs: completedLogs,
-      injuryOccurred: injuryOccurred,
-    );
+    // No-op: ML features removidos
+    debugPrint('⚠️  recordProgramOutcome deprecado');
   }
 
   /// Obtiene precisión del sistema ML
+  @Deprecated('ML features removidos en v2.0.0')
   Future<Map<String, dynamic>> getMLAccuracy({required String userId}) async {
-    return await _hybridOrchestrator.getMLAccuracy(userId: userId);
+    debugPrint('⚠️  getMLAccuracy deprecado');
+    return {'accuracy': 0.0, 'deprecado': true};
   }
 }
