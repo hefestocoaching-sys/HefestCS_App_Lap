@@ -92,8 +92,6 @@ export 'training/vop_snapshot.dart';
 export 'training_engine/phases/phase4_priority_cap_service.dart';
 
 // Training V3 - Motor Nuevo
-export 'training_v3/services/motor_v3_orchestrator.dart';
-export 'training_v3/ml_integration/hybrid_orchestrator_v3.dart';
-export 'training_v3/ml_integration/ml_config_v3.dart';
+export 'training_v3/services/motor_v3_orchestrator.dart' hide TrainingSplit;
 export 'training_v3/converters/v3_to_v2_converter.dart';
 export 'entities/training_plan.dart';

@@ -1211,7 +1211,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final vopContext = VopContext.ensure(workingClient.training.extra);
       final vopMap = vopContext?.snapshot.setsByMuscle ?? {};
 
-      // 4. Ejecutar Motor V3 (HybridOrchestratorV3)
+      // 4. Ejecutar Motor V3 (MotorV3Orchestrator)
       debugPrint(
         '🚀 [Motor V3] Regenerando plan con pipeline científico — timestamp: ${DateTime.now()}',
       );

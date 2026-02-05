@@ -1,8 +1,6 @@
 // lib/presentation/providers/domain/training_providers.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrator_v3.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 
@@ -13,18 +11,6 @@ import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 /// Motor V3 Orchestrator (científico puro)
 final motorV3OrchestratorProvider = Provider<MotorV3Orchestrator>((ref) {
   return MotorV3Orchestrator();
-});
-
-/// Hybrid Orchestrator V3 (científico + ML)
-final hybridOrchestratorV3Provider = Provider<HybridOrchestratorV3>((ref) {
-  return HybridOrchestratorV3(
-    config: MLConfigV3.hybrid(), // 70% reglas + 30% ML
-  );
-});
-
-/// Configuración ML
-final mlConfigProvider = Provider<MLConfigV3>((ref) {
-  return MLConfigV3.hybrid();
 });
 
 // ═══════════════════════════════════════════════════
@@ -91,30 +77,17 @@ Future<void> generateProgramV3({
   required UserProfile userProfile,
   required String phase,
   required int durationWeeks,
-  bool useML = true,
 }) async {
   // Set loading
   ref.read(programGenerationStateProvider.notifier).setLoading();
 
   try {
-    Map<String, dynamic> result;
-
-    if (useML) {
-      // Usar orquestador híbrido (científico + ML)
-      final orchestrator = ref.read(hybridOrchestratorV3Provider);
-      result = await orchestrator.generateHybridProgram(
-        userProfile: userProfile,
-        phase: phase,
-        durationWeeks: durationWeeks,
-      );
-    } else {
-      // Usar orquestador científico puro (método estático)
-      result = await MotorV3Orchestrator.generateProgram(
-        userProfile: userProfile,
-        phase: phase,
-        durationWeeks: durationWeeks,
-      );
-    }
+    // Usar orquestador científico puro (método estático)
+    final result = await MotorV3Orchestrator.generateProgram(
+      userProfile: userProfile,
+      phase: phase,
+      durationWeeks: durationWeeks,
+    );
 
     // Set success
     ref.read(programGenerationStateProvider.notifier).setSuccess(result);

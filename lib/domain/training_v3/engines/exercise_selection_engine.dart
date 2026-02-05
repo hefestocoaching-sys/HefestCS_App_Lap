@@ -357,8 +357,23 @@ class ExerciseSelectionEngine {
     Map<String, dynamic> exercise,
     List<String> available,
   ) {
-    final required = (exercise['equipment'] as List?)?.cast<String>() ?? [];
+    final required = _normalizeEquipment(exercise['equipment']);
+    if (required.isEmpty) return true;
     return required.every((eq) => available.contains(eq));
+  }
+
+  static List<String> _normalizeEquipment(dynamic value) {
+    if (value is List) {
+      return value
+          .map((e) => e?.toString() ?? '')
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    if (value is String) {
+      final normalized = value.trim();
+      return normalized.isEmpty ? const <String>[] : <String>[normalized];
+    }
+    return const <String>[];
   }
 
   /// Verifica si el ejercicio está contraindicado por lesión

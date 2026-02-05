@@ -2048,7 +2048,6 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
       userProfile: userProfile,
       phase: 'accumulation',
       durationWeeks: 4,
-      useML: true,
     );
   }
 }

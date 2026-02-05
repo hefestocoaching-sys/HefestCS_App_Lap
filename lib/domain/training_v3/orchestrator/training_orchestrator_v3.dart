@@ -1,13 +1,23 @@
 // lib/domain/training_v3/orchestrator/training_orchestrator_v3.dart
 
 import 'package:flutter/foundation.dart';
-import 'package:hcs_app_lap/core/enums/training_phase.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/core/enums/training_phase.dart';
+import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/domain/entities/training_week.dart' as v2;
+import 'package:hcs_app_lap/domain/entities/training_session.dart' as v2;
+import 'package:hcs_app_lap/domain/entities/exercise_prescription.dart' as v2;
+import 'package:hcs_app_lap/domain/entities/rep_range.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart'
+    as v3;
+import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart' as v3;
+import 'package:hcs_app_lap/domain/training_v3/models/training_session.dart'
+    as v3;
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 // DecisionTrace is defined in training_program_v3_result.dart, already imported above
@@ -20,7 +30,7 @@ import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 /// RESPONSABILIDADES:
 /// 1. Convertir Client → UserProfile
 /// 2. Delegar generación a MotorV3Orchestrator (científico puro)
-/// 3. Convertir Map → TrainingProgramV3Result
+/// 3. Convertir resultado V3 → TrainingProgramV3Result
 /// 4. Proporcionar interfaz clara para el provider
 ///
 /// ARQUITECTURA:
@@ -88,78 +98,96 @@ class TrainingOrchestratorV3 {
   /// FLUJO:
   /// 1. Validar inputs
   /// 2. Convertir Client → UserProfile
-  /// 3. Delegar a HybridOrchestratorV3
-  /// 4. Convertir Map → TrainingProgramV3Result
+  /// 3. Delegar a MotorV3Orchestrator
+  /// 4. Convertir resultado V3 → TrainingProgramV3Result
   Future<TrainingProgramV3Result> generatePlan({
     required Client client,
     required List<Exercise> exercises,
     required DateTime asOfDate,
     bool recordPrediction = false,
   }) async {
-    try {
-      // ═══════════════════════════════════════════════════════════════
-      // PASO 1: VALIDACIÓN DE INPUTS
-      // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 1: VALIDACIÓN DE INPUTS
+    // ═══════════════════════════════════════════════════════════════
 
-      // Validar que el cliente tenga datos mínimos
-      final age = client.training.age ?? client.profile.age;
-      final gender = client.training.gender ?? client.profile.gender;
+    // Validar que el cliente tenga datos mínimos
+    final age = client.training.age ?? client.profile.age;
+    final gender = client.training.gender ?? client.profile.gender;
 
-      if (age == null) {
-        return TrainingProgramV3Result.blocked(
-          reason: 'Edad no disponible',
-          suggestions: ['Completa la edad en Personal Data'],
-        );
-      }
-
-      if (gender == null) {
-        return TrainingProgramV3Result.blocked(
-          reason: 'Género no disponible',
-          suggestions: ['Completa el género en Personal Data'],
-        );
-      }
-
-      // ═══════════════════════════════════════════════════════════════
-      // PASO 2: CONVERTIR Client → UserProfile
-      // ═══════════════════════════════════════════════════════════════
-
-      final userProfile = _convertClientToUserProfile(client);
-
-      // ═══════════════════════════════════════════════════════════════
-      // PASO 3: DELEGAR A MotorV3Orchestrator (CIENTÍFICO PURO)
-      // ═══════════════════════════════════════════════════════════════
-
-      // Determinar fase y duración
-      // Nota: Por ahora usamos valores por defecto definidos en constantes.
-      // Estos deberían reemplazarse con valores del ciclo activo del cliente.
-      final phase = _defaultPhase;
-      final durationWeeks = _defaultDurationWeeks;
-
-      final result = await MotorV3Orchestrator.generateProgram(
-        userProfile: userProfile,
-        phase: phase,
-        durationWeeks: durationWeeks,
-        client: client,
-        exercises: exercises,
-      );
-
-      // ═══════════════════════════════════════════════════════════════
-      // PASO 4: CONVERTIR Map → TrainingProgramV3Result
-      // ═══════════════════════════════════════════════════════════════
-
-      return _convertMapToResult(result, client, asOfDate);
-    } catch (e, stackTrace) {
-      debugPrint('❌ [TrainingOrchestratorV3] Error generando plan: $e');
-      debugPrint('Stack trace: $stackTrace');
-
+    if (age == null) {
       return TrainingProgramV3Result.blocked(
-        reason: 'Error técnico: ${e.toString()}',
-        suggestions: [
-          'Verifica que los datos del perfil estén completos',
-          'Intenta nuevamente',
-        ],
+        reason: 'Edad no disponible',
+        suggestions: ['Completa la edad en Personal Data'],
       );
     }
+
+    if (gender == null) {
+      return TrainingProgramV3Result.blocked(
+        reason: 'Género no disponible',
+        suggestions: ['Completa el género en Personal Data'],
+      );
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 2: CONVERTIR Client → UserProfile
+    // ═══════════════════════════════════════════════════════════════
+
+    final userProfile = _convertClientToUserProfile(client);
+
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 3: DELEGAR A MotorV3Orchestrator (CIENTÍFICO PURO)
+    // ═══════════════════════════════════════════════════════════════
+
+    // Determinar fase y duración
+    // Nota: Por ahora usamos valores por defecto definidos en constantes.
+    // Estos deberían reemplazarse con valores del ciclo activo del cliente.
+    final phase = _defaultPhase;
+    final durationWeeks = _defaultDurationWeeks;
+
+    debugPrint('🎯 [TrainingOrchestratorV3] Delegando a MotorV3Orchestrator:');
+    debugPrint('   - phase: $phase');
+    debugPrint('   - durationWeeks: $durationWeeks');
+    debugPrint('   - userProfile.id: ${userProfile.id}');
+
+    final splitId =
+        client.training.extra['splitId'] as String? ??
+        client.training.extra['split'] as String?;
+    final trainingDaysPerWeek = _parseInt(
+      client.training.extra['trainingDaysPerWeek'] ??
+          client.training.extra['daysPerWeek'],
+    );
+
+    final result = await MotorV3Orchestrator.generateProgram(
+      userProfile: userProfile,
+      phase: phase,
+      durationWeeks: durationWeeks,
+      splitId: splitId,
+      trainingDaysPerWeek: trainingDaysPerWeek,
+      client: client,
+      exercises: exercises,
+    );
+
+    debugPrint('✅ [TrainingOrchestratorV3] MotorV3Orchestrator completado');
+    debugPrint('   - success: ${result['success']}');
+    debugPrint('   - planConfig: ${result['planConfig'] != null}');
+
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 4: CONVERTIR Resultado V3 → TrainingProgramV3Result
+    // ═══════════════════════════════════════════════════════════════
+
+    final converted = _convertMapToResult(result, client, asOfDate);
+
+    if (!converted.isBlocked) {
+      final plan = converted.plan;
+      if (plan == null) {
+        throw StateError('Resultado V3 sin plan (plan == null)');
+      }
+      if (plan.weeks.isEmpty) {
+        throw StateError('Plan generado sin semanas (weeks.isEmpty)');
+      }
+    }
+
+    return converted;
   }
 
   /// Convierte Client (entidad de dominio) a UserProfile (modelo V3)
@@ -355,7 +383,7 @@ class TrainingOrchestratorV3 {
     return injuries.map((e) => e.toString()).toList();
   }
 
-  /// Convierte Map (resultado de HybridOrchestrator) a TrainingProgramV3Result
+  /// Convierte Map (resultado Motor V3) a TrainingProgramV3Result
   ///
   /// ESTRUCTURA DEL MAP:
   /// ```
@@ -364,8 +392,7 @@ class TrainingOrchestratorV3 {
   ///   'program': TrainingProgram?,
   ///   'errors': List<String>?,
   ///   'warnings': List<String>?,
-  ///   'ml': { ... },
-  ///   'scientific': { ... },
+  ///   'planConfig': TrainingPlanConfig,
   /// }
   /// ```
   TrainingProgramV3Result _convertMapToResult(
@@ -373,15 +400,19 @@ class TrainingOrchestratorV3 {
     Client client,
     DateTime asOfDate,
   ) {
-    final success = result['success'] as bool? ?? false;
+    final success = result['success'] == true;
 
     if (!success) {
       // Plan bloqueado o error
-      final errors = result['errors'] as List<dynamic>? ?? [];
-      final warnings = result['warnings'] as List<dynamic>? ?? [];
+      final errors = result['errors'];
+      final warnings = result['warnings'];
 
-      final errorMessages = errors.map((e) => e.toString()).toList();
-      final warningMessages = warnings.map((e) => e.toString()).toList();
+      final errorMessages = errors is List
+          ? errors.map((e) => e.toString()).toList()
+          : <String>[];
+      final warningMessages = warnings is List
+          ? warnings.map((e) => e.toString()).toList()
+          : <String>[];
 
       final blockReason = errorMessages.isNotEmpty
           ? errorMessages.join('. ')
@@ -394,10 +425,15 @@ class TrainingOrchestratorV3 {
     }
 
     // Plan generado exitosamente
-    // Si HybridOrchestratorV3 ya incluye planConfig, usarlo directamente.
-    final planConfig = (result['planConfig'] is TrainingPlanConfig)
-        ? (result['planConfig'] as TrainingPlanConfig)
-        : _createBasicPlanConfig(client, asOfDate);
+    final planConfigValue = result['planConfig'];
+    final TrainingPlanConfig planConfig;
+    if (planConfigValue is TrainingPlanConfig) {
+      planConfig = planConfigValue;
+    } else if (planConfigValue is v3.TrainingPlanConfig) {
+      planConfig = _convertV3PlanConfigToEntity(planConfigValue, client);
+    } else {
+      throw StateError('Resultado V3 sin TrainingPlanConfig válido');
+    }
 
     // Crear trace para debugging
     final trace = _createDecisionTrace(result);
@@ -409,29 +445,8 @@ class TrainingOrchestratorV3 {
         'generated_at': DateTime.now().toIso8601String(),
         'version': 'motor_v3_1.0.0',
         'strategy': strategy.name,
-        'ml_applied': result['ml']?['applied'] ?? false,
+        'ml_applied': false,
       },
-    );
-  }
-
-  /// Crea un TrainingPlanConfig básico
-  ///
-  /// NOTA: Esto es un placeholder temporal.
-  /// Debería convertir TrainingProgram (V3) → TrainingPlanConfig (domain).
-  TrainingPlanConfig _createBasicPlanConfig(Client client, DateTime asOfDate) {
-    // Por ahora, retornar un plan vacío con estructura básica
-    // TODO: Implementar conversión real
-
-    return TrainingPlanConfig(
-      id: 'plan_${client.id}_${asOfDate.millisecondsSinceEpoch}',
-      name: 'Plan ${client.profile.fullName}',
-      clientId: client.id,
-      startDate: asOfDate,
-      phase: TrainingPhase.accumulation,
-      splitId: 'ul_ul', // Default Upper/Lower
-      microcycleLengthInWeeks: 4,
-      weeks: [], // TODO: Convertir desde TrainingProgram
-      state: {'generated_by': 'motor_v3', 'strategy': strategy.name},
     );
   }
 
@@ -439,9 +454,9 @@ class TrainingOrchestratorV3 {
   DecisionTrace? _createDecisionTrace(Map<String, dynamic> result) {
     try {
       return DecisionTrace(
-        volumeDecisions: result['scientific']?['volume_validation'] ?? {},
-        intensityDecisions: result['ml']?['adjustments'] ?? {},
-        exerciseSelections: {},
+        volumeDecisions: result['volumeDecisions'] ?? {},
+        intensityDecisions: result['intensityDecisions'] ?? {},
+        exerciseSelections: result['exerciseSelections'] ?? {},
         splitRationale: 'Split seleccionado automáticamente',
         phaseRationale: 'Fase determinada por ciclo de entrenamiento',
       );
@@ -449,6 +464,95 @@ class TrainingOrchestratorV3 {
       debugPrint('⚠️  No se pudo crear DecisionTrace: $e');
       return null;
     }
+  }
+
+  TrainingPlanConfig _convertV3PlanConfigToEntity(
+    v3.TrainingPlanConfig planV3,
+    Client client,
+  ) {
+    final resolvedPhase = TrainingPhase.values.firstWhere(
+      (e) => e.name == (planV3.phase ?? ''),
+      orElse: () => TrainingPhase.accumulation,
+    );
+
+    final resolvedSplitId = planV3.split ?? 'fullBody';
+
+    final weeks = planV3.weeks
+        .whereType<v3.TrainingWeek>()
+        .map(
+          (w) => v2.TrainingWeek(
+            id: 'week-${w.weekNumber}-${resolvedPhase.name}',
+            weekNumber: w.weekNumber,
+            phase: resolvedPhase,
+            sessions: _convertV3Sessions(w.sessions),
+          ),
+        )
+        .toList();
+
+    return TrainingPlanConfig(
+      id: planV3.id,
+      name: 'Plan ${client.profile.fullName}',
+      clientId: planV3.clientId,
+      startDate: planV3.startDate,
+      phase: resolvedPhase,
+      splitId: resolvedSplitId,
+      microcycleLengthInWeeks: weeks.length,
+      weeks: weeks,
+      state: planV3.extra,
+      volumePerMuscle: planV3.volumePerMuscle,
+    );
+  }
+
+  List<v2.TrainingSession> _convertV3Sessions(List<dynamic> sessions) {
+    final out = <v2.TrainingSession>[];
+    for (final session in sessions) {
+      if (session is! v3.TrainingSession) continue;
+      final sessionId = session.id;
+      final primary = session.primaryMuscles.isNotEmpty
+          ? session.primaryMuscles.first
+          : 'full_body';
+      final muscleGroup =
+          muscleGroupFromString(primary) ?? MuscleGroup.fullBody;
+
+      final prescriptions = <v2.ExercisePrescription>[];
+      for (final ex in session.exercises) {
+        final order = ex.orderInSession;
+        final repsMin = ex.repRange.isNotEmpty ? ex.repRange.first : 8;
+        final repsMax = ex.repRange.length > 1 ? ex.repRange[1] : 12;
+
+        prescriptions.add(
+          v2.ExercisePrescription(
+            id: 'presc_${sessionId}_$order',
+            sessionId: sessionId,
+            muscleGroup: muscleGroup,
+            exerciseCode: ex.exerciseId,
+            label: _labelForOrder(order),
+            exerciseName: ex.exerciseName,
+            sets: ex.sets,
+            repRange: RepRange(repsMin, repsMax),
+            rir: ex.targetRir.toString(),
+            restMinutes: (ex.restSeconds / 60).round().clamp(1, 10),
+            notes: ex.notes,
+            order: order,
+          ),
+        );
+      }
+
+      out.add(
+        v2.TrainingSession(
+          id: sessionId,
+          dayNumber: session.dayNumber,
+          sessionName: session.name,
+          prescriptions: prescriptions,
+        ),
+      );
+    }
+    return out;
+  }
+
+  String _labelForOrder(int order) {
+    final index = (order - 1) % 26;
+    return String.fromCharCode(65 + index);
   }
 
   /// Registra el resultado de un programa completado

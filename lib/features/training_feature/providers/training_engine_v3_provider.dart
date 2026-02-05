@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml_integration/hybrid_orchestrator_v3.dart';
-import 'package:hcs_app_lap/domain/training_v3/ml_integration/ml_config_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 
-final trainingEngineV3Provider = Provider<HybridOrchestratorV3>((ref) {
-  return HybridOrchestratorV3(config: MLConfigV3.hybrid());
+final trainingEngineV3Provider = Provider<MotorV3Orchestrator>((ref) {
+  return MotorV3Orchestrator();
 });
 
 class TrainingProgramV3State {

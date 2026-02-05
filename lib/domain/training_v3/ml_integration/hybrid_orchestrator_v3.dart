@@ -1,4 +1,8 @@
 // lib/domain/training_v3/ml_integration/hybrid_orchestrator_v3.dart
+//
+// ⚠️ EXPERIMENTAL / FUERA DE USO
+// Este archivo se conserva solo como referencia histórica.
+// No debe usarse en flujos activos ni en producción.
 
 import 'package:uuid/uuid.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
@@ -27,7 +31,7 @@ import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 /// 5. Retorna programa final + metadata completa
 ///
 /// Versión: 1.0.0 (DEPRECADO)
-@Deprecated('Usar MotorV3Orchestrator directamente')
+@Deprecated('EXPERIMENTAL: fuera de uso. Usar MotorV3Orchestrator directamente')
 class HybridOrchestratorV3 {
   final MLConfigV3 config;
   final MotorV3MLAdapter _mlAdapter;
