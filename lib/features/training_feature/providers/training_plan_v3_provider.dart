@@ -8,6 +8,7 @@
 ///
 /// NO usa GeneratedPlan ni TrainingPlanBuilder
 /// SSOT único: TrainingPlanV3State con TrainingProgramV3Result
+library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';

@@ -7,6 +7,7 @@
 /// - isLoading: Estado de carga
 ///
 /// NO contiene ningún modelo legacy (GeneratedPlan, TrainingPlanBuilder, etc.)
+library;
 
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result.dart';

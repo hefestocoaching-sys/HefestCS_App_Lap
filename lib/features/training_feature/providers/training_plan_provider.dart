@@ -589,7 +589,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           isLoading: false,
           error: 'Error en Motor V3: $e',
         );
-        return;
+        return null;
       }
 
       // Validar resultado Motor V3
@@ -602,7 +602,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           blockReason: resultV3.blockReason,
           suggestions: resultV3.suggestions,
         );
-        return;
+        return null;
       }
 
       // Extraer plan generado
@@ -949,7 +949,14 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   /// 3. Persiste TrainingPlan en client.trainingPlans
   /// 4. Setea activePlanId en training.extra
   /// 5. notifyListeners() para UI
-  Future<void> generatePlanFromActiveCycle(DateTime selectedDate) async {
+  ///
+  /// SSOT RULE (ACT-001): Unificación del Plan Activo
+  /// - Criterio de selección: generatePlanFromActiveCycle siempre actualiza activePlanId
+  /// - Retorno: TrainingPlanConfig? para que UI confirme la activación
+  /// - El FAB llama updateActivePlanId(newPlan.id) DESPUÉS de generatePlan
+  Future<TrainingPlanConfig?> generatePlanFromActiveCycle(
+    DateTime selectedDate,
+  ) async {
     debugPrint('🎯 [Motor V3] Generando plan desde ciclo activo...');
 
     const dbTimeout = Duration(seconds: 6);
@@ -982,7 +989,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           isLoading: false,
           error: 'No hay cliente activo',
         );
-        return;
+        return null;
       }
 
       debugPrint(
@@ -1008,7 +1015,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           isLoading: false,
           error: 'Cliente no encontrado',
         );
-        return;
+        return null;
       }
 
       // 2. Cargar catálogo de ejercicios (necesario para bootstrap Y Motor V3)
@@ -1102,7 +1109,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         debugPrint(
           '❌ Error crítico: activeCycleId="${workingClient.activeCycleId}" no existe después de bootstrap',
         );
-        return;
+        return null;
       }
 
       debugPrint(
@@ -1244,7 +1251,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           isLoading: false,
           error: 'Error en Motor V3: $e',
         );
-        return;
+        return null;
       }
 
       // Validar resultado Motor V3
@@ -1257,7 +1264,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           blockReason: resultV3.blockReason,
           suggestions: resultV3.suggestions,
         );
-        return;
+        return null;
       }
 
       // Extraer plan generado
@@ -1494,6 +1501,9 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       debugPrint(
         '[Motor V3] after refresh trainingPlans=${refreshedClient?.trainingPlans.length ?? 0}, activePlanId=${refreshedClient?.training.extra[TrainingExtraKeys.activePlanId]}',
       );
+
+      // ✅ FASE B.1: Retornar el plan generado para que FAB lo active
+      return planConfig;
     } on VopValidationException catch (e) {
       debugPrint('❌ [Motor V3] Validación VOP fallida: ${e.reason}');
       state = TrainingPlanState.blocked(
@@ -1501,6 +1511,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         suggestions: [e.reason],
         missingFields: e.muscles,
       );
+      return null;
     } on TrainingPlanBlockedException catch (blocked) {
       debugPrint('🚫 [Motor V3] Bloqueado: ${blocked.reason}');
       state = TrainingPlanState.blocked(
@@ -1508,6 +1519,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         suggestions: blocked.suggestions,
         missingFields: const [],
       );
+      return null;
     } catch (e, s) {
       debugPrint('❌ [Motor V3] Error: $e');
       debugPrint('Stack: $s');
@@ -1515,6 +1527,48 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         isLoading: false,
         error: 'Motor V3 falló: ${e.toString()}',
       );
+      return null;
+    }
+  }
+
+  /// FASE B.2: Actualizar el plan activo (SSOT)
+  ///
+  /// Persiste el cambio de activePlanId en training.extra y refresca clientsProvider.
+  /// Se llama desde FAB DESPUÉS de generatePlanFromActiveCycle() para:
+  /// 1. Confirmar que el nuevo plan existe
+  /// 2. Garantizar que activePlanId refleja el plan generado
+  /// 3. Permitir que UI lea el nuevo plan como "activo"
+  Future<void> updateActivePlanId(String planId) async {
+    try {
+      final clientId = ref.read(clientsProvider).value?.activeClient?.id;
+      if (clientId == null) {
+        debugPrint('❌ [updateActivePlanId] No active client');
+        return;
+      }
+
+      final client = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+      if (client == null) {
+        debugPrint('❌ [updateActivePlanId] Client not found: $clientId');
+        return;
+      }
+
+      final updatedExtra = Map<String, dynamic>.from(client.training.extra);
+      updatedExtra[TrainingExtraKeys.activePlanId] = planId;
+
+      final updatedClient = client.copyWith(
+        training: client.training.copyWith(extra: updatedExtra),
+      );
+
+      await ref.read(clientRepositoryProvider).saveClient(updatedClient);
+
+      // Refrescar clientsProvider para que UI refleje cambio
+      await ref.read(clientsProvider.notifier).refresh();
+
+      debugPrint('✅ [updateActivePlanId] Activado plan: $planId');
+    } catch (e) {
+      debugPrint('❌ [updateActivePlanId] Error: $e');
     }
   }
 

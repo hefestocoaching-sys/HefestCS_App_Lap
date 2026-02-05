@@ -721,12 +721,19 @@ class _TrainingDashboardScreenState
 
   // ACTIONS
 
-  void _generarPlan() async {
+  Future<void> _generarPlan() async {
     try {
       final now = DateTime.now();
-      await ref
+      final newPlan = await ref
           .read(trainingPlanProvider.notifier)
           .generatePlanFromActiveCycle(now);
+
+      // FASE B.3: Si generación exitosa, activar el plan
+      if (newPlan != null) {
+        await ref
+            .read(trainingPlanProvider.notifier)
+            .updateActivePlanId(newPlan.id);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
