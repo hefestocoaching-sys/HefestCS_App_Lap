@@ -2,24 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 
-/// Vista científica de capacidad volumétrica basada en Motor V3
+/// Vista de volumen semanal basada en Motor V3
 ///
-/// Muestra landmarks volumétricos según fundamentos científicos:
-/// - MEV (Minimum Effective Volume): Volumen mínimo para mantener masa
-/// - MAV (Maximum Adaptive Volume): Zona óptima de crecimiento (12-16 sets)
-/// - MRV (Maximum Recoverable Volume): Límite de recuperación
+/// Muestra el volumen real de sets por músculo calculado por Motor V3.
+/// Los datos provienen directamente de TrainingPlanConfig.volumePerMuscle.
 ///
-/// Codificación visual:
-/// - Verde: Volumen óptimo (80-110% MAV) - Zona de crecimiento
-/// - Naranja: Volumen subóptimo (< 80% MAV) - Por debajo de MEV
-/// - Rojo: Volumen excesivo (> 110% MAV) - Riesgo sobreentrenamiento
+/// Codificación visual por fase:
+/// - Accumulation: Color primario (acumulación de volumen)
+/// - Intensification: Warning (intensificación progresiva)
+/// - Deload: Neutral (descarga activa)
 ///
 /// Basado en:
 /// - Schoenfeld et al. (2017): Dosis-respuesta volumen-hipertrofia
-/// - Schoenfeld et al. (2019): Meta-análisis volumen óptimo
-/// - Motor V3 Phase 2: Capacity Calculation Engine
+/// - Motor V3: Volume Engine con landmarks MEV/MAV/MRV
 ///
-/// Referencia: docs/scientific-foundation/01-volume.md
+/// Versión: 2.0.0 - Sin dependencias legacy phase3
 class VolumeCapacityScientificView extends ConsumerWidget {
   final TrainingPlanConfig plan;
 
@@ -27,110 +24,50 @@ class VolumeCapacityScientificView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    debugPrint('🔍 [VolumeTab] build() llamado');
-    debugPrint('   plan.state exists: ${plan.state != null}');
+    debugPrint('🔍 [VolumeTab] build() - Motor V3');
+    debugPrint('   volumePerMuscle: ${plan.volumePerMuscle}');
+    debugPrint('   state keys: ${plan.state?.keys.toList()}');
 
-    if (plan.state == null) {
-      debugPrint('❌ [VolumeTab] plan.state es NULL');
+    // Validación de datos Motor V3
+    if (plan.volumePerMuscle == null || plan.volumePerMuscle!.isEmpty) {
+      debugPrint('❌ [VolumeTab] volumePerMuscle vacío o null');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error, size: 64, color: Colors.red),
+            Icon(Icons.info_outline, size: 64, color: Colors.blue),
             SizedBox(height: 16),
-            Text('Error: plan.state es NULL'),
+            Text(
+              'Sin datos de volumen',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 8),
             Text(
-              'Regenera el plan Motor V3',
+              'Este plan no contiene datos de volumen del Motor V3.',
               style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Genera un nuevo plan para ver la distribución volumétrica.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
       );
     }
 
-    debugPrint('   plan.state keys: ${plan.state!.keys.toList()}');
+    final volumePerMuscle = plan.volumePerMuscle!;
+    final phase = plan.state?['phase']?.toString() ?? 'accumulation';
+    final split = plan.state?['split']?.toString() ?? 'upperLower';
+    final weeks = plan.state?['duration_weeks'] as int? ?? 4;
 
-    if (!plan.state!.containsKey('phase3')) {
-      debugPrint('❌ [VolumeTab] plan.state NO contiene "phase3"');
-      debugPrint('   Claves disponibles: ${plan.state!.keys.toList()}');
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.warning, size: 64, color: Colors.orange),
-            SizedBox(height: 16),
-            Text('Error: plan.state sin "phase3"'),
-            SizedBox(height: 8),
-            Text(
-              'Motor V3 no generó datos volumétricos',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final phase3 = plan.state!['phase3'];
-    debugPrint('   plan.state[phase3] type: ${phase3.runtimeType}');
-
-    if (phase3 is! Map) {
-      debugPrint('❌ [VolumeTab] phase3 NO es Map, es: ${phase3.runtimeType}');
-      return Center(child: Text('Error: phase3 no es Map'));
-    }
-
-    final phase3Map = phase3 as Map<String, dynamic>;
-
-    if (!phase3Map.containsKey('capacityByMuscle')) {
-      debugPrint('❌ [VolumeTab] phase3 NO contiene "capacityByMuscle"');
-      debugPrint('   Claves en phase3: ${phase3Map.keys.toList()}');
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.warning, size: 64, color: Colors.orange),
-            SizedBox(height: 16),
-            Text('Error: phase3 sin "capacityByMuscle"'),
-          ],
-        ),
-      );
-    }
-
-    final capacityByMuscle = phase3Map['capacityByMuscle'];
-    debugPrint('   capacityByMuscle type: ${capacityByMuscle.runtimeType}');
-
-    if (capacityByMuscle is! Map) {
-      debugPrint('❌ [VolumeTab] capacityByMuscle NO es Map');
-      return Center(child: Text('Error: capacityByMuscle no es Map'));
-    }
-
-    final capacityMap = capacityByMuscle as Map<String, dynamic>;
-    debugPrint(
-      '✅ [VolumeTab] Músculos encontrados: ${capacityMap.keys.toList()}',
-    );
-    debugPrint('   Total músculos: ${capacityMap.length}');
-
-    if (capacityMap.isEmpty) {
-      debugPrint('❌ [VolumeTab] capacityByMuscle está VACÍO');
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error, size: 64, color: Colors.red),
-            SizedBox(height: 16),
-            Text('Error: Sin datos volumétricos'),
-            SizedBox(height: 8),
-            Text(
-              'capacityByMuscle está vacío',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
+    debugPrint('✅ [VolumeTab] Renderizando ${volumePerMuscle.length} músculos');
+    debugPrint('   Fase: $phase, Split: $split, Semanas: $weeks');
 
     // ═══════════════════════════════════════════════════════════════════════
-    // RENDERIZAR TABLA MEV/MAV/MRV
+    // RENDERIZAR VOLUMEN MOTOR V3
     // ═══════════════════════════════════════════════════════════════════════
 
     return SingleChildScrollView(
@@ -138,14 +75,38 @@ class VolumeCapacityScientificView extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // HEADER
           Text(
-            'Capacidad Volumétrica por Músculo',
+            'Volumen Semanal por Músculo',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
           Text(
-            'Basado en landmarks MEV/MAV/MRV (Schoenfeld et al. 2017)',
-            style: TextStyle(color: Colors.grey),
+            'Motor V3 - Volumen calculado según fase y split',
+            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+          ),
+          SizedBox(height: 16),
+
+          // METADATA
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[850],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[700]!),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _metadataItem(
+                  'Fase',
+                  _getPhaseName(phase),
+                  _getPhaseColor(phase),
+                ),
+                _metadataItem('Split', _getSplitName(split), Colors.blue),
+                _metadataItem('Duración', '$weeks sem', Colors.grey[400]!),
+              ],
+            ),
           ),
           SizedBox(height: 24),
 
@@ -153,11 +114,9 @@ class VolumeCapacityScientificView extends ConsumerWidget {
           Table(
             border: TableBorder.all(color: Colors.grey.shade700),
             columnWidths: {
-              0: FlexColumnWidth(2),
-              1: FlexColumnWidth(1),
-              2: FlexColumnWidth(1),
-              3: FlexColumnWidth(1),
-              4: FlexColumnWidth(1),
+              0: FlexColumnWidth(3),
+              1: FlexColumnWidth(2),
+              2: FlexColumnWidth(2),
             },
             children: [
               // HEADER
@@ -165,30 +124,28 @@ class VolumeCapacityScientificView extends ConsumerWidget {
                 decoration: BoxDecoration(color: Colors.grey.shade800),
                 children: [
                   _tableCell('Músculo', isHeader: true),
-                  _tableCell('MEV', isHeader: true),
-                  _tableCell('MAV', isHeader: true),
-                  _tableCell('MRV', isHeader: true),
-                  _tableCell('Actual', isHeader: true),
+                  _tableCell('Sets/semana', isHeader: true),
+                  _tableCell('Fase', isHeader: true),
                 ],
               ),
 
               // ROWS
-              ...capacityMap.entries.map((entry) {
+              ...volumePerMuscle.entries.map((entry) {
                 final muscleName = entry.key;
-                final muscleData = entry.value as Map<String, dynamic>;
-
-                final mev = muscleData['mev'] ?? 0;
-                final mav = muscleData['mav'] ?? 0;
-                final mrv = muscleData['mrv'] ?? 0;
-                final actual = muscleData['recommendedStartVolume'] ?? 0;
+                final weeklyVolume = entry.value;
 
                 return TableRow(
                   children: [
                     _tableCell(_getMuscleDisplayName(muscleName)),
-                    _tableCell('$mev'),
-                    _tableCell('$mav'),
-                    _tableCell('$mrv'),
-                    _tableCell('$actual', isActual: true),
+                    _tableCell(
+                      '$weeklyVolume sets',
+                      isVolume: true,
+                      volumeValue: weeklyVolume,
+                    ),
+                    _tableCell(
+                      _getPhaseBadge(phase),
+                      phaseColor: _getPhaseColor(phase),
+                    ),
                   ],
                 );
               }),
@@ -207,14 +164,32 @@ class VolumeCapacityScientificView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Leyenda:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  'Información:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
                 SizedBox(height: 8),
                 Text(
-                  '• MEV: Minimum Effective Volume (mínimo para crecimiento)',
+                  '• Sets/semana: Volumen total calculado por Motor V3',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[300]),
                 ),
-                Text('• MAV: Maximum Adaptive Volume (zona óptima)'),
-                Text('• MRV: Maximum Recoverable Volume (límite superior)'),
-                Text('• Actual: Volumen inicial recomendado por Motor V3'),
+                Text(
+                  '• Fase: Determina intensidad y distribución RIR',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[300]),
+                ),
+                Text(
+                  '• Split: Determina agrupación de músculos por sesión',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[300]),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Basado en: Volume Engine (MEV/MAV/MRV landmarks)',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[500],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ],
             ),
           ),
@@ -223,18 +198,52 @@ class VolumeCapacityScientificView extends ConsumerWidget {
     );
   }
 
+  Widget _metadataItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+        SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _tableCell(
     String text, {
     bool isHeader = false,
-    bool isActual = false,
+    bool isVolume = false,
+    int? volumeValue,
+    Color? phaseColor,
   }) {
+    Color textColor = Colors.white;
+
+    if (isVolume && volumeValue != null) {
+      // Codificación por volumen (verde = óptimo)
+      if (volumeValue >= 12 && volumeValue <= 20) {
+        textColor = Colors.green;
+      } else if (volumeValue < 12) {
+        textColor = Colors.orange;
+      } else {
+        textColor = Colors.yellow[700]!;
+      }
+    } else if (phaseColor != null) {
+      textColor = phaseColor;
+    }
+
     return Padding(
       padding: EdgeInsets.all(12),
       child: Text(
         text,
         style: TextStyle(
           fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-          color: isActual ? Colors.green : Colors.white,
+          color: isHeader ? Colors.white : textColor,
           fontSize: isHeader ? 14 : 13,
         ),
         textAlign: TextAlign.center,
@@ -248,23 +257,58 @@ class VolumeCapacityScientificView extends ConsumerWidget {
       'lats': 'Dorsales',
       'upper_back': 'Espalda Alta',
       'traps': 'Trapecios',
-      'deltoide_anterior': 'Deltoides Anterior',
-      'deltoide_lateral': 'Deltoides Lateral',
-      'deltoide_posterior': 'Deltoides Posterior',
+      'deltoide_anterior': 'Deltoides Ant.',
+      'deltoide_lateral': 'Deltoides Lat.',
+      'deltoide_posterior': 'Deltoides Post.',
       'biceps': 'Bíceps',
       'triceps': 'Tríceps',
       'quads': 'Cuádriceps',
-      'hamstrings': 'Isquiotibiales',
+      'hamstrings': 'Isquios',
       'glutes': 'Glúteos',
       'calves': 'Gemelos',
       'abs': 'Abdomen',
-      // Legacy compatibility
-      'back': 'Espalda',
-      'shoulders': 'Hombros',
-      'upper_traps': 'Trapecios',
-      'back_mid_upper': 'Espalda Media',
     };
 
     return muscleNames[muscleKey] ?? muscleKey.toUpperCase();
+  }
+
+  String _getPhaseName(String phase) {
+    const phaseNames = {
+      'accumulation': 'Acumulación',
+      'intensification': 'Intensificación',
+      'deload': 'Descarga',
+    };
+    return phaseNames[phase] ?? phase;
+  }
+
+  String _getPhaseBadge(String phase) {
+    const badges = {
+      'accumulation': '🔵 Acum',
+      'intensification': '🟠 Intens',
+      'deload': '⚪ Desc',
+    };
+    return badges[phase] ?? phase;
+  }
+
+  Color _getPhaseColor(String phase) {
+    switch (phase) {
+      case 'accumulation':
+        return Colors.blue;
+      case 'intensification':
+        return Colors.orange;
+      case 'deload':
+        return Colors.grey;
+      default:
+        return Colors.white;
+    }
+  }
+
+  String _getSplitName(String split) {
+    const splitNames = {
+      'upperLower': 'Torso/Pierna',
+      'fullBody': 'Cuerpo Completo',
+      'pushPullLegs': 'Push/Pull/Pierna',
+    };
+    return splitNames[split] ?? split;
   }
 }

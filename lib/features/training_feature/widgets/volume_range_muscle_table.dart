@@ -4,8 +4,13 @@ import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'muscle_detail_modal.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
+/// @deprecated Usar VolumeRangeMuscleTableV3 en su lugar
+///
+/// LEGACY - Esta versión lee phase2/phase3 que NO son generados por Motor V3.
+/// Motor V3 usa SOLO: plan.volumePerMuscle (Map<String, int>)
+///
 /// Modelo UI para una fila de la tabla de volumen por músculo.
-/// Extrae datos de planJson.state.phase2 y phase3.
+/// Extrae datos de planJson.state.phase2 y phase3 (LEGACY).
 class VolumeRangeUiRow {
   final String muscle;
   final int mev;

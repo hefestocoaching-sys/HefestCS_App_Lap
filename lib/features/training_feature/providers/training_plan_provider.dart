@@ -1413,7 +1413,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final mevRaw =
           planConfig.trainingProfileSnapshot?.extra[TrainingExtraKeys
               .mevByMuscle] ??
-          planConfig.state?['phase3']?['capacityByMuscle'] ??
+          planConfig.volumePerMuscle ??
           workingClient.training.extra[TrainingExtraKeys.mevByMuscle];
 
       if (mevRaw is Map) {

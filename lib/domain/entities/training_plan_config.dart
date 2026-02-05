@@ -3,6 +3,23 @@ import 'package:hcs_app_lap/core/enums/training_phase.dart';
 import 'package:hcs_app_lap/domain/entities/training_week.dart';
 import 'training_profile.dart';
 
+/// Entidad persistida de plan de entrenamiento
+///
+/// ARQUITECTURA:
+/// - Genera: Motor V3 (MotorV3Orchestrator)
+/// - Persiste: Firestore (JSON serializable)
+/// - Usa: UI (Widgets, Providers)
+///
+/// PROPIEDADES V3 (reemplazo de state['phase3']):
+/// - volumePerMuscle: Volumen semanal por músculo (Map<String, int>)
+/// - weeklyVolumeTarget: Target de volumen total
+/// - landmarks: Hitos del plan (semana deload, etc.)
+///
+/// PROPIEDADES DEPRECATED:
+/// - state: Mapa genérico legacy (NO generar nuevos)
+///
+/// NOTA: Esta entidad V2 es la SSOT (Single Source of Truth) para UI.
+/// NO existe duplicado para Motor V3. Todos usan esta clase.
 class TrainingPlanConfig extends Equatable {
   final String id;
   final String name;

@@ -82,6 +82,7 @@ class ExerciseSelectionEngine {
 
   /// Calcula score científico del ejercicio (0.0-10.0)
   ///
+  /// TODO: Método refactorizado pero no integrado en flujo actual
   /// FUENTE: Semana 5, Imagen 50-55
   ///
   /// CRITERIOS (peso total = 100%):
@@ -91,6 +92,7 @@ class ExerciseSelectionEngine {
   /// 4. Curva de resistencia (15%): Tensión constante
   /// 5. Fatiga (15%): Menor fatiga sistémica = más sets
   /// 6. Riesgo de lesión (10%): Seguridad
+  /*
   static double _calculateExerciseScore(
     Map<String, dynamic> exercise,
     String targetMuscle,
@@ -128,12 +130,15 @@ class ExerciseSelectionEngine {
 
     return score;
   }
+  */
 
   /// Balancea compounds vs isolation (2:1 ratio)
   ///
+  /// TODO: Método refactorizado pero no integrado en flujo actual
   /// FUENTE: Semana 5, Imagen 56-59
   ///
   /// REGLA: 2/3 compounds, 1/3 isolation
+  /*
   static List<Map<String, dynamic>> _balanceCompoundsAndIsolation(
     List<Map<String, dynamic>> scoredExercises,
     int targetCount,
@@ -155,7 +160,10 @@ class ExerciseSelectionEngine {
 
     return [...selectedCompounds, ...selectedIsolation];
   }
+  */
 
+  /// TODO: Método refactorizado pero no integrado en flujo actual
+  ///
   /// Verifica si el ejercicio entrena el músculo objetivo
   ///
   /// Soporta nombres compuestos:
@@ -164,6 +172,7 @@ class ExerciseSelectionEngine {
   /// - 'deltoide posterior' → 'deltoide_posterior'
   /// - 'pectoral superior' → 'chest' (mapea a grupo padre)
   /// - 'trapecio superior'/'medio'/'inferior' → 'traps'
+  /*
   static bool _isExerciseForMuscle(
     Map<String, dynamic> exercise,
     String muscle,
@@ -187,6 +196,7 @@ class ExerciseSelectionEngine {
 
     return false;
   }
+  */
 
   /// Verifica si un músculo del ejercicio coincide con el target
   static bool _muscleMatches(
@@ -355,7 +365,10 @@ class ExerciseSelectionEngine {
     return canonicalMuscles.contains(muscle);
   }
 
+  /// TODO: Método refactorizado pero no integrado en flujo actual
+  ///
   /// Verifica si tiene el equipamiento necesario
+  /*
   static bool _hasRequiredEquipment(
     Map<String, dynamic> exercise,
     List<String> available,
@@ -378,12 +391,16 @@ class ExerciseSelectionEngine {
     }
     return const <String>[];
   }
+  */
 
+  /// TODO: Método refactorizado pero no integrado en flujo actual
+  ///
   /// Verifica si el ejercicio está contraindicado por lesión
   ///
   /// EJEMPLO:
   /// - Lesión de hombro → evitar overhead press
   /// - Lesión de rodilla → evitar squats profundos
+  /*
   static bool _isContraindicatedByInjury(
     Map<String, dynamic> exercise,
     Map<String, String> injuries,
@@ -402,6 +419,7 @@ class ExerciseSelectionEngine {
 
     return false;
   }
+  */
 
   /// Obtiene variaciones de un ejercicio
   ///
