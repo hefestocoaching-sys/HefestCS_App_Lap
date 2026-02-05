@@ -48,7 +48,7 @@ class TrainingPlanV3State {
     if (plan == null) return 0;
     int total = 0;
     for (final week in plan!.weeks) {
-      total += week.sessions?.length ?? 0;
+      total += week.sessions.length;
     }
     return total;
   }

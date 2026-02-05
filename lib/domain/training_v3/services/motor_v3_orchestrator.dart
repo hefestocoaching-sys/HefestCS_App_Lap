@@ -735,11 +735,6 @@ class MotorV3Orchestrator {
     };
   }
 
-  static String _capitalize(String text) {
-    if (text.isEmpty) return text;
-    return text[0].toUpperCase() + text.substring(1);
-  }
-
   /// Calcula score de calidad total del programa generado
   static Map<String, dynamic> calculateProgramQuality({
     required TrainingProgram program,
