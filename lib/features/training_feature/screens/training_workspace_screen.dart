@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/design/workspace_scaffold.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
@@ -1314,11 +1315,18 @@ class _TrainingWorkspaceScreenState
     return value == 0 ? '' : value.toString();
   }
 
+  Future<void> _commitInterview() async {
+    try {
+      await _interviewTabKey.currentState?.commit();
+    } catch (e) {}
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // E2 GOBERNANZA: MÉTODOS PARA PLAN V3 (CON VERIFICACIÓN)
   // ═══════════════════════════════════════════════════════════════════════════
   Future<void> _generarPlan() async {
     // E2: Verificar que la acción esté permitida
+    await _commitInterview();
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
@@ -1367,6 +1375,7 @@ class _TrainingWorkspaceScreenState
   }
 
   void _regenerarPlan() {
+    unawaited(_commitInterview());
     // E2: Verificar que la acción esté permitida
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
@@ -1413,6 +1422,7 @@ class _TrainingWorkspaceScreenState
   }
 
   Future<void> _adaptarPlan() async {
+    await _commitInterview();
     // E2: Verificar que la acción esté permitida
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;

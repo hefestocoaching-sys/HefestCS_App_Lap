@@ -521,6 +521,10 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     return updatedClient;
   }
 
+  Future<void> commit() async {
+    await _onSavePressed();
+  }
+
   void resetDrafts() {
     final client = ref.read(clientsProvider).value?.activeClient ?? _client;
     if (client == null) return;
