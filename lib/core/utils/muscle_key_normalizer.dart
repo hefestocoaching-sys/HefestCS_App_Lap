@@ -14,6 +14,7 @@ import 'package:hcs_app_lap/core/registry/muscle_registry.dart' as registry;
 /// - dorsal / lats → lats
 ///
 /// NO inventa músculos nuevos. Solo mapea variantes a las 14 claves canónicas.
+/// Para grupos, retorna el token estándar canónico ("back", "shoulders", etc.).
 String normalizeMuscleKey(String raw) {
   // Usar MuscleRegistry como SSOT
   final canonical = registry.normalize(raw);
@@ -29,15 +30,53 @@ String normalizeMuscleKey(String raw) {
   // Usar registry para validar grupo expansión
   final expanded = registry.expandGroup(raw);
   if (expanded.isNotEmpty) {
-    // Es un grupo válido, retornar una marca de grupo
-    // Los callers usarán expandGroup() para obtener las individuales
-    debugPrint('[VOP][Normalizer] Grupo "$raw" → ${expanded.join(", ")}');
-    return raw.toLowerCase(); // Ej: 'back', 'shoulders'
+    // Es un grupo válido, retornar el TOKEN CANÓNICO del grupo
+    // P0: Mapear variantes españolas a tokens estándar ingleses
+    final groupToken = _mapGroupVariantToCanonicalToken(raw);
+    debugPrint(
+      '[VOP][Normalizer] Grupo "$raw" → $groupToken (expande a ${expanded.join(", ")})',
+    );
+    return groupToken;
   }
 
   // Si no es nada conocido, retornar como-está (log advertencia)
   debugPrint('⚠️  [VOP][Normalizer] Clave desconocida: "$raw"');
   return raw.toLowerCase();
+}
+
+/// Mapea variantes de grupo a tokens canónicos estándar.
+/// P0 REGLA: "Espalda" y variantes → "back"; "Hombros" y variantes → "shoulders"
+String _mapGroupVariantToCanonicalToken(String raw) {
+  final lower = raw.toLowerCase().trim();
+
+  // Grupo Espalda
+  if (lower == 'espalda' ||
+      lower == 'back' ||
+      lower == 'back_group' ||
+      lower == 'espalda_group') {
+    return 'back';
+  }
+
+  // Grupo Hombros
+  if (lower == 'hombros' ||
+      lower == 'hombro' ||
+      lower == 'shoulders' ||
+      lower == 'shoulders_group') {
+    return 'shoulders';
+  }
+
+  // Grupo Piernas
+  if (lower == 'piernas' || lower == 'legs' || lower == 'legs_group') {
+    return 'legs';
+  }
+
+  // Grupo Brazos
+  if (lower == 'brazos' || lower == 'arms' || lower == 'arms_group') {
+    return 'arms';
+  }
+
+  // Fallback: retornar lowercase directamente
+  return lower;
 }
 
 /// Normaliza un mapa completo de VOP legacy hacia las 14 claves canónicas
@@ -104,8 +143,21 @@ Map<String, int> normalizeLegacyVopToCanonical(Map<dynamic, dynamic> raw) {
   // 4) Filtrar SOLO canónicas (14)
   final out = <String, int>{};
   for (final e in expanded.entries) {
-    if (e.value <= 0) continue;
-    if (e.key == 'back_group' || e.key == 'shoulders_group') continue;
+    if (e.value <= 0) { continue; }
+    // Filtrar tokens _group que no fueron expandidos (no debería ocurrir con new logic)
+    if (e.key == 'back_group' ||
+        e.key == 'shoulders_group' ||
+        e.key == 'legs_group' ||
+        e.key == 'arms_group') {
+      continue;
+    }
+    // P0: Filtrar también tokens estándar de grupo que no fueron expandidos
+    if (e.key == 'back' ||
+        e.key == 'shoulders' ||
+        e.key == 'legs' ||
+        e.key == 'arms') {
+      continue;
+    }
     if (MuscleKeys.isCanonical(e.key)) out[e.key] = e.value;
   }
   return out;

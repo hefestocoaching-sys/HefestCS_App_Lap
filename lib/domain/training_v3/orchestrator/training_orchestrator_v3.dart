@@ -20,6 +20,7 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_session.dart'
     as v3;
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
+import 'package:hcs_app_lap/domain/training_domain/training_ssot_v1_service.dart';
 // DecisionTrace is defined in training_program_v3_result.dart, already imported above
 
 /// Orquestador principal del Motor V3
@@ -201,21 +202,95 @@ class TrainingOrchestratorV3 {
     final training = client.training;
     final profile = client.profile;
 
-    // Convertir nivel de experiencia
-    final trainingLevel = _convertTrainingLevel(training.extra['level']);
+    // ═══════════════════════════════════════════════════════════════════════
+    // E3 SSOT V1: LEER setupV1 + evalV1 PRIMERO (fallback a legacy si no existen)
+    // ═══════════════════════════════════════════════════════════════════════
+    final setupV1 = TrainingSsotV1Service.readSetup(client);
+    final evalV1 = TrainingSsotV1Service.readEvaluation(client);
+    final useSsotV1 = setupV1 != null && evalV1 != null;
 
-    // Extraer músculos prioritarios (para musclePriorities map)
-    final priorityMuscles = _extractPriorityMuscles(training.extra);
-    final musclePrioritiesMap = <String, int>{};
+    // Extraer availableDays (SSOT V1 primero, luego legacy)
+    final availableDays = useSsotV1 && setupV1.daysPerWeek > 0
+        ? setupV1.daysPerWeek
+        : (_parseInt(training.extra['daysPerWeek']) ?? 4);
 
-    // Assign priority scores if muscles exist
-    // Score decreases from list length to 1, ensuring all scores are positive
-    if (priorityMuscles.isNotEmpty) {
-      for (int i = 0; i < priorityMuscles.length; i++) {
-        // First muscle gets highest score, last gets 1
-        // Example: 8 muscles → [8, 7, 6, 5, 4, 3, 2, 1]
-        final descendingPriorityScore = (priorityMuscles.length - i);
-        musclePrioritiesMap[priorityMuscles[i]] = descendingPriorityScore;
+    // E4 P0: Extraer sessionDurationMinutes (prioridad: extra, luego setupV1, luego legacy)
+    int sessionDuration =
+        (training.extra['sessionDurationMinutes'] as int?) ??
+        (useSsotV1 && setupV1.timePerSessionMinutes > 0
+            ? setupV1.timePerSessionMinutes
+            : null) ??
+        (training.extra['sessionDuration'] as int? ?? _defaultSessionDuration);
+
+    // E4 P0: Extraer planDurationInWeeks (prioridad: extra, luego setupV1, luego legacy)
+    int planDurationWeeks =
+        (training.extra['planDurationInWeeks'] as int?) ??
+        (useSsotV1 && setupV1.planDurationInWeeks > 0
+            ? setupV1.planDurationInWeeks
+            : null) ??
+        8;
+
+    // E4 P0: Extraer yearsTrainingContinuous (prioridad: extra, luego setupV1, luego legacy)
+    double yearsTraining =
+        (training.extra['yearsTrainingContinuous'] as double?) ??
+        (useSsotV1 && setupV1.trainingExperienceYearsContinuous > 0
+            ? setupV1.trainingExperienceYearsContinuous.toDouble()
+            : null) ??
+        (training.extra['yearsTraining'] as double? ?? _defaultYearsTraining);
+
+    // E4 P0: Extraer altura y peso (prioridad: extra, luego setupV1, luego legacy)
+    double heightCm =
+        (training.extra['heightCm'] as double?) ??
+        (useSsotV1 && setupV1.heightCm > 0 ? setupV1.heightCm : null) ??
+        _defaultHeightCm;
+    double weightKg =
+        (training.extra['weightKg'] as double?) ??
+        (useSsotV1 && setupV1.weightKg > 0 ? setupV1.weightKg : null) ??
+        _defaultWeightKg;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // E3 PRIORIDADES MUSCULARES: SSOT V1 primero (con pesos Primary=1.0, Secondary=0.66, Tertiary=0.33)
+    // ═══════════════════════════════════════════════════════════════════════
+    Map<String, int> musclePrioritiesMap;
+
+    if (useSsotV1) {
+      // CASO 1: Usar evalV1.primaryMuscles/secondaryMuscles/tertiaryMuscles
+      musclePrioritiesMap = <String, int>{};
+
+      // Primary = peso 5 (máxima prioridad)
+      for (final muscle in evalV1.primaryMuscles) {
+        if (muscle.isNotEmpty) {
+          musclePrioritiesMap[muscle] = 5;
+        }
+      }
+
+      // Secondary = peso 3 (prioridad media)
+      for (final muscle in evalV1.secondaryMuscles) {
+        if (muscle.isNotEmpty && !musclePrioritiesMap.containsKey(muscle)) {
+          musclePrioritiesMap[muscle] = 3;
+        }
+      }
+
+      // Tertiary = peso 2 (prioridad baja)
+      for (final muscle in evalV1.tertiaryMuscles) {
+        if (muscle.isNotEmpty && !musclePrioritiesMap.containsKey(muscle)) {
+          musclePrioritiesMap[muscle] = 2;
+        }
+      }
+    } else {
+      // CASO 2: Fallback a legacy (extraer desde strings CSV)
+      final priorityMuscles = _extractPriorityMuscles(training.extra);
+      musclePrioritiesMap = <String, int>{};
+
+      // Assign priority scores if muscles exist
+      // Score decreases from list length to 1, ensuring all scores are positive
+      if (priorityMuscles.isNotEmpty) {
+        for (int i = 0; i < priorityMuscles.length; i++) {
+          // First muscle gets highest score, last gets 1
+          // Example: 8 muscles → [8, 7, 6, 5, 4, 3, 2, 1]
+          final descendingPriorityScore = (priorityMuscles.length - i);
+          musclePrioritiesMap[priorityMuscles[i]] = descendingPriorityScore;
+        }
       }
     }
 
@@ -231,23 +306,33 @@ class TrainingOrchestratorV3 {
       clampedMusclePrioritiesMap[key] = clamped;
     });
 
-    // Extraer días disponibles
-    final availableDays = _parseInt(training.extra['daysPerWeek']) ?? 4;
+    // ═══════════════════════════════════════════════════════════════════════
+    // E3 DEBUG: Load-bearing log para auditar fuente de datos
+    // ═══════════════════════════════════════════════════════════════════════
+    debugPrint(
+      '\n═══════════════════════════════════════════════════════════════',
+    );
+    debugPrint('🔍 E3 MOTOR V3 INPUT SOURCE AUDIT');
+    debugPrint(
+      '═══════════════════════════════════════════════════════════════',
+    );
+    debugPrint('SSOT V1 used: $useSsotV1');
+    debugPrint('availableDays resolved: $availableDays');
+    debugPrint('sessionDuration resolved: $sessionDuration min');
+    debugPrint('planDurationWeeks resolved: $planDurationWeeks weeks');
+    debugPrint('yearsTraining resolved: $yearsTraining years');
+    debugPrint(
+      'musclePriorities keys (${clampedMusclePrioritiesMap.length}): ${clampedMusclePrioritiesMap.keys.toList()}',
+    );
+    debugPrint(
+      '═══════════════════════════════════════════════════════════════\n',
+    );
 
-    // Extraer duración de sesión (en minutos)
-    final sessionDuration =
-        training.extra['sessionDuration'] as int? ?? _defaultSessionDuration;
+    // Convertir nivel de experiencia
+    final trainingLevel = _convertTrainingLevel(training.extra['level']);
 
     // Extraer objetivo
     final goal = training.extra['goal'] as String? ?? 'hypertrophy';
-
-    // Extraer años de entrenamiento
-    final yearsTraining =
-        training.extra['yearsTraining'] as double? ?? _defaultYearsTraining;
-
-    // Extraer altura y peso (con valores por defecto)
-    final heightCm = training.extra['heightCm'] as double? ?? _defaultHeightCm;
-    final weightKg = training.extra['weightKg'] as double? ?? _defaultWeightKg;
 
     // Crear mapa de historial de lesiones
     // TODO: Extract actual injury status from client data (active/healed/recovered)
