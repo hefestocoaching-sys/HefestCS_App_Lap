@@ -866,6 +866,64 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       extra[TrainingInterviewKeys.performanceTrend] = _performanceTrend!.name;
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 3B: PERSISTIR SSOT ESTRUCTURADO (trainingSetupV1, trainingEvaluationSnapshotV1, trainingProgressionStateV1)
+    // ═══════════════════════════════════════════════════════════════
+    
+    // 1. Crear TrainingSetupV1 y persistir como Map
+    final trainingSetupV1Map = {
+      'heightCm': heightCmFromCtrl ?? 0.0,
+      'weightKg': weightKgFromCtrl ?? 0.0,
+      'ageYears': _client?.profile.age ?? 0,
+      'sex': _client?.profile.gender?.name ?? '',
+      'daysPerWeek': daysPerWeek,
+      'planDurationInWeeks': 8, // Por defecto 8 semanas
+      'timePerSessionMinutes': derivedSession ?? 0,
+      'trainingExperienceTotalYearsLifetime': derivedYears ?? 0,
+      'trainingExperienceYearsContinuous': derivedYears ?? 0,
+      'trainingExperienceDetrainingMonths': 0, // Se puede capturar si es necesario
+    };
+    extra[TrainingExtraKeys.trainingSetupV1] = trainingSetupV1Map;
+
+    // 2. Crear TrainingEvaluationSnapshotV1 y persistir como Map
+    final now = DateTime.now();
+    final trainingEvaluationSnapshotV1Map = {
+      'schemaVersion': 1,
+      'createdAt': (extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] as Map?)
+          ?['createdAt'] ?? now.toIso8601String(), // Mantener fecha original si existe
+      'updatedAt': now.toIso8601String(),
+      'daysPerWeek': daysPerWeek,
+      'sessionDurationMinutes': derivedSession ?? 0,
+      'planDurationInWeeks': 8,
+      'primaryMuscles': _primaryMuscles,
+      'secondaryMuscles': _secondaryMuscles,
+      'tertiaryMuscles': _tertiaryMuscles,
+      'priorityVolumeSplit': {}, // Se rellena en otras etapas del flujo
+      'intensityDistribution': {}, // Se rellena en otras etapas del flujo
+      'painRules': [], // Se rellena en otras etapas del flujo
+      'status': 'partial', // partial = datos básicos capturados
+    };
+    extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] = trainingEvaluationSnapshotV1Map;
+
+    // 3. Crear TrainingProgressionStateV1 y persistir como Map
+    // (inicialmente, se actualiza con datos reales durante el entrenamiento)
+    final trainingProgressionStateV1Map = {
+      'weeksCompleted': 0,
+      'sessionsCompleted': 0,
+      'consecutiveWeeksTraining': 0,
+      'averageRIR': 2.0,
+      'averageSessionRPE': 7,
+      'perceivedRecovery': 7,
+      'lastPlanId': '',
+      'lastPlanChangeReason': 'initial_evaluation',
+    };
+    extra[TrainingExtraKeys.trainingProgressionStateV1] = trainingProgressionStateV1Map;
+
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 3B: Explícitamente persistir daysPerWeek en extra[] (para Motor V3)
+    // ═══════════════════════════════════════════════════════════════
+    extra[TrainingExtraKeys.daysPerWeek] = daysPerWeek;
+
     return client.copyWith(training: finalTraining.copyWith(extra: extra));
   }
 
@@ -947,12 +1005,11 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         );
 
         // ✅ P0 FIX: Derivar MEV/MRV por músculo PRIMERO para usarlos en el cálculo
+        // PASO 5: Usar SupportedMuscles.keys en lugar de MuscleGroup.values (14 músculos canónicos)
         final volumeByMuscle = VolumeByMuscleDerivationService.derive(
           mevGlobal: bounds.mevIndividual,
           mrvGlobal: bounds.mrvIndividual,
-          rawMuscleKeys: MuscleGroup.values
-              .where((m) => SupportedMuscles.isSupported(m.name))
-              .map((m) => m.name),
+          rawMuscleKeys: SupportedMuscles.keys,
         );
         final mevByMuscle = volumeByMuscle['mevByMuscle'] ?? {};
         final mrvByMuscle = volumeByMuscle['mrvByMuscle'] ?? {};
@@ -1306,80 +1363,74 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     });
 
     return SingleChildScrollView(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-            child: Column(
-              children: [
-                ClinicSectionSurface(
-                  icon: Icons.person,
-                  title: '1. Perfil de Entrenamiento',
-                  child: _buildTrainingProfile(),
-                ),
-                ClinicSectionSurface(
-                  icon: Icons.schedule,
-                  title: '2. Disponibilidad y Capacidad',
-                  child: _buildAvailability(),
-                ),
-                ClinicSectionSurface(
-                  icon: Icons.fitness_center,
-                  title: '3. Tolerancias de Entrenamiento',
-                  child: _buildTolerances(),
-                ),
-                ClinicSectionSurface(
-                  icon: Icons.health_and_safety,
-                  title: '4. Factores de Recuperación',
-                  child: _buildRecoveryFactors(),
-                ),
-                ClinicSectionSurface(
-                  icon: Icons.healing,
-                  title: '5. Lesiones Activas',
-                  child: _buildInjuries(),
-                ),
-                ClinicSectionSurface(
-                  icon: Icons.accessibility_new,
-                  title: '6. Prioridades Musculares',
-                  child: _buildMuscles(),
-                ),
-                ClinicSectionSurface(
-                  icon: Icons.emoji_events,
-                  title: '7. PRs Opcionales (Fuerza)',
-                  child: _buildPRs(),
-                ),
-                ClinicSectionSurface(
-                  icon: Icons.edit_note,
-                  title: '8. Datos Individualizados (Override Opcional)',
-                  child: _buildIndividualizedDataOverrides(),
-                ),
-                ClinicSectionSurface(
-                  icon: Icons.trending_up,
-                  title: '9. Evaluación Avanzada V2 (Científica 2025)',
-                  child: _buildAdvancedEvaluationV2(),
-                ),
-                const SizedBox(height: 32),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    onPressed: _onSavePressed,
-                    icon: const Icon(Icons.save),
-                    label: const Text('Guardar Evaluación'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrimaryColor,
-                      foregroundColor: kTextColor,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
-                      ),
-                    ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+        child: Column(
+          children: [
+            ClinicSectionSurface(
+              icon: Icons.person,
+              title: '1. Perfil de Entrenamiento',
+              child: _buildTrainingProfile(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.schedule,
+              title: '2. Disponibilidad y Capacidad',
+              child: _buildAvailability(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.fitness_center,
+              title: '3. Tolerancias de Entrenamiento',
+              child: _buildTolerances(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.health_and_safety,
+              title: '4. Factores de Recuperación',
+              child: _buildRecoveryFactors(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.healing,
+              title: '5. Lesiones Activas',
+              child: _buildInjuries(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.accessibility_new,
+              title: '6. Prioridades Musculares',
+              child: _buildMuscles(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.emoji_events,
+              title: '7. PRs Opcionales (Fuerza)',
+              child: _buildPRs(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.edit_note,
+              title: '8. Datos Individualizados (Override Opcional)',
+              child: _buildIndividualizedDataOverrides(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.trending_up,
+              title: '9. Evaluación Avanzada V2 (Científica 2025)',
+              child: _buildAdvancedEvaluationV2(),
+            ),
+            const SizedBox(height: 32),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                onPressed: _onSavePressed,
+                icon: const Icon(Icons.save),
+                label: const Text('Guardar Evaluación'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  foregroundColor: kTextColor,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
                   ),
                 ),
-                const SizedBox(height: 40),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );

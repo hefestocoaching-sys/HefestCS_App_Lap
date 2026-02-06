@@ -313,8 +313,7 @@ class _TrainingWorkspaceScreenState
                     _buildProgressionTabPlaceholder(plan),
                     // Tab 6: Intensidad
                     SeriesDistributionEditor(
-                      trainingExtra:
-                          client.training.extra as Map<String, dynamic>,
+                      trainingExtra: client.training.extra,
                       onDistributionChanged: (distribution) {
                         // Handle distribution change
                       },
