@@ -33,15 +33,15 @@ import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/ui/clinic_section_surface.dart';
 import 'package:hcs_app_lap/utils/deep_merge.dart';
 
-class TrainingEvaluationTab extends ConsumerStatefulWidget {
-  const TrainingEvaluationTab({super.key});
+class TrainingInterviewTab extends ConsumerStatefulWidget {
+  const TrainingInterviewTab({super.key});
 
   @override
-  ConsumerState<TrainingEvaluationTab> createState() =>
-      TrainingEvaluationTabState();
+  ConsumerState<TrainingInterviewTab> createState() =>
+      TrainingInterviewTabState();
 }
 
-class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
+class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
@@ -63,6 +63,10 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
   late TextEditingController _sessionDurationCtrl;
   late TextEditingController _restBetweenSetsCtrl;
   late TextEditingController _avgSleepHoursCtrl;
+
+  // ✅ Controllers para peso y estatura (datos mínimos)
+  late TextEditingController _heightCmCtrl;
+  late TextEditingController _weightKgCtrl;
 
   // ═══════════════════════════════════════════════════════════════
   // CONTROLLERS V2 (2025) - MANDATORY FIELDS
@@ -176,6 +180,10 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
     _sessionDurationCtrl = TextEditingController();
     _restBetweenSetsCtrl = TextEditingController();
     _avgSleepHoursCtrl = TextEditingController();
+
+    // ✅ Inicializar controllers de peso y estatura
+    _heightCmCtrl = TextEditingController();
+    _weightKgCtrl = TextEditingController();
 
     // V2 Controllers (mandatory)
     _avgWeeklySetsPerMuscleCtrl = TextEditingController();
@@ -384,6 +392,25 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
       _sessionDurationCtrl.text = _sessionDurationMinutes?.toString() ?? '';
       _restBetweenSetsCtrl.text = _restBetweenSetsSeconds?.toString() ?? '';
       _avgSleepHoursCtrl.text = _avgSleepHours?.toString() ?? '';
+
+      // ✅ Cargar peso y estatura
+      final heightCm =
+          _readNumExtra(extra, [
+            TrainingExtraKeys.heightCm,
+            TrainingInterviewKeys.heightCm,
+            'heightCm',
+          ]) ??
+          0;
+      final weightKg =
+          _readNumExtra(extra, [
+            TrainingExtraKeys.weightKg,
+            TrainingInterviewKeys.weightKg,
+            'weightKg',
+          ]) ??
+          0;
+
+      _heightCmCtrl.text = heightCm > 0 ? heightCm.toString() : '';
+      _weightKgCtrl.text = weightKg > 0 ? weightKg.toString() : '';
     }
 
     // 🔍 LOG TEMPORAL: Verificar que se cargaron correctamente
@@ -637,6 +664,14 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
       _avgSleepHoursCtrl.text.replaceAll(',', '.'),
     );
 
+    // ✅ Parsear peso y estatura desde controllers
+    final heightCmFromCtrl = double.tryParse(
+      _heightCmCtrl.text.replaceAll(',', '.'),
+    );
+    final weightKgFromCtrl = double.tryParse(
+      _weightKgCtrl.text.replaceAll(',', '.'),
+    );
+
     // Actualizar variables internas desde controllers
     _yearsTraining = yearsFromCtrl;
     _sessionDurationMinutes = sessionFromCtrl;
@@ -667,6 +702,16 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
     }
     if (derivedSleep != null) {
       extra[TrainingExtraKeys.avgSleepHours] = derivedSleep;
+    }
+
+    // ✅ GUARDAR PESO Y ESTATURA (datos mínimos para entrenamiento)
+    if (heightCmFromCtrl != null && heightCmFromCtrl > 0) {
+      extra[TrainingExtraKeys.heightCm] = heightCmFromCtrl;
+      extra[TrainingInterviewKeys.heightCm] = heightCmFromCtrl;
+    }
+    if (weightKgFromCtrl != null && weightKgFromCtrl > 0) {
+      extra[TrainingExtraKeys.weightKg] = weightKgFromCtrl;
+      extra[TrainingInterviewKeys.weightKg] = weightKgFromCtrl;
     }
 
     // Guardar también en TrainingInterviewKeys (backward compatibility)
@@ -880,6 +925,9 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
         // PASO 2: Retornar el Client con el training actualizado
         return prev.copyWith(training: mergedTraining);
       });
+
+      // ✅ Verificar que el widget sigue montado después de la operación async
+      if (!mounted) return;
 
       // ============ PASO 2: CALCULAR Y GUARDAR MEV/MRV ============
       // IMPORTANTE: Solo después de que los datos de entrevista estén guardados
@@ -1101,6 +1149,9 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
         );
       });
 
+      // ✅ Verificar que el widget sigue montado después de la operación async
+      if (!mounted) return;
+
       // 🔴 P0: asegurar que el cliente activo en memoria coincide con el guardado
       final updatedClient = ref.read(clientsProvider).value?.activeClient;
       if (updatedClient != null) {
@@ -1122,6 +1173,9 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
             .read(clientsProvider.notifier)
             .setActiveClientById(updatedClient.id);
       }
+
+      // ✅ Verificar que el widget sigue montado después de la operación async
+      if (!mounted) return;
 
       _isDirty = false;
 
@@ -1146,6 +1200,9 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
         } catch (e) {
           debugPrint('⚠️ Error al regenerar plan: $e');
         }
+
+        // ✅ Verificar que el widget sigue montado después de la operación async
+        if (!mounted) return;
       }
 
       // 🔍 VALIDACIÓN FINAL: Confirmar que los datos se guardaron en memoria (antes de persistencia)
@@ -1206,6 +1263,10 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
     _sessionDurationCtrl.dispose();
     _restBetweenSetsCtrl.dispose();
     _avgSleepHoursCtrl.dispose();
+
+    // ✅ Dispose de controllers de peso y estatura
+    _heightCmCtrl.dispose();
+    _weightKgCtrl.dispose();
 
     // V2 Controllers
     _avgWeeklySetsPerMuscleCtrl.dispose();
@@ -1330,6 +1391,33 @@ class TrainingEvaluationTabState extends ConsumerState<TrainingEvaluationTab>
       spacing: 16,
       runSpacing: 16,
       children: [
+        // ✅ DATOS MÍNIMOS PARA ENTRENAMIENTO (peso y estatura)
+        SizedBox(
+          width: 380,
+          child: TextField(
+            controller: _heightCmCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Estatura (cm) *',
+              prefixIcon: Icon(Icons.height),
+              helperText: 'Requerido para entrenamiento',
+            ),
+            onChanged: (_) => _markDirty(),
+          ),
+        ),
+        SizedBox(
+          width: 380,
+          child: TextField(
+            controller: _weightKgCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Peso (kg) *',
+              prefixIcon: Icon(Icons.monitor_weight),
+              helperText: 'Requerido para entrenamiento',
+            ),
+            onChanged: (_) => _markDirty(),
+          ),
+        ),
         SizedBox(
           width: 380,
           child: EnumGlassDropdown<TrainingDiscipline>(

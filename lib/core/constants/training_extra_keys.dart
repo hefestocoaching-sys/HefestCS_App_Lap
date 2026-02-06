@@ -124,5 +124,10 @@ class TrainingExtraKeys {
   // muscleGroupMapping, allMuscles, y flags de migración
   static const vopSnapshot = 'vopSnapshot';
 
+  // --- Training Domain V1 (autonomo) ---
+  static const trainingSetupV1 = 'trainingSetupV1';
+  static const trainingEvaluationSnapshotV1 = 'trainingEvaluationSnapshotV1';
+  static const trainingProgressionStateV1 = 'trainingProgressionStateV1';
+
   const TrainingExtraKeys._();
 }

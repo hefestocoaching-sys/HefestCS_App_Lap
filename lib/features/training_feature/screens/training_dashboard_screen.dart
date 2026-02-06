@@ -8,6 +8,9 @@ import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
 import 'package:intl/intl.dart';
 
+// ENTREVISTA DE ENTRENAMIENTO (SSOT)
+import '../tabs/training_interview_tab.dart';
+
 // IMPORTS DE WIDGETS LEGACY (deprecados, mantener por compatibilidad temporal)
 import '../widgets/volume_capacity_scientific_view.dart';
 import '../widgets/series_distribution_editor.dart';
@@ -59,7 +62,7 @@ class _TrainingDashboardScreenState
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 8, // 8 tabs Motor V3
+      length: 9, // 9 tabs Motor V3 (1 entrevista + 8 tabs)
       vsync: this,
       initialIndex: 0,
     );
@@ -109,29 +112,35 @@ class _TrainingDashboardScreenState
           TrainingPlanConfig? plan;
 
           // 1) Intentar usar activePlanId (SSOT)
-          final activePlanId = client.training.extra[TrainingExtraKeys.activePlanId] as String?;
+          final activePlanId =
+              client.training.extra[TrainingExtraKeys.activePlanId] as String?;
 
           if (activePlanId != null) {
             try {
-              plan = plans.firstWhere(
-                (p) => p.id == activePlanId,
+              plan = plans.firstWhere((p) => p.id == activePlanId);
+              debugPrint(
+                '✅ TrainingDashboard: Plan activo encontrado por activePlanId',
               );
-              debugPrint('✅ TrainingDashboard: Plan activo encontrado por activePlanId');
             } on StateError {
-              debugPrint('⚠️ TrainingDashboard: activePlanId no coincide con ningún plan, usando fallback');
+              debugPrint(
+                '⚠️ TrainingDashboard: activePlanId no coincide con ningún plan, usando fallback',
+              );
             }
           }
 
           // 2) Fallback: plan más reciente por startDate
-          plan ??= (plans.toList()
-                ..sort((a, b) => b.startDate.compareTo(a.startDate)))
-              .first;
+          plan ??=
+              (plans.toList()
+                    ..sort((a, b) => b.startDate.compareTo(a.startDate)))
+                  .first;
 
           debugPrint('✅ TrainingDashboard: Renderizando plan Motor V3:');
           debugPrint('   ID: ${plan.id}');
           debugPrint('   Inicio: ${plan.startDate}');
           debugPrint('   Semanas: ${plan.weeks.length}');
-          debugPrint('   Fuente: ${activePlanId != null ? "activePlanId (SSOT)" : "fallback (más reciente)"}');
+          debugPrint(
+            '   Fuente: ${activePlanId != null ? "activePlanId (SSOT)" : "fallback (más reciente)"}',
+          );
 
           // ✅ activePlanId es SSOT del plan activo (post FASE B)
           // ✅ Usar plan.id directamente (ya tenemos objeto completo)
@@ -298,8 +307,57 @@ class _TrainingDashboardScreenState
   }
 
   Widget _buildMotorV3Workspace(TrainingPlanConfig plan, dynamic client) {
+    // Verificar si hay plan activo
+    final activePlanId =
+        client.training.extra[TrainingExtraKeys.activePlanId] as String?;
+    final hasPlan = activePlanId != null && activePlanId.isNotEmpty;
+
     return Column(
       children: [
+        // Header con acciones (arriba de tabs)
+        Container(
+          color: kAppBarColor,
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Row(
+            children: [
+              // Generar (solo si NO hay plan activo)
+              if (!hasPlan)
+                ElevatedButton.icon(
+                  onPressed: () => _generarPlan(),
+                  icon: Icon(Icons.auto_awesome, size: 18),
+                  label: Text('Generar Plan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF00D9FF),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              if (hasPlan) ...[
+                // Regenerar
+                ElevatedButton.icon(
+                  onPressed: () => _regenerarPlan(),
+                  icon: Icon(Icons.refresh, size: 18),
+                  label: Text('Regenerar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 12),
+                // Adaptar
+                ElevatedButton.icon(
+                  onPressed: () => _adaptarPlan(),
+                  icon: Icon(Icons.tune, size: 18),
+                  label: Text('Adaptar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
         // TabBar sticky (igual que Historia Clínica)
         Container(
           color: kAppBarColor,
@@ -307,6 +365,7 @@ class _TrainingDashboardScreenState
             controller: _tabController,
             isScrollable: true,
             tabs: const [
+              Tab(text: 'Entrevista'),
               Tab(text: 'Overview'),
               Tab(text: 'Volumen'),
               Tab(text: 'Sesiones'),
@@ -330,6 +389,10 @@ class _TrainingDashboardScreenState
             child: TabBarView(
               controller: _tabController,
               children: [
+                // Tab 0: Entrevista (SSOT)
+                TrainingInterviewTab(
+                  key: GlobalKey<TrainingInterviewTabState>(),
+                ),
                 // Tab 1: Overview
                 _buildOverviewTab(plan),
                 // Tab 2: Volumen
@@ -799,5 +862,32 @@ class _TrainingDashboardScreenState
       ),
     );
     // TODO: Implementar exportación
+  }
+
+  Future<void> _adaptarPlan() async {
+    try {
+      final now = DateTime.now();
+      await ref
+          .read(trainingPlanProvider.notifier)
+          .generatePlanFromActiveCycle(now);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Plan adaptado correctamente'),
+            backgroundColor: kSuccessColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al adaptar plan: $e'),
+            backgroundColor: kErrorColor,
+          ),
+        );
+      }
+    }
   }
 }

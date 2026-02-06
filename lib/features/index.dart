@@ -68,7 +68,8 @@ export 'history_clinic_feature/tabs/background_tab.dart';
 export 'history_clinic_feature/tabs/general_evaluation_tab.dart';
 export 'history_clinic_feature/tabs/gyneco_tab.dart';
 export 'history_clinic_feature/tabs/personal_data_tab.dart';
-export 'history_clinic_feature/tabs/training_evaluation_tab.dart';
+// MIGRADO: Entrevista de entrenamiento ahora está en training_feature
+export 'training_feature/tabs/training_interview_tab.dart';
 export 'history_clinic_feature/viewmodel/history_clinic_view_model.dart';
 export 'history_clinic_feature/viewmodel/muscle_volume_buckets.dart';
 export 'history_clinic_feature/widgets/client_hero_header.dart';
@@ -150,6 +151,7 @@ export 'training_feature/providers/training_plan_provider.dart';
 // Training Feature - Screens
 export 'training_feature/screens/series_distribution_screen.dart';
 export 'training_feature/screens/training_dashboard_screen.dart';
+export 'training_feature/screens/training_workspace_screen.dart';
 export 'training_feature/screens/training_weeks_overview_screen.dart';
 export 'training_feature/training_screen.dart';
 

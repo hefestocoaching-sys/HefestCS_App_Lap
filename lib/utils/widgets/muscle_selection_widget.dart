@@ -27,24 +27,56 @@ const List<MuscleOption> allMuscles = [
   MuscleOption('abs', 'Abdominales'),
 ];
 
+/// Helper: Normalizar keys entrada → canon  ónicos
+/// Si entrada es label, mapearlo a key. Si es ya key, devolver.
+String _normalizeToCanonicalKey(String raw) {
+  const labelToKeyMap = {
+    'Pecho': 'chest',
+    'Dorsal ancho': 'lats',
+    'Dorsal ancho (Lats)': 'lats',
+    'Espalda alta': 'upper_back',
+    'Espalda alta / Escápulas': 'upper_back',
+    'Espalda alta / Escápulas (Upper back)': 'upper_back',
+    'Upper back': 'upper_back',
+    'Trapecios': 'traps',
+    'Deltoide Anterior': 'deltoide_anterior',
+    'Deltoide anterior': 'deltoide_anterior',
+    'Deltoide Lateral': 'deltoide_lateral',
+    'Deltoide lateral': 'deltoide_lateral',
+    'Deltoide Posterior': 'deltoide_posterior',
+    'Deltoide posterior': 'deltoide_posterior',
+    'Bíceps': 'biceps',
+    'Tríceps': 'triceps',
+    'Cuádriceps': 'quads',
+    'Isquiotibiales': 'hamstrings',
+    'Glúteos': 'glutes',
+    'Pantorrillas': 'calves',
+    'Abdominales': 'abs',
+  };
+
+  final trimmed = raw.trim();
+  return labelToKeyMap[trimmed] ?? trimmed;
+}
+
 /// Helper: Expand legacy 'back' → ['lats', 'upper_back', 'traps']
 /// Mantiene backward compatibility con datos viejos de entrevista.
 List<String> _expandLegacyKeys(List<String> keys) {
   final expanded = <String>[];
   for (final k in keys) {
-    if (k == 'back') {
+    final normalized = _normalizeToCanonicalKey(k);
+    if (normalized == 'back') {
       // COMPAT LEGACY: back → lats/upper_back/traps
-      // Split científico por defecto:
-      // - lats: 45% (volumen principal)
-      // - upper_back: 35% (romboides, redondo menor)
-      // - traps: 20% (estabilización)
-      // Nota: UI no maneja % aún, solo expande a 3 keys.
       expanded.addAll(['lats', 'upper_back', 'traps']);
     } else {
-      expanded.add(k);
+      expanded.add(normalized);
     }
   }
-  return expanded.toSet().toList(); // elimina duplicados
+  // Filtrar contra keys canónicas SOLO (14 músculos)
+  final canonicalKeys = allMuscles.map((m) => m.key).toSet();
+  return expanded
+      .where((k) => canonicalKeys.contains(k))
+      .toSet()
+      .toList(); // elimina duplicados
 }
 
 class MuscleSelectionGroup extends StatefulWidget {
@@ -82,6 +114,40 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
     _primary = _expandLegacyKeys(widget.primarySelection);
     _secondary = _expandLegacyKeys(widget.secondarySelection);
     _tertiary = _expandLegacyKeys(widget.tertiarySelection);
+  }
+
+  @override
+  void didUpdateWidget(MuscleSelectionGroup oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // ✅ Resincronizar estado si cambiaron las props (al cargar cliente, guardar, etc.)
+    // Esto previene "chips fantasma" duplicados
+    if (widget.primarySelection != oldWidget.primarySelection ||
+        widget.secondarySelection != oldWidget.secondarySelection ||
+        widget.tertiarySelection != oldWidget.tertiarySelection) {
+      final newPrimary = _expandLegacyKeys(widget.primarySelection);
+      final newSecondary = _expandLegacyKeys(widget.secondarySelection);
+      final newTertiary = _expandLegacyKeys(widget.tertiarySelection);
+
+      // Solo setState si realmente cambió
+      if (_listsDiffer(_primary, newPrimary) ||
+          _listsDiffer(_secondary, newSecondary) ||
+          _listsDiffer(_tertiary, newTertiary)) {
+        setState(() {
+          _primary = newPrimary;
+          _secondary = newSecondary;
+          _tertiary = newTertiary;
+        });
+      }
+    }
+  }
+
+  bool _listsDiffer(List<String> a, List<String> b) {
+    if (a.length != b.length) return true;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return true;
+    }
+    return false;
   }
 
   void _updateSelections(

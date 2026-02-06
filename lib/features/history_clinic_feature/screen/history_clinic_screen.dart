@@ -4,7 +4,6 @@ import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart'
 
 import 'package:hcs_app_lap/features/history_clinic_feature/tabs/background_tab.dart';
 import 'package:hcs_app_lap/features/history_clinic_feature/tabs/general_evaluation_tab.dart';
-import 'package:hcs_app_lap/features/history_clinic_feature/tabs/training_evaluation_tab.dart';
 import 'package:hcs_app_lap/features/history_clinic_feature/tabs/personal_data_tab.dart';
 import 'package:hcs_app_lap/features/history_clinic_feature/tabs/gyneco_tab.dart';
 
@@ -32,7 +31,6 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
   final _personalTabKey = GlobalKey<PersonalDataTabState>();
   final _backgroundTabKey = GlobalKey<BackgroundTabState>();
   final _generalTabKey = GlobalKey<GeneralEvaluationTabState>();
-  final _trainingTabKey = GlobalKey<TrainingEvaluationTabState>();
   final _gynecoTabKey = GlobalKey<GynecoTabState>();
   late VoidCallback _tabListener;
 
@@ -40,7 +38,7 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
     'Datos Personales',
     'Antecedentes',
     'Evaluación/Nutrición',
-    'Evaluación/Entrenamiento',
+    'Entrenamiento (migrado)',
     'Ginecobstétricos',
   ];
 
@@ -71,7 +69,7 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
     // Guardar siempre la pestaña visible primero
     await _saveTabIfNeeded(_tabController.index);
     // Luego intentar guardar las demás que puedan estar sucias
-    for (final idx in [0, 1, 2, 3, 4]) {
+    for (final idx in [0, 1, 2, 4]) {
       if (idx == _tabController.index) continue;
       await _saveTabIfNeeded(idx);
     }
@@ -82,7 +80,6 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
     _personalTabKey.currentState?.resetDrafts();
     _backgroundTabKey.currentState?.resetDrafts();
     _generalTabKey.currentState?.resetDrafts();
-    _trainingTabKey.currentState?.resetDrafts();
     _gynecoTabKey.currentState?.resetDrafts();
   }
 
@@ -99,7 +96,8 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
         updated = await _generalTabKey.currentState?.saveIfDirty();
         break;
       case 3:
-        updated = await _trainingTabKey.currentState?.saveIfDirty();
+        // Tab 3: Placeholder (entrevista migrada)
+        updated = null;
         break;
       case 4:
         updated = await _gynecoTabKey.currentState?.saveIfDirty();
@@ -192,7 +190,37 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
           PersonalDataTab(key: _personalTabKey),
           BackgroundTab(key: _backgroundTabKey),
           GeneralEvaluationTab(key: _generalTabKey),
-          TrainingEvaluationTab(key: _trainingTabKey),
+          // Placeholder para entrevista migrada
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.fitness_center,
+                    size: 80,
+                    color: kPrimaryColor.withValues(alpha: 0.6),
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    'Entrevista de Entrenamiento Migrada',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: kTextColor,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'La entrevista de entrenamiento ahora está en el módulo Entrenamiento (primera pestaña).',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: kTextColorSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ),
           GynecoTab(key: _gynecoTabKey),
         ];
 
@@ -229,7 +257,7 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
                     Tab(text: 'Datos Personales'),
                     Tab(text: 'Antecedentes'),
                     Tab(text: 'Evaluación/Nutrición'),
-                    Tab(text: 'Evaluación/Entrenamiento'),
+                    Tab(text: 'Entrenamiento (migrado)'),
                     Tab(text: 'Ginecobstétricos'),
                   ],
                 ),

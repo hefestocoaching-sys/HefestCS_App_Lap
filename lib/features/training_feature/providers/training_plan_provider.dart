@@ -589,7 +589,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           isLoading: false,
           error: 'Error en Motor V3: $e',
         );
-        return null;
+        return;
       }
 
       // Validar resultado Motor V3
@@ -602,7 +602,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           blockReason: resultV3.blockReason,
           suggestions: resultV3.suggestions,
         );
-        return null;
+        return;
       }
 
       // Extraer plan generado
