@@ -9,6 +9,7 @@ import 'package:hcs_app_lap/domain/training_domain/pain_rule.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_migration_service.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_snapshot_v1.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_plan_decision_service.dart';
+import 'package:hcs_app_lap/domain/training_domain/training_plan_governor.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_progression_state_v1.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_setup_v1.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
@@ -167,6 +168,70 @@ class _TrainingWorkspaceScreenState
   // Métodos auxiliares de navegación por tabs eliminados (jerarquía aplanada)
   // El workspace ahora muestra directamente el Motor V3 con sus 9 tabs
 
+  // ═══════════════════════════════════════════════════════════════
+  // E2 GOBERNANZA: Verificar acción permitida
+  // ═══════════════════════════════════════════════════════════════
+  TrainingPlanAction _checkPlanActionAllowed(Client client) {
+    // Leer SSOT desde extra
+    final setupMap =
+        client.training.extra[TrainingExtraKeys.trainingSetupV1]
+            as Map<String, dynamic>?;
+    final snapshotMap =
+        client.training.extra[TrainingExtraKeys.trainingEvaluationSnapshotV1]
+            as Map<String, dynamic>?;
+    final progressionMap =
+        client.training.extra[TrainingExtraKeys.trainingProgressionStateV1]
+            as Map<String, dynamic>?;
+
+    // Si no hay SSOT, permitir generar
+    if (setupMap == null || snapshotMap == null || progressionMap == null) {
+      return TrainingPlanAction.generate;
+    }
+
+    try {
+      final setup = TrainingSetupV1.fromJson(setupMap);
+      final snapshot = TrainingEvaluationSnapshotV1.fromJson(snapshotMap);
+      final progression = TrainingProgressionStateV1.fromJson(progressionMap);
+
+      return TrainingPlanGovernor.decide(
+        setup: setup,
+        snapshot: snapshot,
+        progression: progression,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error al verificar acción permitida: $e');
+      return TrainingPlanAction.adapt; // Fallback seguro
+    }
+  }
+
+  String _getPlanActionTooltip(TrainingPlanAction action, Client client) {
+    // Leer SSOT para obtener rationale
+    final snapshotMap =
+        client.training.extra[TrainingExtraKeys.trainingEvaluationSnapshotV1]
+            as Map<String, dynamic>?;
+    final progressionMap =
+        client.training.extra[TrainingExtraKeys.trainingProgressionStateV1]
+            as Map<String, dynamic>?;
+
+    if (snapshotMap == null || progressionMap == null) {
+      return 'Plan inicial sin historial';
+    }
+
+    try {
+      final snapshot = TrainingEvaluationSnapshotV1.fromJson(snapshotMap);
+      final progression = TrainingProgressionStateV1.fromJson(progressionMap);
+
+      return TrainingPlanGovernor.getDecisionRationale(
+        action,
+        snapshot: snapshot,
+        progression: progression,
+      );
+    } catch (e) {
+      return 'Verificar estado del plan';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   Widget _buildCurrentPlanSection(
     BuildContext context,
     Client client,
@@ -176,6 +241,10 @@ class _TrainingWorkspaceScreenState
         ?.toString();
     final totalPlans = client.trainingPlans.length;
     final hasPlan = activePlanId != null && activePlanId.isNotEmpty;
+
+    // E2 GOBERNANZA: Verificar acción permitida
+    final allowedAction = _checkPlanActionAllowed(client);
+    final actionTooltip = _getPlanActionTooltip(allowedAction, client);
 
     // Si no hay planes, mostrar mensaje
     if (client.trainingPlans.isEmpty) {
@@ -187,13 +256,20 @@ class _TrainingWorkspaceScreenState
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () => _generarPlan(),
-            icon: const Icon(Icons.auto_awesome, size: 18),
-            label: const Text('Generar Plan'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryColor,
-              foregroundColor: Colors.white,
+          Tooltip(
+            message: actionTooltip,
+            child: ElevatedButton.icon(
+              onPressed:
+                  allowedAction == TrainingPlanAction.generate ||
+                      allowedAction == TrainingPlanAction.regenerate
+                  ? () => _generarPlan()
+                  : null,
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: const Text('Generar Plan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+                foregroundColor: Colors.white,
+              ),
             ),
           ),
         ],
@@ -227,33 +303,62 @@ class _TrainingWorkspaceScreenState
         Row(
           children: [
             if (!hasPlan)
-              ElevatedButton.icon(
-                onPressed: () => _generarPlan(),
-                icon: const Icon(Icons.auto_awesome, size: 18),
-                label: const Text('Generar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryColor.withValues(alpha: 0.8),
-                  foregroundColor: Colors.white,
+              Tooltip(
+                message: actionTooltip,
+                child: ElevatedButton.icon(
+                  onPressed:
+                      allowedAction == TrainingPlanAction.generate ||
+                          allowedAction == TrainingPlanAction.regenerate
+                      ? () => _generarPlan()
+                      : null,
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('Generar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor.withValues(alpha: 0.8),
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               )
             else ...[
-              ElevatedButton.icon(
-                onPressed: () => _regenerarPlan(),
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Regenerar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrimaryColor,
-                  foregroundColor: Colors.white,
+              // Botón Regenerar (solo si permitido)
+              Tooltip(
+                message: allowedAction == TrainingPlanAction.regenerate
+                    ? actionTooltip
+                    : '❌ Regeneración bloqueada: $actionTooltip',
+                child: ElevatedButton.icon(
+                  onPressed: allowedAction == TrainingPlanAction.regenerate
+                      ? () => _regenerarPlan()
+                      : null,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Regenerar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade700,
+                    disabledForegroundColor: Colors.grey.shade500,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () => _adaptarPlan(),
-                icon: const Icon(Icons.tune, size: 18),
-                label: const Text('Adaptar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
+              // Botón Adaptar (permitido si not locked)
+              Tooltip(
+                message: allowedAction == TrainingPlanAction.adapt
+                    ? actionTooltip
+                    : allowedAction == TrainingPlanAction.locked
+                    ? '❌ Adaptación bloqueada: $actionTooltip'
+                    : 'Usar regeneración en su lugar',
+                child: ElevatedButton.icon(
+                  onPressed: allowedAction == TrainingPlanAction.adapt
+                      ? () => _adaptarPlan()
+                      : null,
+                  icon: const Icon(Icons.tune, size: 18),
+                  label: const Text('Adaptar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade700,
+                    disabledForegroundColor: Colors.grey.shade500,
+                  ),
                 ),
               ),
             ],
@@ -1209,13 +1314,37 @@ class _TrainingWorkspaceScreenState
     return value == 0 ? '' : value.toString();
   }
 
-  // ✅ MÉTODOS PARA PLAN V3
+  // ═══════════════════════════════════════════════════════════════════════════
+  // E2 GOBERNANZA: MÉTODOS PARA PLAN V3 (CON VERIFICACIÓN)
+  // ═══════════════════════════════════════════════════════════════════════════
   Future<void> _generarPlan() async {
+    // E2: Verificar que la acción esté permitida
+    final client = ref.read(clientsProvider).value?.activeClient;
+    if (client == null) return;
+
+    final allowedAction = _checkPlanActionAllowed(client);
+    if (allowedAction == TrainingPlanAction.locked) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '❌ Plan bloqueado: ${_getPlanActionTooltip(allowedAction, client)}',
+            ),
+            backgroundColor: kErrorColor,
+          ),
+        );
+      }
+      return;
+    }
+
     try {
       final now = DateTime.now();
       await ref
           .read(trainingPlanProvider.notifier)
           .generatePlanFromActiveCycle(now);
+
+      // E2: Actualizar estado de progresión después de generar
+      await _updateProgressionAfterPlanAction('generate');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1238,20 +1367,43 @@ class _TrainingWorkspaceScreenState
   }
 
   void _regenerarPlan() {
+    // E2: Verificar que la acción esté permitida
+    final client = ref.read(clientsProvider).value?.activeClient;
+    if (client == null) return;
+
+    final allowedAction = _checkPlanActionAllowed(client);
+    if (allowedAction != TrainingPlanAction.regenerate) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '❌ Regeneración no permitida: ${_getPlanActionTooltip(allowedAction, client)}',
+            ),
+            backgroundColor: kErrorColor,
+          ),
+        );
+      }
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Regenerar Plan'),
-        content: const Text('¿Regenerar plan completo Motor V3?'),
+        content: const Text(
+          '¿Regenerar plan completo Motor V3?\n\nEsto creará un nuevo plan desde cero.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              _generarPlan();
+              await _generarPlan();
+              // E2: Actualizar estado de progresión
+              await _updateProgressionAfterPlanAction('regenerate');
             },
             child: const Text('Regenerar'),
           ),
@@ -1261,11 +1413,33 @@ class _TrainingWorkspaceScreenState
   }
 
   Future<void> _adaptarPlan() async {
+    // E2: Verificar que la acción esté permitida
+    final client = ref.read(clientsProvider).value?.activeClient;
+    if (client == null) return;
+
+    final allowedAction = _checkPlanActionAllowed(client);
+    if (allowedAction != TrainingPlanAction.adapt) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '❌ Adaptación no permitida: ${_getPlanActionTooltip(allowedAction, client)}',
+            ),
+            backgroundColor: kErrorColor,
+          ),
+        );
+      }
+      return;
+    }
+
     try {
       final now = DateTime.now();
       await ref
           .read(trainingPlanProvider.notifier)
           .generatePlanFromActiveCycle(now);
+
+      // E2: Actualizar estado de progresión después de adaptar
+      await _updateProgressionAfterPlanAction('adapt');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1284,6 +1458,64 @@ class _TrainingWorkspaceScreenState
           ),
         );
       }
+    }
+  }
+
+  // E2: Actualizar estado de progresión después de acción de plan
+  Future<void> _updateProgressionAfterPlanAction(String action) async {
+    final client = ref.read(clientsProvider).value?.activeClient;
+    if (client == null) return;
+
+    try {
+      final progressionMap =
+          client.training.extra[TrainingExtraKeys.trainingProgressionStateV1]
+              as Map<String, dynamic>? ??
+          {};
+      final progression = progressionMap.isNotEmpty
+          ? TrainingProgressionStateV1.fromJson(progressionMap)
+          : const TrainingProgressionStateV1(
+              weeksCompleted: 0,
+              sessionsCompleted: 0,
+              consecutiveWeeksTraining: 0,
+              averageRIR: 2.0,
+              averageSessionRPE: 7,
+              perceivedRecovery: 7,
+              lastPlanId: '',
+              lastPlanChangeReason: 'initial',
+            );
+
+      // Crear historial de adaptación
+      final adaptationHistoryCopy = List<Map<String, dynamic>>.from(
+        progression.adaptationHistory,
+      );
+      adaptationHistoryCopy.add({
+        'timestamp': DateTime.now().toIso8601String(),
+        'action': action,
+        'weekCompleted': progression.weeksCompleted,
+      });
+
+      // Actualizar progresión
+      final updatedProgressionMap = {
+        ...progression.toJson(),
+        'lastAdaptationAt': DateTime.now().toIso8601String(),
+        'adaptationHistory': adaptationHistoryCopy,
+        'lastPlanChangeReason': action,
+      };
+
+      // Persistir
+      await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+        return prev.copyWith(
+          training: prev.training.copyWith(
+            extra: {
+              ...prev.training.extra,
+              TrainingExtraKeys.trainingProgressionStateV1:
+                  updatedProgressionMap,
+            },
+          ),
+        );
+      });
+    } catch (e) {
+      debugPrint('⚠️ Error al actualizar progresión: $e');
     }
   }
 }

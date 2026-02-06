@@ -20,6 +20,16 @@ class TrainingEvaluationSnapshotV1 {
 
   final String status; // minimal | partial | complete
 
+  // ═══════════════════════════════════════════════════════════════
+  // E2 GOBERNANZA: Campos de decisión clínica
+  // ═══════════════════════════════════════════════════════════════
+  final String regenerationPolicy; // allow | adapt_only | locked
+  final int? weeksToCompetition; // Null si no hay competencia próxima
+  final String? profileArchetype; // returning_detrained | advanced | etc.
+  final bool rampUpRequired; // true si necesita rampa progresiva
+  final bool
+  peakPhaseWindow; // true si está en ventana de peak (últimas 3 semanas)
+
   const TrainingEvaluationSnapshotV1({
     required this.schemaVersion,
     required this.createdAt,
@@ -34,6 +44,11 @@ class TrainingEvaluationSnapshotV1 {
     required this.intensityDistribution,
     required this.painRules,
     required this.status,
+    this.regenerationPolicy = 'allow',
+    this.weeksToCompetition,
+    this.profileArchetype,
+    this.rampUpRequired = false,
+    this.peakPhaseWindow = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -51,6 +66,11 @@ class TrainingEvaluationSnapshotV1 {
       'intensityDistribution': intensityDistribution,
       'painRules': painRules.map((rule) => rule.toJson()).toList(),
       'status': status,
+      'regenerationPolicy': regenerationPolicy,
+      'weeksToCompetition': weeksToCompetition,
+      'profileArchetype': profileArchetype,
+      'rampUpRequired': rampUpRequired,
+      'peakPhaseWindow': peakPhaseWindow,
     };
   }
 
@@ -86,6 +106,11 @@ class TrainingEvaluationSnapshotV1 {
       intensityDistribution: _readDoubleMap(json['intensityDistribution']),
       painRules: painRules,
       status: json['status']?.toString() ?? 'minimal',
+      regenerationPolicy: json['regenerationPolicy']?.toString() ?? 'allow',
+      weeksToCompetition: (json['weeksToCompetition'] as num?)?.toInt(),
+      profileArchetype: json['profileArchetype']?.toString(),
+      rampUpRequired: json['rampUpRequired'] == true,
+      peakPhaseWindow: json['peakPhaseWindow'] == true,
     );
   }
 

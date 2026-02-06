@@ -10,6 +10,12 @@ class TrainingProgressionStateV1 {
   final String lastPlanId;
   final String lastPlanChangeReason;
 
+  // ═══════════════════════════════════════════════════════════════
+  // E2 GOBERNANZA: Historial de adaptaciones
+  // ═══════════════════════════════════════════════════════════════
+  final DateTime? lastAdaptationAt;
+  final List<Map<String, dynamic>> adaptationHistory;
+
   const TrainingProgressionStateV1({
     required this.weeksCompleted,
     required this.sessionsCompleted,
@@ -19,6 +25,8 @@ class TrainingProgressionStateV1 {
     required this.perceivedRecovery,
     required this.lastPlanId,
     required this.lastPlanChangeReason,
+    this.lastAdaptationAt,
+    this.adaptationHistory = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -31,6 +39,8 @@ class TrainingProgressionStateV1 {
       'perceivedRecovery': perceivedRecovery,
       'lastPlanId': lastPlanId,
       'lastPlanChangeReason': lastPlanChangeReason,
+      'lastAdaptationAt': lastAdaptationAt?.toIso8601String(),
+      'adaptationHistory': adaptationHistory,
     };
   }
 
@@ -45,6 +55,12 @@ class TrainingProgressionStateV1 {
       perceivedRecovery: (json['perceivedRecovery'] as num?)?.toDouble() ?? 0.0,
       lastPlanId: json['lastPlanId']?.toString() ?? '',
       lastPlanChangeReason: json['lastPlanChangeReason']?.toString() ?? '',
+      lastAdaptationAt: json['lastAdaptationAt'] != null
+          ? DateTime.tryParse(json['lastAdaptationAt'])
+          : null,
+      adaptationHistory:
+          (json['adaptationHistory'] as List?)?.cast<Map<String, dynamic>>() ??
+          const [],
     );
   }
 }

@@ -869,7 +869,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // ═══════════════════════════════════════════════════════════════
     // PASO 3B: PERSISTIR SSOT ESTRUCTURADO (trainingSetupV1, trainingEvaluationSnapshotV1, trainingProgressionStateV1)
     // ═══════════════════════════════════════════════════════════════
-    
+
     // 1. Crear TrainingSetupV1 y persistir como Map
     final trainingSetupV1Map = {
       'heightCm': heightCmFromCtrl ?? 0.0,
@@ -881,16 +881,30 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'timePerSessionMinutes': derivedSession ?? 0,
       'trainingExperienceTotalYearsLifetime': derivedYears ?? 0,
       'trainingExperienceYearsContinuous': derivedYears ?? 0,
-      'trainingExperienceDetrainingMonths': 0, // Se puede capturar si es necesario
+      'trainingExperienceDetrainingMonths':
+          0, // Se puede capturar si es necesario
     };
     extra[TrainingExtraKeys.trainingSetupV1] = trainingSetupV1Map;
 
     // 2. Crear TrainingEvaluationSnapshotV1 y persistir como Map
     final now = DateTime.now();
+
+    // E2 GOBERNANZA: Determinar política de regeneración según historial
+    final existingSnapshotMap =
+        extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] as Map?;
+    final existingProgressionMap =
+        extra[TrainingExtraKeys.trainingProgressionStateV1] as Map?;
+    final weeksCompleted =
+        (existingProgressionMap?['weeksCompleted'] as num?)?.toInt() ?? 0;
+
+    // Política de regeneración:
+    // - 'allow' si weeksCompleted == 0 (sin historial, permitir regenerar)
+    // - 'adapt_only' si weeksCompleted > 0 (con historial, solo adaptar)
+    final regenerationPolicy = weeksCompleted == 0 ? 'allow' : 'adapt_only';
+
     final trainingEvaluationSnapshotV1Map = {
       'schemaVersion': 1,
-      'createdAt': (extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] as Map?)
-          ?['createdAt'] ?? now.toIso8601String(), // Mantener fecha original si existe
+      'createdAt': existingSnapshotMap?['createdAt'] ?? now.toIso8601String(),
       'updatedAt': now.toIso8601String(),
       'daysPerWeek': daysPerWeek,
       'sessionDurationMinutes': derivedSession ?? 0,
@@ -898,12 +912,20 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'primaryMuscles': _primaryMuscles,
       'secondaryMuscles': _secondaryMuscles,
       'tertiaryMuscles': _tertiaryMuscles,
-      'priorityVolumeSplit': {}, // Se rellena en otras etapas del flujo
-      'intensityDistribution': {}, // Se rellena en otras etapas del flujo
-      'painRules': [], // Se rellena en otras etapas del flujo
+      'priorityVolumeSplit': existingSnapshotMap?['priorityVolumeSplit'] ?? {},
+      'intensityDistribution':
+          existingSnapshotMap?['intensityDistribution'] ?? {},
+      'painRules': existingSnapshotMap?['painRules'] ?? [],
       'status': 'partial', // partial = datos básicos capturados
+      // E2 GOBERNANZA: Campos de decisión clínica
+      'regenerationPolicy': regenerationPolicy,
+      'weeksToCompetition': null, // TODO: Capturar en UI si aplica
+      'profileArchetype': _deriveProfileArchetype(derivedYears),
+      'rampUpRequired': _deriveRampUpRequired(derivedYears),
+      'peakPhaseWindow': false, // TODO: Calcular según weeksToCompetition
     };
-    extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] = trainingEvaluationSnapshotV1Map;
+    extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] =
+        trainingEvaluationSnapshotV1Map;
 
     // 3. Crear TrainingProgressionStateV1 y persistir como Map
     // (inicialmente, se actualiza con datos reales durante el entrenamiento)
@@ -917,7 +939,8 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'lastPlanId': '',
       'lastPlanChangeReason': 'initial_evaluation',
     };
-    extra[TrainingExtraKeys.trainingProgressionStateV1] = trainingProgressionStateV1Map;
+    extra[TrainingExtraKeys.trainingProgressionStateV1] =
+        trainingProgressionStateV1Map;
 
     // ═══════════════════════════════════════════════════════════════
     // PASO 3B: Explícitamente persistir daysPerWeek en extra[] (para Motor V3)
@@ -2141,6 +2164,45 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     );
   }
   */
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // E2 GOBERNANZA: Helpers para derivar campos clínicos
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Deriva el arquetipo de perfil según años de entrenamiento y desentrenamiento
+  String? _deriveProfileArchetype(int? yearsTraining) {
+    if (yearsTraining == null || yearsTraining == 0) {
+      return 'beginner';
+    }
+
+    // TODO: Expandir lógica según desentrenamiento
+    // Caso "7 años / 2 off" debería detectarse aquí
+    // Requeriría capturar detrainingMonths en UI
+
+    if (yearsTraining >= 5) {
+      return 'advanced';
+    } else if (yearsTraining >= 2) {
+      return 'intermediate';
+    } else {
+      return 'beginner';
+    }
+  }
+
+  /// Determina si se requiere rampa progresiva (ramp-up)
+  bool _deriveRampUpRequired(int? yearsTraining) {
+    // Requiere rampa si:
+    // - Es principiante (< 1 año)
+    // - O es "returning_detrained" (años altos + desentrenamiento)
+
+    if (yearsTraining == null || yearsTraining < 1) {
+      return true; // Principiante
+    }
+
+    // TODO: Agregar lógica de desentrenamiento
+    // Si detrainingMonths > 6 → rampUpRequired = true
+
+    return false; // Por defecto, no requiere rampa
+  }
 }
 
 // ============================================================================
