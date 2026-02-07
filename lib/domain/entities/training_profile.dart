@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/constants/training_interview_keys.dart';
@@ -9,6 +10,7 @@ import 'package:hcs_app_lap/core/enums/training_focus.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
 import 'package:hcs_app_lap/core/enums/training_interview_enums.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/entities/volume_tolerance_profile.dart';
 import 'package:hcs_app_lap/utils/deep_merge.dart';
 
@@ -143,6 +145,71 @@ class TrainingProfile extends Equatable {
     );
 
     return hasBaseVolume || hasSeriesDistribution || hasPriorityMuscles;
+  }
+
+  static const List<String> _interviewKeys = [
+    TrainingInterviewKeys.yearsTrainingContinuous,
+    TrainingInterviewKeys.avgSleepHours,
+    TrainingInterviewKeys.sessionDurationMinutes,
+    TrainingInterviewKeys.restBetweenSetsSeconds,
+    TrainingInterviewKeys.workCapacity,
+    TrainingInterviewKeys.recoveryHistory,
+    TrainingInterviewKeys.externalRecovery,
+    TrainingInterviewKeys.programNovelty,
+    TrainingInterviewKeys.physicalStress,
+    TrainingInterviewKeys.nonPhysicalStress,
+    TrainingInterviewKeys.restQuality,
+    TrainingInterviewKeys.dietQuality,
+    TrainingInterviewKeys.yearsTraining,
+    TrainingInterviewKeys.sessionDuration,
+    TrainingInterviewKeys.restBetweenSets,
+    TrainingInterviewKeys.workCapacityScore,
+    TrainingInterviewKeys.recoveryHistoryScore,
+    TrainingInterviewKeys.externalRecoverySupport,
+    TrainingInterviewKeys.programNoveltyClass,
+    TrainingInterviewKeys.externalPhysicalStressLevel,
+    TrainingInterviewKeys.nonPhysicalStressLevel,
+    TrainingInterviewKeys.nonPhysicalStressLevel2,
+    TrainingInterviewKeys.restQuality2,
+    TrainingInterviewKeys.dietHabitsClass,
+    TrainingInterviewKeys.strengthLevelClass,
+    TrainingInterviewKeys.heightCm,
+    TrainingInterviewKeys.weightKg,
+    TrainingInterviewKeys.usesAnabolics,
+    TrainingInterviewKeys.trainingLevel,
+    TrainingInterviewKeys.trainingLevelLabel,
+    TrainingInterviewKeys.avgWeeklySetsPerMuscle,
+    TrainingInterviewKeys.consecutiveWeeksTraining,
+    TrainingInterviewKeys.perceivedRecoveryStatus,
+    TrainingInterviewKeys.averageRIR,
+    TrainingInterviewKeys.averageSessionRPE,
+    TrainingInterviewKeys.maxWeeklySetsBeforeOverreaching,
+    TrainingInterviewKeys.deloadFrequencyWeeks,
+    TrainingInterviewKeys.restingHeartRate,
+    TrainingInterviewKeys.heartRateVariability,
+    TrainingInterviewKeys.soreness48hAverage,
+    TrainingInterviewKeys.periodBreaksLast12Months,
+    TrainingInterviewKeys.sessionCompletionRate,
+    TrainingInterviewKeys.performanceTrend,
+  ];
+
+  bool hasInterviewChangedSincePlanGeneration(TrainingPlanConfig plan) {
+    final snapshotExtra = plan.trainingProfileSnapshot?.extra ??
+        const <String, dynamic>{};
+    if (snapshotExtra.isEmpty && extra.isEmpty) {
+      return false;
+    }
+
+    const comparer = DeepCollectionEquality();
+    for (final key in _interviewKeys) {
+      final currentValue = extra[key];
+      final snapshotValue = snapshotExtra[key];
+      if (!comparer.equals(currentValue, snapshotValue)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /// Compatibilidad con código previo que consulta `profile.baseSeries`.

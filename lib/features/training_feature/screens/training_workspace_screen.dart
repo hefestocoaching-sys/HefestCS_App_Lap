@@ -130,6 +130,7 @@ class _TrainingWorkspaceScreenState
             progression,
             workspaceState.interviewStatus,
             workspaceState.canGeneratePlan,
+            workspaceState.isPlanOutdated,
           ),
         );
       },
@@ -249,6 +250,7 @@ class _TrainingWorkspaceScreenState
     TrainingProgressionStateV1 progression,
     TrainingInterviewStatus interviewStatus,
     bool canGeneratePlan,
+    bool isPlanOutdated,
   ) {
     final activePlanId =
       client.training.extra[TrainingExtraKeys.activePlanId]?.toString();
@@ -398,6 +400,20 @@ class _TrainingWorkspaceScreenState
           ],
         ),
         const SizedBox(height: 12),
+        if (isPlanOutdated)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: kWarningSubtle,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kWarningColor.withValues(alpha: 0.8)),
+            ),
+            child: const Text(
+              '⚠️ El plan fue generado con datos de entrevista anteriores.\nValida la entrevista y regenera el plan para aplicar los cambios.',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
 
         // ✅ TabBar + TabBarView sin Expanded (parent lo maneja via Expanded en _buildMainPanel)
         Expanded(

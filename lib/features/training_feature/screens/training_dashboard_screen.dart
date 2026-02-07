@@ -6,6 +6,8 @@ import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart'
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
+import 'package:hcs_app_lap/features/training_feature/providers/training_workspace_provider.dart';
+import 'package:hcs_app_lap/features/training_feature/domain/training_interview_status.dart';
 import 'package:intl/intl.dart';
 
 // ENTREVISTA DE ENTRENAMIENTO (SSOT)
@@ -86,11 +88,14 @@ class _TrainingDashboardScreenState
   @override
   Widget build(BuildContext context) {
     final clientsAsync = ref.watch(clientsProvider);
+    final workspaceState = ref.watch(trainingWorkspaceProvider);
+    final interviewStatus = workspaceState.interviewStatus;
+    final isPlanOutdated = workspaceState.isPlanOutdated;
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
       appBar: clientsAsync.when(
-        data: (_) => _buildAppBar(clientsAsync),
+        data: (_) => _buildAppBar(clientsAsync, interviewStatus),
         loading: () => _buildLoadingAppBar(),
         error: (_, __) => _buildErrorAppBar(),
       ),
@@ -145,7 +150,12 @@ class _TrainingDashboardScreenState
           // ✅ activePlanId es SSOT del plan activo (post FASE B)
           // ✅ Usar plan.id directamente (ya tenemos objeto completo)
           // ✅ RENDERIZAR TABS MOTOR V3
-          return _buildMotorV3Workspace(plan, client);
+          return _buildMotorV3Workspace(
+            plan,
+            client,
+            interviewStatus,
+            isPlanOutdated,
+          );
         },
         loading: () => Center(
           child: Column(
@@ -183,7 +193,10 @@ class _TrainingDashboardScreenState
     );
   }
 
-  PreferredSizeWidget _buildAppBar(AsyncValue clientsAsync) {
+  PreferredSizeWidget _buildAppBar(
+    AsyncValue clientsAsync,
+    TrainingInterviewStatus interviewStatus,
+  ) {
     final clientName =
         clientsAsync.value?.activeClient?.profile.fullName ?? 'Sin cliente';
     final planDate = DateTime.now();
@@ -217,7 +230,10 @@ class _TrainingDashboardScreenState
         IconButton(
           icon: Icon(Icons.refresh, color: kPrimaryColor),
           tooltip: 'Regenerar plan',
-          onPressed: () => _regenerarPlan(),
+          onPressed:
+              interviewStatus == TrainingInterviewStatus.valid
+                  ? () => _regenerarPlan()
+                  : null,
         ),
         IconButton(
           icon: Icon(Icons.download, color: kPrimaryColor),
@@ -306,11 +322,18 @@ class _TrainingDashboardScreenState
     );
   }
 
-  Widget _buildMotorV3Workspace(TrainingPlanConfig plan, dynamic client) {
+  Widget _buildMotorV3Workspace(
+    TrainingPlanConfig plan,
+    dynamic client,
+    TrainingInterviewStatus interviewStatus,
+    bool isPlanOutdated,
+  ) {
     // Verificar si hay plan activo
     final activePlanId =
         client.training.extra[TrainingExtraKeys.activePlanId] as String?;
     final hasPlan = activePlanId != null && activePlanId.isNotEmpty;
+
+    final canRegenerate = interviewStatus == TrainingInterviewStatus.valid;
 
     return Column(
       children: [
@@ -334,7 +357,7 @@ class _TrainingDashboardScreenState
               if (hasPlan) ...[
                 // Regenerar
                 ElevatedButton.icon(
-                  onPressed: () => _regenerarPlan(),
+                  onPressed: canRegenerate ? () => _regenerarPlan() : null,
                   icon: Icon(Icons.refresh, size: 18),
                   label: Text('Regenerar'),
                   style: ElevatedButton.styleFrom(
@@ -344,13 +367,19 @@ class _TrainingDashboardScreenState
                 ),
                 SizedBox(width: 12),
                 // Adaptar
-                ElevatedButton.icon(
-                  onPressed: () => _adaptarPlan(),
-                  icon: Icon(Icons.tune, size: 18),
-                  label: Text('Adaptar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
+                Tooltip(
+                  message:
+                      isPlanOutdated
+                          ? 'El plan está desactualizado. Regenera antes de adaptar.'
+                          : 'Adaptar plan',
+                  child: ElevatedButton.icon(
+                    onPressed: isPlanOutdated ? null : () => _adaptarPlan(),
+                    icon: Icon(Icons.tune, size: 18),
+                    label: Text('Adaptar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ),
               ],

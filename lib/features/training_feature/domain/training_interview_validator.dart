@@ -13,6 +13,13 @@ TrainingInterviewStatus evaluateTrainingInterview(Map<String, dynamic>? extra) {
     'timePerSessionMinutes',
     'planDurationInWeeks',
     'priorityMusclesPrimary',
+    'yearsTrainingContinuous',
+    'avgSleepHours',
+    'workCapacity',
+    'programNovelty',
+    'perceivedRecoveryStatus',
+    'averageRIR',
+    'averageSessionRPE',
   ];
 
   final hasAllRequired = requiredKeys.every(
