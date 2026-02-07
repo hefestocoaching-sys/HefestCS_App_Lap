@@ -15,6 +15,8 @@ import 'package:hcs_app_lap/domain/training_domain/training_progression_state_v1
 import 'package:hcs_app_lap/domain/training_domain/training_setup_v1.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
+import 'package:hcs_app_lap/features/training_feature/providers/training_workspace_provider.dart';
+import 'package:hcs_app_lap/features/training_feature/domain/training_interview_status.dart';
 import 'package:hcs_app_lap/features/training_feature/tabs/training_interview_tab.dart';
 import 'package:hcs_app_lap/features/training_feature/widgets/volume_capacity_scientific_view.dart';
 import 'package:hcs_app_lap/features/training_feature/widgets/series_distribution_editor.dart';
@@ -109,6 +111,8 @@ class _TrainingWorkspaceScreenState
           return const Center(child: Text('Selecciona un cliente'));
         }
 
+        final workspaceState = ref.watch(trainingWorkspaceProvider);
+
         _runMigrationIfNeeded(client);
 
         final setup = _readSetup(client);
@@ -120,7 +124,13 @@ class _TrainingWorkspaceScreenState
         return WorkspaceScaffold(
           header: _buildHeader(client),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          body: _buildCurrentPlanSection(context, client, progression),
+          body: _buildCurrentPlanSection(
+            context,
+            client,
+            progression,
+            workspaceState.interviewStatus,
+            workspaceState.canGeneratePlan,
+          ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -237,81 +247,83 @@ class _TrainingWorkspaceScreenState
     BuildContext context,
     Client client,
     TrainingProgressionStateV1 progression,
+    TrainingInterviewStatus interviewStatus,
+    bool canGeneratePlan,
   ) {
-    final activePlanId = client.training.extra[TrainingExtraKeys.activePlanId]
-        ?.toString();
+    final activePlanId =
+      client.training.extra[TrainingExtraKeys.activePlanId]?.toString();
     final totalPlans = client.trainingPlans.length;
-    final hasPlan = activePlanId != null && activePlanId.isNotEmpty;
+    final hasAnyPlan = client.trainingPlans.isNotEmpty;
+    final hasActiveId = activePlanId != null && activePlanId.isNotEmpty;
 
     // E2 GOBERNANZA: Verificar acción permitida
     final allowedAction = _checkPlanActionAllowed(client);
     final actionTooltip = _getPlanActionTooltip(allowedAction, client);
 
-    // Si no hay planes, mostrar mensaje
-    if (client.trainingPlans.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Sin plan activo',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Tooltip(
-            message: actionTooltip,
-            child: ElevatedButton.icon(
-              onPressed:
-                  allowedAction == TrainingPlanAction.generate ||
-                      allowedAction == TrainingPlanAction.regenerate
-                  ? () => _generarPlan()
-                  : null,
-              icon: const Icon(Icons.auto_awesome, size: 18),
-              label: const Text('Generar Plan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
     // Obtener plan activo o más reciente
     TrainingPlanConfig? plan;
-    if (activePlanId != null) {
+    if (hasAnyPlan && hasActiveId) {
       try {
         plan = client.trainingPlans.firstWhere((p) => p.id == activePlanId);
       } on StateError {
-        // Fallback: usar más reciente por startDate
-        plan =
-            (client.trainingPlans.toList()
-                  ..sort((a, b) => b.startDate.compareTo(a.startDate)))
-                .first;
+        plan = null;
       }
-    } else {
+    }
+
+    if (hasAnyPlan && plan == null) {
       plan =
           (client.trainingPlans.toList()
                 ..sort((a, b) => b.startDate.compareTo(a.startDate)))
               .first;
     }
 
+    if (interviewStatus != TrainingInterviewStatus.valid && plan == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_v3TabController.index != 0) {
+          _v3TabController.animateTo(0);
+        }
+      });
+    }
+
+    final interviewBlockedTooltip =
+        'Completa entrevista para habilitar generación/adaptación';
+
     // Mostrar TabBar + TabBarView con los 9 tabs Motor V3
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (plan != null && interviewStatus != TrainingInterviewStatus.valid)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: kCardColor.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: const Text(
+              'Plan existente visible. Entrevista en edición: valida para regenerar/adaptar.',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
         // Header con acciones (Generar/Regenerar/Adaptar)
         Row(
           children: [
-            if (!hasPlan)
+            if (!hasAnyPlan)
               Tooltip(
-                message: actionTooltip,
+                message:
+                    interviewStatus == TrainingInterviewStatus.valid
+                        ? actionTooltip
+                        : interviewBlockedTooltip,
                 child: ElevatedButton.icon(
                   onPressed:
-                      allowedAction == TrainingPlanAction.generate ||
-                          allowedAction == TrainingPlanAction.regenerate
-                      ? () => _generarPlan()
-                      : null,
+                      canGeneratePlan &&
+                              (allowedAction == TrainingPlanAction.generate ||
+                                  allowedAction ==
+                                      TrainingPlanAction.regenerate)
+                          ? () => _generarPlan()
+                          : null,
                   icon: const Icon(Icons.auto_awesome, size: 18),
                   label: const Text('Generar'),
                   style: ElevatedButton.styleFrom(
@@ -323,13 +335,19 @@ class _TrainingWorkspaceScreenState
             else ...[
               // Botón Regenerar (solo si permitido)
               Tooltip(
-                message: allowedAction == TrainingPlanAction.regenerate
+              message:
+                interviewStatus != TrainingInterviewStatus.valid
+                  ? interviewBlockedTooltip
+                  : allowedAction == TrainingPlanAction.regenerate
                     ? actionTooltip
                     : '❌ Regeneración bloqueada: $actionTooltip',
                 child: ElevatedButton.icon(
-                  onPressed: allowedAction == TrainingPlanAction.regenerate
-                      ? () => _regenerarPlan()
-                      : null,
+                onPressed:
+                  interviewStatus == TrainingInterviewStatus.valid &&
+                      allowedAction ==
+                        TrainingPlanAction.regenerate
+                    ? () => _regenerarPlan()
+                    : null,
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('Regenerar'),
                   style: ElevatedButton.styleFrom(
@@ -343,13 +361,18 @@ class _TrainingWorkspaceScreenState
               const SizedBox(width: 12),
               // Botón Adaptar (permitido si not locked)
               Tooltip(
-                message: allowedAction == TrainingPlanAction.adapt
-                    ? actionTooltip
-                    : allowedAction == TrainingPlanAction.locked
-                    ? '❌ Adaptación bloqueada: $actionTooltip'
-                    : 'Usar regeneración en su lugar',
+                message:
+                  interviewStatus != TrainingInterviewStatus.valid
+                    ? interviewBlockedTooltip
+                    : allowedAction == TrainingPlanAction.adapt
+                      ? actionTooltip
+                      : allowedAction == TrainingPlanAction.locked
+                        ? '❌ Adaptación bloqueada: $actionTooltip'
+                        : 'Usar regeneración en su lugar',
                 child: ElevatedButton.icon(
-                  onPressed: allowedAction == TrainingPlanAction.adapt
+                  onPressed:
+                    interviewStatus == TrainingInterviewStatus.valid &&
+                        allowedAction == TrainingPlanAction.adapt
                       ? () => _adaptarPlan()
                       : null,
                   icon: const Icon(Icons.tune, size: 18),
@@ -366,7 +389,9 @@ class _TrainingWorkspaceScreenState
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Plan: ${plan.id.substring(0, 8)}... | ${totalPlans} total',
+                plan == null
+                    ? 'Sin plan | $totalPlans total'
+                    : 'Plan: ${plan.id.substring(0, 8)}... | $totalPlans total',
                 style: TextStyle(color: kTextColorSecondary, fontSize: 12),
               ),
             ),
@@ -408,26 +433,74 @@ class _TrainingWorkspaceScreenState
                     // Tab 0: Entrevista
                     TrainingInterviewTab(key: _interviewTabKey),
                     // Tab 1: Overview (placeholder simplificado)
-                    _buildOverviewTabPlaceholder(plan),
+                    plan != null
+                        ? _buildOverviewTabPlaceholder(plan)
+                        : _buildLockedTab(
+                            title: 'Bloqueado',
+                            message:
+                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                          ),
                     // Tab 2: Volumen
-                    VolumeCapacityScientificView(plan: plan),
+                    plan != null
+                        ? VolumeCapacityScientificView(plan: plan)
+                        : _buildLockedTab(
+                            title: 'Bloqueado',
+                            message:
+                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                          ),
                     // Tab 3: Sesiones
-                    WeeklyPlanDetailView(plan: plan),
+                    plan != null
+                        ? WeeklyPlanDetailView(plan: plan)
+                        : _buildLockedTab(
+                            title: 'Bloqueado',
+                            message:
+                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                          ),
                     // Tab 4: Ejercicios (placeholder)
-                    _buildExercisesTabPlaceholder(plan),
+                    plan != null
+                        ? _buildExercisesTabPlaceholder(plan)
+                        : _buildLockedTab(
+                            title: 'Bloqueado',
+                            message:
+                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                          ),
                     // Tab 5: Progresión (placeholder)
-                    _buildProgressionTabPlaceholder(plan),
+                    plan != null
+                        ? _buildProgressionTabPlaceholder(plan)
+                        : _buildLockedTab(
+                            title: 'Bloqueado',
+                            message:
+                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                          ),
                     // Tab 6: Intensidad
-                    SeriesDistributionEditor(
-                      trainingExtra: client.training.extra,
-                      onDistributionChanged: (distribution) {
-                        // Handle distribution change
-                      },
-                    ),
+                    plan != null
+                        ? SeriesDistributionEditor(
+                          trainingExtra: client.training.extra,
+                          onDistributionChanged: (distribution) {
+                            // Handle distribution change
+                          },
+                        )
+                        : _buildLockedTab(
+                            title: 'Bloqueado',
+                            message:
+                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                          ),
                     // Tab 7: Decisiones (placeholder)
-                    _buildDecisionsTabPlaceholder(plan),
+                    plan != null
+                        ? _buildDecisionsTabPlaceholder(plan)
+                        : _buildLockedTab(
+                            title: 'Bloqueado',
+                            message:
+                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                          ),
                     // Tab 8: Monitoreo (placeholder)
-                    _buildMonitoringTabPlaceholder(plan),
+                    plan != null
+                        ? _buildMonitoringTabPlaceholder(plan)
+                        : _buildLockedTab(
+                            title: 'Bloqueado',
+                            message:
+                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                          ),
                   ],
                 ),
               ),
@@ -505,6 +578,34 @@ class _TrainingWorkspaceScreenState
           Icon(Icons.assessment, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('Tab de monitoreo (pendiente)'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLockedTab({
+    required String title,
+    required String message,
+    IconData icon = Icons.lock,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => _v3TabController.animateTo(0),
+            child: const Text('Ir a Entrevista'),
+          ),
         ],
       ),
     );
@@ -958,7 +1059,7 @@ class _TrainingWorkspaceScreenState
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<InjuryRegion>(
-                value: selectedRegion,
+                initialValue: selectedRegion,
                 decoration: hcsDecoration(context, labelText: 'Region'),
                 items: InjuryRegion.values
                     .map(
@@ -975,7 +1076,7 @@ class _TrainingWorkspaceScreenState
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<MovementPattern>(
-                value: selectedPattern,
+                initialValue: selectedPattern,
                 decoration: hcsDecoration(context, labelText: 'Patron'),
                 items: MovementPattern.values
                     .map(
@@ -992,7 +1093,7 @@ class _TrainingWorkspaceScreenState
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
-                value: severity,
+                initialValue: severity,
                 decoration: hcsDecoration(context, labelText: 'Severidad'),
                 items: const [
                   DropdownMenuItem(value: 0, child: Text('0')),
@@ -1029,15 +1130,15 @@ class _TrainingWorkspaceScreenState
 
     if (confirmed != true) return;
 
-    final updatedRules = [...evaluation.painRules]
-      ..add(
-        PainRule(
-          region: selectedRegion,
-          pattern: selectedPattern,
-          severity: severity,
-          avoid: avoid,
-        ),
-      );
+    final updatedRules = [
+      ...evaluation.painRules,
+      PainRule(
+        region: selectedRegion,
+        pattern: selectedPattern,
+        severity: severity,
+        avoid: avoid,
+      ),
+    ];
 
     final updated = TrainingEvaluationSnapshotV1(
       schemaVersion: evaluation.schemaVersion,
@@ -1325,6 +1426,11 @@ class _TrainingWorkspaceScreenState
   // E2 GOBERNANZA: MÉTODOS PARA PLAN V3 (CON VERIFICACIÓN)
   // ═══════════════════════════════════════════════════════════════════════════
   Future<void> _generarPlan() async {
+    final interviewStatus =
+        ref.read(trainingWorkspaceProvider).interviewStatus;
+    if (interviewStatus != TrainingInterviewStatus.valid) {
+      return;
+    }
     // E2: Verificar que la acción esté permitida
     await _commitInterview();
     final client = ref.read(clientsProvider).value?.activeClient;

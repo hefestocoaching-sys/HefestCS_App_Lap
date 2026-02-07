@@ -232,21 +232,21 @@ class TrainingOrchestratorV3 {
 
     // E4 P0: Extraer yearsTrainingContinuous (prioridad: extra, luego setupV1, luego legacy)
     double yearsTraining =
-        (training.extra['yearsTrainingContinuous'] as double?) ??
-        (useSsotV1 && setupV1.trainingExperienceYearsContinuous > 0
-            ? setupV1.trainingExperienceYearsContinuous.toDouble()
-            : null) ??
-        (training.extra['yearsTraining'] as double? ?? _defaultYearsTraining);
+      _parseDouble(training.extra['yearsTrainingContinuous']) ??
+      (useSsotV1 && setupV1.trainingExperienceYearsContinuous > 0
+        ? setupV1.trainingExperienceYearsContinuous.toDouble()
+        : null) ??
+      (_parseDouble(training.extra['yearsTraining']) ?? _defaultYearsTraining);
 
     // E4 P0: Extraer altura y peso (prioridad: extra, luego setupV1, luego legacy)
     double heightCm =
-        (training.extra['heightCm'] as double?) ??
-        (useSsotV1 && setupV1.heightCm > 0 ? setupV1.heightCm : null) ??
-        _defaultHeightCm;
+      _parseDouble(training.extra['heightCm']) ??
+      (useSsotV1 && setupV1.heightCm > 0 ? setupV1.heightCm : null) ??
+      _defaultHeightCm;
     double weightKg =
-        (training.extra['weightKg'] as double?) ??
-        (useSsotV1 && setupV1.weightKg > 0 ? setupV1.weightKg : null) ??
-        _defaultWeightKg;
+      _parseDouble(training.extra['weightKg']) ??
+      (useSsotV1 && setupV1.weightKg > 0 ? setupV1.weightKg : null) ??
+      _defaultWeightKg;
 
     // ═══════════════════════════════════════════════════════════════════════
     // E3 PRIORIDADES MUSCULARES: SSOT V1 primero (con pesos Primary=1.0, Secondary=0.66, Tertiary=0.33)
@@ -429,6 +429,12 @@ class TrainingOrchestratorV3 {
     if (value is int) return value;
     if (value is num) return value.toInt();
     return int.tryParse(value?.toString() ?? '');
+  }
+
+  double? _parseDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '');
   }
 
   /// Extrae músculos prioritarios del perfil
