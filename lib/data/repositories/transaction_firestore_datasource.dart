@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hcs_app_lap/domain/entities/transaction.dart'
     as app_transaction;
+import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
 /// Datasource para gestionar transacciones financieras en Firestore
 /// Estructura: coaches/{coachId}/transactions/{transactionId}
@@ -80,7 +82,12 @@ class TransactionFirestoreDataSource {
     if (collection == null) return;
 
     try {
-      await collection.doc(transaction.id).set(transaction.toJson());
+      final payload = sanitizeForFirestore(transaction.toJson());
+      final invalidPath = findInvalidFirestorePath(payload);
+      if (invalidPath != null) {
+        debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+      }
+      await collection.doc(transaction.id).set(payload);
     } catch (e) {
       rethrow;
     }
@@ -94,7 +101,12 @@ class TransactionFirestoreDataSource {
     if (collection == null) return;
 
     try {
-      await collection.doc(transaction.id).update(transaction.toJson());
+      final payload = sanitizeForFirestore(transaction.toJson());
+      final invalidPath = findInvalidFirestorePath(payload);
+      if (invalidPath != null) {
+        debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+      }
+      await collection.doc(transaction.id).update(payload);
     } catch (e) {
       rethrow;
     }

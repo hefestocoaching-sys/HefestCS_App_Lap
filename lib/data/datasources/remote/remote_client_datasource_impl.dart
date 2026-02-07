@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import './remote_client_datasource.dart';
+import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
 class RemoteClientDataSourceImpl implements RemoteClientDataSource {
   final FirebaseFirestore _firestore;
@@ -26,7 +28,12 @@ class RemoteClientDataSourceImpl implements RemoteClientDataSource {
   @override
   Future<void> saveClient(Client client) async {
     final docRef = _firestore.collection('clients').doc(client.id);
-    await docRef.set(client.toJson());
+    final sanitized = sanitizeForFirestore(client.toJson());
+    final invalidPath = findInvalidFirestorePath(sanitized);
+    if (invalidPath != null) {
+      debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+    }
+    await docRef.set(sanitized);
   }
 
   @override

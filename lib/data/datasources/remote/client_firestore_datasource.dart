@@ -1,55 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
-
-/// Sanitiza recursivamente un Map para Firestore eliminando tipos no soportados
-Map<String, dynamic> _sanitizeForFirestore(Map<String, dynamic> data) {
-  final result = <String, dynamic>{};
-
-  for (final entry in data.entries) {
-    final value = entry.value;
-
-    if (value == null) {
-      result[entry.key] = null;
-    } else if (value is String || value is num || value is bool) {
-      result[entry.key] = value;
-    } else if (value is DateTime) {
-      result[entry.key] = Timestamp.fromDate(value);
-    } else if (value is List) {
-      result[entry.key] = value
-          .map((item) {
-            if (item is Map<String, dynamic>) {
-              return _sanitizeForFirestore(item);
-            } else if (item is Map) {
-              return _sanitizeForFirestore(Map<String, dynamic>.from(item));
-            } else if (item is String ||
-                item is num ||
-                item is bool ||
-                item == null) {
-              return item;
-            } else {
-              // Skip non-serializable items
-              return null;
-            }
-          })
-          .where((item) => item != null)
-          .toList();
-    } else if (value is Map<String, dynamic>) {
-      result[entry.key] = _sanitizeForFirestore(value);
-    } else if (value is Map) {
-      result[entry.key] = _sanitizeForFirestore(
-        Map<String, dynamic>.from(value),
-      );
-    } else {
-      // Skip non-serializable types (classes, functions, etc.)
-      debugPrint(
-        '⚠️ Skipping non-serializable field "${entry.key}" of type ${value.runtimeType}',
-      );
-    }
-  }
-
-  return result;
-}
+import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
 class RemoteClientSnapshot {
   final String clientId;
@@ -104,7 +56,7 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     // ESTRUCTURA ESTANDARIZADA: {payload, schemaVersion, updatedAt, deleted}
     // El payload contiene el Client.toJson() completo, sanitizado para Firestore
     final clientJson = client.toJson();
-    final sanitizedPayload = _sanitizeForFirestore(clientJson);
+    final sanitizedPayload = sanitizeForFirestore(clientJson);
 
     final fullPayload = <String, dynamic>{
       'payload': sanitizedPayload,
@@ -112,6 +64,11 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       'updatedAt': FieldValue.serverTimestamp(),
       'deleted': deleted,
     };
+
+    final invalidPath = findInvalidFirestorePath(fullPayload);
+    if (invalidPath != null) {
+      debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+    }
 
     debugPrint('🔥 Upserting client ${client.id} to Firestore...');
     debugPrint(

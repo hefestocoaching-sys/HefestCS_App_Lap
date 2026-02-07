@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
 /// Dominios de registros soportados en Firestore.
 /// Cada dominio tiene su propia subcolección bajo coaches/{coachId}/clients/{clientId}
@@ -99,8 +100,7 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
     required Map<String, dynamic> payload,
     bool deleted = false,
   }) async {
-    // Validate payload before saving so we can also log it on error
-    final sanitizedPayload = _sanitizePayload(payload);
+    final sanitizedPayload = sanitizeForFirestore(payload);
 
     final ref = _firestore
         .collection('coaches')
@@ -111,6 +111,17 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
         .doc(dateKey);
 
     try {
+      final invalidPath = findInvalidFirestorePath({
+        'payload': sanitizedPayload,
+        'schemaVersion': 1,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'deleted': deleted,
+        'dateKey': dateKey,
+      });
+      if (invalidPath != null) {
+        print('🔥 Record payload invalid at: $invalidPath');
+      }
+
       await ref.set({
         'dateKey': dateKey,
         'schemaVersion': 1,
@@ -135,40 +146,7 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
     }
   }
 
-  /// Sanitize payload recursively to avoid Firestore type errors.
-  Map<String, dynamic> _sanitizePayload(Map<String, dynamic> payload) {
-    Map<String, dynamic> clean = {};
-
-    dynamic sanitizeValue(dynamic value) {
-      if (value == null) return null;
-
-      if (value is num) {
-        if (value is double && !value.isFinite) return null; // Drop NaN/Inf
-        return value;
-      }
-
-      if (value is bool || value is String) return value;
-
-      if (value is DateTime) return value.toIso8601String();
-
-      if (value is List) {
-        return value.map(sanitizeValue).where((v) => v != null).toList();
-      }
-
-      if (value is Map) {
-        return _sanitizePayload(value.map((k, v) => MapEntry(k.toString(), v)));
-      }
-
-      // Fallback: store as string to avoid Firestore type errors
-      return value.toString();
-    }
-
-    payload.forEach((key, value) {
-      clean[key] = sanitizeValue(value);
-    });
-
-    return clean;
-  }
+  // Sanitization moved to shared firestore_sanitizer.dart
 
   @override
   Future<List<RemoteRecordSnapshot>> fetchRecords({

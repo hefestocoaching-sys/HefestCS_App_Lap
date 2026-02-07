@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/entities/appointment.dart';
+import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
 /// Datasource para gestionar citas en Firestore
 /// Estructura: coaches/{coachId}/appointments/{appointmentId}
@@ -98,7 +99,12 @@ class AppointmentFirestoreDataSource {
     if (collection == null) return;
 
     try {
-      await collection.doc(appointment.id).set(appointment.toJson());
+      final payload = sanitizeForFirestore(appointment.toJson());
+      final invalidPath = findInvalidFirestorePath(payload);
+      if (invalidPath != null) {
+        debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+      }
+      await collection.doc(appointment.id).set(payload);
     } catch (e) {
       rethrow;
     }
@@ -110,7 +116,12 @@ class AppointmentFirestoreDataSource {
     if (collection == null) return;
 
     try {
-      await collection.doc(appointment.id).update(appointment.toJson());
+      final payload = sanitizeForFirestore(appointment.toJson());
+      final invalidPath = findInvalidFirestorePath(payload);
+      if (invalidPath != null) {
+        debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+      }
+      await collection.doc(appointment.id).update(payload);
     } catch (e) {
       rethrow;
     }
