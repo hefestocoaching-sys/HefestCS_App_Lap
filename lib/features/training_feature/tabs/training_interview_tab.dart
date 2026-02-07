@@ -16,7 +16,6 @@ import 'package:hcs_app_lap/core/enums/recovery_quality.dart';
 import 'package:hcs_app_lap/core/enums/injury_region.dart';
 import 'package:hcs_app_lap/core/enums/training_interview_enums.dart';
 import 'package:hcs_app_lap/core/enums/performance_trend.dart';
-import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/domain/training/models/supported_muscles.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/services/volume_individualization_service.dart';
@@ -56,7 +55,8 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   late TextEditingController _prBenchCtrl;
   late TextEditingController _prDeadliftCtrl;
   late TextEditingController _historicalFreqCtrl;
-  late TextEditingController _plannedFreqCtrl;
+  int? _daysPerWeek;
+  int? _planDurationInWeeks;
 
   // ✅ Controllers para los 4 campos críticos (evita reset al guardar)
   late TextEditingController _yearsTrainingCtrl;
@@ -98,7 +98,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   TrainingLevel? _trainingLevel;
   TrainingAgeBucket? _trainingAge;
   int? _historicalFrequency; // días reales último mes
-  int? _plannedFrequency; // días sostenibles próximos 2 meses
+  int? _plannedFrequency; // compat: igual a daysPerWeek
   TimePerSessionBucket? _timePerSession;
   VolumeTolerance? _volumeTolerance;
   IntensityTolerance? _intensityTolerance;
@@ -110,10 +110,24 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   // Lesiones por región (checklist)
   Set<InjuryRegion> _activeInjuries = {};
 
+  // Restricciones por hombro (detalle)
+  bool _shoulderAvoidOverheadPress = false;
+  bool _shoulderAvoidPainfulLateralRaise = false;
+  bool _shoulderAvoidWideGripPress = false;
+  bool _shoulderAvoidEndRangePain = false;
+
   // Prioridades musculares
   List<String> _primaryMuscles = [];
   List<String> _secondaryMuscles = [];
   List<String> _tertiaryMuscles = [];
+
+  // Historia de entrenamiento (dato duro)
+  int? _yearsTotalStrengthTraining;
+  int? _yearsContinuousStrengthTraining;
+  int? _longestBreakMonthsLast5Years;
+  int? _monthsContinuousCurrent;
+
+  bool _showValidationErrors = false;
 
   // PRs opcionales
   bool _knowsPRs = false;
@@ -173,7 +187,8 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     _prBenchCtrl = TextEditingController();
     _prDeadliftCtrl = TextEditingController();
     _historicalFreqCtrl = TextEditingController();
-    _plannedFreqCtrl = TextEditingController();
+    _daysPerWeek = null;
+    _planDurationInWeeks = null;
 
     // ✅ Inicializar controllers de campos críticos
     _yearsTrainingCtrl = TextEditingController();
@@ -236,7 +251,8 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       _prBenchCtrl.clear();
       _prDeadliftCtrl.clear();
       _historicalFreqCtrl.clear();
-      _plannedFreqCtrl.clear();
+      _daysPerWeek = null;
+      _planDurationInWeeks = null;
 
       // Limpiar nuevos campos
       _yearsTraining = null;
@@ -249,6 +265,14 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       _programNovelty = null;
       _physicalStress = null;
       _dietQuality = null;
+      _yearsTotalStrengthTraining = null;
+      _yearsContinuousStrengthTraining = null;
+      _longestBreakMonthsLast5Years = null;
+      _monthsContinuousCurrent = null;
+      _shoulderAvoidOverheadPress = false;
+      _shoulderAvoidPainfulLateralRaise = false;
+      _shoulderAvoidWideGripPress = false;
+      _shoulderAvoidEndRangePain = false;
 
       // ✅ Limpiar controllers
       _yearsTrainingCtrl.clear();
@@ -267,6 +291,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       _soreness48hCtrl.clear();
       _periodBreaksCtrl.clear();
       _performanceTrend = null;
+      _showValidationErrors = false;
 
       return;
     }
@@ -286,6 +311,30 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     );
     _historicalFrequency = extra[TrainingExtraKeys.historicalFrequency] as int?;
     _plannedFrequency = extra[TrainingExtraKeys.plannedFrequency] as int?;
+    final daysPerWeekExtra = (extra[TrainingExtraKeys.daysPerWeek] as num?)
+        ?.toInt();
+    final planDurationExtra =
+        (extra[TrainingExtraKeys.planDurationInWeeks] as num?)?.toInt();
+    final setupV1Map =
+        extra[TrainingExtraKeys.trainingSetupV1] as Map<String, dynamic>?;
+    final setupDaysPerWeek = (setupV1Map?['daysPerWeek'] as num?)?.toInt();
+    final setupPlanDuration = (setupV1Map?['planDurationInWeeks'] as num?)
+        ?.toInt();
+    final experienceMap =
+        setupV1Map?['experience'] as Map<String, dynamic>? ?? {};
+
+    _daysPerWeek = daysPerWeekExtra ?? setupDaysPerWeek ?? _plannedFrequency;
+    _planDurationInWeeks = planDurationExtra ?? setupPlanDuration;
+    _plannedFrequency = _daysPerWeek;
+
+    _yearsTotalStrengthTraining =
+        (experienceMap['yearsTotalStrengthTraining'] as num?)?.toInt();
+    _yearsContinuousStrengthTraining =
+        (experienceMap['yearsContinuousStrengthTraining'] as num?)?.toInt();
+    _longestBreakMonthsLast5Years =
+        (experienceMap['longestBreakMonthsLast5Years'] as num?)?.toInt();
+    _monthsContinuousCurrent =
+        (experienceMap['monthsContinuousCurrent'] as num?)?.toInt();
     _timePerSession = parseTimePerSessionBucket(
       extra[TrainingExtraKeys.timePerSessionBucket]?.toString(),
     );
@@ -319,6 +368,19 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       _activeInjuries = {};
     }
 
+    final restrictionsDetail =
+        extra['movementRestrictionsDetail'] as Map<String, dynamic>?;
+    final shoulderRestrictions =
+        restrictionsDetail?['shoulder'] as Map<String, dynamic>?;
+    _shoulderAvoidOverheadPress =
+        shoulderRestrictions?['avoidOverheadPress'] == true;
+    _shoulderAvoidPainfulLateralRaise =
+        shoulderRestrictions?['avoidPainfulLateralRaise'] == true;
+    _shoulderAvoidWideGripPress =
+        shoulderRestrictions?['avoidWideGripPress'] == true;
+    _shoulderAvoidEndRangePain =
+        shoulderRestrictions?['avoidEndRangePain'] == true;
+
     // Cargar prioridades musculares
     _primaryMuscles = _parseMuscleList(
       t.priorityMusclesPrimary.isNotEmpty
@@ -345,7 +407,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
 
     // Actualizar controladores de frecuencia
     _historicalFreqCtrl.text = _historicalFrequency?.toString() ?? '';
-    _plannedFreqCtrl.text = _plannedFrequency?.toString() ?? '';
 
     // ============ CARGAR NUEVOS CAMPOS DE ENTREVISTA (con fallback keys) ============
     // ✅ ORDEN DE PRIORIDAD: TrainingExtraKeys → TrainingInterviewKeys → legacy strings
@@ -497,6 +558,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       );
     }
 
+    _showValidationErrors = false;
     _isDirty = false;
   }
 
@@ -598,7 +660,9 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     extra[TrainingExtraKeys.discipline] = _discipline?.name;
     extra[TrainingExtraKeys.trainingAge] = _trainingAge?.name;
     extra[TrainingExtraKeys.historicalFrequency] = _historicalFrequency;
-    extra[TrainingExtraKeys.plannedFrequency] = _plannedFrequency;
+    extra[TrainingExtraKeys.daysPerWeek] = _daysPerWeek;
+    extra[TrainingExtraKeys.planDurationInWeeks] = _planDurationInWeeks;
+    extra[TrainingExtraKeys.plannedFrequency] = _daysPerWeek;
     extra[TrainingExtraKeys.timePerSessionBucket] = _timePerSession?.name;
     extra[TrainingExtraKeys.volumeTolerance] = _volumeTolerance?.name;
     extra[TrainingExtraKeys.intensityTolerance] = _intensityTolerance?.name;
@@ -609,6 +673,17 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     extra[TrainingExtraKeys.activeInjuries] = _activeInjuries
         .map((e) => e.name)
         .toList();
+    final existingRestrictionsDetail =
+        extra['movementRestrictionsDetail'] as Map<String, dynamic>?;
+    final movementRestrictionsDetail =
+        Map<String, dynamic>.from(existingRestrictionsDetail ?? {})
+          ..['shoulder'] = {
+            'avoidOverheadPress': _shoulderAvoidOverheadPress,
+            'avoidPainfulLateralRaise': _shoulderAvoidPainfulLateralRaise,
+            'avoidWideGripPress': _shoulderAvoidWideGripPress,
+            'avoidEndRangePain': _shoulderAvoidEndRangePain,
+          };
+    extra['movementRestrictionsDetail'] = movementRestrictionsDetail;
     extra[TrainingExtraKeys.knowsPRs] = _knowsPRs;
     extra[TrainingExtraKeys.prSquat] = _knowsPRs ? _prSquatCtrl.text : null;
     extra[TrainingExtraKeys.prBench] = _knowsPRs ? _prBenchCtrl.text : null;
@@ -786,8 +861,20 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // nonPhysicalStressLevel2, restQuality2, dietHabitsClass, y otros campos del extra)
     // No removemos ni sobrescribimos, solo actualizamos los que se editan aquí
 
-    // Calcular días por semana desde frequencia planificada
-    final daysPerWeek = _plannedFrequency ?? 0;
+    // Calcular días por semana desde selección dura
+    final daysPerWeek = _daysPerWeek ?? 0;
+    final planDurationWeeks = _planDurationInWeeks ?? 8;
+
+    final primaryMuscles = _primaryMuscles.toSet().toList();
+    final secondaryMuscles = _secondaryMuscles.toSet().toList();
+    final tertiaryMuscles = _tertiaryMuscles.toSet().toList();
+    if (primaryMuscles.length > 3) primaryMuscles.length = 3;
+    if (secondaryMuscles.length > 3) secondaryMuscles.length = 3;
+    if (tertiaryMuscles.length > 3) tertiaryMuscles.length = 3;
+
+    extra[TrainingExtraKeys.priorityMusclesPrimary] = primaryMuscles;
+    extra[TrainingExtraKeys.priorityMusclesSecondary] = secondaryMuscles;
+    extra[TrainingExtraKeys.priorityMusclesTertiary] = tertiaryMuscles;
 
     final updatedTraining = TrainingProfileFormMapper.apply(
       base: client.training,
@@ -796,12 +883,12 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         trainingLevelLabel: _trainingLevel != null
             ? TrainingProfileFormMapper.optionFromTrainingLevel(_trainingLevel)
             : null,
-        daysPerWeekLabel: daysPerWeek.toString(),
+        daysPerWeekLabel: daysPerWeek > 0 ? daysPerWeek.toString() : '',
         timePerSessionLabel: _timePerSession?.label,
-        planDurationWeeks: 8, // Valor por defecto de 8 semanas
-        priorityMusclesPrimary: _primaryMuscles,
-        priorityMusclesSecondary: _secondaryMuscles,
-        priorityMusclesTertiary: _tertiaryMuscles,
+        planDurationWeeks: planDurationWeeks,
+        priorityMusclesPrimary: primaryMuscles,
+        priorityMusclesSecondary: secondaryMuscles,
+        priorityMusclesTertiary: tertiaryMuscles,
         avgSleepHours: derivedSleep,
         perceivedStress: _stressLevel?.label,
         recoveryQuality: _recoveryQuality?.label,
@@ -875,19 +962,32 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // ═══════════════════════════════════════════════════════════════
 
     // 1. Crear TrainingSetupV1 y persistir como Map
-    final trainingSetupV1Map = {
-      'heightCm': heightCmFromCtrl ?? 0.0,
-      'weightKg': weightKgFromCtrl ?? 0.0,
-      'ageYears': _client?.profile.age ?? 0,
-      'sex': _client?.profile.gender?.name ?? '',
-      'daysPerWeek': daysPerWeek,
-      'planDurationInWeeks': 8, // Por defecto 8 semanas
-      'timePerSessionMinutes': derivedSession ?? 0,
-      'trainingExperienceTotalYearsLifetime': derivedYears ?? 0,
-      'trainingExperienceYearsContinuous': derivedYears ?? 0,
-      'trainingExperienceDetrainingMonths':
-          0, // Se puede capturar si es necesario
-    };
+    final existingSetupV1Map =
+        extra[TrainingExtraKeys.trainingSetupV1] as Map<String, dynamic>?;
+    final trainingSetupV1Map =
+        Map<String, dynamic>.from(existingSetupV1Map ?? {})..addAll({
+          'heightCm': heightCmFromCtrl ?? 0.0,
+          'weightKg': weightKgFromCtrl ?? 0.0,
+          'ageYears': _client?.profile.age ?? 0,
+          'sex': _client?.profile.gender?.name ?? '',
+          'daysPerWeek': daysPerWeek,
+          'planDurationInWeeks': planDurationWeeks,
+          'timePerSessionMinutes': derivedSession ?? 0,
+          'trainingExperienceTotalYearsLifetime': derivedYears ?? 0,
+          'trainingExperienceYearsContinuous': derivedYears ?? 0,
+          'trainingExperienceDetrainingMonths': 0,
+        });
+
+    final existingExperience =
+        trainingSetupV1Map['experience'] as Map<String, dynamic>?;
+    final experienceMap = Map<String, dynamic>.from(existingExperience ?? {})
+      ..addAll({
+        'yearsTotalStrengthTraining': _yearsTotalStrengthTraining,
+        'yearsContinuousStrengthTraining': _yearsContinuousStrengthTraining,
+        'longestBreakMonthsLast5Years': _longestBreakMonthsLast5Years,
+        'monthsContinuousCurrent': _monthsContinuousCurrent,
+      });
+    trainingSetupV1Map['experience'] = experienceMap;
     extra[TrainingExtraKeys.trainingSetupV1] = trainingSetupV1Map;
 
     // 2. Crear TrainingEvaluationSnapshotV1 y persistir como Map
@@ -912,10 +1012,10 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'updatedAt': now.toIso8601String(),
       'daysPerWeek': daysPerWeek,
       'sessionDurationMinutes': derivedSession ?? 0,
-      'planDurationInWeeks': 8,
-      'primaryMuscles': _primaryMuscles,
-      'secondaryMuscles': _secondaryMuscles,
-      'tertiaryMuscles': _tertiaryMuscles,
+      'planDurationInWeeks': planDurationWeeks,
+      'primaryMuscles': primaryMuscles,
+      'secondaryMuscles': secondaryMuscles,
+      'tertiaryMuscles': tertiaryMuscles,
       'priorityVolumeSplit': existingSnapshotMap?['priorityVolumeSplit'] ?? {},
       'intensityDistribution':
           existingSnapshotMap?['intensityDistribution'] ?? {},
@@ -950,12 +1050,24 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // PASO 3B: Explícitamente persistir daysPerWeek en extra[] (para Motor V3)
     // ═══════════════════════════════════════════════════════════════
     extra[TrainingExtraKeys.daysPerWeek] = daysPerWeek;
+    extra[TrainingExtraKeys.planDurationInWeeks] = planDurationWeeks;
 
     return client.copyWith(training: finalTraining.copyWith(extra: extra));
   }
 
   Future<void> _onSavePressed() async {
     if (_client == null) return;
+
+    final hasMissingRequired =
+        _daysPerWeek == null || _planDurationInWeeks == null;
+    final hasExperienceError =
+        _yearsTotalStrengthTraining != null &&
+        _yearsContinuousStrengthTraining != null &&
+        _yearsContinuousStrengthTraining! > _yearsTotalStrengthTraining!;
+    if (hasMissingRequired || hasExperienceError) {
+      setState(() => _showValidationErrors = true);
+      return;
+    }
 
     try {
       // ============ PASO 1: GUARDAR DATOS DE ENTREVISTA ============
@@ -1340,7 +1452,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     _prBenchCtrl.dispose();
     _prDeadliftCtrl.dispose();
     _historicalFreqCtrl.dispose();
-    _plannedFreqCtrl.dispose();
 
     // ✅ Dispose de controllers de campos críticos
     _yearsTrainingCtrl.dispose();
@@ -1398,6 +1509,11 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
               icon: Icons.person,
               title: '1. Perfil de Entrenamiento',
               child: _buildTrainingProfile(),
+            ),
+            ClinicSectionSurface(
+              icon: Icons.history,
+              title: 'Historia de entrenamiento (dato duro)',
+              child: _buildTrainingHistory(),
             ),
             ClinicSectionSurface(
               icon: Icons.schedule,
@@ -1511,15 +1627,25 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         ),
         SizedBox(
           width: 380,
-          child: EnumGlassDropdown<TrainingLevel>(
-            label: 'Nivel de entrenamiento real *',
-            value: _trainingLevel,
-            values: TrainingLevel.values,
-            labelBuilder: (l) => l.label,
-            onChanged: (v) {
-              setState(() => _trainingLevel = v);
-              _markDirty();
-            },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              EnumGlassDropdown<TrainingLevel>(
+                label: 'Auto-percepción de nivel (opcional)',
+                value: _trainingLevel,
+                values: TrainingLevel.values,
+                labelBuilder: (l) => l.label,
+                onChanged: (v) {
+                  setState(() => _trainingLevel = v);
+                  _markDirty();
+                },
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'El motor prioriza tu historia real (años, pausas, continuidad).',
+                style: TextStyle(color: Colors.white54, fontSize: 11),
+              ),
+            ],
           ),
         ),
         SizedBox(
@@ -1533,6 +1659,121 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
               setState(() => _trainingAge = v);
               _markDirty();
             },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIntDropdown({
+    required String label,
+    required int? value,
+    required List<int> options,
+    String? helperText,
+    String? errorText,
+    required void Function(int?) onChanged,
+  }) {
+    return DropdownButtonFormField<int>(
+      initialValue: value,
+      isExpanded: true,
+      items: options
+          .map(
+            (v) => DropdownMenuItem<int>(value: v, child: Text(v.toString())),
+          )
+          .toList(),
+      onChanged: onChanged,
+      dropdownColor: kBackgroundColor,
+      iconEnabledColor: kTextColor,
+      style: const TextStyle(color: kTextColor),
+      decoration: InputDecoration(
+        labelText: label,
+        helperText: helperText,
+        errorText: errorText,
+      ),
+    );
+  }
+
+  Widget _buildTrainingHistory() {
+    final yearOptions = List<int>.generate(16, (i) => i);
+    final breakOptions = [0, 1, 2, 3, 4, 6, 9, 12, 18, 24, 36];
+    final monthsCurrentOptions = [0, 1, 2, 3, 4, 6, 9, 12, 18, 24];
+    final hasExperienceError =
+        _yearsTotalStrengthTraining != null &&
+        _yearsContinuousStrengthTraining != null &&
+        _yearsContinuousStrengthTraining! > _yearsTotalStrengthTraining!;
+    final shouldWarnBreakMismatch =
+        _longestBreakMonthsLast5Years != null &&
+        _monthsContinuousCurrent != null &&
+        _monthsContinuousCurrent! * 12 < _longestBreakMonthsLast5Years!;
+
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        SizedBox(
+          width: 320,
+          child: _buildIntDropdown(
+            label: 'Años totales entrenando fuerza (histórico)',
+            value: _yearsTotalStrengthTraining,
+            options: yearOptions,
+            onChanged: (v) {
+              setState(() => _yearsTotalStrengthTraining = v);
+              _markDirty();
+            },
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: _buildIntDropdown(
+            label: 'Años continuos entrenando (sin pausas largas)',
+            value: _yearsContinuousStrengthTraining,
+            options: yearOptions,
+            errorText: _showValidationErrors && hasExperienceError
+                ? 'No puede ser mayor que años totales.'
+                : null,
+            onChanged: (v) {
+              setState(() => _yearsContinuousStrengthTraining = v);
+              _markDirty();
+            },
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: _buildIntDropdown(
+            label: 'Pausa más larga en los últimos 5 años (meses)',
+            value: _longestBreakMonthsLast5Years,
+            options: breakOptions,
+            helperText: 'Si dejaste 2 años, selecciona 24.',
+            onChanged: (v) {
+              setState(() => _longestBreakMonthsLast5Years = v);
+              _markDirty();
+            },
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildIntDropdown(
+                label: 'Meses entrenando de forma continua actualmente',
+                value: _monthsContinuousCurrent,
+                options: monthsCurrentOptions,
+                helperText: 'Ej: volviste hace 3 meses → 3.',
+                onChanged: (v) {
+                  setState(() => _monthsContinuousCurrent = v);
+                  _markDirty();
+                },
+              ),
+              if (shouldWarnBreakMismatch)
+                const Padding(
+                  padding: EdgeInsets.only(top: 6),
+                  child: Text(
+                    'Aviso: revisa si la pausa más larga coincide con tu continuidad actual.',
+                    style: TextStyle(color: Colors.orangeAccent, fontSize: 11),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -1557,12 +1798,37 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           ),
         ),
         SizedBox(
-          width: 250,
-          child: GlassNumericField(
-            controller: _plannedFreqCtrl,
-            label: 'Días que puede sostener los próximos 2 meses (1-7) *',
+          width: 320,
+          child: _buildIntDropdown(
+            label: 'Días por semana (próximas 8 semanas)',
+            value: _daysPerWeek,
+            options: const [3, 4, 5, 6],
+            helperText: 'Dato duro: selecciona el máximo realista sostenido.',
+            errorText: _showValidationErrors && _daysPerWeek == null
+                ? 'Selecciona un valor.'
+                : null,
             onChanged: (v) {
-              _plannedFrequency = int.tryParse(v);
+              setState(() {
+                _daysPerWeek = v;
+                _plannedFrequency = v;
+              });
+              _markDirty();
+            },
+          ),
+        ),
+        SizedBox(
+          width: 320,
+          child: _buildIntDropdown(
+            label: 'Duración del plan (semanas)',
+            value: _planDurationInWeeks,
+            options: const [4, 6, 8, 12, 16],
+            helperText:
+                'Se usa para el ciclo actual y gobierno de regeneración/adaptación.',
+            errorText: _showValidationErrors && _planDurationInWeeks == null
+                ? 'Selecciona un valor.'
+                : null,
+            onChanged: (v) {
+              setState(() => _planDurationInWeeks = v);
               _markDirty();
             },
           ),
@@ -1694,32 +1960,95 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
 
   // 5. LESIONES
   Widget _buildInjuries() {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: InjuryRegion.values.map((region) {
-        final isSelected = _activeInjuries.contains(region);
-        return FilterChip(
-          label: Text(region.label),
-          selected: isSelected,
-          onSelected: (selected) {
-            setState(() {
-              if (selected) {
-                _activeInjuries.add(region);
-              } else {
-                _activeInjuries.remove(region);
-              }
-            });
+    final hasShoulder = _activeInjuries.contains(InjuryRegion.shoulder);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: InjuryRegion.values.map((region) {
+            final isSelected = _activeInjuries.contains(region);
+            return FilterChip(
+              label: Text(region.label),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    _activeInjuries.add(region);
+                  } else {
+                    _activeInjuries.remove(region);
+                  }
+                });
+                _markDirty();
+              },
+              selectedColor: kPrimaryColor.withValues(alpha: 0.3),
+              checkmarkColor: kPrimaryColor,
+              backgroundColor: kBackgroundColor,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : Colors.white70,
+              ),
+            );
+          }).toList(),
+        ),
+        if (hasShoulder) ...[
+          const SizedBox(height: 16),
+          _buildShoulderRestrictions(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildShoulderRestrictions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Restricciones por hombro (selecciona lo que aplica)',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: kPrimaryColor),
+        ),
+        const SizedBox(height: 8),
+        CheckboxListTile(
+          value: _shoulderAvoidOverheadPress,
+          onChanged: (v) {
+            setState(() => _shoulderAvoidOverheadPress = v ?? false);
             _markDirty();
           },
-          selectedColor: kPrimaryColor.withValues(alpha: 0.3),
-          checkmarkColor: kPrimaryColor,
-          backgroundColor: kBackgroundColor,
-          labelStyle: TextStyle(
-            color: isSelected ? Colors.white : Colors.white70,
+          title: const Text(
+            'Evitar empujes por encima de la cabeza (overhead press)',
           ),
-        );
-      }).toList(),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          value: _shoulderAvoidPainfulLateralRaise,
+          onChanged: (v) {
+            setState(() => _shoulderAvoidPainfulLateralRaise = v ?? false);
+            _markDirty();
+          },
+          title: const Text('Evitar elevaciones laterales dolorosas'),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          value: _shoulderAvoidWideGripPress,
+          onChanged: (v) {
+            setState(() => _shoulderAvoidWideGripPress = v ?? false);
+            _markDirty();
+          },
+          title: const Text('Evitar press con agarre ancho'),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        CheckboxListTile(
+          value: _shoulderAvoidEndRangePain,
+          onChanged: (v) {
+            setState(() => _shoulderAvoidEndRangePain = v ?? false);
+            _markDirty();
+          },
+          title: const Text('Evitar rangos finales por dolor'),
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+      ],
     );
   }
 
@@ -1729,19 +2058,27 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Seleccione los músculos por prioridad (sin límite)',
+          'Seleccione los músculos por prioridad (máximo 3 por categoría)',
           style: TextStyle(color: Colors.white70, fontSize: 12),
         ),
         const SizedBox(height: 12),
         MuscleSelectionGroup(
-          primarySelection: _primaryMuscles,
-          secondarySelection: _secondaryMuscles,
-          tertiarySelection: _tertiaryMuscles,
-          onUpdate: (p, s, t) {
+          selectedPrimary: _primaryMuscles.toSet(),
+          selectedSecondary: _secondaryMuscles.toSet(),
+          selectedTertiary: _tertiaryMuscles.toSet(),
+          onChanged: (tier, newSet) {
             setState(() {
-              _primaryMuscles = p;
-              _secondaryMuscles = s;
-              _tertiaryMuscles = t;
+              switch (tier) {
+                case 'primary':
+                  _primaryMuscles = newSet.toList();
+                  break;
+                case 'secondary':
+                  _secondaryMuscles = newSet.toList();
+                  break;
+                case 'tertiary':
+                  _tertiaryMuscles = newSet.toList();
+                  break;
+              }
             });
             _markDirty();
           },

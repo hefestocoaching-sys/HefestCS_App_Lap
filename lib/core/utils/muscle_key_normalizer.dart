@@ -143,7 +143,9 @@ Map<String, int> normalizeLegacyVopToCanonical(Map<dynamic, dynamic> raw) {
   // 4) Filtrar SOLO canónicas (14)
   final out = <String, int>{};
   for (final e in expanded.entries) {
-    if (e.value <= 0) { continue; }
+    if (e.value <= 0) {
+      continue;
+    }
     // Filtrar tokens _group que no fueron expandidos (no debería ocurrir con new logic)
     if (e.key == 'back_group' ||
         e.key == 'shoulders_group' ||

@@ -80,22 +80,17 @@ List<String> _expandLegacyKeys(List<String> keys) {
 }
 
 class MuscleSelectionGroup extends StatefulWidget {
-  final List<String> primarySelection;
-  final List<String> secondarySelection;
-  final List<String> tertiarySelection;
-  final Function(
-    List<String> primary,
-    List<String> secondary,
-    List<String> tertiary,
-  )
-  onUpdate;
+  final Set<String> selectedPrimary;
+  final Set<String> selectedSecondary;
+  final Set<String> selectedTertiary;
+  final void Function(String tier, Set<String> newSet) onChanged;
 
   const MuscleSelectionGroup({
     super.key,
-    required this.primarySelection,
-    required this.secondarySelection,
-    required this.tertiarySelection,
-    required this.onUpdate,
+    required this.selectedPrimary,
+    required this.selectedSecondary,
+    required this.selectedTertiary,
+    required this.onChanged,
   });
 
   @override
@@ -103,17 +98,17 @@ class MuscleSelectionGroup extends StatefulWidget {
 }
 
 class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
-  late List<String> _primary;
-  late List<String> _secondary;
-  late List<String> _tertiary;
+  late Set<String> _primary;
+  late Set<String> _secondary;
+  late Set<String> _tertiary;
 
   @override
   void initState() {
     super.initState();
     // Expandir legacy keys si existen (p.ej. 'back' -> ['lats', 'upper_back', 'traps'])
-    _primary = _expandLegacyKeys(widget.primarySelection);
-    _secondary = _expandLegacyKeys(widget.secondarySelection);
-    _tertiary = _expandLegacyKeys(widget.tertiarySelection);
+    _primary = _expandLegacyKeys(widget.selectedPrimary.toList()).toSet();
+    _secondary = _expandLegacyKeys(widget.selectedSecondary.toList()).toSet();
+    _tertiary = _expandLegacyKeys(widget.selectedTertiary.toList()).toSet();
   }
 
   @override
@@ -122,17 +117,20 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
 
     // ✅ Resincronizar estado si cambiaron las props (al cargar cliente, guardar, etc.)
     // Esto previene "chips fantasma" duplicados
-    if (widget.primarySelection != oldWidget.primarySelection ||
-        widget.secondarySelection != oldWidget.secondarySelection ||
-        widget.tertiarySelection != oldWidget.tertiarySelection) {
-      final newPrimary = _expandLegacyKeys(widget.primarySelection);
-      final newSecondary = _expandLegacyKeys(widget.secondarySelection);
-      final newTertiary = _expandLegacyKeys(widget.tertiarySelection);
+    if (widget.selectedPrimary != oldWidget.selectedPrimary ||
+      widget.selectedSecondary != oldWidget.selectedSecondary ||
+      widget.selectedTertiary != oldWidget.selectedTertiary) {
+      final newPrimary =
+        _expandLegacyKeys(widget.selectedPrimary.toList()).toSet();
+      final newSecondary =
+        _expandLegacyKeys(widget.selectedSecondary.toList()).toSet();
+      final newTertiary =
+        _expandLegacyKeys(widget.selectedTertiary.toList()).toSet();
 
       // Solo setState si realmente cambió
-      if (_listsDiffer(_primary, newPrimary) ||
-          _listsDiffer(_secondary, newSecondary) ||
-          _listsDiffer(_tertiary, newTertiary)) {
+      if (_setsDiffer(_primary, newPrimary) ||
+          _setsDiffer(_secondary, newSecondary) ||
+          _setsDiffer(_tertiary, newTertiary)) {
         setState(() {
           _primary = newPrimary;
           _secondary = newSecondary;
@@ -142,10 +140,10 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
     }
   }
 
-  bool _listsDiffer(List<String> a, List<String> b) {
+  bool _setsDiffer(Set<String> a, Set<String> b) {
     if (a.length != b.length) return true;
-    for (int i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return true;
+    for (final entry in a) {
+      if (!b.contains(entry)) return true;
     }
     return false;
   }
@@ -153,70 +151,67 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
   void _updateSelections(
     String muscleKey,
     bool isSelected,
-    List<String> currentList,
+    Set<String> currentSet,
   ) {
     setState(() {
       if (isSelected) {
-        // Remove from other lists first to ensure exclusivity.
-        if (currentList != _primary) {
+        if (!currentSet.contains(muscleKey) && currentSet.length >= 3) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Máximo 3 músculos por categoría.'),
+            ),
+          );
+          return;
+        }
+        if (currentSet != _primary) {
           _primary.remove(muscleKey);
         }
-        if (currentList != _secondary) {
+        if (currentSet != _secondary) {
           _secondary.remove(muscleKey);
         }
-        if (currentList != _tertiary) {
+        if (currentSet != _tertiary) {
           _tertiary.remove(muscleKey);
         }
-
-        // Then, add to the current list if it's not already there.
-        if (!currentList.contains(muscleKey)) {
-          currentList.add(muscleKey);
-        }
+        currentSet.add(muscleKey);
       } else {
-        // If deselected, just remove it from its current list.
-        currentList.remove(muscleKey);
+        currentSet.remove(muscleKey);
       }
-      widget.onUpdate(_primary, _secondary, _tertiary);
+      widget.onChanged('primary', _primary);
+      widget.onChanged('secondary', _secondary);
+      widget.onChanged('tertiary', _tertiary);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Músculos (keys) que no están seleccionados en NINGUNA lista.
-    final unselectedMuscleKeys = allMuscles.map((m) => m.key).where((k) {
-      return !_primary.contains(k) &&
-          !_secondary.contains(k) &&
-          !_tertiary.contains(k);
-    }).toList();
-
-    // Las opciones para cada lista son sus propios elementos seleccionados MÁS los no seleccionados.
-    final primaryOptions = [..._primary, ...unselectedMuscleKeys];
-    final secondaryOptions = [..._secondary, ...unselectedMuscleKeys];
-    final tertiaryOptions = [..._tertiary, ...unselectedMuscleKeys];
+    final allKeys = allMuscles.map((m) => m.key).toSet();
+    final primaryOptions = allKeys;
+    final secondaryOptions = allKeys.difference(_primary);
+    final tertiaryOptions = allKeys.difference(_primary).difference(_secondary);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _MuscleChecklist(
           title: 'Músculos Primarios',
-          allOptionKeys: primaryOptions,
-          selectedKeys: _primary,
+          allOptionKeys: primaryOptions.toList(),
+          selectedKeys: _primary.toList(),
           onChanged: (muscleKey, isSelected) =>
               _updateSelections(muscleKey, isSelected, _primary),
         ),
         const SizedBox(height: 24),
         _MuscleChecklist(
           title: 'Músculos Secundarios',
-          allOptionKeys: secondaryOptions,
-          selectedKeys: _secondary,
+          allOptionKeys: secondaryOptions.toList(),
+          selectedKeys: _secondary.toList(),
           onChanged: (muscleKey, isSelected) =>
               _updateSelections(muscleKey, isSelected, _secondary),
         ),
         const SizedBox(height: 24),
         _MuscleChecklist(
           title: 'Músculos Terciarios',
-          allOptionKeys: tertiaryOptions,
-          selectedKeys: _tertiary,
+          allOptionKeys: tertiaryOptions.toList(),
+          selectedKeys: _tertiary.toList(),
           onChanged: (muscleKey, isSelected) =>
               _updateSelections(muscleKey, isSelected, _tertiary),
         ),
