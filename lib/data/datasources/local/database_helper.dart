@@ -2,13 +2,15 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/training_interview.dart';
+import 'package:hcs_app_lap/features/training_feature/domain/training_interview_validator.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -85,7 +87,7 @@ class DatabaseHelper {
 
   // Non-destructive upgrade: keep table to avoid data loss.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < newVersion) {
+    if (oldVersion < 5) {
       await _ensureTrainingInterviewsTable(db);
     }
   }
@@ -110,7 +112,7 @@ class DatabaseHelper {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         completed_at TEXT,
-        FOREIGN KEY (client_id) REFERENCES clients(id)
+        FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
       )
     ''');
   }
@@ -146,21 +148,24 @@ class DatabaseHelper {
 
   Future<void> upsertClient(Client client) async {
     final db = await database;
+    final batch = db.batch();
 
-    // ✅ CORRECCIÓN P0-1: Guardar cliente TAL COMO VIENE
-    // ✅ NO hacer merge automático — Provider controla limpieza
-    // ✅ training.extra del client entrante es la verdad absoluta
-    // ✅ Esto permite que training_plan_provider limpie datos legacy
-
-    await db.insert(
+    batch.insert(
       'clients',
       _wrapClientJson(client),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
 
-    debugPrint(
-      '✅ DatabaseHelper P0-1: Cliente guardado SIN merge automático (SSOT puro)',
+    final lastInterview = await getActiveTrainingInterview(client.id);
+    final newInterview = _buildInterviewFromClient(client, lastInterview);
+
+    batch.insert(
+      'training_interviews',
+      newInterview.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
+
+    await batch.commit(noResult: true);
   }
 
   Future<Client?> getClientById(String id) async {
@@ -253,6 +258,36 @@ class DatabaseHelper {
 
     if (result.isEmpty) return null;
     return TrainingInterview.fromMap(result.first);
+  }
+
+  TrainingInterview _buildInterviewFromClient(
+    Client client,
+    TrainingInterview? last,
+  ) {
+    final data = Map<String, dynamic>.from(client.training.extra);
+    final status = evaluateTrainingInterview(data).name;
+    final now = DateTime.now();
+    final lastData = last?.data;
+    final isSameData =
+      lastData != null &&
+      const DeepCollectionEquality().equals(data, lastData);
+    final version = last == null
+        ? 1
+        : isSameData
+            ? last.version
+            : last.version + 1;
+    final createdAt = isSameData ? last!.createdAt : now;
+
+    return TrainingInterview(
+      id: const Uuid().v4(),
+      clientId: client.id,
+      version: version,
+      status: status,
+      data: data,
+      createdAt: createdAt,
+      updatedAt: now,
+      completedAt: status == 'valid' ? now : null,
+    );
   }
 
   // -------------------------------
