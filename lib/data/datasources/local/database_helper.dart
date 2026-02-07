@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:hcs_app_lap/domain/entities/client.dart';
+import 'package:hcs_app_lap/domain/entities/training_interview.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -16,7 +17,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
 
   static const String _dbName = 'hcs_app_lap_v4.db';
-  static const int _dbVersion = 4;
+  static const int _dbVersion = 5;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -78,12 +79,15 @@ class DatabaseHelper {
         updatedAt TEXT
       )
     ''');
+    await _ensureTrainingInterviewsTable(db);
     await _ensureAppStateTable(db);
   }
 
   // Non-destructive upgrade: keep table to avoid data loss.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Intentionally no-op. Data is stored as JSON payloads in a single table.
+    if (oldVersion < newVersion) {
+      await _ensureTrainingInterviewsTable(db);
+    }
   }
 
   Future<void> _ensureAppStateTable(Database db) async {
@@ -91,6 +95,22 @@ class DatabaseHelper {
       CREATE TABLE IF NOT EXISTS app_state (
         key TEXT PRIMARY KEY,
         value TEXT
+      )
+    ''');
+  }
+
+  Future<void> _ensureTrainingInterviewsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS training_interviews (
+        id TEXT PRIMARY KEY,
+        client_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        data TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        completed_at TEXT,
+        FOREIGN KEY (client_id) REFERENCES clients(id)
       )
     ''');
   }
@@ -199,6 +219,41 @@ class DatabaseHelper {
   Future<void> insertClient(Client client) => upsertClient(client);
 
   Future<void> updateClient(Client client) => upsertClient(client);
+
+  Future<void> insertTrainingInterview(TrainingInterview interview) async {
+    final db = await database;
+    await db.insert(
+      'training_interviews',
+      interview.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateTrainingInterview(TrainingInterview interview) async {
+    final db = await database;
+    await db.update(
+      'training_interviews',
+      interview.toMap(),
+      where: 'id = ?',
+      whereArgs: [interview.id],
+    );
+  }
+
+  Future<TrainingInterview?> getActiveTrainingInterview(
+    String clientId,
+  ) async {
+    final db = await database;
+    final result = await db.query(
+      'training_interviews',
+      where: 'client_id = ?',
+      whereArgs: [clientId],
+      orderBy: 'version DESC',
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+    return TrainingInterview.fromMap(result.first);
+  }
 
   // -------------------------------
   // App state (active client)
