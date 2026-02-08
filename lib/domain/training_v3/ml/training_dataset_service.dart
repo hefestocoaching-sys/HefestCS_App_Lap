@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 import 'package:csv/csv.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
@@ -444,7 +445,9 @@ class TrainingDatasetService {
 
     // ✅ NUEVO: Agregar weeklyFeedback si existe
     if (weeklyFeedback != null) {
-      updateData['weeklyFeedback'] = weeklyFeedback.toJson();
+      updateData['weeklyFeedback'] = sanitizeForFirestore(
+        weeklyFeedback.toJson(),
+      );
     }
 
     await docRef.update(updateData);

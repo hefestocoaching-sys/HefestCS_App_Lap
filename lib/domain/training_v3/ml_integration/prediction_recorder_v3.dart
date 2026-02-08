@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
+import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
 /// Registrador de predicciones ML para entrenamiento futuro
 ///
@@ -43,7 +44,7 @@ class PredictionRecorderV3 {
     required TrainingProgram finalProgram,
   }) async {
     try {
-      await _firestore.collection(_collection).doc(predictionId).set({
+      final payload = {
         // Metadata
         'prediction_id': predictionId,
         'user_id': userId,
@@ -88,7 +89,12 @@ class PredictionRecorderV3 {
 
         // Status
         'status': 'pending',
-      });
+      };
+
+      await _firestore
+          .collection(_collection)
+          .doc(predictionId)
+          .set(sanitizeForFirestore(payload));
 
       print('✅ Predicción ML registrada: $predictionId');
     } catch (e) {

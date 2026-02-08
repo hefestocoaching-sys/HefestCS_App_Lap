@@ -38,6 +38,109 @@ abstract class ClientRemoteDataSource {
 
 class ClientFirestoreDataSource implements ClientRemoteDataSource {
   final FirebaseFirestore _firestore;
+  static const bool _enableFirestoreAudit = true;
+  static const Set<String> _remoteExcludedKeys = {
+    'anthropometry',
+    'biochemistry',
+    'tracking',
+    'trainingPlans',
+    'trainingWeeks',
+    'trainingSessions',
+    'trainingLogs',
+    'sessionLogs',
+    'trainingCycles',
+    'trainingHistory',
+    'nutritionHistory',
+    'trainingEvaluation',
+    'exerciseMotivation',
+    'gluteSpecializationProfile',
+    'mobilityAssessments',
+    'movementPatternAssessments',
+    'strengthAssessments',
+    'volumeToleranceProfiles',
+    'psychologicalTrainingProfiles',
+  };
+  static const Set<String> _trainingExtraWhitelist = {
+    'sportDiscipline',
+    'trainingYears',
+    'yearsTrainingContinuous',
+    'injuries',
+    'availableEquipment',
+    'barriers',
+    'periodizationHistory',
+    'priorityExercises',
+    'prSquat',
+    'prBench',
+    'prDeadlift',
+    'detailedInjuryHistory',
+    'pastVolumeTolerance',
+    'typicalRestPeriods',
+    'trainingPreferences',
+    'competitionDateIso',
+    'trainingLevel',
+    'trainingLevelLabel',
+    'trainingAge',
+    'previousTrainingExperience',
+    'daysPerWeek',
+    'plannedFrequency',
+    'historicalFrequency',
+    'timePerSession',
+    'timePerSessionBucket',
+    'timePerSessionMinutes',
+    'planDurationInWeeks',
+    'avgSleepHours',
+    'perceivedStress',
+    'stressLevel',
+    'recoveryQuality',
+    'sleepBucket',
+    'usesAnabolics',
+    'isCompetitor',
+    'competitionCategory',
+    'priorityMusclesPrimary',
+    'priorityMusclesSecondary',
+    'priorityMusclesTertiary',
+    'baseSeries',
+    'movementRestrictions',
+    'movementRestrictionsDetail',
+    'selectedPlanStartDateIso',
+    'discipline',
+    'volumeTolerance',
+    'intensityTolerance',
+    'restProfile',
+    'activeInjuries',
+    'knowsPRs',
+    'sessionDurationMinutes',
+    'restBetweenSetsSeconds',
+    'externalRecovery',
+    'strengthLevelClass',
+    'workCapacityScore',
+    'recoveryHistoryScore',
+    'externalRecoverySupport',
+    'programNoveltyClass',
+    'externalPhysicalStressLevel',
+    'dietHabitsClass',
+    'nonPhysicalStressLevel2',
+    'restQuality2',
+    'mevBase',
+    'mrvBase',
+    'mevAdjustTotal',
+    'mrvAdjustTotal',
+    'mevIndividual',
+    'mrvIndividual',
+    'targetSetsByMuscle',
+    'mevByMuscle',
+    'mrvByMuscle',
+    'priorityVolumeSplit',
+    'targetSetsByMusclePriority',
+    'intensityVolumeSplit',
+    'targetSetsByMusclePriorityIntensity',
+    'seriesTypePercentSplit',
+    'trainingSetupV1',
+    'trainingEvaluationSnapshotV1',
+    'trainingProgressionStateV1',
+    'generatedAtIso',
+    'forDateIso',
+  };
 
   ClientFirestoreDataSource(this._firestore);
 
@@ -57,34 +160,121 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     // El payload contiene el Client.toJson() completo, sanitizado para Firestore
     final clientJson = client.toJson();
     final sanitizedPayload = sanitizeForFirestore(clientJson);
+    final remotePayload = Map<String, dynamic>.from(sanitizedPayload)
+      ..removeWhere((key, _) => _remoteExcludedKeys.contains(key));
+
+    final training = remotePayload['training'];
+    if (training is Map) {
+      final extra = training['extra'];
+      if (extra is Map) {
+        final filteredExtra = <String, dynamic>{};
+        for (final entry in extra.entries) {
+          final key = entry.key.toString();
+          if (_trainingExtraWhitelist.contains(key)) {
+            filteredExtra[key] = entry.value;
+          }
+        }
+        final updatedTraining = Map<String, dynamic>.from(training);
+        updatedTraining['extra'] = filteredExtra;
+        remotePayload['training'] = updatedTraining;
+      }
+    }
+
+    List<String> rawInvalidPaths = const [];
+    List<String> rawAuditFindings = const [];
+    if (_enableFirestoreAudit) {
+      rawInvalidPaths = listInvalidFirestorePaths(clientJson, limit: 12);
+      if (rawInvalidPaths.isNotEmpty) {
+        print(
+          '🔥 Firestore raw payload invalid paths: ${rawInvalidPaths.join(' | ')}',
+        );
+      }
+      rawAuditFindings = listFirestoreAuditFindings(clientJson, limit: 12);
+      if (rawAuditFindings.isNotEmpty) {
+        print(
+          '🔥 Firestore raw payload audit findings: ${rawAuditFindings.join(' | ')}',
+        );
+      }
+    }
 
     final fullPayload = <String, dynamic>{
-      'payload': sanitizedPayload,
+      'payload': remotePayload,
       'schemaVersion': 1,
       'updatedAt': FieldValue.serverTimestamp(),
       'deleted': deleted,
     };
 
-    final invalidPath = findInvalidFirestorePath(fullPayload);
-    if (invalidPath != null) {
-      debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+    String? invalidPath;
+    List<String> invalidPaths = const [];
+    List<String> auditFindings = const [];
+    if (_enableFirestoreAudit) {
+      invalidPath = findInvalidFirestorePath(fullPayload);
+      if (invalidPath != null) {
+        print('🔥 Firestore payload invalid at: $invalidPath');
+      }
+      invalidPaths = listInvalidFirestorePaths(fullPayload, limit: 12);
+      if (invalidPaths.isNotEmpty) {
+        print(
+          '🔥 Firestore payload invalid paths: ${invalidPaths.join(' | ')}',
+        );
+      }
+      auditFindings = listFirestoreAuditFindings(fullPayload, limit: 12);
+      if (auditFindings.isNotEmpty) {
+        print(
+          '🔥 Firestore payload audit findings: ${auditFindings.join(' | ')}',
+        );
+      }
+
+      debugPrint('🔥 Upserting client ${client.id} to Firestore...');
+      debugPrint(
+        '   training.extra keys: ${client.training.extra.keys.join(', ')}',
+      );
+      debugPrint(
+        '   payload.training.extra is Map: ${(fullPayload['payload'] as Map)['training'] is Map}',
+      );
     }
 
-    debugPrint('🔥 Upserting client ${client.id} to Firestore...');
-    debugPrint(
-      '   training.extra keys: ${client.training.extra.keys.join(', ')}',
-    );
-    debugPrint(
-      '   payload.training.extra is Map: ${(fullPayload['payload'] as Map)['training'] is Map}',
-    );
+    if (_enableFirestoreAudit) {
+      final hasAuditIssues =
+          rawInvalidPaths.isNotEmpty ||
+          rawAuditFindings.isNotEmpty ||
+          invalidPath != null ||
+          invalidPaths.isNotEmpty ||
+          auditFindings.isNotEmpty;
+      if (hasAuditIssues) {
+        debugPrint(
+          '⚠️ Skipping remote client sync due to invalid Firestore payload.',
+        );
+        return;
+      }
+    }
 
     try {
       // ✅ OBLIGATORIO: SetOptions(merge: true) para no perder datos en concurrencia
       await ref.set(fullPayload, SetOptions(merge: true));
       debugPrint('✅ Client ${client.id} synced to Firestore successfully');
-    } on FirebaseException catch (e, st) {
+    } catch (e, st) {
+      final failInvalidPath = findInvalidFirestorePath(fullPayload);
+      if (failInvalidPath != null) {
+        print('🔥 Firestore payload invalid at: $failInvalidPath');
+      }
+      final failInvalidPaths = listInvalidFirestorePaths(fullPayload, limit: 12);
+      if (failInvalidPaths.isNotEmpty) {
+        print(
+          '🔥 Firestore payload invalid paths: ${failInvalidPaths.join(' | ')}',
+        );
+      }
+      final failAuditFindings = listFirestoreAuditFindings(
+        fullPayload,
+        limit: 12,
+      );
+      if (failAuditFindings.isNotEmpty) {
+        print(
+          '🔥 Firestore payload audit findings: ${failAuditFindings.join(' | ')}',
+        );
+      }
       debugPrint(
-        '🔥 Firestore upsert failed for client ${client.id}: ${e.code} ${e.message}',
+        '🔥 Firestore upsert failed for client ${client.id}: ${e.runtimeType} $e',
       );
       debugPrint('Full payload keys: ${fullPayload.keys.join(', ')}');
       debugPrint(st.toString());

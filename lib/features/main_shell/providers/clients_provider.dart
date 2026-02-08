@@ -206,14 +206,15 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
 
         await _repository.saveClient(mergedClient);
 
-        // Refresh local state after write.
-        final clients = await _loadClients();
-        final activeId = _resolveActiveClientId(clients, mergedClient.id);
-        await _persistActiveClientId(activeId);
+        // Refresh local state without reloading all clients.
+        final updatedClients = current.clients
+            .map((client) => client.id == mergedClient.id ? mergedClient : client)
+            .toList();
+        final sortedClients = _sortClients(updatedClients);
         state = AsyncValue.data(
           current.copyWith(
-            clients: clients,
-            activeClientId: activeId,
+            clients: sortedClients,
+            activeClientId: mergedClient.id,
             isLoading: false,
             error: null,
           ),

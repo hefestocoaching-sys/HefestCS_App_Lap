@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -44,6 +46,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
 
   final _selectedIndexNotifier = ValueNotifier<int>(0);
   final _showClientsScreenNotifier = ValueNotifier<bool>(false);
+  Timer? _saveDebounceTimer;
 
   bool get isHomeContext => _selectedIndexNotifier.value == _homeIndex;
 
@@ -68,6 +71,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
 
   @override
   void dispose() {
+    _saveDebounceTimer?.cancel();
     _selectedIndexNotifier.dispose();
     _showClientsScreenNotifier.dispose();
     super.dispose();
@@ -189,6 +193,13 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     } finally {
       _isSaving = false;
     }
+  }
+
+  void _scheduleSaveActiveModuleIfNeeded() {
+    _saveDebounceTimer?.cancel();
+    _saveDebounceTimer = Timer(const Duration(milliseconds: 600), () {
+      unawaited(_saveActiveModuleIfNeeded());
+    });
   }
 
   void _resetAllDrafts() {
@@ -406,7 +417,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                 return;
                               }
 
-                              await _saveActiveModuleIfNeeded();
+                              _scheduleSaveActiveModuleIfNeeded();
                               if (!mounted) return;
 
                               // Cambiar índice y forzar rebuild
@@ -428,7 +439,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                 'DEBUG: Shell onClientsPressed handler called',
                               );
                               await _clearActiveClientSelection();
-                              await _saveActiveModuleIfNeeded();
+                              _scheduleSaveActiveModuleIfNeeded();
                               if (!mounted) {
                                 debugPrint(
                                   'DEBUG: Widget not mounted, returning',

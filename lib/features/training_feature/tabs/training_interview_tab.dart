@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,7 +32,6 @@ import 'package:hcs_app_lap/utils/widgets/shared_form_widgets.dart';
 import 'package:hcs_app_lap/utils/widgets/hcs_input_decoration.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/ui/clinic_section_surface.dart';
-import 'package:hcs_app_lap/utils/deep_merge.dart';
 
 class TrainingInterviewTab extends ConsumerStatefulWidget {
   const TrainingInterviewTab({super.key});
@@ -1069,6 +1070,10 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       return;
     }
 
+    final previousExtra = Map<String, dynamic>.from(
+      _client?.training.extra ?? {},
+    );
+
     try {
       // ============ PASO 1: GUARDAR DATOS DE ENTREVISTA ============
       // Construir el TrainingProfile editado explícitamente
@@ -1095,11 +1100,10 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
 
       // ESPERAR a que se guarden los datos de entrevista
       await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
-        // PASO 1: Deep merge para preservar Maps anidados (mevByMuscle, etc.)
-        final mergedTrainingExtra = deepMerge(
+        // PASO 1: Merge superficial para evitar costos altos en mapas grandes
+        final mergedTrainingExtra = Map<String, dynamic>.from(
           prev.training.extra,
-          editedProfile.extra,
-        );
+        )..addAll(editedProfile.extra);
         final mergedTraining = editedProfile.copyWith(
           extra: mergedTrainingExtra,
         );
@@ -1126,25 +1130,48 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       // ✅ Verificar que el widget sigue montado después de la operación async
       if (!mounted) return;
 
+      unawaited(_postSaveRecomputeAndRegen(previousExtra));
+
+      _isDirty = false;
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Perfil de entrenamiento guardado correctamente.'),
+            backgroundColor: kPrimaryColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar entrevista: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _postSaveRecomputeAndRegen(
+    Map<String, dynamic> previousExtra,
+  ) async {
+    try {
       // ============ PASO 2: CALCULAR Y GUARDAR MEV/MRV ============
-      // IMPORTANTE: Solo después de que los datos de entrevista estén guardados
       await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
         final resolver = AthleteContextResolver();
         final volume = VolumeIndividualizationService();
 
-        // Resolver contexto del atleta desde el cliente actualizado
         final athlete = resolver.resolve(prev);
         final level = prev.training.trainingLevel ?? TrainingLevel.intermediate;
 
-        // Calcular MEV/MRV individualizados
         final bounds = volume.computeBounds(
           level: level,
           athlete: athlete,
           trainingExtra: prev.training.extra,
         );
 
-        // ✅ P0 FIX: Derivar MEV/MRV por músculo PRIMERO para usarlos en el cálculo
-        // PASO 5: Usar SupportedMuscles.keys en lugar de MuscleGroup.values (14 músculos canónicos)
         final volumeByMuscle = VolumeByMuscleDerivationService.derive(
           mevGlobal: bounds.mevIndividual,
           mrvGlobal: bounds.mrvIndividual,
@@ -1153,8 +1180,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         final mevByMuscle = volumeByMuscle['mevByMuscle'] ?? {};
         final mrvByMuscle = volumeByMuscle['mrvByMuscle'] ?? {};
 
-        // ✅ P0 FIX FINAL: SIEMPRE calcular targetSetsByMuscle usando MEV/MRV POR MÚSCULO
-        // No preservar valores previos para evitar targets planos persistidos
         final Map<String, double> targetSetsByMuscle = {};
         for (final key in mevByMuscle.keys) {
           final mevVal = mevByMuscle[key];
@@ -1163,34 +1188,21 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           if (mevVal != null && mrvVal != null) {
             final mev = mevVal.toDouble();
             final mrv = mrvVal.toDouble();
-            final mid = ((mev + mrv) / 2.0)
-                .roundToDouble(); // Punto medio por músculo
+            final mid = ((mev + mrv) / 2.0).roundToDouble();
             targetSetsByMuscle[key] = mid;
           }
         }
 
         debugPrint(
-          '[SAVE][COMPUTE] targetSetsByMuscle calculado con ${targetSetsByMuscle.length} músculos',
+          '[SAVE][COMPUTE] targetSetsByMuscle=${targetSetsByMuscle.length} mevByMuscle=${mevByMuscle.length} mrvByMuscle=${mrvByMuscle.length}',
         );
 
-        // 🔎 INSTRUMENTACIÓN P0: Verificar que hay valores distintos
-        debugPrint('[WRITE][targetSetsByMuscle] = $targetSetsByMuscle');
-        debugPrint('[WRITE][mevByMuscle] = $mevByMuscle');
-        debugPrint('[WRITE][mrvByMuscle] = $mrvByMuscle');
-
-        // ═══════════════════════════════════════════════════════════════════
-        // PHASE 4: Distribuir targetSetsByMuscle en primary/secondary/tertiary
-        // según prioridades musculares, sin cambiar el volumen total por músculo
-        // ═══════════════════════════════════════════════════════════════════
-
-        // PASO 1: Definir split base (estable y explícito)
         final priorityVolumeSplit = <String, double>{
           'primary': 0.45,
           'secondary': 0.35,
           'tertiary': 0.20,
         };
 
-        // PASO 2: Obtener prioridades del perfil (con cast seguro)
         final rawPrimary = prev.training.extra['priorityMusclesPrimary'];
         final rawSecondary = prev.training.extra['priorityMusclesSecondary'];
         final rawTertiary = prev.training.extra['priorityMusclesTertiary'];
@@ -1215,7 +1227,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           }
         }
 
-        // PASO 3: Distribuir por músculo
         final Map<String, Map<String, double>> targetSetsByMusclePriority = {};
 
         for (final entry in targetSetsByMuscle.entries) {
@@ -1225,51 +1236,34 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           double p, s, t;
 
           if (primaryMuscles.contains(muscle)) {
-            // Músculo priorizado como PRIMARY → mayor peso en primary
             p = total * priorityVolumeSplit['primary']!;
             s = total * priorityVolumeSplit['secondary']!;
             t = total * priorityVolumeSplit['tertiary']!;
           } else if (secondaryMuscles.contains(muscle)) {
-            // Músculo priorizado como SECONDARY → balance hacia secondary
             p = total * 0.35;
             s = total * 0.40;
             t = total * 0.25;
           } else if (tertiaryMuscles.contains(muscle)) {
-            // Músculo priorizado como TERTIARY → mayor peso en tertiary
             p = total * 0.25;
             s = total * 0.35;
             t = total * 0.40;
           } else {
-            // Sin prioridad declarada → balance neutro
             p = total * 0.33;
             s = total * 0.34;
             t = total * 0.33;
           }
 
           targetSetsByMusclePriority[muscle] = {
-            'primary': (p * 10).roundToDouble() / 10, // 1 decimal
+            'primary': (p * 10).roundToDouble() / 10,
             'secondary': (s * 10).roundToDouble() / 10,
             'tertiary': (t * 10).roundToDouble() / 10,
           };
         }
 
-        // PASO 4: Log de validación
-        debugPrint('[PHASE4] priorityVolumeSplit = $priorityVolumeSplit');
-        debugPrint(
-          '[PHASE4] targetSetsByMusclePriority = $targetSetsByMusclePriority',
-        );
-
-        // ═══════════════════════════════════════════════════════════════════
-        // PHASE 5: Distribuir series por intensidad (Heavy / Medium / Light)
-        // sin alterar el volumen total semanal ni la prioridad
-        // ═══════════════════════════════════════════════════════════════════
-
-        // PASO 1: Definir split base por intensidad
         double heavyPct = 0.30;
         double mediumPct = 0.40;
         double lightPct = 0.30;
 
-        // Ajustes por nivel de entrenamiento
         final trainingLevel = prev.training.extra['trainingLevel'];
         if (trainingLevel == 'beginner') {
           heavyPct = 0.25;
@@ -1279,7 +1273,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           lightPct = 0.25;
         }
 
-        // Normalizar medium para que sume 100%
         mediumPct = 1.0 - heavyPct - lightPct;
 
         final intensityVolumeSplit = <String, double>{
@@ -1288,7 +1281,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           'light': lightPct,
         };
 
-        // PASO 2: Distribuir por músculo y prioridad
         final Map<String, Map<String, Map<String, double>>>
         targetSetsByMusclePriorityIntensity = {};
 
@@ -1299,8 +1291,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           final Map<String, Map<String, double>> muscleOut = {};
 
           for (final priorityEntry in byPriority.entries) {
-            final priority =
-                priorityEntry.key; // primary / secondary / tertiary
+            final priority = priorityEntry.key;
             final total = priorityEntry.value;
 
             final heavy = (total * heavyPct * 10).roundToDouble() / 10;
@@ -1317,13 +1308,13 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           targetSetsByMusclePriorityIntensity[muscle] = muscleOut;
         }
 
-        // PASO 3: Log de validación
-        debugPrint('[PHASE5] intensityVolumeSplit = $intensityVolumeSplit');
         debugPrint(
-          '[PHASE5] targetSetsByMusclePriorityIntensity = $targetSetsByMusclePriorityIntensity',
+          '[PHASE4] targetSetsByMusclePriority=${targetSetsByMusclePriority.length}',
+        );
+        debugPrint(
+          '[PHASE5] targetSetsByMusclePriorityIntensity=${targetSetsByMusclePriorityIntensity.length}',
         );
 
-        // GUARDAR MEV/MRV en training.extra
         final updatedExtra = Map<String, dynamic>.from(prev.training.extra)
           ..['mevBase'] = bounds.mevBase
           ..['mrvBase'] = bounds.mrvBase
@@ -1345,48 +1336,18 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         );
       });
 
-      // ✅ Verificar que el widget sigue montado después de la operación async
       if (!mounted) return;
 
-      // 🔴 P0: asegurar que el cliente activo en memoria coincide con el guardado
       final updatedClient = ref.read(clientsProvider).value?.activeClient;
-      if (updatedClient != null) {
-        // 🔎 VERIFICACIÓN PRE-SYNC: Confirmar que los mapas por músculo están presentes
-        debugPrint(
-          '🔎 PRE-SYNC extra keys: ${updatedClient.training.extra.keys.toList()}',
-        );
-        debugPrint(
-          '🔎 PRE-SYNC has mevByMuscle: ${updatedClient.training.extra['mevByMuscle'] is Map}',
-        );
-        debugPrint(
-          '🔎 PRE-SYNC has mrvByMuscle: ${updatedClient.training.extra['mrvByMuscle'] is Map}',
-        );
-        debugPrint(
-          '🔎 PRE-SYNC has targetSetsByMuscle: ${updatedClient.training.extra['targetSetsByMuscle'] is Map}',
-        );
+      if (updatedClient == null) return;
 
-        await ref
-            .read(clientsProvider.notifier)
-            .setActiveClientById(updatedClient.id);
-      }
-
-      // ✅ Verificar que el widget sigue montado después de la operación async
-      if (!mounted) return;
-
-      _isDirty = false;
-
-      // 🔥 Regenerar plan si cambió algo relevante para volumen
-      final oldExtra = _client?.training.extra ?? {};
-      final newExtra = updatedClient?.training.extra ?? {};
-      final needsRegenBase = _volumeRelevantChanged(oldExtra, newExtra);
-
-      // 🔥 Forzar regen si aún no existen los mapas por músculo
+      final newExtra = updatedClient.training.extra;
+      final needsRegenBase = _volumeRelevantChanged(previousExtra, newExtra);
       final mapsMissing =
           newExtra['mevByMuscle'] is! Map || newExtra['mrvByMuscle'] is! Map;
-
       final needsRegen = needsRegenBase || mapsMissing;
 
-      if (needsRegen && updatedClient != null) {
+      if (needsRegen) {
         debugPrint('🔄 CAMBIO RELEVANTE DETECTADO - Regenerando plan...');
         try {
           await ref
@@ -1396,53 +1357,9 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         } catch (e) {
           debugPrint('⚠️ Error al regenerar plan: $e');
         }
-
-        // ✅ Verificar que el widget sigue montado después de la operación async
-        if (!mounted) return;
-      }
-
-      // 🔍 VALIDACIÓN FINAL: Confirmar que los datos se guardaron en memoria (antes de persistencia)
-      final finalClient = ref.read(clientsProvider).value?.activeClient;
-      if (finalClient != null) {
-        debugPrint('🎯 GUARDADO COMPLETADO - training.extra final contiene:');
-        debugPrint(
-          '   yearsTrainingContinuous: ${finalClient.training.extra[TrainingInterviewKeys.yearsTrainingContinuous]}',
-        );
-        debugPrint(
-          '   sessionDurationMinutes: ${finalClient.training.extra[TrainingInterviewKeys.sessionDurationMinutes]}',
-        );
-        debugPrint(
-          '   restBetweenSetsSeconds: ${finalClient.training.extra[TrainingInterviewKeys.restBetweenSetsSeconds]}',
-        );
-        debugPrint(
-          '   avgSleepHours: ${finalClient.training.extra[TrainingInterviewKeys.avgSleepHours]}',
-        );
-        debugPrint(
-          '   mevIndividual: ${finalClient.training.extra['mevIndividual']}',
-        );
-        debugPrint(
-          '   mrvIndividual: ${finalClient.training.extra['mrvIndividual']}',
-        );
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Perfil de entrenamiento guardado correctamente.'),
-            backgroundColor: kPrimaryColor,
-          ),
-        );
       }
     } catch (e) {
-      // Si falla el cálculo de MEV/MRV, mostrar error pero mantener los datos guardados
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al calcular MEV/MRV: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      debugPrint('⚠️ Error en post-save MEV/MRV: $e');
     }
   }
 
