@@ -47,16 +47,21 @@ class ClientSideNavigationRail extends ConsumerWidget {
       index: 5,
     ),
     _ClientNavItem(
-      icon: Icons.menu_book_outlined,
-      label: 'Diseño de Plan',
+      icon: Icons.table_chart_outlined,
+      label: 'Tabla de Equivalentes',
       index: 6,
+    ),
+    _ClientNavItem(
+      icon: Icons.menu_book_outlined,
+      label: 'Diseño de Menu',
+      index: 7,
     ),
     _ClientNavItem(
       icon: Icons.fitness_center_outlined,
       label: 'Entrenamiento',
-      index: 7,
+      index: 8,
     ),
-    _ClientNavItem(icon: Icons.science_outlined, label: 'Bioquímica', index: 8),
+    _ClientNavItem(icon: Icons.science_outlined, label: 'Bioquimica', index: 9),
   ];
 
   @override
