@@ -1,4 +1,6 @@
 // ignore_for_file: avoid_print
+import 'dart:developer' as developer;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hcs_app_lap/data/datasources/remote/record_firestore_datasource.dart';
 import 'package:hcs_app_lap/domain/entities/anthropometry_record.dart';
@@ -51,7 +53,7 @@ class AnthropometryFirestoreDataSource {
         deleted: deleted,
       );
     } catch (e) {
-      print('Error in upsertAnthropometryRecord: $e');
+      developer.log('Error in upsertAnthropometryRecord: $e');
       rethrow;
     }
   }
@@ -68,7 +70,7 @@ class AnthropometryFirestoreDataSource {
   /// );
   ///
   /// for (final record in records) {
-  ///   print('${record.date}: ${record.weightKg} kg');
+  ///   debugPrint('${record.date}: ${record.weightKg} kg');
   /// }
   /// ```
   Future<List<AnthropometryRecord>> fetchAnthropometryRecords({

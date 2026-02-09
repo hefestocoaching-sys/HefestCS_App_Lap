@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
@@ -66,12 +68,15 @@ class AthleteContextResolver {
       ageYears = _calculateAge(birthDate);
     }
 
-    // 2. Sexo desde profile (obligatorio)
-    final sex = client.profile.gender;
+    // 2. Sexo desde profile (con fallback seguro)
+    var sex = client.profile.gender ??
+        client.training.gender ??
+        _resolveSexFromTrainingExtra(client.training.extra);
     if (sex == null) {
-      throw ArgumentError(
-        'Cliente ${client.id}: gender es requerido para el contexto del atleta',
+      developer.log(
+        'Warning: Client ${client.id} missing gender; defaulting to other.',
       );
+      sex = Gender.other;
     }
 
     // 3. Altura y peso desde latestAnthropometryRecord (regla "más reciente")
@@ -116,5 +121,17 @@ class AthleteContextResolver {
     }
 
     return age;
+  }
+
+  Gender? _resolveSexFromTrainingExtra(Map<String, dynamic> extra) {
+    final setup = extra[TrainingExtraKeys.trainingSetupV1];
+    if (setup is Map) {
+      final raw = setup['sex']?.toString();
+      final parsed = parseGender(raw);
+      if (parsed != null) return parsed;
+    }
+
+    final raw = extra['sex']?.toString();
+    return parseGender(raw);
   }
 }

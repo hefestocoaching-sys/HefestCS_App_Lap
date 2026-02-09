@@ -24,13 +24,13 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result
 /// - TrainingProgramV3Result.plan (TrainingPlanConfig)
 ///   → TrainingPlan (modelo V2 para UI/Firestore)
 ///
-/// - TrainingPlanConfig.weeks (List<TrainingWeek>)
+/// - TrainingPlanConfig.weeks (List&lt;TrainingWeek&gt;)
 ///   → PlanWeek (semanas V2)
 ///
-/// - TrainingWeek.sessions (List<TrainingSession>)
+/// - TrainingWeek.sessions (List&lt;TrainingSession&gt;)
 ///   → PlanDay (días V2)
 ///
-/// - TrainingSession.prescriptions (List<ExercisePrescription>)
+/// - TrainingSession.prescriptions (List&lt;ExercisePrescription&gt;)
 ///   → DayMuscleVolume (volumen por músculo V2)
 class V3ToV2Converter {
   V3ToV2Converter._(); // Clase estática

@@ -4,6 +4,8 @@
 // Este archivo se conserva solo como referencia histórica.
 // No debe usarse en flujos activos ni en producción.
 
+import 'dart:developer' as developer;
+
 import 'package:uuid/uuid.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
@@ -63,7 +65,7 @@ class HybridOrchestratorV3 {
     // FASE 1: GENERACIÓN CIENTÍFICA PURA
     // ═══════════════════════════════════════════════════
 
-    print('🔬 [Fase 1] Generando programa científico...');
+    developer.log('🔬 [Fase 1] Generando programa científico...');
 
     final scientificResult = await MotorV3Orchestrator.generateProgram(
       userProfile: userProfile,
@@ -98,8 +100,8 @@ class HybridOrchestratorV3 {
       };
     }
 
-    print('✅ Programa científico generado: ${scientificProgram.id}');
-    print(
+    developer.log('✅ Programa científico generado: ${scientificProgram.id}');
+    developer.log(
       '   Volumen total: ${scientificProgram.weeklyVolumeByMuscle.values.fold(0.0, (sum, v) => sum + v)} sets',
     );
 
@@ -107,7 +109,7 @@ class HybridOrchestratorV3 {
     // FASE 2: OBTENER DATOS HISTÓRICOS
     // ═══════════════════════════════════════════════════
 
-    print('📊 [Fase 2] Obteniendo logs históricos...');
+    developer.log('📊 [Fase 2] Obteniendo logs históricos...');
 
     final recentLogs = await WorkoutLogRepository.getLogsByUser(
       userId: userProfile.id,
@@ -115,13 +117,13 @@ class HybridOrchestratorV3 {
       startDate: timestamp.subtract(Duration(days: 28)), // Últimas 4 semanas
     );
 
-    print('   Logs encontrados: ${recentLogs.length}');
+    developer.log('   Logs encontrados: ${recentLogs.length}');
 
     // ═══════════════════════════════════════════════════
     // FASE 3: REFINAMIENTO ML
     // ═══════════════════════════════════════════════════
 
-    print('🤖 [Fase 3] Aplicando refinamientos ML...');
+    developer.log('🤖 [Fase 3] Aplicando refinamientos ML...');
 
     final mlResult = await _mlAdapter.applyMLRefinements(
       scientificProgram: scientificProgram,
@@ -135,13 +137,17 @@ class HybridOrchestratorV3 {
     if (mlApplied) {
       final adjustments = mlResult['adjustments'] as Map<String, dynamic>;
       final confidence = mlResult['confidence'] as double?;
-      print('✅ ML aplicado: ${adjustments['volume_change_pct']}% volumen');
-      print('   Readiness: ${adjustments['readiness_level']}');
+      developer.log(
+        '✅ ML aplicado: ${adjustments['volume_change_pct']}% volumen',
+      );
+      developer.log('   Readiness: ${adjustments['readiness_level']}');
       if (confidence != null) {
-        print('   Confianza: ${(confidence * 100).toStringAsFixed(0)}%');
+        developer.log(
+          '   Confianza: ${(confidence * 100).toStringAsFixed(0)}%',
+        );
       }
     } else {
-      print('⚠️  ML no aplicado: ${mlResult['ml_reason']}');
+      developer.log('⚠️  ML no aplicado: ${mlResult['ml_reason']}');
     }
 
     // ═══════════════════════════════════════════════════
@@ -151,7 +157,7 @@ class HybridOrchestratorV3 {
     String? predictionId;
 
     if (mlApplied && config.enablePredictionLogging) {
-      print('💾 [Fase 4] Registrando predicción ML...');
+      developer.log('💾 [Fase 4] Registrando predicción ML...');
 
       predictionId = _uuid.v4();
 
@@ -179,7 +185,7 @@ class HybridOrchestratorV3 {
         finalProgram: finalProgram,
       );
 
-      print('✅ Predicción registrada: $predictionId');
+      developer.log('✅ Predicción registrada: $predictionId');
     }
 
     // ═══════════════════════════════════════════════════
@@ -189,7 +195,7 @@ class HybridOrchestratorV3 {
     Map<String, dynamic>? explainability;
 
     if (mlApplied && config.enableExplainability) {
-      print('📋 [Fase 5] Generando explicabilidad...');
+      developer.log('📋 [Fase 5] Generando explicabilidad...');
 
       final features = FeatureExtractorV3.extractFeatures(
         profile: userProfile,
@@ -263,16 +269,16 @@ class HybridOrchestratorV3 {
       'version': 'hybrid_v3_1.0.0',
     };
 
-    print('');
-    print('═══════════════════════════════════════════════════');
-    print('✅ PROGRAMA HÍBRIDO GENERADO EXITOSAMENTE');
-    print('═══════════════════════════════════════════════════');
-    print('ID: ${finalProgram.id}');
-    print('ML aplicado: $mlApplied');
-    print(
+    developer.log('');
+    developer.log('═══════════════════════════════════════════════════');
+    developer.log('✅ PROGRAMA HÍBRIDO GENERADO EXITOSAMENTE');
+    developer.log('═══════════════════════════════════════════════════');
+    developer.log('ID: ${finalProgram.id}');
+    developer.log('ML aplicado: $mlApplied');
+    developer.log(
       'Volumen final: ${(result['comparison'] as Map)['final_volume']} sets',
     );
-    print('═══════════════════════════════════════════════════');
+    developer.log('═══════════════════════════════════════════════════');
 
     return result;
   }

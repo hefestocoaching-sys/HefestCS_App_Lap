@@ -5,17 +5,19 @@ import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_definition.d
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Tab de equivalentes para un dia especifico
-/// Contiene 2 sub-tabs: Equivalentes Generales | Distribucion por Comidas
+/// Contiene 2 sub-tabs: Equivalentes | Distribucion por Comidas
 class DayEquivalentsTab extends ConsumerStatefulWidget {
   final String dayKey; // 'lunes', 'martes', etc.
   final String dayLabel; // 'Lunes', 'Martes', etc.
   final dynamic planResult;
+  final Future<void> Function()? onSave;
 
   const DayEquivalentsTab({
     super.key,
     required this.dayKey,
     required this.dayLabel,
     required this.planResult,
+    this.onSave,
   });
 
   @override
@@ -52,14 +54,14 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     return Column(
       children: [
         Container(
-          color: kCardColor.withOpacity(0.3),
+          color: kCardColor.withValues(alpha: 0.3),
           child: TabBar(
             controller: _subTabController,
             labelColor: kTextColor,
             unselectedLabelColor: kTextColorSecondary,
             indicatorColor: kPrimaryColor,
             tabs: const [
-              Tab(text: 'Equivalentes Generales'),
+              Tab(text: 'Equivalentes'),
               Tab(text: 'Distribucion por Comidas'),
             ],
           ),
@@ -68,8 +70,8 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
           child: TabBarView(
             controller: _subTabController,
             children: [
-              _buildGeneralEquivalentsTab(),
-              _buildMealsDistributionTab(),
+              _buildGeneralEquivalentsTab(context),
+              _buildMealsDistributionTab(context),
             ],
           ),
         ),
@@ -78,480 +80,957 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
   }
 
   // =====================================================================
-  // TAB 1: EQUIVALENTES GENERALES
+  // TAB 1: EQUIVALENTES GENERALES (COMPACTO + STICKY SUMMARY)
   // =====================================================================
 
-  Widget _buildGeneralEquivalentsTab() {
+  Widget _buildGeneralEquivalentsTab(BuildContext context) {
     final allGroups = _getAllSMAEGroups();
     final state = ref.watch(equivalentsByDayProvider);
     final dayEquivalents = state.dayEquivalents[widget.dayKey] ?? {};
     final totals = _calculateTotals(dayEquivalents);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                _buildTableHeader(),
-                ...allGroups.map(
-                  (group) => _buildTableRow(group, dayEquivalents),
-                ),
-                _buildTotalsRow(totals),
-                _buildFaltantesRow(totals),
-              ],
-            ),
+    final groupsWithValues = allGroups
+        .where((group) => (dayEquivalents[group.id] ?? 0) > 0)
+        .toList();
+    final emptyGroups = allGroups
+        .where((group) => (dayEquivalents[group.id] ?? 0) == 0)
+        .toList();
+
+    return CustomScrollView(
+      slivers: [
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _SummaryHeaderDelegate(
+            minHeight: 240,
+            maxHeight: 240,
+            child: _buildSummaryCard(context, totals),
           ),
-          const SizedBox(height: 24),
-          _buildActionButtons(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFD32F2F).withOpacity(0.2),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-      ),
-      child: const Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: _HeaderCell('Grupo en el Sistema de Equivalentes'),
-          ),
-          Expanded(flex: 2, child: _HeaderCell('Subgrupos')),
-          Expanded(flex: 2, child: _HeaderCell('Equivalentes')),
-          Expanded(flex: 1, child: _HeaderCell('Energia\n(kcal)')),
-          Expanded(flex: 1, child: _HeaderCell('Proteina\n(g)')),
-          Expanded(flex: 1, child: _HeaderCell('Lipidos\n(g)')),
-          Expanded(flex: 1, child: _HeaderCell('Hidratos\ncarbono (g)')),
-          Expanded(flex: 1, child: _HeaderCell('Etanol\n(g)')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTableRow(
-    EquivalentDefinition group,
-    Map<String, double> dayEquivalents,
-  ) {
-    final qty = dayEquivalents[group.id] ?? 0.0;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(
-        color: _getGroupBackgroundColor(group.group),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              _getGroupMainLabel(group.group),
-              style: const TextStyle(
-                fontSize: 12,
-                color: kTextColor,
-                fontWeight: FontWeight.w600,
+        const SliverToBoxAdapter(child: SizedBox(height: 12)),
+        if (groupsWithValues.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'GRUPOS ASIGNADOS',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: kTextColorSecondary.withValues(alpha: 0.9),
+                ),
               ),
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              _getSubgroupLabel(group.subgroup),
-              style: const TextStyle(fontSize: 11, color: kTextColorSecondary),
+        if (groupsWithValues.isNotEmpty)
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final group = groupsWithValues[index];
+                final qty = dayEquivalents[group.id] ?? 0;
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: _buildGroupCard(group, qty),
+                );
+              },
+              childCount: groupsWithValues.length,
             ),
           ),
-          Expanded(flex: 2, child: _buildEquivalentCounter(group.id, qty)),
-          Expanded(
-            flex: 1,
-            child: _buildValueCell(group.kcal * qty, decimals: 0),
+        if (groupsWithValues.isEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildEmptyGroupsCard(),
+            ),
           ),
-          Expanded(
-            flex: 1,
-            child: _buildValueCell(group.proteinG * qty, decimals: 0),
-          ),
-          Expanded(
-            flex: 1,
-            child: _buildValueCell(group.fatG * qty, decimals: 0),
-          ),
-          Expanded(
-            flex: 1,
-            child: _buildValueCell(group.carbG * qty, decimals: 0),
-          ),
-          const Expanded(flex: 1, child: _ValueCell('0')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEquivalentCounter(String groupId, double current) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          onTap: current >= 0.5
-              ? () => ref
-                    .read(equivalentsByDayProvider.notifier)
-                    .updateEquivalent(widget.dayKey, groupId, -0.5)
-              : null,
-          child: Icon(
-            Icons.remove_circle_outline,
-            size: 16,
-            color: current >= 0.5
-                ? kPrimaryColor
-                : kTextColorSecondary.withOpacity(0.3),
-          ),
-        ),
-        SizedBox(
-          width: 35,
-          child: Text(
-            current.toStringAsFixed(1),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: kTextColor,
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: OutlinedButton.icon(
+              onPressed: () => _showAddGroupDialog(
+                context,
+                emptyGroups,
+              ),
+              icon: const Icon(Icons.add_circle_outline),
+              label: const Text('Agregar Grupo de Alimentos'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                minimumSize: const Size(double.infinity, 50),
+              ),
             ),
           ),
         ),
-        InkWell(
-          onTap: () => ref
-              .read(equivalentsByDayProvider.notifier)
-              .updateEquivalent(widget.dayKey, groupId, 0.5),
-          child: const Icon(
-            Icons.add_circle_outline,
-            size: 16,
-            color: kPrimaryColor,
+        if (emptyGroups.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: _buildEmptyGroupsExpansion(emptyGroups),
+            ),
           ),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 16)),
       ],
     );
   }
 
-  Widget _buildTotalsRow(Map<String, double> totals) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFF9800).withOpacity(0.2),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
-        ),
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            flex: 7,
-            child: Text(
-              'Suma de los gramos totales y Energia total',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFFFF9800),
-              ),
-            ),
-          ),
-          Expanded(flex: 1, child: _buildTotalCell(totals['kcal']!)),
-          Expanded(flex: 1, child: _buildTotalCell(totals['protein']!)),
-          Expanded(flex: 1, child: _buildTotalCell(totals['fat']!)),
-          Expanded(flex: 1, child: _buildTotalCell(totals['carb']!)),
-          const Expanded(flex: 1, child: _ValueCell('0')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFaltantesRow(Map<String, double> totals) {
-    final kcalDiff = totals['kcal']! - widget.planResult.kcalTargetDay;
-    final protDiff = totals['protein']! - widget.planResult.proteinTargetDay;
-    final fatDiff = totals['fat']! - widget.planResult.fatTargetDay;
-    final carbDiff = totals['carb']! - widget.planResult.carbTargetDay;
+  Widget _buildSummaryCard(BuildContext context, Map<String, double> totals) {
+    final kcalTarget = widget.planResult.kcalTargetDay ?? 0.0;
+    final proteinTarget = widget.planResult.proteinTargetDay ?? 0.0;
+    final fatTarget = widget.planResult.fatTargetDay ?? 0.0;
+    final carbTarget = widget.planResult.carbTargetDay ?? 0.0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFC107).withOpacity(0.2),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            flex: 7,
-            child: Text(
-              'Energia y gramos faltantes para el Plan Alimenticio',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: kTextColor,
-              ),
-            ),
-          ),
-          Expanded(flex: 1, child: _buildDiffCell(kcalDiff)),
-          Expanded(flex: 1, child: _buildDiffCell(protDiff)),
-          Expanded(flex: 1, child: _buildDiffCell(fatDiff)),
-          Expanded(flex: 1, child: _buildDiffCell(carbDiff)),
-          const Expanded(flex: 1, child: _ValueCell('0')),
-        ],
-      ),
-    );
-  }
-
-  // =====================================================================
-  // TAB 2: DISTRIBUCION POR COMIDAS
-  // =====================================================================
-
-  Widget _buildMealsDistributionTab() {
-    final allGroups = _getAllSMAEGroups();
-    final mealsCount = widget.planResult.mealsPerDay;
-    final state = ref.watch(equivalentsByDayProvider);
-    final dayMeals = state.dayMealEquivalents[widget.dayKey] ?? {};
-    final dayEquivalents = state.dayEquivalents[widget.dayKey] ?? {};
-
-    return SingleChildScrollView(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       padding: const EdgeInsets.all(16),
-      scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-                borderRadius: BorderRadius.circular(8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            kPrimaryColor.withValues(alpha: 0.14),
+            kCardColor.withValues(alpha: 0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kPrimaryColor.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.calendar_today, size: 18, color: kPrimaryColor),
+              const SizedBox(width: 8),
+              Text(
+                'RESUMEN DEL DIA: ${widget.dayLabel.toUpperCase()}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: kPrimaryColor,
+                ),
               ),
-              child: Column(
-                children: [
-                  _buildMealsHeader(mealsCount),
-                  ...allGroups.map(
-                    (group) => _buildMealsRow(
-                      group,
-                      mealsCount,
-                      dayMeals[group.id] ?? {},
-                      dayEquivalents[group.id] ?? 0.0,
-                    ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildMacroProgressRow(
+            label: 'Energia',
+            current: totals['kcal'] ?? 0,
+            target: kcalTarget,
+            unit: 'kcal',
+            color: Colors.orange,
+          ),
+          const SizedBox(height: 10),
+          _buildMacroProgressRow(
+            label: 'Proteina',
+            current: totals['protein'] ?? 0,
+            target: proteinTarget,
+            unit: 'g',
+            color: Colors.blue,
+          ),
+          const SizedBox(height: 10),
+          _buildMacroProgressRow(
+            label: 'Grasas',
+            current: totals['fat'] ?? 0,
+            target: fatTarget,
+            unit: 'g',
+            color: Colors.purple,
+          ),
+          const SizedBox(height: 10),
+          _buildMacroProgressRow(
+            label: 'Carbos',
+            current: totals['carb'] ?? 0,
+            target: carbTarget,
+            unit: 'g',
+            color: Colors.amber,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _showCopyDayDialog(context),
+                  icon: const Icon(Icons.copy, size: 18),
+                  label: const Text('Copiar de otro dia'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _autoDistribute(context),
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('Distribucion auto'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrimaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: widget.onSave == null
+                      ? null
+                      : () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          await widget.onSave?.call();
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Cambios guardados'),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.save, size: 18),
+                  label: const Text('Guardar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacroProgressRow({
+    required String label,
+    required double current,
+    required double target,
+    required String unit,
+    required Color color,
+  }) {
+    final progress = target <= 0 ? 0 : current / target;
+    final percentage = (progress * 100).clamp(0, 200);
+    final diff = current - target;
+    final progressColor = percentage >= 90 && percentage <= 110
+        ? Colors.green
+        : percentage >= 80 && percentage <= 120
+            ? Colors.orange
+            : Colors.red;
+
+    final diffText = diff.abs() < 1
+        ? 'Objetivo alcanzado'
+        : diff > 0
+            ? 'Sobran ${diff.toStringAsFixed(0)}$unit'
+            : 'Faltan ${diff.abs().toStringAsFixed(0)}$unit';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+            Text(
+              '${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} $unit',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: kTextColor,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildMealsHeader(int mealsCount) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEC407A).withOpacity(0.3),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 200,
-            child: _HeaderCell('Grupo en el Sistema de Equivalentes'),
-          ),
-          const SizedBox(width: 150, child: _HeaderCell('Subgrupos')),
-          ...List.generate(
-            mealsCount,
-            (i) => SizedBox(width: 80, child: _HeaderCell('Comida ${i + 1}')),
-          ),
-          const SizedBox(width: 80, child: _HeaderCell('Totales')),
-          const SizedBox(width: 80, child: _HeaderCell('Faltantes')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMealsRow(
-    EquivalentDefinition group,
-    int mealsCount,
-    Map<int, double> mealValues,
-    double dayTotal,
-  ) {
-    final totalByMeals = mealValues.values.fold<double>(
-      0,
-      (sum, value) => sum + value,
-    );
-    final faltante = dayTotal - totalByMeals;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(
-        color: _getGroupBackgroundColor(group.group),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
-        ),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 200,
-            child: Text(
-              _getGroupMainLabel(group.group),
-              style: const TextStyle(
-                fontSize: 12,
-                color: kTextColor,
-                fontWeight: FontWeight.w600,
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: LinearProgressIndicator(
+                value: progress.clamp(0, 1).toDouble(),
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                minHeight: 8,
+                borderRadius: BorderRadius.circular(6),
               ),
             ),
-          ),
-          SizedBox(
-            width: 150,
-            child: Text(
-              _getSubgroupLabel(group.subgroup),
-              style: const TextStyle(fontSize: 11, color: kTextColorSecondary),
+            const SizedBox(width: 10),
+            Text(
+              '${percentage.toStringAsFixed(0)}%',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: progressColor,
+              ),
             ),
-          ),
-          ...List.generate(
-            mealsCount,
-            (i) => SizedBox(
-              width: 80,
-              child: _buildMealCell(group.id, i, mealValues[i] ?? 0.0),
-            ),
-          ),
-          SizedBox(
-            width: 80,
-            child: _buildValueCell(totalByMeals, decimals: 1),
-          ),
-          SizedBox(
-            width: 80,
-            child: _buildValueCell(faltante, decimals: 1),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMealCell(String groupId, int mealIndex, double value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        InkWell(
-          onTap: value >= 0.5
-              ? () => ref
-                    .read(equivalentsByDayProvider.notifier)
-                    .updateMealEquivalent(
-                      widget.dayKey,
-                      groupId,
-                      mealIndex,
-                      -0.5,
-                    )
-              : null,
-          child: Icon(
-            Icons.remove_circle_outline,
-            size: 14,
-            color: value >= 0.5
-                ? kPrimaryColor
-                : kTextColorSecondary.withOpacity(0.3),
-          ),
+          ],
         ),
-        SizedBox(
-          width: 28,
-          child: Text(
-            value.toStringAsFixed(1),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, color: kTextColor),
-          ),
-        ),
-        InkWell(
-          onTap: () => ref
-              .read(equivalentsByDayProvider.notifier)
-              .updateMealEquivalent(widget.dayKey, groupId, mealIndex, 0.5),
-          child: const Icon(
-            Icons.add_circle_outline,
-            size: 14,
-            color: kPrimaryColor,
+        const SizedBox(height: 4),
+        Text(
+          diffText,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: progressColor,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGroupCard(EquivalentDefinition def, double qty) {
+    final kcal = def.kcal * qty;
+    final protein = def.proteinG * qty;
+    final fat = def.fatG * qty;
+    final carb = def.carbG * qty;
+    final groupColor = _getGroupColor(def.group);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _getGroupBackgroundColor(def.group),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: groupColor.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: groupColor.withValues(alpha: 0.2),
+                child: Icon(Icons.restaurant, color: groupColor, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getGroupMainLabel(def.group),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: kTextColor,
+                      ),
+                    ),
+                    if (def.subgroup.isNotEmpty)
+                      Text(
+                        _getSubgroupLabel(def.subgroup),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: kTextColorSecondary,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: qty >= 0.5
+                        ? () => ref
+                              .read(equivalentsByDayProvider.notifier)
+                              .updateEquivalent(widget.dayKey, def.id, -0.5)
+                        : null,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.remove_circle_outline,
+                        size: 22,
+                        color: qty >= 0.5
+                            ? kPrimaryColor
+                            : kTextColorSecondary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 46,
+                    child: Text(
+                      qty.toStringAsFixed(1),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: kTextColor,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => ref
+                        .read(equivalentsByDayProvider.notifier)
+                        .updateEquivalent(widget.dayKey, def.id, 0.5),
+                    borderRadius: BorderRadius.circular(20),
+                    child: const Padding(
+                      padding: EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.add_circle_outline,
+                        size: 22,
+                        color: kPrimaryColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildMacroChip('${kcal.toStringAsFixed(0)} kcal', Colors.orange),
+              _buildMacroChip('${protein.toStringAsFixed(1)}g prot', Colors.blue),
+              _buildMacroChip('${carb.toStringAsFixed(1)}g HC', Colors.amber),
+              _buildMacroChip('${fat.toStringAsFixed(1)}g grasa', Colors.purple),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacroChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyGroupsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: kCardColor.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: kTextColorSecondary.withValues(alpha: 0.2)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.info_outline, color: kTextColorSecondary),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'No hay grupos asignados. Agrega grupos para empezar.',
+              style: TextStyle(fontSize: 12, color: kTextColorSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyGroupsExpansion(List<EquivalentDefinition> emptyGroups) {
+    return Container(
+      decoration: BoxDecoration(
+        color: kCardColor.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: kTextColorSecondary.withValues(alpha: 0.15)),
+      ),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        title: Text(
+          'Grupos sin asignar (${emptyGroups.length})',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: kTextColorSecondary,
+          ),
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: emptyGroups
+                  .map(
+                    (g) => Chip(
+                      label: Text(
+                        _getGroupMainLabel(g.group),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      backgroundColor: kCardColor.withValues(alpha: 0.3),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =====================================================================
+  // TAB 2: DISTRIBUCION POR COMIDAS (ACORDEON)
+  // =====================================================================
+
+  Widget _buildMealsDistributionTab(BuildContext context) {
+    final allGroups = _getAllSMAEGroups();
+    final mealsCount = widget.planResult.mealsPerDay;
+    final state = ref.watch(equivalentsByDayProvider);
+    final dayMeals = state.dayMealEquivalents[widget.dayKey] ?? {};
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      itemCount: mealsCount,
+      itemBuilder: (context, index) {
+        final mealTotals = _calculateMealTotals(allGroups, dayMeals, index);
+        final targets = _mealTargets(mealsCount);
+        final mealGroups = allGroups
+            .map((def) => MapEntry(def, dayMeals[def.id]?[index] ?? 0))
+            .where((entry) => entry.value > 0)
+            .toList();
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildMealAccordion(
+            context: context,
+            mealIndex: index,
+            mealTotals: mealTotals,
+            mealTargets: targets,
+            mealGroups: mealGroups,
+            allGroups: allGroups,
+            dayMeals: dayMeals,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMealAccordion({
+    required BuildContext context,
+    required int mealIndex,
+    required Map<String, double> mealTotals,
+    required Map<String, double> mealTargets,
+    required List<MapEntry<EquivalentDefinition, double>> mealGroups,
+    required List<EquivalentDefinition> allGroups,
+    required Map<String, Map<int, double>> dayMeals,
+  }) {
+    final kcalCurrent = mealTotals['kcal'] ?? 0;
+    final kcalTarget = mealTargets['kcal'] ?? 0;
+    final progress = kcalTarget <= 0 ? 0 : kcalCurrent / kcalTarget;
+    final percentage = (progress * 100).clamp(0, 200);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: kCardColor.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: kTextColorSecondary.withValues(alpha: 0.15)),
+      ),
+      child: ExpansionTile(
+        initiallyExpanded: mealIndex == 0,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        title: Row(
+          children: [
+            const Icon(Icons.sunny, size: 18, color: kPrimaryColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Comida ${mealIndex + 1}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: kTextColor,
+                ),
+              ),
+            ),
+            Text(
+              '${kcalCurrent.toStringAsFixed(0)} / ${kcalTarget.toStringAsFixed(0)} kcal',
+              style: const TextStyle(
+                fontSize: 11,
+                color: kTextColorSecondary,
+              ),
+            ),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 6, right: 8),
+          child: LinearProgressIndicator(
+            value: progress.clamp(0, 1).toDouble(),
+            backgroundColor: Colors.white.withValues(alpha: 0.08),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              percentage >= 90 && percentage <= 110
+                  ? Colors.green
+                  : percentage >= 80 && percentage <= 120
+                      ? Colors.orange
+                      : Colors.red,
+            ),
+            minHeight: 6,
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+            child: Column(
+              children: [
+                _buildMealMacroRow('Proteina', mealTotals, mealTargets, Colors.blue),
+                const SizedBox(height: 8),
+                _buildMealMacroRow('Carbos', mealTotals, mealTargets, Colors.amber),
+                const SizedBox(height: 8),
+                _buildMealMacroRow('Grasas', mealTotals, mealTargets, Colors.purple),
+                const SizedBox(height: 12),
+                if (mealGroups.isNotEmpty)
+                  ...mealGroups.map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildMealGroupRow(entry.key, entry.value, mealIndex),
+                    ),
+                  ),
+                if (mealGroups.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: kCardColor.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: kTextColorSecondary.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: kTextColorSecondary),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Sin equivalentes asignados a esta comida.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: kTextColorSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _copyMealToOthers(
+                          mealIndex,
+                          allGroups,
+                          dayMeals,
+                        ),
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: const Text('Copiar a otras comidas'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMealMacroRow(
+    String label,
+    Map<String, double> totals,
+    Map<String, double> targets,
+    Color color,
+  ) {
+    final key = label == 'Proteina'
+        ? 'protein'
+        : label == 'Carbos'
+            ? 'carb'
+            : 'fat';
+    final current = totals[key] ?? 0;
+    final target = targets[key] ?? 0;
+    final progress = target <= 0 ? 0 : current / target;
+    final percentage = (progress * 100).clamp(0, 200);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+            Text(
+              '${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} g',
+              style: const TextStyle(
+                fontSize: 11,
+                color: kTextColorSecondary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: progress.clamp(0, 1).toDouble(),
+          backgroundColor: Colors.white.withValues(alpha: 0.08),
+          valueColor: AlwaysStoppedAnimation<Color>(
+            percentage >= 90 && percentage <= 110
+                ? Colors.green
+                : percentage >= 80 && percentage <= 120
+                    ? Colors.orange
+                    : Colors.red,
+          ),
+          minHeight: 6,
+          borderRadius: BorderRadius.circular(6),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMealGroupRow(
+    EquivalentDefinition def,
+    double value,
+    int mealIndex,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: kCardColor.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getGroupMainLabel(def.group),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: kTextColor,
+                  ),
+                ),
+                if (def.subgroup.isNotEmpty)
+                  Text(
+                    _getSubgroupLabel(def.subgroup),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: kTextColorSecondary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              InkWell(
+                onTap: value >= 0.5
+                    ? () => ref
+                          .read(equivalentsByDayProvider.notifier)
+                          .updateMealEquivalent(
+                            widget.dayKey,
+                            def.id,
+                            mealIndex,
+                            -0.5,
+                          )
+                    : null,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.remove_circle_outline,
+                    size: 20,
+                    color: value >= 0.5
+                        ? kPrimaryColor
+                        : kTextColorSecondary.withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  value.toStringAsFixed(1),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: kTextColor,
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () => ref
+                    .read(equivalentsByDayProvider.notifier)
+                    .updateMealEquivalent(
+                      widget.dayKey,
+                      def.id,
+                      mealIndex,
+                      0.5,
+                    ),
+                borderRadius: BorderRadius.circular(20),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.add_circle_outline,
+                    size: 20,
+                    color: kPrimaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =====================================================================
+  // DIALOGS Y ACCIONES
+  // =====================================================================
+
+  void _showCopyDayDialog(BuildContext context) {
+    final days = [
+      'lunes',
+      'martes',
+      'miercoles',
+      'jueves',
+      'viernes',
+      'sabado',
+      'domingo',
+    ];
+    final otherDays = days.where((d) => d != widget.dayKey).toList();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: kCardColor,
+          title: const Text(
+            'Copiar equivalentes de otro dia',
+            style: TextStyle(color: kTextColor),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: otherDays.map((day) {
+              final label = day[0].toUpperCase() + day.substring(1);
+              return ListTile(
+                title: Text(label, style: const TextStyle(color: kTextColor)),
+                trailing: const Icon(Icons.arrow_forward, color: kPrimaryColor),
+                onTap: () {
+                  ref
+                      .read(equivalentsByDayProvider.notifier)
+                      .copyDay(day, widget.dayKey);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Equivalentes copiados de $label'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddGroupDialog(
+    BuildContext context,
+    List<EquivalentDefinition> emptyGroups,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: kCardColor,
+          title: const Text('Agregar Grupo', style: TextStyle(color: kTextColor)),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: emptyGroups.length,
+              itemBuilder: (context, index) {
+                final def = emptyGroups[index];
+                return ListTile(
+                  leading: Icon(Icons.restaurant, color: _getGroupColor(def.group)),
+                  title: Text(
+                    _getGroupMainLabel(def.group),
+                    style: const TextStyle(
+                      color: kTextColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'P:${def.proteinG}g • C:${def.carbG}g • G:${def.fatG}g • ${def.kcal}kcal',
+                    style: const TextStyle(
+                      color: kTextColorSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                  onTap: () {
+                    ref
+                        .read(equivalentsByDayProvider.notifier)
+                        .updateEquivalent(widget.dayKey, def.id, 1.0);
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _autoDistribute(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Distribucion automatica en desarrollo'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
+  void _copyMealToOthers(
+    int sourceIndex,
+    List<EquivalentDefinition> allGroups,
+    Map<String, Map<int, double>> dayMeals,
+  ) {
+    final notifier = ref.read(equivalentsByDayProvider.notifier);
+    for (final def in allGroups) {
+      final sourceValue = dayMeals[def.id]?[sourceIndex] ?? 0.0;
+      for (var i = 0; i < widget.planResult.mealsPerDay; i++) {
+        if (i == sourceIndex) continue;
+        final currentValue = dayMeals[def.id]?[i] ?? 0.0;
+        final delta = sourceValue - currentValue;
+        if (delta.abs() < 0.01) continue;
+        notifier.updateMealEquivalent(widget.dayKey, def.id, i, delta);
+      }
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Comida copiada a otras comidas')),
     );
   }
 
   // =====================================================================
   // HELPERS
   // =====================================================================
-
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.copy),
-            label: const Text('Copiar a Otro Dia'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.save),
-            label: const Text('Guardar'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildValueCell(double value, {int decimals = 1}) {
-    return Text(
-      value.toStringAsFixed(decimals),
-      textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 12, color: kTextColor),
-    );
-  }
-
-  Widget _buildTotalCell(double value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: kCardColor.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        value.toStringAsFixed(0),
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: kTextColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDiffCell(double diff) {
-    final color = diff.abs() < 50
-        ? Colors.green
-        : diff > 0
-        ? Colors.orange
-        : Colors.red;
-    return Text(
-      diff > 0 ? '+${diff.toStringAsFixed(0)}' : diff.toStringAsFixed(0),
-      textAlign: TextAlign.center,
-      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
-    );
-  }
 
   List<EquivalentDefinition> _getAllSMAEGroups() {
     final list = EquivalentCatalog.v1Definitions.toList();
@@ -571,6 +1050,34 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       carb += def.carbG * entry.value;
     }
     return {'kcal': kcal, 'protein': protein, 'fat': fat, 'carb': carb};
+  }
+
+  Map<String, double> _calculateMealTotals(
+    List<EquivalentDefinition> allGroups,
+    Map<String, Map<int, double>> dayMeals,
+    int mealIndex,
+  ) {
+    double kcal = 0, protein = 0, fat = 0, carb = 0;
+    for (final def in allGroups) {
+      final value = dayMeals[def.id]?[mealIndex] ?? 0.0;
+      kcal += def.kcal * value;
+      protein += def.proteinG * value;
+      fat += def.fatG * value;
+      carb += def.carbG * value;
+    }
+    return {'kcal': kcal, 'protein': protein, 'fat': fat, 'carb': carb};
+  }
+
+  Map<String, double> _mealTargets(int mealsCount) {
+    if (mealsCount <= 0) {
+      return {'kcal': 0, 'protein': 0, 'fat': 0, 'carb': 0};
+    }
+    return {
+      'kcal': (widget.planResult.kcalTargetDay ?? 0) / mealsCount,
+      'protein': (widget.planResult.proteinTargetDay ?? 0) / mealsCount,
+      'fat': (widget.planResult.fatTargetDay ?? 0) / mealsCount,
+      'carb': (widget.planResult.carbTargetDay ?? 0) / mealsCount,
+    };
   }
 
   int _getGroupOrder(String groupId) {
@@ -610,7 +1117,23 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       'libres': Color(0xFFBDBDBD),
       'alcohol': Color(0xFFD7CCC8),
     };
-    return (colors[group] ?? kCardColor).withOpacity(0.12);
+    return (colors[group] ?? kCardColor).withValues(alpha: 0.12);
+  }
+
+  Color _getGroupColor(String group) {
+    const colors = {
+      'vegetales': Color(0xFF66BB6A),
+      'frutas': Color(0xFFFFB300),
+      'cereales_tuberculos': Color(0xFF8D6E63),
+      'leguminosas': Color(0xFF7CB342),
+      'aoa': Color(0xFF64B5F6),
+      'leches': Color(0xFF90A4AE),
+      'grasas': Color(0xFFFFA726),
+      'azucares': Color(0xFF42A5F5),
+      'libres': Color(0xFF9E9E9E),
+      'alcohol': Color(0xFFBCAAA4),
+    };
+    return colors[group] ?? kPrimaryColor;
   }
 
   String _getGroupMainLabel(String group) {
@@ -650,38 +1173,36 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
   }
 }
 
-class _HeaderCell extends StatelessWidget {
-  final String text;
-  const _HeaderCell(this.text);
+class _SummaryHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  _SummaryHeaderDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: kTextColor,
-        ),
-      ),
-    );
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox.expand(child: child);
   }
-}
-
-class _ValueCell extends StatelessWidget {
-  final String value;
-
-  const _ValueCell(this.value);
 
   @override
-  Widget build(BuildContext context) {
-    return Text(
-      value,
-      textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 12, color: kTextColor),
-    );
+  bool shouldRebuild(covariant _SummaryHeaderDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+        minHeight != oldDelegate.minHeight ||
+        child != oldDelegate.child;
   }
 }

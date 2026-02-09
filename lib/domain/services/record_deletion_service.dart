@@ -17,7 +17,7 @@ import 'package:hcs_app_lap/data/datasources/remote/record_firestore_datasource.
 /// await service.deleteAnthropometryByDate(
 ///   clientId: 'client-123',
 ///   date: DateTime(2025, 01, 15),
-///   onError: (e) => print('Error: $e'),
+///   onError: (e) => debugPrint('Error: $e'),
 /// );
 /// ```
 class RecordDeletionService {

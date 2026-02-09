@@ -108,9 +108,10 @@ class _MacrocycleOverviewTabState extends State<MacrocycleOverviewTab> {
       );
     }
 
-    // Debug temporal para validar SSOT canónico
-    // ignore: avoid_print
-    print('[VOP][SSOT] keys=${vopCtx.snapshot.setsByMuscle.keys.toList()}');
+    // Debug temporal para validar SSOT canonico
+    debugPrint(
+      '[VOP][SSOT] keys=${vopCtx.snapshot.setsByMuscle.keys.toList()}',
+    );
 
     final split = _loadSeriesSplit();
     final missing = <String>[];

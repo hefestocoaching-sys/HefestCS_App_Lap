@@ -7,7 +7,7 @@ import 'package:hcs_app_lap/utils/theme.dart';
 ///
 /// VERSIÓN 2.0.0 - Sin dependencias legacy
 ///
-/// Fuente ÚNICA: plan.volumePerMuscle (Map<String, int>)
+/// Fuente ÚNICA: plan.volumePerMuscle (Map&lt;String, int&gt;)
 /// No usa: state['phase2'], state['phase3'], extra
 ///
 /// Renderiza:

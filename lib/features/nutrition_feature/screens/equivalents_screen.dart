@@ -165,6 +165,17 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
   Widget _buildGeneralTab() {
     final planResult = ref.watch(nutritionPlanResultProvider);
     final totals = _calculateGeneralTotals();
+    final kcalTargetLabel =
+      planResult != null ? planResult.kcalTargetDay.toStringAsFixed(0) : '-';
+    final proteinTargetLabel = planResult != null
+      ? '${planResult.proteinTargetDay.toStringAsFixed(1)}g'
+      : '-';
+    final fatTargetLabel = planResult != null
+      ? '${planResult.fatTargetDay.toStringAsFixed(1)}g'
+      : '-';
+    final carbTargetLabel = planResult != null
+      ? '${planResult.carbTargetDay.toStringAsFixed(1)}g'
+      : '-';
 
     return SingleChildScrollView(
       child: Column(
@@ -190,22 +201,22 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
                   children: [
                     _buildTargetCard(
                       'KCAL',
-                      '${planResult?.kcalTargetDay?.toStringAsFixed(0) ?? '—'}',
+                      kcalTargetLabel,
                       Colors.white,
                     ),
                     _buildTargetCard(
                       'PROTEÍNA',
-                      '${planResult?.proteinTargetDay?.toStringAsFixed(1) ?? '—'}g',
+                      proteinTargetLabel,
                       Colors.white,
                     ),
                     _buildTargetCard(
                       'GRASAS',
-                      '${planResult?.fatTargetDay?.toStringAsFixed(1) ?? '—'}g',
+                      fatTargetLabel,
                       Colors.white,
                     ),
                     _buildTargetCard(
                       'CARBOS',
-                      '${planResult?.carbTargetDay?.toStringAsFixed(1) ?? '—'}g',
+                      carbTargetLabel,
                       Colors.white,
                     ),
                   ],
@@ -322,7 +333,7 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
                       const SizedBox(),
                     ],
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -386,6 +397,9 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
   Widget _buildMealsDistributionTab() {
     final planResult = ref.watch(nutritionPlanResultProvider);
     final mealsPerDay = planResult?.mealsPerDay ?? 3;
+    final macroTargetPerMeal = planResult != null
+        ? (planResult.kcalTargetDay / mealsPerDay)
+        : 0.0;
 
     final mealNames = ['Desayuno', 'Almuerzo', 'Comida', 'Merienda', 'Cena'];
 
@@ -409,7 +423,7 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Macro-objetivo por comida: ${(planResult?.kcalTargetDay ?? 0 / mealsPerDay).toStringAsFixed(0)} kcal',
+                  'Macro-objetivo por comida: ${macroTargetPerMeal.toStringAsFixed(0)} kcal',
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
                 ),
               ],
@@ -541,7 +555,7 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
                         }),
                       ],
                     );
-                  }).toList(),
+                  }),
                   // Row de totales por comida
                   TableRow(
                     decoration: BoxDecoration(color: Colors.yellow.shade100),

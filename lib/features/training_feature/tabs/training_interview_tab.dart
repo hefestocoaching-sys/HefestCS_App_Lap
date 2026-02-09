@@ -584,6 +584,12 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     }
   }
 
+  int? _parseIntFromText(String raw) {
+    final cleaned = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleaned.isEmpty) return null;
+    return int.tryParse(cleaned);
+  }
+
   // ============ FUNCIONES HELPER PARA DERIVAR VALORES NUMÉRICOS ============
   int? _deriveSessionDurationFromBucket(TimePerSessionBucket? bucket) {
     if (bucket == null) return null;
@@ -705,7 +711,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // Esto evita que se pierdan valores al guardar
 
     // Parsear valores desde controllers
-    final yearsFromCtrl = int.tryParse(_yearsTrainingCtrl.text);
+    final yearsFromCtrl = _parseIntFromText(_yearsTrainingCtrl.text);
     final sessionFromCtrl = int.tryParse(_sessionDurationCtrl.text);
     final restFromCtrl = int.tryParse(_restBetweenSetsCtrl.text);
     final sleepFromCtrl = double.tryParse(
@@ -719,7 +725,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     final weightKgFromCtrl = double.tryParse(
       _weightKgCtrl.text.replaceAll(',', '.'),
     );
-    final ageYearsFromCtrl = int.tryParse(_ageYearsCtrl.text);
+    final ageYearsFromCtrl = _parseIntFromText(_ageYearsCtrl.text);
 
     // Actualizar variables internas desde controllers
     _yearsTraining = yearsFromCtrl;
@@ -944,12 +950,15 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // 1. Crear TrainingSetupV1 y persistir como Map
     final existingSetupV1Map =
         extra[TrainingExtraKeys.trainingSetupV1] as Map<String, dynamic>?;
+    final resolvedSex =
+      _client?.profile.gender?.name ?? existingSetupV1Map?['sex']?.toString() ??
+      'other';
     final trainingSetupV1Map =
         Map<String, dynamic>.from(existingSetupV1Map ?? {})..addAll({
           'heightCm': heightCmFromCtrl ?? 0.0,
           'weightKg': weightKgFromCtrl ?? 0.0,
           'ageYears': _client?.profile.age ?? 0,
-          'sex': _client?.profile.gender?.name ?? '',
+        'sex': resolvedSex,
           'daysPerWeek': daysPerWeek,
           'planDurationInWeeks': planDurationWeeks,
           'timePerSessionMinutes': derivedSession ?? 0,
@@ -1038,7 +1047,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   Future<void> _onSavePressed() async {
     if (_client == null) return;
 
-    final ageYears = int.tryParse(_ageYearsCtrl.text);
+    final ageYears = _parseIntFromText(_ageYearsCtrl.text);
     final hasMissingRequired =
       _daysPerWeek == null ||
       _planDurationInWeeks == null ||
@@ -1520,8 +1529,8 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
               labelText: 'Edad (años) *',
               prefixIcon: Icon(Icons.cake),
               errorText:
-                  _showValidationErrors &&
-                          int.tryParse(_ageYearsCtrl.text) == null
+                    _showValidationErrors &&
+                      _parseIntFromText(_ageYearsCtrl.text) == null
                       ? 'Requerido'
                       : null,
             ),
@@ -1897,7 +1906,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         SizedBox(
           width: 380,
           child: DropdownButtonFormField<String>(
-            value: _strengthLevelClass,
+            initialValue: _strengthLevelClass,
             isExpanded: true,
             items: const [
               DropdownMenuItem(value: 'B', child: Text('Principiante')),

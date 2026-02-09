@@ -31,7 +31,7 @@ class OrderingEngine {
   /// - [exerciseData]: Metadata de ejercicios (tipo, fatiga, etc.)
   ///
   /// RETORNA:
-  /// - List<String>: IDs ordenados científicamente
+  /// - List&lt;String&gt;: IDs ordenados científicamente
   static List<String> orderExercises({
     required List<String> exercises,
     required Map<String, Map<String, dynamic>> exerciseData,

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
@@ -177,12 +177,12 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  // Métodos auxiliares de navegación por tabs eliminados (jerarquía aplanada)
+  // M├®todos auxiliares de navegaci├│n por tabs eliminados (jerarqu├¡a aplanada)
   // El workspace ahora muestra directamente el Motor V3 con sus 9 tabs
 
-  // ═══════════════════════════════════════════════════════════════
-  // E2 GOBERNANZA: Verificar acción permitida
-  // ═══════════════════════════════════════════════════════════════
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // E2 GOBERNANZA: Verificar acci├│n permitida
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
   TrainingPlanAction _checkPlanActionAllowed(Client client) {
     // Leer SSOT desde extra
     final setupMap =
@@ -211,7 +211,7 @@ class _TrainingWorkspaceScreenState
         progression: progression,
       );
     } catch (e) {
-      debugPrint('⚠️ Error al verificar acción permitida: $e');
+      debugPrint('ÔÜá´©Å Error al verificar acci├│n permitida: $e');
       return TrainingPlanAction.adapt; // Fallback seguro
     }
   }
@@ -243,7 +243,7 @@ class _TrainingWorkspaceScreenState
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
   Widget _buildCurrentPlanSection(
     BuildContext context,
     Client client,
@@ -258,11 +258,11 @@ class _TrainingWorkspaceScreenState
     final hasAnyPlan = client.trainingPlans.isNotEmpty;
     final hasActiveId = activePlanId != null && activePlanId.isNotEmpty;
 
-    // E2 GOBERNANZA: Verificar acción permitida
+    // E2 GOBERNANZA: Verificar acci├│n permitida
     final allowedAction = _checkPlanActionAllowed(client);
     final actionTooltip = _getPlanActionTooltip(allowedAction, client);
 
-    // Obtener plan activo o más reciente
+    // Obtener plan activo o m├ís reciente
     TrainingPlanConfig? plan;
     if (hasAnyPlan && hasActiveId) {
       try {
@@ -289,7 +289,7 @@ class _TrainingWorkspaceScreenState
     }
 
     final interviewBlockedTooltip =
-        'Completa entrevista para habilitar generación/adaptación';
+        'Completa entrevista para habilitar generaci├│n/adaptaci├│n';
 
     // Mostrar TabBar + TabBarView con los 9 tabs Motor V3
     return Column(
@@ -305,7 +305,7 @@ class _TrainingWorkspaceScreenState
               border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: const Text(
-              'Plan existente visible. Entrevista en edición: valida para regenerar/adaptar.',
+              'Plan existente visible. Entrevista en edici├│n: valida para regenerar/adaptar.',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -335,14 +335,14 @@ class _TrainingWorkspaceScreenState
                 ),
               )
             else ...[
-              // Botón Regenerar (solo si permitido)
+              // Bot├│n Regenerar (solo si permitido)
               Tooltip(
               message:
                 interviewStatus != TrainingInterviewStatus.valid
                   ? interviewBlockedTooltip
                   : allowedAction == TrainingPlanAction.regenerate
                     ? actionTooltip
-                    : '❌ Regeneración bloqueada: $actionTooltip',
+                    : 'ÔØî Regeneraci├│n bloqueada: $actionTooltip',
                 child: ElevatedButton.icon(
                 onPressed:
                   interviewStatus == TrainingInterviewStatus.valid &&
@@ -361,7 +361,7 @@ class _TrainingWorkspaceScreenState
                 ),
               ),
               const SizedBox(width: 12),
-              // Botón Adaptar (permitido si not locked)
+              // Bot├│n Adaptar (permitido si not locked)
               Tooltip(
                 message:
                   interviewStatus != TrainingInterviewStatus.valid
@@ -369,8 +369,8 @@ class _TrainingWorkspaceScreenState
                     : allowedAction == TrainingPlanAction.adapt
                       ? actionTooltip
                       : allowedAction == TrainingPlanAction.locked
-                        ? '❌ Adaptación bloqueada: $actionTooltip'
-                        : 'Usar regeneración en su lugar',
+                        ? 'ÔØî Adaptaci├│n bloqueada: $actionTooltip'
+                        : 'Usar regeneraci├│n en su lugar',
                 child: ElevatedButton.icon(
                   onPressed:
                     interviewStatus == TrainingInterviewStatus.valid &&
@@ -410,12 +410,12 @@ class _TrainingWorkspaceScreenState
               border: Border.all(color: kWarningColor.withValues(alpha: 0.8)),
             ),
             child: const Text(
-              '⚠️ El plan fue generado con datos de entrevista anteriores.\nValida la entrevista y regenera el plan para aplicar los cambios.',
+              'ÔÜá´©Å El plan fue generado con datos de entrevista anteriores.\nValida la entrevista y regenera el plan para aplicar los cambios.',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
 
-        // ✅ TabBar + TabBarView sin Expanded (parent lo maneja via Expanded en _buildMainPanel)
+        // Ô£à TabBar + TabBarView sin Expanded (parent lo maneja via Expanded en _buildMainPanel)
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -430,7 +430,7 @@ class _TrainingWorkspaceScreenState
                   Tab(text: 'Volumen'),
                   Tab(text: 'Sesiones'),
                   Tab(text: 'Ejercicios'),
-                  Tab(text: 'Progresión'),
+                  Tab(text: 'Progresi├│n'),
                   Tab(text: 'Intensidad'),
                   Tab(text: 'Decisiones'),
                   Tab(text: 'Monitoreo'),
@@ -454,7 +454,7 @@ class _TrainingWorkspaceScreenState
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista y genera plan para habilitar esta secci├│n.',
                           ),
                     // Tab 2: Volumen
                     plan != null
@@ -462,7 +462,7 @@ class _TrainingWorkspaceScreenState
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista y genera plan para habilitar esta secci├│n.',
                           ),
                     // Tab 3: Sesiones
                     plan != null
@@ -470,7 +470,7 @@ class _TrainingWorkspaceScreenState
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista y genera plan para habilitar esta secci├│n.',
                           ),
                     // Tab 4: Ejercicios (placeholder)
                     plan != null
@@ -478,15 +478,15 @@ class _TrainingWorkspaceScreenState
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista y genera plan para habilitar esta secci├│n.',
                           ),
-                    // Tab 5: Progresión (placeholder)
+                    // Tab 5: Progresi├│n (placeholder)
                     plan != null
                         ? _buildProgressionTabPlaceholder(plan)
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista y genera plan para habilitar esta secci├│n.',
                           ),
                     // Tab 6: Intensidad
                     plan != null
@@ -499,7 +499,7 @@ class _TrainingWorkspaceScreenState
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista y genera plan para habilitar esta secci├│n.',
                           ),
                     // Tab 7: Decisiones (placeholder)
                     plan != null
@@ -507,7 +507,7 @@ class _TrainingWorkspaceScreenState
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista y genera plan para habilitar esta secci├│n.',
                           ),
                     // Tab 8: Monitoreo (placeholder)
                     plan != null
@@ -515,7 +515,7 @@ class _TrainingWorkspaceScreenState
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista y genera plan para habilitar esta secci├│n.',
                           ),
                   ],
                 ),
@@ -567,7 +567,7 @@ class _TrainingWorkspaceScreenState
         children: const [
           Icon(Icons.trending_up, size: 48, color: Colors.grey),
           SizedBox(height: 16),
-          Text('Tab de progresión (pendiente)'),
+          Text('Tab de progresi├│n (pendiente)'),
         ],
       ),
     );
@@ -627,6 +627,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
+  // ignore: unused_element
   Widget _buildFieldRow(
     BuildContext context, {
     required List<Widget> children,
@@ -647,6 +648,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
+  // ignore: unused_element
   Widget _buildTextField(
     BuildContext context, {
     required TextEditingController controller,
@@ -659,6 +661,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
+  // ignore: unused_element
   Widget _buildSaveButton({
     required String label,
     required VoidCallback onPressed,
@@ -676,7 +679,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  // Métodos _setSection y _sectionTitle eliminados (ya no se necesitan con TabBar)
+  // M├®todos _setSection y _sectionTitle eliminados (ya no se necesitan con TabBar)
 
   void _runMigrationIfNeeded(Client client) {
     final needsMigration = TrainingEvaluationMigrationService.needsMigration(
@@ -840,7 +843,7 @@ class _TrainingWorkspaceScreenState
         client.training.extra[TrainingExtraKeys.trainingEvaluationSnapshotV1];
     if (raw is Map<String, dynamic>) {
       final snapshot = TrainingEvaluationSnapshotV1.fromJson(raw);
-      // ✅ Normalizar músculos al cargar (por si hay datos legacy)
+      // Ô£à Normalizar m├║sculos al cargar (por si hay datos legacy)
       return TrainingEvaluationSnapshotV1(
         schemaVersion: snapshot.schemaVersion,
         createdAt: snapshot.createdAt,
@@ -879,7 +882,7 @@ class _TrainingWorkspaceScreenState
     }
 
     final now = DateTime.now();
-    // ✅ Normalizar al construir desde legacy keys
+    // Ô£à Normalizar al construir desde legacy keys
     final primary = _normalizeMuscleKeys(
       _parseMuscleList(
         client.training.extra[TrainingExtraKeys.priorityMusclesPrimary],
@@ -945,6 +948,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
+  // ignore: unused_element
   Future<void> _saveSetup(Client client) async {
     final setup = TrainingSetupV1(
       heightCm: _parseDouble(_heightController.text),
@@ -962,12 +966,13 @@ class _TrainingWorkspaceScreenState
     });
   }
 
+  // ignore: unused_element
   Future<void> _saveEvaluation(
     Client client,
     TrainingEvaluationSnapshotV1 current,
   ) async {
     final now = DateTime.now();
-    // ✅ NORMALIZAR A KEYS CANÓNICAS (evitar labels duplicados)
+    // Ô£à NORMALIZAR A KEYS CAN├ôNICAS (evitar labels duplicados)
     final primary = _normalizeMuscleKeys(
       _parseMuscleList(_primaryMusclesController.text),
     );
@@ -988,7 +993,7 @@ class _TrainingWorkspaceScreenState
 
     final daysPerWeek = _parseInt(_daysController.text);
     debugPrint(
-      '[TrainingWorkspace] Guardando evaluación: daysPerWeek=$daysPerWeek',
+      '[TrainingWorkspace] Guardando evaluaci├│n: daysPerWeek=$daysPerWeek',
     );
 
     final evaluation = TrainingEvaluationSnapshotV1(
@@ -1018,7 +1023,7 @@ class _TrainingWorkspaceScreenState
 
     await ref.read(clientsProvider.notifier).updateActiveClient((current) {
       final extra = Map<String, dynamic>.from(current.training.extra);
-      // ✅ Guardar en AMBOS keys para compatibilidad con legacy code
+      // Ô£à Guardar en AMBOS keys para compatibilidad con legacy code
       extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] = evaluation
           .toJson();
       extra[TrainingExtraKeys.daysPerWeek] = daysPerWeek;
@@ -1031,6 +1036,7 @@ class _TrainingWorkspaceScreenState
     });
   }
 
+  // ignore: unused_element
   Future<void> _saveProgression(
     Client client,
     TrainingProgressionStateV1 current,
@@ -1056,6 +1062,7 @@ class _TrainingWorkspaceScreenState
     });
   }
 
+  // ignore: unused_element
   Future<void> _openPainRuleDialog(
     Client client,
     TrainingEvaluationSnapshotV1 evaluation,
@@ -1181,6 +1188,7 @@ class _TrainingWorkspaceScreenState
     });
   }
 
+  // ignore: unused_element
   Future<void> _handlePlanAction(
     BuildContext context, {
     required PlanAction action,
@@ -1344,16 +1352,16 @@ class _TrainingWorkspaceScreenState
     return duplicates.toList();
   }
 
-  /// ✅ NORMALIZACIÓN A KEYS CANÓNICAS
-  /// Convierte labels legacy a keys estándar de Motor V3
+  /// Ô£à NORMALIZACI├ôN A KEYS CAN├ôNICAS
+  /// Convierte labels legacy a keys est├índar de Motor V3
   List<String> _normalizeMuscleKeys(List<String> keys) {
     const labelToKeyMap = {
       'Pecho': 'chest',
       'Dorsal ancho': 'lats',
       'Dorsal ancho (Lats)': 'lats',
       'Espalda alta': 'upper_back',
-      'Espalda alta / Escápulas': 'upper_back',
-      'Espalda alta / Escápulas (Upper back)': 'upper_back',
+      'Espalda alta / Esc├ípulas': 'upper_back',
+      'Espalda alta / Esc├ípulas (Upper back)': 'upper_back',
       'Upper back': 'upper_back',
       'Trapecios': 'traps',
       'Deltoide Anterior': 'deltoide_anterior',
@@ -1362,11 +1370,11 @@ class _TrainingWorkspaceScreenState
       'Deltoide lateral': 'deltoide_lateral',
       'Deltoide Posterior': 'deltoide_posterior',
       'Deltoide posterior': 'deltoide_posterior',
-      'Bíceps': 'biceps',
-      'Tríceps': 'triceps',
-      'Cuádriceps': 'quads',
+      'B├¡ceps': 'biceps',
+      'Tr├¡ceps': 'triceps',
+      'Cu├ídriceps': 'quads',
       'Isquiotibiales': 'hamstrings',
-      'Glúteos': 'glutes',
+      'Gl├║teos': 'glutes',
       'Pantorrillas': 'calves',
       'Abdominales': 'abs',
     };
@@ -1375,7 +1383,7 @@ class _TrainingWorkspaceScreenState
     for (final k in keys) {
       final trimmed = k.trim();
       final normalized = labelToKeyMap[trimmed] ?? trimmed;
-      // ✅ Handle legacy 'back' expansion
+      // Ô£à Handle legacy 'back' expansion
       if (normalized == 'back') {
         expanded.addAll(['lats', 'upper_back', 'traps']);
       } else {
@@ -1383,7 +1391,7 @@ class _TrainingWorkspaceScreenState
       }
     }
 
-    // ✅ Filter against canonical 14-muscle set
+    // Ô£à Filter against canonical 14-muscle set
     const canonicalKeys = {
       'chest',
       'lats',
@@ -1435,19 +1443,21 @@ class _TrainingWorkspaceScreenState
   Future<void> _commitInterview() async {
     try {
       await _interviewTabKey.currentState?.commit();
-    } catch (e) {}
+    } catch (e) {
+      debugPrint('[TrainingWorkspace] commit interview failed: $e');
+    }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // E2 GOBERNANZA: MÉTODOS PARA PLAN V3 (CON VERIFICACIÓN)
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+  // E2 GOBERNANZA: M├ëTODOS PARA PLAN V3 (CON VERIFICACI├ôN)
+  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
   Future<void> _generarPlan() async {
     final interviewStatus =
         ref.read(trainingWorkspaceProvider).interviewStatus;
     if (interviewStatus != TrainingInterviewStatus.valid) {
       return;
     }
-    // E2: Verificar que la acción esté permitida
+    // E2: Verificar que la acci├│n est├® permitida
     await _commitInterview();
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
@@ -1458,7 +1468,7 @@ class _TrainingWorkspaceScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Plan bloqueado: ${_getPlanActionTooltip(allowedAction, client)}',
+              'ÔØî Plan bloqueado: ${_getPlanActionTooltip(allowedAction, client)}',
             ),
             backgroundColor: kErrorColor,
           ),
@@ -1473,7 +1483,7 @@ class _TrainingWorkspaceScreenState
           .read(trainingPlanProvider.notifier)
           .generatePlanFromActiveCycle(now);
 
-      // E2: Actualizar estado de progresión después de generar
+      // E2: Actualizar estado de progresi├│n despu├®s de generar
       await _updateProgressionAfterPlanAction('generate');
 
       if (mounted) {
@@ -1498,7 +1508,7 @@ class _TrainingWorkspaceScreenState
 
   void _regenerarPlan() {
     unawaited(_commitInterview());
-    // E2: Verificar que la acción esté permitida
+    // E2: Verificar que la acci├│n est├® permitida
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
@@ -1508,7 +1518,7 @@ class _TrainingWorkspaceScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Regeneración no permitida: ${_getPlanActionTooltip(allowedAction, client)}',
+              'ÔØî Regeneraci├│n no permitida: ${_getPlanActionTooltip(allowedAction, client)}',
             ),
             backgroundColor: kErrorColor,
           ),
@@ -1522,7 +1532,7 @@ class _TrainingWorkspaceScreenState
       builder: (context) => AlertDialog(
         title: const Text('Regenerar Plan'),
         content: const Text(
-          '¿Regenerar plan completo Motor V3?\n\nEsto creará un nuevo plan desde cero.',
+          '┬┐Regenerar plan completo Motor V3?\n\nEsto crear├í un nuevo plan desde cero.',
         ),
         actions: [
           TextButton(
@@ -1533,7 +1543,7 @@ class _TrainingWorkspaceScreenState
             onPressed: () async {
               Navigator.pop(context);
               await _generarPlan();
-              // E2: Actualizar estado de progresión
+              // E2: Actualizar estado de progresi├│n
               await _updateProgressionAfterPlanAction('regenerate');
             },
             child: const Text('Regenerar'),
@@ -1545,7 +1555,7 @@ class _TrainingWorkspaceScreenState
 
   Future<void> _adaptarPlan() async {
     await _commitInterview();
-    // E2: Verificar que la acción esté permitida
+    // E2: Verificar que la acci├│n est├® permitida
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
@@ -1555,7 +1565,7 @@ class _TrainingWorkspaceScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Adaptación no permitida: ${_getPlanActionTooltip(allowedAction, client)}',
+              'ÔØî Adaptaci├│n no permitida: ${_getPlanActionTooltip(allowedAction, client)}',
             ),
             backgroundColor: kErrorColor,
           ),
@@ -1570,7 +1580,7 @@ class _TrainingWorkspaceScreenState
           .read(trainingPlanProvider.notifier)
           .generatePlanFromActiveCycle(now);
 
-      // E2: Actualizar estado de progresión después de adaptar
+      // E2: Actualizar estado de progresi├│n despu├®s de adaptar
       await _updateProgressionAfterPlanAction('adapt');
 
       if (mounted) {
@@ -1593,7 +1603,7 @@ class _TrainingWorkspaceScreenState
     }
   }
 
-  // E2: Actualizar estado de progresión después de acción de plan
+  // E2: Actualizar estado de progresi├│n despu├®s de acci├│n de plan
   Future<void> _updateProgressionAfterPlanAction(String action) async {
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
@@ -1616,7 +1626,7 @@ class _TrainingWorkspaceScreenState
               lastPlanChangeReason: 'initial',
             );
 
-      // Crear historial de adaptación
+      // Crear historial de adaptaci├│n
       final adaptationHistoryCopy = List<Map<String, dynamic>>.from(
         progression.adaptationHistory,
       );
@@ -1626,7 +1636,7 @@ class _TrainingWorkspaceScreenState
         'weekCompleted': progression.weeksCompleted,
       });
 
-      // Actualizar progresión
+      // Actualizar progresi├│n
       final updatedProgressionMap = {
         ...progression.toJson(),
         'lastAdaptationAt': DateTime.now().toIso8601String(),
@@ -1647,7 +1657,7 @@ class _TrainingWorkspaceScreenState
         );
       });
     } catch (e) {
-      debugPrint('⚠️ Error al actualizar progresión: $e');
+      debugPrint('ÔÜá´©Å Error al actualizar progresi├│n: $e');
     }
   }
 }

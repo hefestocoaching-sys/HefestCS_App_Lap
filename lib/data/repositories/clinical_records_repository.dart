@@ -1,5 +1,5 @@
-// ignore_for_file: avoid_print
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -50,7 +50,7 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('Warning: No authenticated user - skipping Firestore sync');
+      developer.log('Warning: No authenticated user - skipping Firestore sync');
       return;
     }
 
@@ -90,7 +90,7 @@ class ClinicalRecordsRepository {
       } catch (e) {
         // If client check/creation fails, continue anyway
         // Local storage will still work
-        print('Warning: Could not ensure client exists in Firestore: $e');
+        developer.log('Warning: Could not ensure client exists in Firestore: $e');
       }
 
       // Now push the anthropometry record
@@ -107,7 +107,7 @@ class ClinicalRecordsRepository {
     } catch (e) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      print('Note: Firestore sync failed (local save succeeded): $e');
+      developer.log('Note: Firestore sync failed (local save succeeded): $e');
     }
   }
 
@@ -126,7 +126,7 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('Warning: No authenticated user - skipping Firestore sync');
+      developer.log('Warning: No authenticated user - skipping Firestore sync');
       return;
     }
 
@@ -161,7 +161,7 @@ class ClinicalRecordsRepository {
               );
         }
       } catch (e) {
-        print('Warning: Could not ensure client exists in Firestore: $e');
+          developer.log('Warning: Could not ensure client exists in Firestore: $e');
       }
 
       final dateKey = _dateFormat.format(record.date);
@@ -190,7 +190,7 @@ class ClinicalRecordsRepository {
     } catch (e) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      print('Note: Firestore sync failed (local save succeeded): $e');
+        developer.log('Note: Firestore sync failed (local save succeeded): $e');
     }
   }
 
@@ -214,7 +214,7 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('Warning: No authenticated user - skipping Firestore sync');
+      developer.log('Warning: No authenticated user - skipping Firestore sync');
       return;
     }
 
@@ -249,7 +249,7 @@ class ClinicalRecordsRepository {
               );
         }
       } catch (e) {
-        print('Warning: Could not ensure client exists in Firestore: $e');
+          developer.log('Warning: Could not ensure client exists in Firestore: $e');
       }
 
       final dateKey = _dateFormat.format(date);
@@ -269,7 +269,7 @@ class ClinicalRecordsRepository {
     } catch (e) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      print('Note: Firestore sync failed (local save succeeded): $e');
+        developer.log('Note: Firestore sync failed (local save succeeded): $e');
     }
   }
 
@@ -296,7 +296,7 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print('Warning: No authenticated user - skipping Firestore sync');
+      developer.log('Warning: No authenticated user - skipping Firestore sync');
       return;
     }
 
@@ -331,7 +331,7 @@ class ClinicalRecordsRepository {
               );
         }
       } catch (e) {
-        print('Warning: Could not ensure client exists in Firestore: $e');
+          developer.log('Warning: Could not ensure client exists in Firestore: $e');
       }
 
       final dateKey = _dateFormat.format(date);
@@ -351,7 +351,7 @@ class ClinicalRecordsRepository {
     } catch (e) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      print('Note: Firestore sync failed (local save succeeded): $e');
+        developer.log('Note: Firestore sync failed (local save succeeded): $e');
     }
   }
 
@@ -364,8 +364,8 @@ class ClinicalRecordsRepository {
         try {
           await operation();
         } catch (e, st) {
-          print('Background push failed: $e');
-          print(st);
+            developer.log('Background push failed: $e');
+            developer.log(st.toString());
         }
       }),
     );

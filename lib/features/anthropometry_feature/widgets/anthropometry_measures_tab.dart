@@ -583,8 +583,7 @@ class AnthropometryMeasuresTabState
       setState(() => _rfmValue = rfmValue);
       showErrorSnackbar(context, '$message$rfmInfo', isError: false);
     } catch (e) {
-      // ignore: avoid_print
-      print('Error al guardar mediciones: $e');
+      debugPrint('Error al guardar mediciones: $e');
       if (mounted) {
         showErrorSnackbar(
           context,
@@ -815,8 +814,7 @@ class AnthropometryMeasuresTabState
         date: targetDate,
         onError: (e) {
           // Log error pero no bloquea UI (fire-and-forget)
-          // ignore: avoid_print
-          print('Error al borrar antropometría: $e');
+          debugPrint('Error al borrar antropometria: $e');
         },
       );
 

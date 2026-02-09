@@ -1,5 +1,7 @@
 // lib/domain/training_v3/repositories/performance_data_repository.dart
 
+import 'dart:developer' as developer;
+
 import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
 
 /// Repositorio de datos de rendimiento agregados
@@ -26,7 +28,7 @@ class PerformanceDataRepository {
     return id;
     */
 
-    print('📊 [MOCK] Guardando PerformanceMetrics: ${metrics.targetId}');
+    developer.log('📊 [MOCK] Guardando PerformanceMetrics: ${metrics.targetId}');
     return '${metrics.targetId}_${DateTime.now().millisecondsSinceEpoch}';
   }
 
@@ -61,7 +63,7 @@ class PerformanceDataRepository {
     return PerformanceMetrics.fromJson(snapshot.docs.first.data());
     */
 
-    print('📊 [MOCK] Obteniendo métricas de $muscle');
+    developer.log('📊 [MOCK] Obteniendo métricas de $muscle');
     return null;
   }
 
@@ -73,7 +75,7 @@ class PerformanceDataRepository {
     required DateTime endDate,
   }) async {
     // PLACEHOLDER: Consultar Firestore
-    print('📊 [MOCK] Obteniendo métricas de ejercicio $exerciseId');
+    developer.log('📊 [MOCK] Obteniendo métricas de ejercicio $exerciseId');
     return null;
   }
 
@@ -101,7 +103,7 @@ class PerformanceDataRepository {
         .toList();
     */
 
-    print('📊 [MOCK] Obteniendo histórico de $targetId');
+    developer.log('📊 [MOCK] Obteniendo histórico de $targetId');
     return [];
   }
 
@@ -133,7 +135,7 @@ class PerformanceDataRepository {
     return metricsByMuscle;
     */
 
-    print('📊 [MOCK] Obteniendo métricas de todos los músculos');
+    developer.log('📊 [MOCK] Obteniendo métricas de todos los músculos');
     return {};
   }
 
@@ -150,7 +152,7 @@ class PerformanceDataRepository {
         .update(metrics.toJson());
     */
 
-    print('✏️  [MOCK] Actualizando métricas: $metricsId');
+    developer.log('✏️  [MOCK] Actualizando métricas: $metricsId');
   }
 
   /// Elimina métricas antiguas (limpieza periódica)
@@ -171,7 +173,7 @@ class PerformanceDataRepository {
     return snapshot.docs.length;
     */
 
-    print('🗑️  [MOCK] Eliminando métricas antiguas');
+    developer.log('🗑️  [MOCK] Eliminando métricas antiguas');
     return 0;
   }
 

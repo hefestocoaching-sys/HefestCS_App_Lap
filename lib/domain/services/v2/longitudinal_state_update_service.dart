@@ -25,8 +25,7 @@ class LongitudinalStateUpdateService {
 
   void debugLog(String message) {
     if (kDebugMode) {
-      // ignore: avoid_print
-      print('[LongitudinalStateUpdateService] $message');
+      debugPrint('[LongitudinalStateUpdateService] $message');
     }
   }
 }

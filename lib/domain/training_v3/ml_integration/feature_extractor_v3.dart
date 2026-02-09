@@ -24,7 +24,7 @@ class FeatureExtractorV3 {
   /// - [metrics]: Métricas agregadas (opcional)
   ///
   /// RETORNA:
-  /// - Map<String, double>: Features normalizadas (0.0-1.0)
+  /// - Map&lt;String, double&gt;: Features normalizadas (0.0-1.0)
   static Map<String, double> extractFeatures({
     required UserProfile profile,
     List<WorkoutLog>? recentLogs,

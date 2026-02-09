@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
@@ -45,13 +46,13 @@ void main() {
         );
 
         // DEBUG: Imprimir resultado
-        print('📋 RESULTADO: ${result.keys}');
-        print('📋 SUCCESS: ${result['success']}');
+        debugPrint('📋 RESULTADO: ${result.keys}');
+        debugPrint('📋 SUCCESS: ${result['success']}');
         if (result['errors'] != null) {
-          print('❌ ERRORS: ${result['errors']}');
+          debugPrint('❌ ERRORS: ${result['errors']}');
         }
         if (result['warnings'] != null) {
-          print('⚠️ WARNINGS: ${result['warnings']}');
+          debugPrint('⚠️ WARNINGS: ${result['warnings']}');
         }
 
         // ASSERT: Validar resultado
@@ -66,8 +67,8 @@ void main() {
           reason: 'El plan no debe ser nulo',
         );
 
-        print('✅ TEST PASADO: Plan generado correctamente');
-        print('   - Resultado: ${result.keys.join(', ')}');
+        debugPrint('✅ TEST PASADO: Plan generado correctamente');
+        debugPrint('   - Resultado: ${result.keys.join(', ')}');
       },
     );
 
@@ -114,11 +115,11 @@ void main() {
           reason: 'Debe tener lista de errores',
         );
 
-        print('✅ TEST PASADO: Manejo de errores correcto');
-        print('   - Errores: ${result['errors']}');
+        debugPrint('✅ TEST PASADO: Manejo de errores correcto');
+        debugPrint('   - Errores: ${result['errors']}');
       } catch (e) {
-        print('✅ TEST PASADO: Excepción capturada correctamente');
-        print('   - Error: $e');
+        debugPrint('✅ TEST PASADO: Excepción capturada correctamente');
+        debugPrint('   - Error: $e');
       }
     });
   });

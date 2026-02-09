@@ -11,7 +11,7 @@ import 'training_profile.dart';
 /// - Usa: UI (Widgets, Providers)
 ///
 /// PROPIEDADES V3 (reemplazo de state['phase3']):
-/// - volumePerMuscle: Volumen semanal por músculo (Map<String, int>)
+/// - volumePerMuscle: Volumen semanal por músculo (Map&lt;String, int&gt;)
 /// - weeklyVolumeTarget: Target de volumen total
 /// - landmarks: Hitos del plan (semana deload, etc.)
 ///

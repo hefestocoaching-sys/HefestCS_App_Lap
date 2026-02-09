@@ -1,5 +1,7 @@
 // lib/domain/training_v3/ml_integration/prediction_recorder_v3.dart
 
+import 'dart:developer' as developer;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
@@ -71,7 +73,7 @@ class PredictionRecorderV3 {
           'phase': scientificProgram.phase,
           'total_volume': scientificProgram.weeklyVolumeByMuscle.values.fold(
             0.0,
-            (sum, v) => sum + v,
+            (total, v) => total + v,
           ),
         },
         'program_final': {
@@ -79,7 +81,7 @@ class PredictionRecorderV3 {
           'phase': finalProgram.phase,
           'total_volume': finalProgram.weeklyVolumeByMuscle.values.fold(
             0.0,
-            (sum, v) => sum + v,
+            (total, v) => total + v,
           ),
         },
 
@@ -96,9 +98,9 @@ class PredictionRecorderV3 {
           .doc(predictionId)
           .set(sanitizeForFirestore(payload));
 
-      print('✅ Predicción ML registrada: $predictionId');
+      developer.log('✅ Predicción ML registrada: $predictionId');
     } catch (e) {
-      print('❌ Error al registrar predicción ML: $e');
+      developer.log('❌ Error al registrar predicción ML: $e');
       // No lanzar error - el registro es opcional
     }
   }
@@ -126,26 +128,26 @@ class PredictionRecorderV3 {
               ? 0.0
               : completedLogs.fold(
                       0.0,
-                      (sum, l) => sum + l.adherencePercentage,
+                      (total, l) => total + l.adherencePercentage,
                     ) /
                     completedLogs.length);
 
       final avgRpe = completedLogs.isEmpty
           ? 0.0
-          : completedLogs.fold(0.0, (sum, l) => sum + l.sessionRpe) /
+          : completedLogs.fold(0.0, (total, l) => total + l.sessionRpe) /
                 completedLogs.length;
 
       final avgPrs = completedLogs.isEmpty
           ? 0.0
           : completedLogs.fold(
                   0.0,
-                  (sum, l) => sum + l.perceivedRecoveryStatus,
+                  (total, l) => total + l.perceivedRecoveryStatus,
                 ) /
                 completedLogs.length;
 
       final avgDoms = completedLogs.isEmpty
           ? 0.0
-          : completedLogs.fold(0.0, (sum, l) => sum + l.muscleSoreness) /
+          : completedLogs.fold(0.0, (total, l) => total + l.muscleSoreness) /
                 completedLogs.length;
 
       await _firestore.collection(_collection).doc(predictionId).update({
@@ -163,9 +165,9 @@ class PredictionRecorderV3 {
         'status': 'completed',
       });
 
-      print('✅ Outcome registrado para predicción: $predictionId');
+      developer.log('✅ Outcome registrado para predicción: $predictionId');
     } catch (e) {
-      print('❌ Error al registrar outcome: $e');
+      developer.log('❌ Error al registrar outcome: $e');
     }
   }
 
@@ -185,7 +187,7 @@ class PredictionRecorderV3 {
 
       return snapshot.docs.map((doc) => doc.data()).toList();
     } catch (e) {
-      print('❌ Error al obtener predicciones pendientes: $e');
+      developer.log('❌ Error al obtener predicciones pendientes: $e');
       return [];
     }
   }
@@ -253,7 +255,7 @@ class PredictionRecorderV3 {
         'overall_accuracy': ((1.0 - avgVolumeError) + readinessAccuracy) / 2,
       };
     } catch (e) {
-      print('❌ Error al calcular accuracy: $e');
+      developer.log('❌ Error al calcular accuracy: $e');
       return {'has_data': false, 'error': e.toString()};
     }
   }
@@ -283,10 +285,10 @@ class PredictionRecorderV3 {
         deletedCount++;
       }
 
-      print('✅ Limpiadas $deletedCount predicciones antiguas');
+      developer.log('✅ Limpiadas $deletedCount predicciones antiguas');
       return deletedCount;
     } catch (e) {
-      print('❌ Error al limpiar predicciones: $e');
+      developer.log('❌ Error al limpiar predicciones: $e');
       return 0;
     }
   }

@@ -22,6 +22,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     with SingleTickerProviderStateMixin
     implements SaveableModule {
   late TabController _tabController;
+  late final ProviderSubscription _clientSubscription;
 
   final days = const [
     'Lunes',
@@ -37,10 +38,20 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: days.length, vsync: this);
+    // Load equivalents when active client changes, outside build.
+    _clientSubscription = ref.listenManual(clientsProvider, (previous, next) {
+      final client = next.value?.activeClient;
+      ref.read(equivalentsByDayProvider.notifier).loadFromClient(client);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final client = ref.read(clientsProvider).value?.activeClient;
+      ref.read(equivalentsByDayProvider.notifier).loadFromClient(client);
+    });
   }
 
   @override
   void dispose() {
+    _clientSubscription.close();
     _tabController.dispose();
     super.dispose();
   }
@@ -81,10 +92,6 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     final client = ref.watch(clientsProvider).value?.activeClient;
     final planResult = ref.watch(nutritionPlanResultProvider);
 
-    if (client != null) {
-      ref.read(equivalentsByDayProvider.notifier).loadFromClient(client);
-    }
-
     if (client == null || planResult == null) {
       return _buildEmptyState();
     }
@@ -93,7 +100,6 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
       backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          _buildHeader(planResult),
           TabBar(
             controller: _tabController,
             labelColor: kPrimaryColor,
@@ -110,6 +116,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
                   dayKey: day.toLowerCase(),
                   dayLabel: day,
                   planResult: planResult,
+                  onSave: saveIfDirty,
                 );
               }).toList(),
             ),
@@ -127,7 +134,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
           Icon(
             Icons.table_chart_outlined,
             size: 80,
-            color: kTextColorSecondary.withOpacity(0.5),
+            color: kTextColorSecondary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -143,93 +150,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     );
   }
 
-  Widget _buildHeader(planResult) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFFD32F2F).withOpacity(0.15),
-            kCardColor.withOpacity(0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFD32F2F).withOpacity(0.4),
-          width: 1.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'DIETOCALCULO DEL PLAN DE ALIMENTACION',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFFD32F2F),
-            ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Sistema Mexicano de Alimentos Equivalentes',
-            style: TextStyle(
-              fontSize: 13,
-              color: kTextColorSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              _buildChip(
-                'Objetivo',
-                '${planResult.kcalTargetDay.toStringAsFixed(0)} kcal/dia',
-                Colors.orange,
-              ),
-              _buildChip(
-                'Proteina',
-                '${planResult.proteinTargetDay.toStringAsFixed(0)}g/dia',
-                Colors.blue,
-              ),
-              _buildChip(
-                'Lipidos',
-                '${planResult.fatTargetDay.toStringAsFixed(0)}g/dia',
-                Colors.purple,
-              ),
-              _buildChip(
-                'H.C.',
-                '${planResult.carbTargetDay.toStringAsFixed(0)}g/dia',
-                Colors.amber,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChip(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.4)),
-      ),
-      child: Text(
-        '$label: $value',
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
+  
 }
 
 typedef EquivalentsByDayScreenState = _EquivalentsByDayScreenState;

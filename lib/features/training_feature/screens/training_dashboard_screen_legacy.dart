@@ -605,6 +605,7 @@ class _TrainingDashboardScreenState
                     .read(trainingPlanProvider.notifier)
                     .generatePlanFromActiveCycle(now);
               } catch (e) {
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Motor V3 en desarrollo: $e'),
@@ -656,6 +657,7 @@ class _TrainingDashboardScreenState
                     .read(trainingPlanProvider.notifier)
                     .generatePlanFromActiveCycle(now);
 
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: const Text('Plan Motor V3 generado correctamente'),
@@ -663,6 +665,7 @@ class _TrainingDashboardScreenState
                   ),
                 );
               } catch (e) {
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Error al generar plan: $e'),
@@ -1431,8 +1434,7 @@ class _TrainingDashboardScreenState
         date: targetDate,
         onError: (e) {
           // Log error pero no bloquea UI (fire-and-forget)
-          // ignore: avoid_print
-          print('Error al borrar entrenamiento: $e');
+          debugPrint('Error al borrar entrenamiento: $e');
         },
       );
 

@@ -25,7 +25,7 @@ class TrainingPlanV3State {
 
   /// Acceso directo al plan de configuración (result?.plan)
   /// Facilita navegación en UI sin null-coalescing excesivo
-  /// Contiene: weeks (List<TrainingWeek>) con sesiones y ejercicios
+  /// Contiene: weeks (List&lt;TrainingWeek&gt;) con sesiones y ejercicios
   final TrainingPlanConfig? plan;
 
   const TrainingPlanV3State({

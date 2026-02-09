@@ -19,7 +19,7 @@ class ExerciseDatabaseRepository {
   /// Obtiene todos los ejercicios del catálogo
   ///
   /// RETORNA:
-  /// - Map<exerciseId, exerciseData>
+  /// - Map&lt;exerciseId, exerciseData&gt;
   static Future<Map<String, Map<String, dynamic>>> getAllExercises() async {
     // Si ya está en cache, retornar
     if (_exerciseCache != null) {

@@ -1,7 +1,7 @@
-// ignore_for_file: avoid_print
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hcs_app_lap/data/datasources/remote/anthropometry_firestore_datasource.dart';
 import 'package:hcs_app_lap/domain/entities/anthropometry_record.dart';
@@ -46,7 +46,7 @@ void main() {
         record: record1,
       );
 
-      print('✅ Upserted record for 2025-01-15');
+      debugPrint('✅ Upserted record for 2025-01-15');
 
       // Test 2: Upsert another record (different date)
       final record2 = AnthropometryRecord(
@@ -63,7 +63,7 @@ void main() {
         record: record2,
       );
 
-      print('✅ Upserted record for 2025-01-20');
+      debugPrint('✅ Upserted record for 2025-01-20');
 
       // Test 3: Update existing record (same date)
       final record1Updated = AnthropometryRecord(
@@ -80,7 +80,7 @@ void main() {
         record: record1Updated,
       );
 
-      print('✅ Updated record for 2025-01-15');
+      debugPrint('✅ Updated record for 2025-01-15');
 
       // Test 4: Fetch all records
       final records = await datasource.fetchAnthropometryRecords(
@@ -106,7 +106,7 @@ void main() {
       expect(jan20.weightKg, 76.0);
       expect(jan20.tricipitalFold, 12.5);
 
-      print('✅ Fetched and verified ${records.length} records');
+      debugPrint('✅ Fetched and verified ${records.length} records');
 
       // Test 5: Soft delete
       await datasource.deleteAnthropometryRecord(
@@ -115,7 +115,7 @@ void main() {
         date: DateTime(2025, 1, 15),
       );
 
-      print('✅ Soft deleted record for 2025-01-15');
+      debugPrint('✅ Soft deleted record for 2025-01-15');
 
       // Test 6: Verify deleted record is not returned
       final recordsAfterDelete = await datasource.fetchAnthropometryRecords(
@@ -135,10 +135,12 @@ void main() {
         reason: 'Remaining record should be 2025-01-20',
       );
 
-      print('✅ Verified soft delete works correctly');
+      debugPrint('✅ Verified soft delete works correctly');
 
-      print('\n🎉 All anthropometry records smoke tests passed!');
-      print('Path: coaches/$coachId/clients/$clientId/anthropometry_records/');
+      debugPrint('\n🎉 All anthropometry records smoke tests passed!');
+      debugPrint(
+        'Path: coaches/$coachId/clients/$clientId/anthropometry_records/',
+      );
     },
     skip: 'Manual smoke test. Requires an authenticated coach session.',
   );

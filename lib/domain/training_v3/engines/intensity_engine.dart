@@ -33,7 +33,7 @@ class IntensityEngine {
   /// - [exerciseTypes]: Mapa ejercicio → tipo ('compound'/'isolation')
   ///
   /// RETORNA:
-  /// - Map<String, String>: ejercicioId → 'heavy'|'moderate'|'light'
+  /// - Map&lt;String, String&gt;: ejercicioId → 'heavy'|'moderate'|'light'
   static Map<String, String> distributeIntensities({
     required List<String> exercises,
     required Map<String, String> exerciseTypes,

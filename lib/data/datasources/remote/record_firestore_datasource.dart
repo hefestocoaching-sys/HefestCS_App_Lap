@@ -1,7 +1,6 @@
-// ignore_for_file: avoid_print
 import 'dart:async';
-
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -119,7 +118,7 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
         'dateKey': dateKey,
       });
       if (invalidPath != null) {
-        print('🔥 Record payload invalid at: $invalidPath');
+        developer.log('🔥 Record payload invalid at: $invalidPath');
       }
 
       await ref.set({
@@ -130,15 +129,15 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
         'payload': sanitizedPayload,
       }, SetOptions(merge: true));
     } catch (e) {
-      print('Error in upsertRecordByDate: $e');
-      print(
+      developer.log('Error in upsertRecordByDate: $e');
+      developer.log(
         'Details - coachId: $coachId, clientId: $clientId, domain: ${domain.collectionName}, dateKey: $dateKey',
       );
-      print(
+      developer.log(
         'Payload snapshot: ${sanitizedPayload.map((k, v) => MapEntry(k, v?.runtimeType))}',
       );
       try {
-        print('Payload json: ${jsonEncode(sanitizedPayload)}');
+        developer.log('Payload json: ${jsonEncode(sanitizedPayload)}');
       } catch (_) {
         // ignore json encode failures
       }

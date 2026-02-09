@@ -122,6 +122,36 @@ class EquivalentsByDayNotifier extends Notifier<EquivalentsByDayState> {
     state = state.copyWith(dayMealEquivalents: dayMeals, isDirty: true);
   }
 
+  void copyDay(String sourceDay, String targetDay) {
+    if (sourceDay == targetDay) return;
+
+    final dayEquivalents = Map<String, Map<String, double>>.from(
+      state.dayEquivalents,
+    );
+    final sourceEquivalents = dayEquivalents[sourceDay];
+    if (sourceEquivalents != null) {
+      dayEquivalents[targetDay] = Map<String, double>.from(sourceEquivalents);
+    }
+
+    final dayMeals = Map<String, Map<String, Map<int, double>>>.from(
+      state.dayMealEquivalents,
+    );
+    final sourceMeals = dayMeals[sourceDay];
+    if (sourceMeals != null) {
+      final copiedMeals = <String, Map<int, double>>{};
+      for (final entry in sourceMeals.entries) {
+        copiedMeals[entry.key] = Map<int, double>.from(entry.value);
+      }
+      dayMeals[targetDay] = copiedMeals;
+    }
+
+    state = state.copyWith(
+      dayEquivalents: dayEquivalents,
+      dayMealEquivalents: dayMeals,
+      isDirty: true,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     final dayEquivalents = state.dayEquivalents.map(
       (day, groups) => MapEntry(day, Map<String, dynamic>.from(groups)),

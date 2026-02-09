@@ -914,8 +914,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         date: dateTime,
         onError: (e) {
           // Log error pero no bloquea UI (fire-and-forget)
-          // ignore: avoid_print
-          print('Error al borrar nutrición: $e');
+          debugPrint('Error al borrar nutricion: $e');
         },
       );
 

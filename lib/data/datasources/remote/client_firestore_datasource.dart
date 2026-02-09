@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
@@ -186,13 +188,13 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     if (_enableFirestoreAudit) {
       rawInvalidPaths = listInvalidFirestorePaths(clientJson, limit: 12);
       if (rawInvalidPaths.isNotEmpty) {
-        print(
+        developer.log(
           '🔥 Firestore raw payload invalid paths: ${rawInvalidPaths.join(' | ')}',
         );
       }
       rawAuditFindings = listFirestoreAuditFindings(clientJson, limit: 12);
       if (rawAuditFindings.isNotEmpty) {
-        print(
+        developer.log(
           '🔥 Firestore raw payload audit findings: ${rawAuditFindings.join(' | ')}',
         );
       }
@@ -211,17 +213,17 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     if (_enableFirestoreAudit) {
       invalidPath = findInvalidFirestorePath(fullPayload);
       if (invalidPath != null) {
-        print('🔥 Firestore payload invalid at: $invalidPath');
+        developer.log('🔥 Firestore payload invalid at: $invalidPath');
       }
       invalidPaths = listInvalidFirestorePaths(fullPayload, limit: 12);
       if (invalidPaths.isNotEmpty) {
-        print(
+        developer.log(
           '🔥 Firestore payload invalid paths: ${invalidPaths.join(' | ')}',
         );
       }
       auditFindings = listFirestoreAuditFindings(fullPayload, limit: 12);
       if (auditFindings.isNotEmpty) {
-        print(
+        developer.log(
           '🔥 Firestore payload audit findings: ${auditFindings.join(' | ')}',
         );
       }
@@ -257,11 +259,11 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     } catch (e, st) {
       final failInvalidPath = findInvalidFirestorePath(fullPayload);
       if (failInvalidPath != null) {
-        print('🔥 Firestore payload invalid at: $failInvalidPath');
+        developer.log('🔥 Firestore payload invalid at: $failInvalidPath');
       }
       final failInvalidPaths = listInvalidFirestorePaths(fullPayload, limit: 12);
       if (failInvalidPaths.isNotEmpty) {
-        print(
+        developer.log(
           '🔥 Firestore payload invalid paths: ${failInvalidPaths.join(' | ')}',
         );
       }
@@ -270,7 +272,7 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
         limit: 12,
       );
       if (failAuditFindings.isNotEmpty) {
-        print(
+        developer.log(
           '🔥 Firestore payload audit findings: ${failAuditFindings.join(' | ')}',
         );
       }

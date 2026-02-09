@@ -119,7 +119,7 @@ class _EquivalentsGeneralScreenState
           Icon(
             Icons.table_chart_outlined,
             size: 80,
-            color: kTextColorSecondary.withOpacity(0.5),
+            color: kTextColorSecondary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -147,13 +147,13 @@ class _EquivalentsGeneralScreenState
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFD32F2F).withOpacity(0.15),
-            kCardColor.withOpacity(0.3),
+            const Color(0xFFD32F2F).withValues(alpha: 0.15),
+            kCardColor.withValues(alpha: 0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFD32F2F).withOpacity(0.3),
+          color: const Color(0xFFD32F2F).withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -226,9 +226,9 @@ class _EquivalentsGeneralScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         '$label: $value',
@@ -247,7 +247,7 @@ class _EquivalentsGeneralScreenState
 
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -267,7 +267,7 @@ class _EquivalentsGeneralScreenState
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFD32F2F).withOpacity(0.2),
+        color: const Color(0xFFD32F2F).withValues(alpha: 0.2),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
       ),
       child: Row(
@@ -295,7 +295,7 @@ class _EquivalentsGeneralScreenState
         child: Text(
           'Sin grupos agregados. Presiona el boton de abajo para agregar.',
           style: TextStyle(
-            color: kTextColorSecondary.withOpacity(0.7),
+            color: kTextColorSecondary.withValues(alpha: 0.7),
             fontStyle: FontStyle.italic,
           ),
           textAlign: TextAlign.center,
@@ -316,7 +316,7 @@ class _EquivalentsGeneralScreenState
       decoration: BoxDecoration(
         color: _getGroupBackgroundColor(def.group),
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
       ),
       child: Row(
@@ -363,7 +363,7 @@ class _EquivalentsGeneralScreenState
             width: 40,
             child: IconButton(
               icon: const Icon(Icons.delete_outline, size: 18),
-              color: Colors.red.withOpacity(0.7),
+              color: Colors.red.withValues(alpha: 0.7),
               onPressed: () {
                 setState(() {
                   _equivalentsByGroup.remove(groupId);
@@ -393,7 +393,7 @@ class _EquivalentsGeneralScreenState
               size: 20,
               color: current > 0.5
                   ? kPrimaryColor
-                  : kTextColorSecondary.withOpacity(0.3),
+                  : kTextColorSecondary.withValues(alpha: 0.3),
             ),
           ),
         ),
@@ -440,9 +440,9 @@ class _EquivalentsGeneralScreenState
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: kPrimaryColor.withOpacity(0.1),
+          color: kPrimaryColor.withValues(alpha: 0.1),
           border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.1)),
+            top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
           ),
           borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
         ),
@@ -476,13 +476,13 @@ class _EquivalentsGeneralScreenState
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFFF9800).withOpacity(0.15),
-            kCardColor.withOpacity(0.3),
+            const Color(0xFFFF9800).withValues(alpha: 0.15),
+            kCardColor.withValues(alpha: 0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: const Color(0xFFFF9800).withOpacity(0.3),
+          color: const Color(0xFFFF9800).withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -546,7 +546,7 @@ class _EquivalentsGeneralScreenState
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: kCardColor.withOpacity(0.4),
+        color: kCardColor.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -614,7 +614,7 @@ class _EquivalentsGeneralScreenState
             label: const Text('Guardar y Distribuir por Comidas'),
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
-              disabledBackgroundColor: kTextColorSecondary.withOpacity(0.2),
+              disabledBackgroundColor: kTextColorSecondary.withValues(alpha: 0.2),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
@@ -662,7 +662,7 @@ class _EquivalentsGeneralScreenState
                 final def = available[index];
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: _getGroupColor(def.group).withOpacity(0.2),
+                    backgroundColor: _getGroupColor(def.group).withValues(alpha: 0.2),
                     child: Icon(
                       _getGroupIcon(def.group),
                       color: _getGroupColor(def.group),
@@ -754,7 +754,7 @@ class _EquivalentsGeneralScreenState
       'grasas': Color(0xFFFFC107),
       'azucares': Color(0xFF90CAF9),
     };
-    return (colors[group] ?? kCardColor).withOpacity(0.12);
+    return (colors[group] ?? kCardColor).withValues(alpha: 0.12);
   }
 
   Color _getGroupColor(String group) {

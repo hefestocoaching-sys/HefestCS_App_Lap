@@ -1,5 +1,7 @@
 // lib/domain/training_v3/repositories/workout_log_repository.dart
 
+import 'dart:developer' as developer;
+
 import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
 
 /// Repositorio de persistencia de logs de entrenamiento
@@ -27,7 +29,7 @@ class WorkoutLogRepository {
     // PLACEHOLDER: Guardar en Firestore
     // await _firestore.collection('workout_logs').doc(log.id).set(log.toJson());
 
-    print('📝 [MOCK] Guardando WorkoutLog: ${log.id}');
+    developer.log('📝 [MOCK] Guardando WorkoutLog: ${log.id}');
     return log.id;
   }
 
@@ -40,7 +42,7 @@ class WorkoutLogRepository {
   /// - [endDate]: Fecha de fin (opcional)
   ///
   /// RETORNA:
-  /// - List<WorkoutLog>: Logs ordenados por fecha (más reciente primero)
+  /// - List&lt;WorkoutLog&gt;: Logs ordenados por fecha (más reciente primero)
   static Future<List<WorkoutLog>> getLogsByUser({
     required String userId,
     int limit = 50,
@@ -67,7 +69,7 @@ class WorkoutLogRepository {
     return snapshot.docs.map((doc) => WorkoutLog.fromJson(doc.data())).toList();
     */
 
-    print('📖 [MOCK] Obteniendo logs de usuario: $userId');
+    developer.log('📖 [MOCK] Obteniendo logs de usuario: $userId');
     return []; // Mock vacío
   }
 
@@ -76,7 +78,7 @@ class WorkoutLogRepository {
     required String programId,
   }) async {
     // PLACEHOLDER: Consultar Firestore
-    print('📖 [MOCK] Obteniendo logs de programa: $programId');
+    developer.log('📖 [MOCK] Obteniendo logs de programa: $programId');
     return [];
   }
 
@@ -121,7 +123,7 @@ class WorkoutLogRepository {
     // PLACEHOLDER: Actualizar en Firestore
     // await _firestore.collection('workout_logs').doc(log.id).update(log.toJson());
 
-    print('✏️  [MOCK] Actualizando WorkoutLog: ${log.id}');
+    developer.log('✏️  [MOCK] Actualizando WorkoutLog: ${log.id}');
   }
 
   /// Elimina un log
@@ -129,7 +131,7 @@ class WorkoutLogRepository {
     // PLACEHOLDER: Eliminar de Firestore
     // await _firestore.collection('workout_logs').doc(logId).delete();
 
-    print('🗑️  [MOCK] Eliminando WorkoutLog: $logId');
+    developer.log('🗑️  [MOCK] Eliminando WorkoutLog: $logId');
   }
 
   /// Cuenta logs de un usuario
