@@ -12,7 +12,7 @@ import 'package:hcs_app_lap/features/history_clinic_feature/screen/history_clini
 import 'package:hcs_app_lap/features/macros_feature/screen/macros_screen.dart';
 import 'package:hcs_app_lap/features/meal_plan_feature/screen/meal_plan_screen.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/screen/nutrition_screen.dart';
-import 'package:hcs_app_lap/features/nutrition_feature/screens/equivalents_table_screen.dart';
+import 'package:hcs_app_lap/features/nutrition_feature/screens/equivalents_screen.dart';
 import 'package:hcs_app_lap/features/training_feature/training_screen.dart';
 import 'package:hcs_app_lap/features/main_shell/screen/client_selection_screen.dart';
 import 'package:hcs_app_lap/features/main_shell/widgets/global_side_navigation_rail.dart';
@@ -59,7 +59,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
   final _anthropometryKey = GlobalKey<AnthropometryScreenState>();
   final _nutritionKey = GlobalKey<NutritionScreenState>();
   final _macrosKey = GlobalKey<MacrosScreenState>();
-  final _equivalentsTableKey = GlobalKey<EquivalentsTableScreenState>();
+  final _equivalentsKey = GlobalKey<EquivalentsScreenState>();
   final _mealPlanKey = GlobalKey<MealPlanScreenState>();
   final _biochemistryKey = GlobalKey<BiochemistryScreenState>();
 
@@ -143,12 +143,10 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       case 4:
         return _macrosKey.currentState;
       case 5:
-        return _equivalentsTableKey.currentState;
+        return _equivalentsKey.currentState;
       case 6:
-        return null; // Reserved for future
-      case 7:
         return _mealPlanKey.currentState;
-      case 9:
+      case 8:
         return _biochemistryKey.currentState;
       default:
         return null;
@@ -161,7 +159,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       _anthropometryKey.currentState,
       _nutritionKey.currentState,
       _macrosKey.currentState,
-      _equivalentsTableKey.currentState,
+      _equivalentsKey.currentState,
       _mealPlanKey.currentState,
       _biochemistryKey.currentState,
     ];
@@ -364,10 +362,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                               MacrosScreen(
                                                 key: _macrosKey,
                                               ), // 4
-                                              EquivalentsTableScreen(
-                                                key: _equivalentsTableKey,
+                                              EquivalentsScreen(
+                                                key: _equivalentsKey,
                                               ), // 5
-                                              const SizedBox.shrink(), // 6 (reserved for future)
                                               currentActiveClient != null
                                                   ? MealPlanScreen(
                                                       key: _mealPlanKey,
@@ -384,13 +381,13 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                                                 );
                                                           },
                                                     )
-                                                  : const SizedBox.shrink(), // 7
-                                              TrainingScreen(), // 8
+                                                  : const SizedBox.shrink(), // 6
+                                              TrainingScreen(), // 7
                                               BiochemistryScreen(
                                                 key: _biochemistryKey,
-                                              ), // 9
-                                              SettingsScreen(), // 10
-                                              const ClientOverviewScreen(), // 11
+                                              ), // 8
+                                              SettingsScreen(), // 9
+                                              const ClientOverviewScreen(), // 10
                                             ],
                                           ),
                                         ),
