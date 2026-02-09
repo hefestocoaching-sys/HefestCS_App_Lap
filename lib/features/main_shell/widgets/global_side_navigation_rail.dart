@@ -144,34 +144,72 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
                       size: 32,
                     ),
             ),
-            // Items de navegación con scroll suave
+            // Items de navegación distribuidos uniformemente
             Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: items.map((item) {
-                    final isSelected =
-                        item.index >= 0 && widget.selectedIndex == item.index;
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Calcular si los items caben sin scroll
+                  final itemHeight = 48.0; // altura aproximada de cada item
+                  final totalItemsHeight = items.length * itemHeight;
+                  final needsScroll = totalItemsHeight > constraints.maxHeight;
 
-                    return _NavRailItem(
-                      item: item,
-                      isExpanded: _isExpanded,
-                      isSelected: isSelected,
-                      onTap: () {
-                        if (item.index == 9) {
-                          debugPrint(
-                            'DEBUG: Clients button tapped, calling onClientsPressed',
+                  if (needsScroll) {
+                    // Si no caben, usar scroll compacto
+                    return SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: items.map((item) {
+                          final isSelected =
+                              item.index >= 0 &&
+                              widget.selectedIndex == item.index;
+                          return _NavRailItem(
+                            item: item,
+                            isExpanded: _isExpanded,
+                            isSelected: isSelected,
+                            onTap: () {
+                              if (item.index == 9) {
+                                debugPrint(
+                                  'DEBUG: Clients button tapped, calling onClientsPressed',
+                                );
+                                widget.onClientsPressed?.call();
+                                debugPrint('DEBUG: onClientsPressed called');
+                              } else if (item.index >= 0) {
+                                widget.onIndexChanged(item.index);
+                              }
+                            },
                           );
-                          widget.onClientsPressed?.call();
-                          debugPrint('DEBUG: onClientsPressed called');
-                        } else if (item.index >= 0) {
-                          widget.onIndexChanged(item.index);
-                        }
-                      },
+                        }).toList(),
+                      ),
                     );
-                  }).toList(),
-                ),
+                  } else {
+                    // Si caben, distribuir uniformemente
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: items.map((item) {
+                        final isSelected =
+                            item.index >= 0 &&
+                            widget.selectedIndex == item.index;
+                        return _NavRailItem(
+                          item: item,
+                          isExpanded: _isExpanded,
+                          isSelected: isSelected,
+                          onTap: () {
+                            if (item.index == 9) {
+                              debugPrint(
+                                'DEBUG: Clients button tapped, calling onClientsPressed',
+                              );
+                              widget.onClientsPressed?.call();
+                              debugPrint('DEBUG: onClientsPressed called');
+                            } else if (item.index >= 0) {
+                              widget.onIndexChanged(item.index);
+                            }
+                          },
+                        );
+                      }).toList(),
+                    );
+                  }
+                },
               ),
             ),
             // Settings en footer
@@ -242,6 +280,7 @@ class _NavRailItemState extends State<_NavRailItem> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
+          height: 48, // Altura fija para distribución uniforme
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: const BoxDecoration(color: Colors.transparent),
           child: Row(
