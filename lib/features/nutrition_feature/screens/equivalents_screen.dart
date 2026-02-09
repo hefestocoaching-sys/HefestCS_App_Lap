@@ -60,7 +60,7 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
     }
 
     // Tab 2: Inicializar matriz por comidas
-    int mealsPerDay = planResult.mealsPerDay ?? 3;
+    int mealsPerDay = planResult.mealsPerDay;
     for (var def in EquivalentCatalog.v1Definitions) {
       _equivalentsByMealAndGroup[def.id] = {};
       for (int mealIdx = 0; mealIdx < mealsPerDay; mealIdx++) {
