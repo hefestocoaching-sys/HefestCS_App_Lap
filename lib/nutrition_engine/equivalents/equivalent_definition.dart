@@ -21,11 +21,14 @@ class EquivalentDefinition {
   /// AOA → proteína | Cereales/Frutas → carbohidratos | Grasas → lípidos
   String get keyMacroForGroup {
     switch (group.toLowerCase()) {
-      case 'alimentos_origen_animal':
+      case 'aoa':
         return 'protein';
-      case 'cereales':
+      case 'cereales_tuberculos':
       case 'frutas':
-      case 'verduras':
+      case 'vegetales':
+      case 'leguminosas':
+      case 'azucares':
+      case 'leches':
         return 'carbs';
       case 'grasas':
         return 'fat';
@@ -39,138 +42,168 @@ class EquivalentDefinition {
 /// Basado en SMAE + nomenclatura SSOT canónica
 class EquivalentCatalog {
   static const List<EquivalentDefinition> v1Definitions = [
-    // ═══════════════════════════════════════════════════════════════════════
-    // ALIMENTOS DE ORIGEN ANIMAL (AOA) - Protein llave
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// AOA Bajo aporte grasa (~7g proteína, ~1.5g grasa)
+    // Datos sincronizados con assets/data/equivalents_v1.json
     EquivalentDefinition(
-      id: 'aoa_bajo_grasa',
-      group: 'alimentos_origen_animal',
-      subgroup: 'bajo_aporte_grasa',
-      kcal: 35.0,
+      id: 'vegetales',
+      group: 'vegetales',
+      subgroup: 'general',
+      kcal: 25.0,
+      proteinG: 2.0,
+      fatG: 0.0,
+      carbG: 4.0,
+    ),
+    EquivalentDefinition(
+      id: 'frutas',
+      group: 'frutas',
+      subgroup: 'general',
+      kcal: 60.0,
+      proteinG: 0.0,
+      fatG: 0.0,
+      carbG: 15.0,
+    ),
+    EquivalentDefinition(
+      id: 'cereales_sin_grasa',
+      group: 'cereales_tuberculos',
+      subgroup: 'sin_grasa',
+      kcal: 70.0,
+      proteinG: 2.0,
+      fatG: 0.0,
+      carbG: 15.0,
+    ),
+    EquivalentDefinition(
+      id: 'cereales_con_grasa',
+      group: 'cereales_tuberculos',
+      subgroup: 'con_grasa',
+      kcal: 115.0,
+      proteinG: 2.0,
+      fatG: 5.0,
+      carbG: 15.0,
+    ),
+    EquivalentDefinition(
+      id: 'leguminosas',
+      group: 'leguminosas',
+      subgroup: 'general',
+      kcal: 120.0,
+      proteinG: 8.0,
+      fatG: 1.0,
+      carbG: 20.0,
+    ),
+    EquivalentDefinition(
+      id: 'aoa_muy_bajo',
+      group: 'aoa',
+      subgroup: 'muy_bajo',
+      kcal: 40.0,
       proteinG: 7.0,
-      fatG: 1.5,
+      fatG: 1.0,
       carbG: 0.0,
     ),
-
-    /// AOA Medio aporte grasa (~7g proteína, ~5g grasa)
     EquivalentDefinition(
-      id: 'aoa_medio_grasa',
-      group: 'alimentos_origen_animal',
-      subgroup: 'medio_aporte_grasa',
-      kcal: 60.0,
+      id: 'aoa_bajo',
+      group: 'aoa',
+      subgroup: 'bajo',
+      kcal: 55.0,
+      proteinG: 7.0,
+      fatG: 3.0,
+      carbG: 0.0,
+    ),
+    EquivalentDefinition(
+      id: 'aoa_moderado',
+      group: 'aoa',
+      subgroup: 'moderado',
+      kcal: 75.0,
       proteinG: 7.0,
       fatG: 5.0,
       carbG: 0.0,
     ),
-
-    /// AOA Alto aporte grasa (~7g proteína, ~8g grasa)
     EquivalentDefinition(
-      id: 'aoa_alto_grasa',
-      group: 'alimentos_origen_animal',
-      subgroup: 'alto_aporte_grasa',
+      id: 'aoa_alto',
+      group: 'aoa',
+      subgroup: 'alto',
       kcal: 100.0,
       proteinG: 7.0,
       fatG: 8.0,
       carbG: 0.0,
     ),
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // CEREALES - Carbs llave
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// Cereales sin grasa (~15g carbs, ~3g proteína)
     EquivalentDefinition(
-      id: 'cereal_sin_grasa',
-      group: 'cereales',
-      subgroup: 'sin_grasa',
-      kcal: 68.0,
-      proteinG: 3.0,
-      fatG: 0.5,
-      carbG: 15.0,
+      id: 'leche_descremada',
+      group: 'leches',
+      subgroup: 'descremada',
+      kcal: 95.0,
+      proteinG: 9.0,
+      fatG: 2.0,
+      carbG: 12.0,
     ),
-
-    /// Cereales con grasa (~15g carbs, ~3g proteína, ~5g grasa)
     EquivalentDefinition(
-      id: 'cereal_con_grasa',
-      group: 'cereales',
-      subgroup: 'con_grasa',
-      kcal: 125.0,
-      proteinG: 3.0,
-      fatG: 5.0,
-      carbG: 15.0,
+      id: 'leche_semidescremada',
+      group: 'leches',
+      subgroup: 'semidescremada',
+      kcal: 110.0,
+      proteinG: 9.0,
+      fatG: 4.0,
+      carbG: 12.0,
     ),
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // FRUTAS - Carbs llave
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// Frutas (~15g carbs, ~0.5g proteína)
     EquivalentDefinition(
-      id: 'fruta_standard',
-      group: 'frutas',
-      subgroup: 'standard',
-      kcal: 60.0,
-      proteinG: 0.5,
-      fatG: 0.2,
-      carbG: 15.0,
+      id: 'leche_entera',
+      group: 'leches',
+      subgroup: 'entera',
+      kcal: 150.0,
+      proteinG: 8.0,
+      fatG: 8.0,
+      carbG: 12.0,
     ),
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // VERDURAS - Carbs llave
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// Verduras (~5g carbs, ~2g proteína) - porción generosa
     EquivalentDefinition(
-      id: 'verdura_standard',
-      group: 'verduras',
-      subgroup: 'standard',
-      kcal: 25.0,
-      proteinG: 2.0,
-      fatG: 0.2,
-      carbG: 5.0,
-    ),
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // GRASAS - Fat llave
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// Grasa (~5g grasa)
-    EquivalentDefinition(
-      id: 'grasa_standard',
+      id: 'grasas_sin_proteina',
       group: 'grasas',
-      subgroup: 'standard',
+      subgroup: 'sin_proteina',
       kcal: 45.0,
       proteinG: 0.0,
       fatG: 5.0,
       carbG: 0.0,
     ),
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // LÁCTEOS - Mixed (proteína + carbs)
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// Lácteo descremado (~8g proteína, ~12g carbs)
     EquivalentDefinition(
-      id: 'lacteo_descremado',
-      group: 'lacteos',
-      subgroup: 'descremado',
-      kcal: 85.0,
-      proteinG: 8.0,
-      fatG: 0.5,
-      carbG: 12.0,
+      id: 'grasas_con_proteina',
+      group: 'grasas',
+      subgroup: 'con_proteina',
+      kcal: 70.0,
+      proteinG: 3.0,
+      fatG: 5.0,
+      carbG: 3.0,
     ),
-
-    /// Lácteo completo (~8g proteína, ~12g carbs, ~7g grasa)
     EquivalentDefinition(
-      id: 'lacteo_completo',
-      group: 'lacteos',
-      subgroup: 'completo',
-      kcal: 150.0,
-      proteinG: 8.0,
-      fatG: 7.0,
-      carbG: 12.0,
+      id: 'azucares_sin_grasa',
+      group: 'azucares',
+      subgroup: 'sin_grasa',
+      kcal: 40.0,
+      proteinG: 0.0,
+      fatG: 0.0,
+      carbG: 10.0,
+    ),
+    EquivalentDefinition(
+      id: 'azucares_con_grasa',
+      group: 'azucares',
+      subgroup: 'con_grasa',
+      kcal: 85.0,
+      proteinG: 0.0,
+      fatG: 5.0,
+      carbG: 10.0,
+    ),
+    EquivalentDefinition(
+      id: 'libres_energia',
+      group: 'libres',
+      subgroup: 'energia',
+      kcal: 0.0,
+      proteinG: 0.0,
+      fatG: 0.0,
+      carbG: 0.0,
+    ),
+    EquivalentDefinition(
+      id: 'alcohol',
+      group: 'alcohol',
+      subgroup: 'general',
+      kcal: 140.0,
+      proteinG: 0.0,
+      fatG: 0.0,
+      carbG: 0.0,
     ),
   ];
 
