@@ -351,23 +351,45 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                             children: [
                                               const WorkspaceHomeScreen(), // 0
                                               HistoryClinicScreen(
-                                                key: _historyClinicKey,
+                                                key: currentActiveClient != null
+                                                    ? ValueKey(
+                                                        'history_${currentActiveClient.id}',
+                                                      )
+                                                    : _historyClinicKey,
                                               ), // 1
                                               AnthropometryScreen(
-                                                key: _anthropometryKey,
+                                                key: currentActiveClient != null
+                                                    ? ValueKey(
+                                                        'anthropometry_${currentActiveClient.id}',
+                                                      )
+                                                    : _anthropometryKey,
                                               ), // 2
                                               NutritionScreen(
-                                                key: _nutritionKey,
+                                                key: currentActiveClient != null
+                                                    ? ValueKey(
+                                                        'nutrition_${currentActiveClient.id}',
+                                                      )
+                                                    : _nutritionKey,
                                               ), // 3
                                               MacrosScreen(
-                                                key: _macrosKey,
+                                                key: currentActiveClient != null
+                                                    ? ValueKey(
+                                                        'macros_${currentActiveClient.id}',
+                                                      )
+                                                    : _macrosKey,
                                               ), // 4
                                               EquivalentsByDayScreen(
-                                                key: _equivalentsKey,
+                                                key: currentActiveClient != null
+                                                    ? ValueKey(
+                                                        'equivalents_${currentActiveClient.id}',
+                                                      )
+                                                    : _equivalentsKey,
                                               ), // 5
                                               currentActiveClient != null
                                                   ? MealPlanScreen(
-                                                      key: _mealPlanKey,
+                                                      key: ValueKey(
+                                                        'mealplan_${currentActiveClient.id}',
+                                                      ),
                                                       client:
                                                           currentActiveClient,
                                                       onClientUpdated:
@@ -382,9 +404,21 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                                           },
                                                     )
                                                   : const SizedBox.shrink(), // 6
-                                              TrainingScreen(), // 7
+                                              TrainingScreen(
+                                                key: currentActiveClient != null
+                                                    ? ValueKey(
+                                                        'training_${currentActiveClient.id}',
+                                                      )
+                                                    : const ValueKey(
+                                                        'training_none',
+                                                      ),
+                                              ), // 7
                                               BiochemistryScreen(
-                                                key: _biochemistryKey,
+                                                key: currentActiveClient != null
+                                                    ? ValueKey(
+                                                        'biochemistry_${currentActiveClient.id}',
+                                                      )
+                                                    : _biochemistryKey,
                                               ), // 8
                                               SettingsScreen(), // 9
                                               const ClientOverviewScreen(), // 10

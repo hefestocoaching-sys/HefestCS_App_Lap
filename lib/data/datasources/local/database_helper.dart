@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/training_interview.dart';
 import 'package:hcs_app_lap/features/training_feature/domain/training_interview_validator.dart';
+import 'package:hcs_app_lap/data/datasources/local/sync_queue_helper.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -37,6 +38,9 @@ class DatabaseHelper {
       onUpgrade: _onUpgrade,
       onOpen: (db) async {
         await _ensureAppStateTable(db);
+        await SyncQueueHelper.ensureTable(db);
+        await db.execute('PRAGMA journal_mode=WAL');
+        await db.execute('PRAGMA foreign_keys=ON');
       },
     );
   }
@@ -83,6 +87,7 @@ class DatabaseHelper {
     ''');
     await _ensureTrainingInterviewsTable(db);
     await _ensureAppStateTable(db);
+    await SyncQueueHelper.ensureTable(db);
   }
 
   // Non-destructive upgrade: keep table to avoid data loss.
@@ -112,8 +117,20 @@ class DatabaseHelper {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         completed_at TEXT,
+        is_synced INTEGER DEFAULT 0,
         FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
       )
+    ''');
+
+    try {
+      await db.execute(
+        'ALTER TABLE training_interviews ADD COLUMN is_synced INTEGER DEFAULT 0',
+      );
+    } catch (_) {}
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_training_interviews_synced
+      ON training_interviews(is_synced)
     ''');
   }
 

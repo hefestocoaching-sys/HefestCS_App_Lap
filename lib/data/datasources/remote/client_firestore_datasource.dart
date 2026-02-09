@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -217,6 +218,15 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       'deleted': deleted,
     };
 
+    final jsonStr = jsonEncode(fullPayload);
+    if (jsonStr.length > 900000) {
+      debugPrint('⚠️ Client document too large: ${jsonStr.length} bytes');
+      throw Exception(
+        'Client document exceeds Firestore limit (${jsonStr.length} bytes). '
+        'Consider moving large arrays to subcollections.',
+      );
+    }
+
     String? invalidPath;
     List<String> invalidPaths = const [];
     List<String> auditFindings = const [];
@@ -271,7 +281,10 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       if (failInvalidPath != null) {
         developer.log('🔥 Firestore payload invalid at: $failInvalidPath');
       }
-      final failInvalidPaths = listInvalidFirestorePaths(fullPayload, limit: 12);
+      final failInvalidPaths = listInvalidFirestorePaths(
+        fullPayload,
+        limit: 12,
+      );
       if (failInvalidPaths.isNotEmpty) {
         developer.log(
           '🔥 Firestore payload invalid paths: ${failInvalidPaths.join(' | ')}',

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hcs_app_lap/core/services/sync_service.dart';
 import 'package:hcs_app_lap/services/food_database_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:intl/intl.dart';
@@ -44,6 +45,11 @@ Future<void> main() async {
   await _loadEnvIfAvailable();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  SyncService.instance.start();
+
+  PaintingBinding.instance.imageCache.maximumSize = 100;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 50 << 20;
 
   runApp(const ProviderScope(child: HcsAppLap()));
 }

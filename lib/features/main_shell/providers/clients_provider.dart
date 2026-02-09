@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hcs_app_lap/core/utils/update_lock.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
+import 'package:hcs_app_lap/domain/entities/nutrition_settings.dart';
 import 'package:hcs_app_lap/services/database_helper.dart';
 
 class ClientsState {
@@ -148,86 +150,103 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
   }
 
   Future<void> updateActiveClient(Client Function(Client) transform) async {
-    final current = state.value;
-    if (current == null) return;
-    final active = current.activeClient;
-    if (active == null) return;
-    state = AsyncValue.data(current.copyWith(isLoading: true, error: null));
-    try {
-      // Serialize writes per-client to avoid lost-update races.
-      final clientId = active.id;
-      final previous = _clientWriteLocks[clientId] ?? Future.value();
+    return UpdateLock.instance.safeClientUpdate(() async {
+      final current = state.value;
+      if (current == null) return;
+      final active = current.activeClient;
+      if (active == null) return;
+      state = AsyncValue.data(current.copyWith(isLoading: true, error: null));
+      try {
+        // Serialize writes per-client to avoid lost-update races.
+        final clientId = active.id;
+        final previous = _clientWriteLocks[clientId] ?? Future.value();
 
-      // Usar .then() en lugar de .whenComplete() para evitar problemas con async
-      final next = previous.then((_) async {
-        final persisted = await _repository.getClientById(clientId) ?? active;
-        final updated = transform(persisted);
+        // Usar .then() en lugar de .whenComplete() para evitar problemas con async
+        final next = previous.then((_) async {
+          final persisted = await _repository.getClientById(clientId) ?? active;
+          final updated = transform(persisted);
 
-        final mergedNutritionExtra = Map<String, dynamic>.from(
-          persisted.nutrition.extra,
-        );
-        mergedNutritionExtra.addAll(updated.nutrition.extra);
+          final mergedTrainingExtra = Map<String, dynamic>.from(
+            persisted.training.extra,
+          );
+          mergedTrainingExtra.addAll(updated.training.extra);
 
-        final mergedTrainingExtra = Map<String, dynamic>.from(
-          persisted.training.extra,
-        );
-        mergedTrainingExtra.addAll(updated.training.extra);
+          debugPrint('✅ training.extra mergeado en updateActiveClient');
 
-        debugPrint('✅ training.extra mergeado en updateActiveClient');
+          final mergedNutrition = _safeMergeNutrition(
+            persisted.nutrition,
+            updated.nutrition,
+          );
 
-        final mergedNutrition = persisted.nutrition.copyWith(
-          extra: mergedNutritionExtra,
-          dailyMealPlans:
-              updated.nutrition.dailyMealPlans ??
-              persisted.nutrition.dailyMealPlans,
-          planType: updated.nutrition.planType ?? persisted.nutrition.planType,
-          planStartDate:
-              updated.nutrition.planStartDate ??
-              persisted.nutrition.planStartDate,
-          planEndDate:
-              updated.nutrition.planEndDate ?? persisted.nutrition.planEndDate,
-        );
+          // ✅ CORRECTO: usar updated.training como base, solo mergear extra
+          final mergedTraining = updated.training.copyWith(
+            extra: mergedTrainingExtra,
+          );
 
-        // ✅ CORRECTO: usar updated.training como base, solo mergear extra
-        final mergedTraining = updated.training.copyWith(
-          extra: mergedTrainingExtra,
-        );
+          final mergedClient = persisted.copyWith(
+            profile: updated.profile,
+            history: updated.history,
+            nutrition: mergedNutrition,
+            training: mergedTraining,
+            trainingPlans: updated.trainingPlans,
+            trainingWeeks: updated.trainingWeeks,
+            trainingSessions: updated.trainingSessions,
+            status: updated.status,
+          );
 
-        final mergedClient = persisted.copyWith(
-          profile: updated.profile,
-          history: updated.history,
-          nutrition: mergedNutrition,
-          training: mergedTraining,
-          trainingPlans: updated.trainingPlans,
-          trainingWeeks: updated.trainingWeeks,
-          trainingSessions: updated.trainingSessions,
-          status: updated.status,
-        );
+          await _repository.saveClient(mergedClient);
 
-        await _repository.saveClient(mergedClient);
+          // Refresh local state without reloading all clients.
+          final updatedClients = current.clients
+              .map(
+                (client) =>
+                    client.id == mergedClient.id ? mergedClient : client,
+              )
+              .toList();
+          final sortedClients = _sortClients(updatedClients);
+          state = AsyncValue.data(
+            current.copyWith(
+              clients: sortedClients,
+              activeClientId: mergedClient.id,
+              isLoading: false,
+              error: null,
+            ),
+          );
+        });
 
-        // Refresh local state without reloading all clients.
-        final updatedClients = current.clients
-            .map((client) => client.id == mergedClient.id ? mergedClient : client)
-            .toList();
-        final sortedClients = _sortClients(updatedClients);
+        _clientWriteLocks[clientId] = next;
+        await next;
+      } catch (e) {
         state = AsyncValue.data(
-          current.copyWith(
-            clients: sortedClients,
-            activeClientId: mergedClient.id,
-            isLoading: false,
-            error: null,
-          ),
+          current.copyWith(isLoading: false, error: e.toString()),
         );
-      });
+      }
+    });
+  }
 
-      _clientWriteLocks[clientId] = next;
-      await next;
-    } catch (e) {
-      state = AsyncValue.data(
-        current.copyWith(isLoading: false, error: e.toString()),
-      );
-    }
+  NutritionSettings _safeMergeNutrition(
+    NutritionSettings current,
+    NutritionSettings updated,
+  ) {
+    final mergedExtra = Map<String, dynamic>.from(current.extra);
+    updated.extra.forEach((key, value) {
+      if (value != null) {
+        mergedExtra[key] = value;
+      }
+    });
+
+    return NutritionSettings(
+      planType: updated.planType ?? current.planType,
+      planStartDate: updated.planStartDate ?? current.planStartDate,
+      planEndDate: updated.planEndDate ?? current.planEndDate,
+      kcal: updated.kcal ?? current.kcal,
+      dailyKcal: updated.dailyKcal ?? current.dailyKcal,
+      weeklyMacroSettings:
+          updated.weeklyMacroSettings ?? current.weeklyMacroSettings,
+      dailyMealPlans: updated.dailyMealPlans ?? current.dailyMealPlans,
+      clinicalRestrictionProfile: updated.clinicalRestrictionProfile,
+      extra: mergedExtra,
+    );
   }
 
   Future<void> _persistActiveClientId(String? id) async {

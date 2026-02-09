@@ -54,8 +54,10 @@ service cloud.firestore {
     // ════════════════════════════════════════════════════════════
     
     match /ml_training_data/{exampleId} {
-      // Permitir lectura/escritura a usuarios autenticados
-      allow read, write: if isAuthenticated();
+      allow read, write: if isAuthenticated() &&
+        resource.data.coachId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.coachId == request.auth.uid;
     }
   }
 }
