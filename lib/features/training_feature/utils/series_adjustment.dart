@@ -10,7 +10,12 @@ class SeriesAdjustmentEngine {
     final extra = profile.extra;
     final resolvedLevel =
         profile.trainingLevel ??
-        parseTrainingLevel(extra[TrainingExtraKeys.trainingLevel]?.toString());
+        parseTrainingLevel(
+          (extra[TrainingExtraKeys.effectiveTrainingLevel] ??
+            extra[TrainingExtraKeys.legacyTrainingLevel] ??
+            extra[TrainingExtraKeys.trainingLevel])
+              ?.toString(),
+        );
     final base = _getBaseVolume(resolvedLevel);
     if (base.min <= 0 || base.max <= 0) {
       return {};

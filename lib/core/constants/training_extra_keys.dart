@@ -1,4 +1,12 @@
 class TrainingExtraKeys {
+  static const effectiveTrainingState = 'effectiveTrainingState';
+  static const effectiveTrainingLevel = 'effectiveTrainingLevel';
+  static const isReconditioningPhase = 'isReconditioningPhase';
+  static const volumeToleranceModifier = 'volumeToleranceModifier';
+
+  // Legacy compatibility (NO USAR PARA DECISIONES)
+  static const legacyTrainingLevel = 'trainingLevel';
+
   static const sportDiscipline = 'sportDiscipline';
   static const trainingYears = 'trainingYears';
   static const injuries = 'injuries';

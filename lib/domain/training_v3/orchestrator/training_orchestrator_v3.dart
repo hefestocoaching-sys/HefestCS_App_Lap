@@ -230,13 +230,17 @@ class TrainingOrchestratorV3 {
             : null) ??
         8;
 
-    // E4 P0: Extraer yearsTrainingContinuous (prioridad: extra, luego setupV1, luego legacy)
+    // E4 P0: Extraer yearsTrainingContinuous (prioridad: setupV1, luego SSOT, luego legacy)
+    final monthsTrainingNow =
+        _parseDouble(training.extra['monthsTrainingNow']);
     double yearsTraining =
-      _parseDouble(training.extra['yearsTrainingContinuous']) ??
       (useSsotV1 && setupV1.trainingExperienceYearsContinuous > 0
         ? setupV1.trainingExperienceYearsContinuous.toDouble()
         : null) ??
-      (_parseDouble(training.extra['yearsTraining']) ?? _defaultYearsTraining);
+      (monthsTrainingNow != null ? (monthsTrainingNow / 12.0) : null) ??
+      (_parseDouble(training.extra['trainingYears']) ??
+          _parseDouble(training.extra['yearsTraining']) ??
+          _defaultYearsTraining);
 
     // E4 P0: Extraer altura y peso (prioridad: extra, luego setupV1, luego legacy)
     double heightCm =

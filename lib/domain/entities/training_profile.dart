@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/constants/training_interview_keys.dart';
+import 'package:hcs_app_lap/core/constants/training_interview_legacy_keys.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/core/enums/training_goal.dart';
 import 'package:hcs_app_lap/core/enums/training_focus.dart';
@@ -148,49 +149,12 @@ class TrainingProfile extends Equatable {
   }
 
   static const List<String> _interviewKeys = [
-    TrainingInterviewKeys.yearsTrainingContinuous,
-    TrainingInterviewKeys.avgSleepHours,
-    TrainingInterviewKeys.sessionDurationMinutes,
-    TrainingInterviewKeys.restBetweenSetsSeconds,
-    TrainingInterviewKeys.workCapacity,
-    TrainingInterviewKeys.recoveryHistory,
-    TrainingInterviewKeys.externalRecovery,
-    TrainingInterviewKeys.programNovelty,
-    TrainingInterviewKeys.physicalStress,
-    TrainingInterviewKeys.nonPhysicalStress,
-    TrainingInterviewKeys.restQuality,
-    TrainingInterviewKeys.dietQuality,
-    TrainingInterviewKeys.yearsTraining,
-    TrainingInterviewKeys.sessionDuration,
-    TrainingInterviewKeys.restBetweenSets,
-    TrainingInterviewKeys.workCapacityScore,
-    TrainingInterviewKeys.recoveryHistoryScore,
-    TrainingInterviewKeys.externalRecoverySupport,
-    TrainingInterviewKeys.programNoveltyClass,
-    TrainingInterviewKeys.externalPhysicalStressLevel,
-    TrainingInterviewKeys.nonPhysicalStressLevel,
-    TrainingInterviewKeys.nonPhysicalStressLevel2,
-    TrainingInterviewKeys.restQuality2,
-    TrainingInterviewKeys.dietHabitsClass,
-    TrainingInterviewKeys.strengthLevelClass,
-    TrainingInterviewKeys.heightCm,
-    TrainingInterviewKeys.weightKg,
-    TrainingInterviewKeys.usesAnabolics,
-    TrainingInterviewKeys.trainingLevel,
-    TrainingInterviewKeys.trainingLevelLabel,
-    TrainingInterviewKeys.avgWeeklySetsPerMuscle,
-    TrainingInterviewKeys.consecutiveWeeksTraining,
-    TrainingInterviewKeys.perceivedRecoveryStatus,
-    TrainingInterviewKeys.averageRIR,
-    TrainingInterviewKeys.averageSessionRPE,
-    TrainingInterviewKeys.maxWeeklySetsBeforeOverreaching,
-    TrainingInterviewKeys.deloadFrequencyWeeks,
-    TrainingInterviewKeys.restingHeartRate,
-    TrainingInterviewKeys.heartRateVariability,
-    TrainingInterviewKeys.soreness48hAverage,
-    TrainingInterviewKeys.periodBreaksLast12Months,
-    TrainingInterviewKeys.sessionCompletionRate,
-    TrainingInterviewKeys.performanceTrend,
+    TrainingInterviewKeys.hasTrainedBefore,
+    TrainingInterviewKeys.totalYearsTrainedBefore,
+    TrainingInterviewKeys.hadLongPause,
+    TrainingInterviewKeys.longestPauseMonths,
+    TrainingInterviewKeys.isTrainingNow,
+    TrainingInterviewKeys.monthsTrainingNow,
   ];
 
   bool hasInterviewChangedSincePlanGeneration(TrainingPlanConfig plan) {
@@ -230,7 +194,7 @@ class TrainingProfile extends Equatable {
   int get yearsTrainingContinuousResolved {
     final v =
         extra[TrainingExtraKeys.trainingYears] ??
-        extra[TrainingInterviewKeys.yearsTrainingContinuous];
+        extra[TrainingInterviewLegacyKeys.yearsTrainingContinuous];
     if (v is int) return v;
     if (v is num) return v.toInt();
     return int.tryParse(v?.toString() ?? '') ?? 0;
@@ -238,13 +202,13 @@ class TrainingProfile extends Equatable {
 
   /// Años de entrenamiento continuo (legacy, mantiene compatibilidad)
   int get yearsTraining =>
-      extra[TrainingInterviewKeys.yearsTrainingContinuous] as int? ?? 0;
+      extra[TrainingInterviewLegacyKeys.yearsTrainingContinuous] as int? ?? 0;
 
   /// Horas promedio de sueño (lee primero de TrainingExtraKeys, luego TrainingInterviewKeys)
   double get avgSleepHoursResolved {
     final v =
         extra[TrainingExtraKeys.avgSleepHours] ??
-        extra[TrainingInterviewKeys.avgSleepHours];
+        extra[TrainingInterviewLegacyKeys.avgSleepHours];
     if (v is double) return v;
     if (v is num) return v.toDouble();
     return double.tryParse(v?.toString() ?? '') ?? 0.0;
@@ -252,14 +216,16 @@ class TrainingProfile extends Equatable {
 
   /// Horas promedio de sueño (para cálculos de VMR) (legacy)
   double get avgSleepHoursFromExtra =>
-      (extra[TrainingInterviewKeys.avgSleepHours] ?? avgSleepHours ?? 7.0)
+      (extra[TrainingInterviewLegacyKeys.avgSleepHours] ??
+          avgSleepHours ??
+          7.0)
           .toDouble();
 
   /// Duración de sesión en minutos (lee primero de TrainingExtraKeys, luego TrainingInterviewKeys)
   int get sessionDurationMinutesResolved {
     final v =
         extra[TrainingExtraKeys.timePerSessionMinutes] ??
-        extra[TrainingInterviewKeys.sessionDurationMinutes];
+        extra[TrainingInterviewLegacyKeys.sessionDurationMinutes];
     if (v is int) return v;
     if (v is num) return v.toInt();
     return int.tryParse(v?.toString() ?? '') ?? 0;
@@ -269,7 +235,7 @@ class TrainingProfile extends Equatable {
   int get restBetweenSetsSecondsResolved {
     final v =
         extra[TrainingExtraKeys.restBetweenSetsSeconds] ??
-        extra[TrainingInterviewKeys.restBetweenSetsSeconds];
+        extra[TrainingInterviewLegacyKeys.restBetweenSetsSeconds];
     if (v is int) return v;
     if (v is num) return v.toInt();
     return int.tryParse(v?.toString() ?? '') ?? 0;
@@ -277,19 +243,19 @@ class TrainingProfile extends Equatable {
 
   /// Capacidad de trabajo (escala 1-5)
   int get workCapacity =>
-      extra[TrainingInterviewKeys.workCapacity] as int? ?? 3;
+      extra[TrainingInterviewLegacyKeys.workCapacity] as int? ?? 3;
 
   /// Historial de recuperación (escala 1-5)
   int get recoveryHistory =>
-      extra[TrainingInterviewKeys.recoveryHistory] as int? ?? 3;
+      extra[TrainingInterviewLegacyKeys.recoveryHistory] as int? ?? 3;
 
   /// Soporte externo de recuperación (masajes, fisio, etc.)
   bool get externalRecovery =>
-      extra[TrainingInterviewKeys.externalRecovery] as bool? ?? false;
+      extra[TrainingInterviewLegacyKeys.externalRecovery] as bool? ?? false;
 
   /// Novedad del programa (enum ProgramNovelty)
   ProgramNovelty? get programNovelty {
-    final value = extra[TrainingInterviewKeys.programNovelty];
+    final value = extra[TrainingInterviewLegacyKeys.programNovelty];
     if (value == null) return null;
     try {
       return ProgramNovelty.values.byName(value.toString());
@@ -300,7 +266,7 @@ class TrainingProfile extends Equatable {
 
   /// Estrés físico externo (enum InterviewStressLevel)
   InterviewStressLevel? get physicalStress {
-    final value = extra[TrainingInterviewKeys.physicalStress];
+    final value = extra[TrainingInterviewLegacyKeys.physicalStress];
     if (value == null) return null;
     try {
       return InterviewStressLevel.values.byName(value.toString());
@@ -311,7 +277,7 @@ class TrainingProfile extends Equatable {
 
   /// Estrés no físico (mental, emocional) (enum InterviewStressLevel)
   InterviewStressLevel? get nonPhysicalStress {
-    final value = extra[TrainingInterviewKeys.nonPhysicalStress];
+    final value = extra[TrainingInterviewLegacyKeys.nonPhysicalStress];
     if (value == null) return null;
     try {
       return InterviewStressLevel.values.byName(value.toString());
@@ -322,7 +288,7 @@ class TrainingProfile extends Equatable {
 
   /// Calidad del descanso/sueño (enum InterviewRestQuality)
   InterviewRestQuality? get restQualityEnum {
-    final value = extra[TrainingInterviewKeys.restQuality];
+    final value = extra[TrainingInterviewLegacyKeys.restQuality];
     if (value == null) return null;
     try {
       return InterviewRestQuality.values.byName(value.toString());
@@ -333,7 +299,7 @@ class TrainingProfile extends Equatable {
 
   /// Calidad de la dieta (enum DietQuality)
   DietQuality? get dietQuality {
-    final value = extra[TrainingInterviewKeys.dietQuality];
+    final value = extra[TrainingInterviewLegacyKeys.dietQuality];
     if (value == null) return null;
     try {
       return DietQuality.values.byName(value.toString());
@@ -539,9 +505,15 @@ class TrainingProfile extends Equatable {
 
     final resolvedTrainingLevel =
         parseLevel(json['trainingLevel']) ??
-        parseLevel(extraMap['trainingLevel']?.toString()) ??
-        parseTrainingLevel(extraMap['trainingLevelLabel']?.toString()) ??
-        parseTrainingLevel(extraMap['trainingLevel']?.toString());
+        parseLevel(
+          extraMap[TrainingExtraKeys.effectiveTrainingLevel]?.toString(),
+        ) ??
+        parseLevel(
+          extraMap[TrainingExtraKeys.legacyTrainingLevel]?.toString(),
+        ) ??
+        parseTrainingLevel(
+          extraMap[TrainingExtraKeys.legacyTrainingLevel]?.toString(),
+        );
 
     final rawBaseVolume = mapStringInt(json['baseVolumePerMuscle']);
     final resolvedBaseVolumePerMuscle = rawBaseVolume.isNotEmpty
@@ -590,22 +562,30 @@ class TrainingProfile extends Equatable {
     final resolvedAvgSleepHours =
         parseDouble(extraMap['avgSleepHours'] ?? json['avgSleepHours']) ?? 0.0;
 
+    final monthsTrainingNow = parseInt(
+      extraMap[TrainingInterviewKeys.monthsTrainingNow],
+    );
     final resolvedYearsTrainingContinuous = parseInt(
       json['yearsTrainingContinuous'] ??
-          extraMap[TrainingInterviewKeys.yearsTrainingContinuous],
+          extraMap[TrainingInterviewLegacyKeys.yearsTrainingContinuous],
     );
     final resolvedSessionDurationMinutes = parseInt(
       json['sessionDurationMinutes'] ??
-          extraMap[TrainingInterviewKeys.sessionDurationMinutes],
+          extraMap[TrainingInterviewLegacyKeys.sessionDurationMinutes],
     );
     final resolvedRestBetweenSetsSeconds = parseInt(
       json['restBetweenSetsSeconds'] ??
-          extraMap[TrainingInterviewKeys.restBetweenSetsSeconds],
+          extraMap[TrainingInterviewLegacyKeys.restBetweenSetsSeconds],
     );
     final resolvedPerceivedStress =
         (extraMap['perceivedStress'] ?? json['perceivedStress'])?.toString();
     final resolvedRecoveryQuality =
         (extraMap['recoveryQuality'] ?? json['recoveryQuality'])?.toString();
+
+    final resolvedYearsTrainingContinuousFinal =
+      resolvedYearsTrainingContinuous > 0
+        ? resolvedYearsTrainingContinuous
+        : (monthsTrainingNow ~/ 12);
 
     return TrainingProfile(
       id: json['id']?.toString(),
@@ -631,7 +611,7 @@ class TrainingProfile extends Equatable {
       trainingLevel: resolvedTrainingLevel,
       daysPerWeek: resolvedDaysPerWeek,
       timePerSessionMinutes: resolvedTimePerSessionMinutes,
-      yearsTrainingContinuous: resolvedYearsTrainingContinuous,
+      yearsTrainingContinuous: resolvedYearsTrainingContinuousFinal,
       sessionDurationMinutes: resolvedSessionDurationMinutes,
       restBetweenSetsSeconds: resolvedRestBetweenSetsSeconds,
       avgSleepHours: resolvedAvgSleepHours,

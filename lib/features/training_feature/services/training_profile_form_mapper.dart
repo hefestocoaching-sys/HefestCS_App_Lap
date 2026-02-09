@@ -5,7 +5,6 @@ import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 
 class TrainingProfileFormInput {
   final Map<String, dynamic> extra;
-  final String? trainingLevelLabel;
   final String? daysPerWeekLabel;
   final String? timePerSessionLabel;
   final int? planDurationWeeks;
@@ -27,7 +26,6 @@ class TrainingProfileFormInput {
 
   const TrainingProfileFormInput({
     required this.extra,
-    required this.trainingLevelLabel,
     required this.daysPerWeekLabel,
     required this.timePerSessionLabel,
     required this.planDurationWeeks,
@@ -74,21 +72,12 @@ class TrainingProfileFormMapper {
         input.planDurationWeeks ??
         (base.blockLengthWeeks > 0 ? base.blockLengthWeeks : 4);
 
-    // Parsear el trainingLevel primero para tener el enum
+    final effectiveLevelRaw =
+        input.extra[TrainingExtraKeys.effectiveTrainingLevel] ??
+        input.extra[TrainingExtraKeys.legacyTrainingLevel] ??
+        input.extra[TrainingExtraKeys.trainingLevel];
     final trainingLevel =
-        parseTrainingLevel(input.trainingLevelLabel) ?? base.trainingLevel;
-
-    // DOBLE CANAL: Guardar tanto el enum canónico como el label humano
-    // El motor SIEMPRE debe leer el enum (.name)
-    // La UI puede usar el label para mostrar al usuario
-    if (trainingLevel != null) {
-      extra[TrainingExtraKeys.trainingLevel] = trainingLevel.name;
-      extra[TrainingExtraKeys.trainingLevelLabel] = input.trainingLevelLabel;
-    } else {
-      // Si no se pudo parsear, guardar el label original para no perder datos
-      extra[TrainingExtraKeys.trainingLevel] = input.trainingLevelLabel;
-      extra[TrainingExtraKeys.trainingLevelLabel] = input.trainingLevelLabel;
-    }
+        parseTrainingLevel(effectiveLevelRaw?.toString()) ?? base.trainingLevel;
 
     extra[TrainingExtraKeys.daysPerWeek] = daysPerWeek;
     extra[TrainingExtraKeys.timePerSession] = input.timePerSessionLabel;

@@ -6,7 +6,7 @@ import 'package:hcs_app_lap/domain/entities/client_profile.dart';
 import 'package:hcs_app_lap/domain/entities/clinical_history.dart';
 import 'package:hcs_app_lap/domain/entities/nutrition_settings.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
-import 'package:hcs_app_lap/core/constants/training_interview_keys.dart';
+import 'package:hcs_app_lap/core/constants/training_interview_legacy_keys.dart';
 
 Client _buildClient({
   required String id,
@@ -54,16 +54,16 @@ void main() {
           id: 'test_interview_persist_${DateTime.now().millisecondsSinceEpoch}',
           name: 'Test Interview Persistence',
           trainingExtra: {
-            TrainingInterviewKeys.yearsTrainingContinuous: 5,
-            TrainingInterviewKeys.avgSleepHours: 7.5,
-            TrainingInterviewKeys.sessionDurationMinutes: 60,
-            TrainingInterviewKeys.restBetweenSetsSeconds: 90,
-            TrainingInterviewKeys.workCapacity: 'Alto',
-            TrainingInterviewKeys.recoveryHistory: 'Buena',
-            TrainingInterviewKeys.externalRecovery: true,
-            TrainingInterviewKeys.programNovelty: 'Variado',
-            TrainingInterviewKeys.physicalStress: 'Moderado',
-            TrainingInterviewKeys.dietQuality: 'Excelente',
+            TrainingInterviewLegacyKeys.yearsTrainingContinuous: 5,
+            TrainingInterviewLegacyKeys.avgSleepHours: 7.5,
+            TrainingInterviewLegacyKeys.sessionDurationMinutes: 60,
+            TrainingInterviewLegacyKeys.restBetweenSetsSeconds: 90,
+            TrainingInterviewLegacyKeys.workCapacity: 'Alto',
+            TrainingInterviewLegacyKeys.recoveryHistory: 'Buena',
+            TrainingInterviewLegacyKeys.externalRecovery: true,
+            TrainingInterviewLegacyKeys.programNovelty: 'Variado',
+            TrainingInterviewLegacyKeys.physicalStress: 'Moderado',
+            TrainingInterviewLegacyKeys.dietQuality: 'Excelente',
           },
         );
 
@@ -75,56 +75,63 @@ void main() {
 
         expect(reloadedClient, isNotNull);
         expect(
-          reloadedClient!.training.extra[TrainingInterviewKeys
+          reloadedClient!.training.extra[TrainingInterviewLegacyKeys
               .yearsTrainingContinuous],
           equals(5),
           reason:
               'yearsTrainingContinuous should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys.avgSleepHours],
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
+              .avgSleepHours],
           equals(7.5),
           reason: 'avgSleepHours should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
               .sessionDurationMinutes],
           equals(60),
           reason: 'sessionDurationMinutes should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
               .restBetweenSetsSeconds],
           equals(90),
           reason: 'restBetweenSetsSeconds should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys.workCapacity],
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
+              .workCapacity],
           equals('Alto'),
           reason: 'workCapacity should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys.recoveryHistory],
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
+              .recoveryHistory],
           equals('Buena'),
           reason: 'recoveryHistory should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys.externalRecovery],
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
+              .externalRecovery],
           equals(true),
           reason: 'externalRecovery should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys.programNovelty],
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
+              .programNovelty],
           equals('Variado'),
           reason: 'programNovelty should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys.physicalStress],
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
+              .physicalStress],
           equals('Moderado'),
           reason: 'physicalStress should persist after save and reload',
         );
         expect(
-          reloadedClient.training.extra[TrainingInterviewKeys.dietQuality],
+          reloadedClient.training.extra[TrainingInterviewLegacyKeys
+              .dietQuality],
           equals('Excelente'),
           reason: 'dietQuality should persist after save and reload',
         );
@@ -141,8 +148,8 @@ void main() {
           'workCapacityScore': 3,
           'recoveryHistoryScore': 3,
           // New interview fields
-          TrainingInterviewKeys.yearsTrainingContinuous: 10,
-          TrainingInterviewKeys.avgSleepHours: 8.0,
+          TrainingInterviewLegacyKeys.yearsTrainingContinuous: 10,
+          TrainingInterviewLegacyKeys.avgSleepHours: 8.0,
         };
 
         final testClient = _buildClient(
@@ -156,8 +163,8 @@ void main() {
 
         // Now update with new data while preserving old
         final updatedExtra = {...originalExtra};
-        updatedExtra[TrainingInterviewKeys.workCapacity] = 'Muy Alto';
-        updatedExtra[TrainingInterviewKeys.dietQuality] = 'Buena';
+        updatedExtra[TrainingInterviewLegacyKeys.workCapacity] = 'Muy Alto';
+        updatedExtra[TrainingInterviewLegacyKeys.dietQuality] = 'Buena';
 
         final updatedClient = testClient.copyWith(
           training: testClient.training.copyWith(extra: updatedExtra),
@@ -182,24 +189,24 @@ void main() {
         );
         // Original interview fields should still exist
         expect(
-          finalClient.training.extra[TrainingInterviewKeys
+          finalClient.training.extra[TrainingInterviewLegacyKeys
               .yearsTrainingContinuous],
           equals(10),
           reason: 'Original yearsTrainingContinuous should be preserved',
         );
         expect(
-          finalClient.training.extra[TrainingInterviewKeys.avgSleepHours],
+          finalClient.training.extra[TrainingInterviewLegacyKeys.avgSleepHours],
           equals(8.0),
           reason: 'Original avgSleepHours should be preserved',
         );
         // New fields should be added
         expect(
-          finalClient.training.extra[TrainingInterviewKeys.workCapacity],
+          finalClient.training.extra[TrainingInterviewLegacyKeys.workCapacity],
           equals('Muy Alto'),
           reason: 'Updated workCapacity should be saved',
         );
         expect(
-          finalClient.training.extra[TrainingInterviewKeys.dietQuality],
+          finalClient.training.extra[TrainingInterviewLegacyKeys.dietQuality],
           equals('Buena'),
           reason: 'New dietQuality should be saved',
         );

@@ -1,3 +1,4 @@
+import 'package:hcs_app_lap/core/constants/training_interview_keys.dart';
 import 'package:hcs_app_lap/features/training_feature/domain/training_interview_status.dart';
 
 TrainingInterviewStatus evaluateTrainingInterview(Map<String, dynamic>? extra) {
@@ -5,38 +6,40 @@ TrainingInterviewStatus evaluateTrainingInterview(Map<String, dynamic>? extra) {
     return TrainingInterviewStatus.empty;
   }
 
-  final requiredKeys = [
-    'discipline',
-    'heightCm',
-    'weightKg',
-    'daysPerWeek',
-    'timePerSessionMinutes',
-    'planDurationInWeeks',
-    'priorityMusclesPrimary',
-    'yearsTrainingContinuous',
-    'avgSleepHours',
-    'workCapacity',
-    'programNovelty',
-    'perceivedRecoveryStatus',
-    'averageRIR',
-    'averageSessionRPE',
-  ];
+  int? parseInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '');
+  }
 
-  final hasAllRequired = requiredKeys.every(
-    (k) => extra.containsKey(k) && extra[k] != null,
-  );
+  final hasTrainedBefore =
+      extra[TrainingInterviewKeys.hasTrainedBefore] as bool?;
+  final isTrainingNow = extra[TrainingInterviewKeys.isTrainingNow] as bool?;
+  final totalYearsTrainedBefore =
+      parseInt(extra[TrainingInterviewKeys.totalYearsTrainedBefore]);
+  final hadLongPause = extra[TrainingInterviewKeys.hadLongPause] as bool?;
+  final longestPauseMonths =
+      parseInt(extra[TrainingInterviewKeys.longestPauseMonths]);
+  final monthsTrainingNow =
+      parseInt(extra[TrainingInterviewKeys.monthsTrainingNow]);
 
-  if (!hasAllRequired) {
+  if (hasTrainedBefore == null || isTrainingNow == null) {
     return TrainingInterviewStatus.partial;
   }
 
-  final days = extra['daysPerWeek'];
-  if (days is num) {
-    final daysValue = days.toInt();
-    if (daysValue < 3 || daysValue > 6) {
+  if (hasTrainedBefore) {
+    if (totalYearsTrainedBefore == null) {
       return TrainingInterviewStatus.partial;
     }
-  } else {
+    if (hadLongPause == null) {
+      return TrainingInterviewStatus.partial;
+    }
+    if (hadLongPause && longestPauseMonths == null) {
+      return TrainingInterviewStatus.partial;
+    }
+  }
+
+  if (isTrainingNow && monthsTrainingNow == null) {
     return TrainingInterviewStatus.partial;
   }
 
