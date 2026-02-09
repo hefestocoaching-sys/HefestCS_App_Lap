@@ -62,23 +62,28 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
           index: 4,
         ),
         NavItem(
-          icon: Icons.menu_book_outlined,
-          label: 'Diseño de Plan',
+          icon: Icons.table_chart_outlined,
+          label: 'Tabla de Equivalentes',
           index: 5,
+        ),
+        NavItem(
+          icon: Icons.menu_book_outlined,
+          label: 'Diseño de Menú',
+          index: 6,
         ),
         NavItem(
           icon: Icons.fitness_center_outlined,
           label: 'Entrenamiento',
-          index: 6,
+          index: 7,
         ),
-        NavItem(icon: Icons.science_outlined, label: 'Bioquímica', index: 7),
+        NavItem(icon: Icons.science_outlined, label: 'Bioquímica', index: 8),
       ];
     } else {
       // Items globales normales
       return [
         NavItem(icon: Icons.home_outlined, label: 'Inicio', index: 0),
         NavItem(icon: Icons.group_outlined, label: 'Clientes', index: 9),
-        NavItem(icon: Icons.science_outlined, label: 'Bioquímica', index: 7),
+        NavItem(icon: Icons.science_outlined, label: 'Bioquímica', index: 8),
         NavItem(
           icon: Icons.calendar_today_outlined,
           label: 'Agenda',
