@@ -116,7 +116,7 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
           children: [
             // Logo/branding en header
             Container(
-              height: 70,
+              height: 60,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 border: Border(
@@ -144,10 +144,10 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
                       size: 32,
                     ),
             ),
-            // Items de navegación (sin scroll pero con espacio flexible)
+            // Items de navegación con scroll suave
             Expanded(
               child: SingleChildScrollView(
-                physics: const NeverScrollableScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: items.map((item) {
@@ -242,14 +242,14 @@ class _NavRailItemState extends State<_NavRailItem> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: const BoxDecoration(color: Colors.transparent),
           child: Row(
             children: [
               // Icon
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: widget.isSelected
@@ -271,11 +271,11 @@ class _NavRailItemState extends State<_NavRailItem> {
               if (widget.isExpanded)
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 12),
+                    padding: const EdgeInsets.only(left: 10),
                     child: Text(
                       widget.item.label,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: widget.isSelected
                             ? FontWeight.w600
                             : FontWeight.w500,
