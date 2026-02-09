@@ -77,6 +77,7 @@ class TrainingExtraKeys {
 
   // --- Nuevas keys para formulario cerrado ampliado ---
   static const heightCm = 'heightCm';
+    static const ageYears = 'ageYears';
   static const strengthLevelClass = 'strengthLevelClass';
   static const workCapacityScore = 'workCapacityScore';
   static const recoveryHistoryScore = 'recoveryHistoryScore';

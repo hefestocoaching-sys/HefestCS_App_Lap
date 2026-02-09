@@ -156,7 +156,7 @@ class _DepletionTabState extends ConsumerState<DepletionTab>
     _fullTimelineNotifier.value = newTimeline;
   }
 
-  void _showEditDialogForDate(DateTime date) {
+  Future<void> _showEditDialogForDate(DateTime date) async {
     final dateKey = DateFormat('yyyy-MM-dd').format(date);
     final existingRecord = _fullTimelineNotifier.value[dateKey];
     final existingFeedback =
@@ -180,159 +180,138 @@ class _DepletionTabState extends ConsumerState<DepletionTab>
     bool isSpillover = (existingFeedback['isSpillover'] as bool?) ?? false;
     bool isPeak3D = (existingFeedback['isPeak3D'] as bool?) ?? false;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: kCardColor,
-              title: Text(
-                "Seguimiento para ${DateFormat('EEE, d MMM', 'es').format(date)}",
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: weightCtrl,
-                      decoration: hcsDecoration(
-                        context,
-                        labelText: 'Peso (kg)',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                    TextField(
-                      controller: abdFoldCtrl,
-                      decoration: hcsDecoration(
-                        context,
-                        labelText: 'Pliegue Abdominal (mm)',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                    TextField(
-                      controller: waistCircCtrl,
-                      decoration: hcsDecoration(
-                        context,
-                        labelText: 'Cintura (cm)',
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                    ),
-                    TextField(
-                      controller: urineColorCtrl,
-                      decoration: hcsDecoration(
-                        context,
-                        labelText: 'Color de Orina (1-8)',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const Divider(height: 24),
-                    Text(
-                      "Feedback Visual",
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    CheckboxListTile(
-                      title: const Text("âœ… Pico 3D (Lleno y Seco)"),
-                      subtitle: const Text("Estado óptimo alcanzado"),
-                      value: isPeak3D,
-                      activeColor: kPrimaryColor,
-                      onChanged: (val) => setDialogState(() {
-                        isPeak3D = val ?? false;
-                        if (isPeak3D) {
-                          isFlat = false;
-                          isSpillover = false;
-                        }
-                      }),
-                    ),
-                    const SizedBox(height: 8),
-                    CheckboxListTile(
-                      title: const Text("Plano (Flat)"),
-                      value: isFlat,
-                      activeColor: kPrimaryColor,
-                      onChanged: isPeak3D
-                          ? null
-                          : (val) =>
-                                setDialogState(() => isFlat = val ?? false),
-                    ),
-                    CheckboxListTile(
-                      title: const Text("Aguado (Spillover)"),
-                      value: isSpillover,
-                      activeColor: kPrimaryColor,
-                      onChanged: isPeak3D
-                          ? null
-                          : (val) => setDialogState(
-                              () => isSpillover = val ?? false,
-                            ),
-                    ),
-                  ],
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                backgroundColor: kCardColor,
+                title: Text(
+                  "Seguimiento para ${DateFormat('EEE, d MMM', 'es').format(date)}",
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    _saveAndRecalculate(
-                      date,
-                      weightCtrl.text,
-                      abdFoldCtrl.text,
-                      waistCircCtrl.text,
-                      urineColorCtrl.text,
-                      isFlat,
-                      isSpillover,
-                      isPeak3D,
-                    );
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    existingRecord != null
-                        ? SaveMessages.buttonSaveChanges
-                        : SaveMessages.buttonCreateNew,
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: weightCtrl,
+                        decoration: hcsDecoration(
+                          context,
+                          labelText: 'Peso (kg)',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      TextField(
+                        controller: abdFoldCtrl,
+                        decoration: hcsDecoration(
+                          context,
+                          labelText: 'Pliegue Abdominal (mm)',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      TextField(
+                        controller: waistCircCtrl,
+                        decoration: hcsDecoration(
+                          context,
+                          labelText: 'Cintura (cm)',
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      TextField(
+                        controller: urineColorCtrl,
+                        decoration: hcsDecoration(
+                          context,
+                          labelText: 'Color Orina (1-8)',
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 12),
+                      SwitchListTile(
+                        title: const Text('Plano / sin llenado'),
+                        value: isFlat,
+                        onChanged: (value) =>
+                            setDialogState(() => isFlat = value),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Spillover (retención)'),
+                        value: isSpillover,
+                        onChanged: (value) =>
+                            setDialogState(() => isSpillover = value),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Peak 3D'),
+                        value: isPeak3D,
+                        onChanged: (value) =>
+                            setDialogState(() => isPeak3D = value),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            );
-          },
-        );
-      },
-    );
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      final weight = double.tryParse(weightCtrl.text);
+                      final abdFold = double.tryParse(abdFoldCtrl.text);
+                      final waist = double.tryParse(waistCircCtrl.text);
+                      final urineColor =
+                          int.tryParse(urineColorCtrl.text) ?? 3;
+
+                      final updatedRecord = DailyTrackingRecord(
+                        date: date,
+                        weightKg: weight,
+                        abdominalFold: abdFold,
+                        waistCircNarrowest: waist,
+                        urineColor: urineColor,
+                      );
+
+                      _saveDayRecord(dateKey, updatedRecord, {
+                        'isFlat': isFlat,
+                        'isSpillover': isSpillover,
+                        'isPeak3D': isPeak3D,
+                      });
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Guardar'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      weightCtrl.dispose();
+      abdFoldCtrl.dispose();
+      waistCircCtrl.dispose();
+      urineColorCtrl.dispose();
+    }
   }
 
-  void _saveAndRecalculate(
-    DateTime date,
-    String weight,
-    String abdFold,
-    String waistCirc,
-    String urineColor,
-    bool isFlat,
-    bool isSpillover,
-    bool isPeak3D,
+  void _saveDayRecord(
+    String dateKey,
+    DailyTrackingRecord recordToSave,
+    Map<String, dynamic> feedback,
   ) {
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
-    final dateKey = DateFormat('yyyy-MM-dd').format(date);
-
-    final recordToSave = DailyTrackingRecord(
-      date: date,
-      weightKg: double.tryParse(weight),
-      abdominalFold: double.tryParse(abdFold),
-      waistCircNarrowest: double.tryParse(waistCirc),
-      urineColor: int.tryParse(urineColor),
-    );
 
     // Detectar si es edición o nuevo registro
     // ignore: unused_local_variable
     final isEditing = SaveActionDetector.isEditingExistingDate(
       client.tracking,
-      date,
+      recordToSave.date,
       (record) => record.date,
     );
 
@@ -354,11 +333,7 @@ class _DepletionTabState extends ConsumerState<DepletionTab>
     final currentFeedback = Map<String, Map<String, dynamic>>.from(
       _visualFeedbackNotifier.value,
     );
-    currentFeedback[dateKey] = {
-      'isFlat': isFlat,
-      'isSpillover': isSpillover,
-      'isPeak3D': isPeak3D,
-    };
+    currentFeedback[dateKey] = feedback;
     _visualFeedbackNotifier.value = currentFeedback;
   }
 

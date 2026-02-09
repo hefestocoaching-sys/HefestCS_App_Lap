@@ -31,5 +31,8 @@ class NutritionExtraKeys {
   static const estimatedKgWeek = 'estimatedKgWeek';
   static const estimatedKgMonth = 'estimatedKgMonth';
 
+  // NEW v3: SMAE Equivalents
+  static const String equivalentsByDay = 'equivalentsByDay';
+
   const NutritionExtraKeys._();
 }

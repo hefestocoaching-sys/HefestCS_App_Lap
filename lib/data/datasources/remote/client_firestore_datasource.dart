@@ -33,6 +33,7 @@ abstract class ClientRemoteDataSource {
   Future<List<RemoteClientSnapshot>> fetchClients({
     required String coachId,
     DateTime? since,
+    int? limit,
   });
 }
 
@@ -294,11 +295,23 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
         .collection('clients')
         .doc(clientId);
 
+    final sanitizedMeta = sanitizeForFirestore(metaData);
+
+    if (_enableFirestoreAudit) {
+      final invalidPath = findInvalidFirestorePath(sanitizedMeta);
+      if (invalidPath != null) {
+        debugPrint(
+          '⚠️ Skipping remote client meta sync due to invalid Firestore payload.',
+        );
+        return;
+      }
+    }
+
     await ref.set({
       'id': clientId,
       'schemaVersion': 1,
       'updatedAt': FieldValue.serverTimestamp(),
-      'meta': metaData,
+      'meta': sanitizedMeta,
     }, SetOptions(merge: true));
   }
 
@@ -306,6 +319,7 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
   Future<List<RemoteClientSnapshot>> fetchClients({
     required String coachId,
     DateTime? since,
+    int? limit,
   }) async {
     Query query = _firestore
         .collection('coaches')
@@ -317,6 +331,10 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
         'updatedAt',
         isGreaterThan: Timestamp.fromDate(since),
       );
+    }
+
+    if (limit != null) {
+      query = query.limit(limit);
     }
 
     final snap = await query.get();

@@ -7,14 +7,10 @@ import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/constants/training_interview_keys.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
 import 'package:hcs_app_lap/core/enums/training_discipline.dart';
-import 'package:hcs_app_lap/core/enums/training_age_bucket.dart';
 import 'package:hcs_app_lap/core/enums/time_per_session_bucket.dart';
-import 'package:hcs_app_lap/core/enums/volume_tolerance.dart';
-import 'package:hcs_app_lap/core/enums/intensity_tolerance.dart';
 import 'package:hcs_app_lap/core/enums/rest_profile.dart';
 import 'package:hcs_app_lap/core/enums/sleep_bucket.dart';
 import 'package:hcs_app_lap/core/enums/stress_level.dart';
-import 'package:hcs_app_lap/core/enums/recovery_quality.dart';
 import 'package:hcs_app_lap/core/enums/injury_region.dart';
 import 'package:hcs_app_lap/core/enums/training_interview_enums.dart';
 import 'package:hcs_app_lap/core/enums/performance_trend.dart';
@@ -29,7 +25,6 @@ import 'package:hcs_app_lap/features/training_feature/services/training_profile_
 import 'package:hcs_app_lap/utils/widgets/muscle_selection_widget.dart';
 import 'package:hcs_app_lap/utils/widgets/enum_dropdown_widget.dart';
 import 'package:hcs_app_lap/utils/widgets/shared_form_widgets.dart';
-import 'package:hcs_app_lap/utils/widgets/hcs_input_decoration.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/ui/clinic_section_surface.dart';
 
@@ -68,6 +63,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   // ✅ Controllers para peso y estatura (datos mínimos)
   late TextEditingController _heightCmCtrl;
   late TextEditingController _weightKgCtrl;
+  late TextEditingController _ageYearsCtrl;
 
   // ═══════════════════════════════════════════════════════════════
   // CONTROLLERS V2 (2025) - MANDATORY FIELDS
@@ -96,17 +92,12 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
 
   // Variables de Estado - TODAS cerradas
   TrainingDiscipline? _discipline;
-  TrainingLevel? _trainingLevel;
-  TrainingAgeBucket? _trainingAge;
   int? _historicalFrequency; // días reales último mes
   int? _plannedFrequency; // compat: igual a daysPerWeek
   TimePerSessionBucket? _timePerSession;
-  VolumeTolerance? _volumeTolerance;
-  IntensityTolerance? _intensityTolerance;
   RestProfile? _restProfile;
   SleepBucket? _sleepBucket;
   StressLevel? _stressLevel;
-  RecoveryQuality? _recoveryQuality;
 
   // Lesiones por región (checklist)
   Set<InjuryRegion> _activeInjuries = {};
@@ -153,8 +144,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'sessionDurationMinutes',
       'restBetweenSetsSeconds',
       'avgSleepHours',
-      'volumeTolerance',
-      'intensityTolerance',
       'priorityMusclesPrimary',
       'priorityMusclesSecondary',
       'priorityMusclesTertiary',
@@ -172,6 +161,10 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   ProgramNovelty? _programNovelty; // enum
   InterviewStressLevel? _physicalStress; // enum (estrés físico externo)
   DietQuality? _dietQuality; // enum
+
+  String? _strengthLevelClass;
+  int? _workCapacityScore;
+  int? _recoveryHistoryScore;
   @override
   void initState() {
     super.initState();
@@ -200,6 +193,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // ✅ Inicializar controllers de peso y estatura
     _heightCmCtrl = TextEditingController();
     _weightKgCtrl = TextEditingController();
+    _ageYearsCtrl = TextEditingController();
 
     // V2 Controllers (mandatory)
     _avgWeeklySetsPerMuscleCtrl = TextEditingController();
@@ -232,17 +226,12 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     if (client == null) {
       // Limpiar todos los campos
       _discipline = null;
-      _trainingLevel = null;
-      _trainingAge = null;
       _historicalFrequency = null;
       _plannedFrequency = null;
       _timePerSession = null;
-      _volumeTolerance = null;
-      _intensityTolerance = null;
       _restProfile = null;
       _sleepBucket = null;
       _stressLevel = null;
-      _recoveryQuality = null;
       _activeInjuries = {};
       _primaryMuscles = [];
       _secondaryMuscles = [];
@@ -274,12 +263,16 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       _shoulderAvoidPainfulLateralRaise = false;
       _shoulderAvoidWideGripPress = false;
       _shoulderAvoidEndRangePain = false;
+      _strengthLevelClass = null;
+      _workCapacityScore = null;
+      _recoveryHistoryScore = null;
 
       // ✅ Limpiar controllers
       _yearsTrainingCtrl.clear();
       _sessionDurationCtrl.clear();
       _restBetweenSetsCtrl.clear();
       _avgSleepHoursCtrl.clear();
+      _ageYearsCtrl.clear();
 
       // ✅ Limpiar controllers V2
       _avgWeeklySetsPerMuscleCtrl.clear();
@@ -303,12 +296,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // Cargar desde extra con parsers
     _discipline = parseTrainingDiscipline(
       extra[TrainingExtraKeys.discipline]?.toString(),
-    );
-    _trainingLevel =
-        t.trainingLevel ??
-        parseTrainingLevel(extra[TrainingExtraKeys.trainingLevel]?.toString());
-    _trainingAge = parseTrainingAgeBucket(
-      extra[TrainingExtraKeys.trainingAge]?.toString(),
     );
     _historicalFrequency = extra[TrainingExtraKeys.historicalFrequency] as int?;
     _plannedFrequency = extra[TrainingExtraKeys.plannedFrequency] as int?;
@@ -339,12 +326,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     _timePerSession = parseTimePerSessionBucket(
       extra[TrainingExtraKeys.timePerSessionBucket]?.toString(),
     );
-    _volumeTolerance = parseVolumeTolerance(
-      extra[TrainingExtraKeys.volumeTolerance]?.toString(),
-    );
-    _intensityTolerance = parseIntensityTolerance(
-      extra[TrainingExtraKeys.intensityTolerance]?.toString(),
-    );
     _restProfile = parseRestProfile(
       extra[TrainingExtraKeys.restProfile]?.toString(),
     );
@@ -354,9 +335,11 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     _stressLevel = parseStressLevel(
       extra[TrainingExtraKeys.stressLevel]?.toString(),
     );
-    _recoveryQuality = parseRecoveryQuality(
-      extra[TrainingExtraKeys.recoveryQuality]?.toString(),
-    );
+    _strengthLevelClass = extra[TrainingExtraKeys.strengthLevelClass] as String?;
+    _workCapacityScore =
+        (extra[TrainingExtraKeys.workCapacityScore] as num?)?.toInt();
+    _recoveryHistoryScore =
+        (extra[TrainingExtraKeys.recoveryHistoryScore] as num?)?.toInt();
 
     // Cargar lesiones
     final injuriesData = extra[TrainingExtraKeys.activeInjuries];
@@ -470,9 +453,12 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
             'weightKg',
           ]) ??
           0;
+      final ageYears =
+          _readNumExtra(extra, [TrainingExtraKeys.ageYears]) ?? 0;
 
       _heightCmCtrl.text = heightCm > 0 ? heightCm.toString() : '';
       _weightKgCtrl.text = weightKg > 0 ? weightKg.toString() : '';
+      _ageYearsCtrl.text = ageYears > 0 ? ageYears.toString() : '';
     }
 
     // 🔍 LOG TEMPORAL: Verificar que se cargaron correctamente
@@ -599,20 +585,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   }
 
   // ============ FUNCIONES HELPER PARA DERIVAR VALORES NUMÉRICOS ============
-  int? _deriveYearsTrainingFromBucket(TrainingAgeBucket? bucket) {
-    if (bucket == null) return null;
-    switch (bucket) {
-      case TrainingAgeBucket.lessThanOne:
-        return 1;
-      case TrainingAgeBucket.oneToTwo:
-        return 2;
-      case TrainingAgeBucket.threeToFive:
-        return 4;
-      case TrainingAgeBucket.moreThanFive:
-        return 6;
-    }
-  }
-
   int? _deriveSessionDurationFromBucket(TimePerSessionBucket? bucket) {
     if (bucket == null) return null;
     // Usar averageMinutes del enum
@@ -659,18 +631,14 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
 
     // Guardar todos los enums como nombres
     extra[TrainingExtraKeys.discipline] = _discipline?.name;
-    extra[TrainingExtraKeys.trainingAge] = _trainingAge?.name;
     extra[TrainingExtraKeys.historicalFrequency] = _historicalFrequency;
     extra[TrainingExtraKeys.daysPerWeek] = _daysPerWeek;
     extra[TrainingExtraKeys.planDurationInWeeks] = _planDurationInWeeks;
     extra[TrainingExtraKeys.plannedFrequency] = _daysPerWeek;
     extra[TrainingExtraKeys.timePerSessionBucket] = _timePerSession?.name;
-    extra[TrainingExtraKeys.volumeTolerance] = _volumeTolerance?.name;
-    extra[TrainingExtraKeys.intensityTolerance] = _intensityTolerance?.name;
     extra[TrainingExtraKeys.restProfile] = _restProfile?.name;
     extra[TrainingExtraKeys.sleepBucket] = _sleepBucket?.name;
     extra[TrainingExtraKeys.stressLevel] = _stressLevel?.name;
-    extra[TrainingExtraKeys.recoveryQuality] = _recoveryQuality?.name;
     extra[TrainingExtraKeys.activeInjuries] = _activeInjuries
         .map((e) => e.name)
         .toList();
@@ -751,6 +719,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     final weightKgFromCtrl = double.tryParse(
       _weightKgCtrl.text.replaceAll(',', '.'),
     );
+    final ageYearsFromCtrl = int.tryParse(_ageYearsCtrl.text);
 
     // Actualizar variables internas desde controllers
     _yearsTraining = yearsFromCtrl;
@@ -760,7 +729,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
 
     // Calcular valores derivados (usar overrides numéricos del usuario si existen)
     final derivedYears =
-        _yearsTraining ?? _deriveYearsTrainingFromBucket(_trainingAge);
+      _yearsTraining ?? _yearsContinuousStrengthTraining;
     final derivedSession =
         _sessionDurationMinutes ??
         _deriveSessionDurationFromBucket(_timePerSession);
@@ -784,14 +753,26 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       extra[TrainingExtraKeys.avgSleepHours] = derivedSleep;
     }
 
+    if (ageYearsFromCtrl != null && ageYearsFromCtrl > 0) {
+      extra[TrainingExtraKeys.ageYears] = ageYearsFromCtrl;
+    }
+
+    if (_strengthLevelClass != null) {
+      extra[TrainingExtraKeys.strengthLevelClass] = _strengthLevelClass;
+    }
+    if (_workCapacityScore != null) {
+      extra[TrainingExtraKeys.workCapacityScore] = _workCapacityScore;
+    }
+    if (_recoveryHistoryScore != null) {
+      extra[TrainingExtraKeys.recoveryHistoryScore] = _recoveryHistoryScore;
+    }
+
     // ✅ GUARDAR PESO Y ESTATURA (datos mínimos para entrenamiento)
     if (heightCmFromCtrl != null && heightCmFromCtrl > 0) {
       extra[TrainingExtraKeys.heightCm] = heightCmFromCtrl;
-      extra[TrainingInterviewKeys.heightCm] = heightCmFromCtrl;
     }
     if (weightKgFromCtrl != null && weightKgFromCtrl > 0) {
       extra[TrainingExtraKeys.weightKg] = weightKgFromCtrl;
-      extra[TrainingInterviewKeys.weightKg] = weightKgFromCtrl;
     }
 
     // Guardar también en TrainingInterviewKeys (backward compatibility)
@@ -866,24 +847,22 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     final daysPerWeek = _daysPerWeek ?? 0;
     final planDurationWeeks = _planDurationInWeeks ?? 8;
 
-    final primaryMuscles = _primaryMuscles.toSet().toList();
-    final secondaryMuscles = _secondaryMuscles.toSet().toList();
-    final tertiaryMuscles = _tertiaryMuscles.toSet().toList();
-    if (primaryMuscles.length > 3) primaryMuscles.length = 3;
-    if (secondaryMuscles.length > 3) secondaryMuscles.length = 3;
-    if (tertiaryMuscles.length > 3) tertiaryMuscles.length = 3;
+    final primaryMuscles = List<String>.from(_primaryMuscles);
+    final secondaryMuscles = List<String>.from(_secondaryMuscles);
+    final tertiaryMuscles = List<String>.from(_tertiaryMuscles);
 
     extra[TrainingExtraKeys.priorityMusclesPrimary] = primaryMuscles;
     extra[TrainingExtraKeys.priorityMusclesSecondary] = secondaryMuscles;
     extra[TrainingExtraKeys.priorityMusclesTertiary] = tertiaryMuscles;
 
+    final trainingLevelLabel =
+      extra[TrainingExtraKeys.trainingLevelLabel]?.toString();
+
     final updatedTraining = TrainingProfileFormMapper.apply(
       base: client.training,
       input: TrainingProfileFormInput(
         extra: extra,
-        trainingLevelLabel: _trainingLevel != null
-            ? TrainingProfileFormMapper.optionFromTrainingLevel(_trainingLevel)
-            : null,
+        trainingLevelLabel: trainingLevelLabel,
         daysPerWeekLabel: daysPerWeek > 0 ? daysPerWeek.toString() : '',
         timePerSessionLabel: _timePerSession?.label,
         planDurationWeeks: planDurationWeeks,
@@ -892,7 +871,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         priorityMusclesTertiary: tertiaryMuscles,
         avgSleepHours: derivedSleep,
         perceivedStress: _stressLevel?.label,
-        recoveryQuality: _recoveryQuality?.label,
+        recoveryQuality: client.training.recoveryQuality,
         usesAnabolics: false, // Campo eliminado
         isCompetitor: false, // Campo eliminado
         competitionCategory: null,
@@ -1059,8 +1038,15 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   Future<void> _onSavePressed() async {
     if (_client == null) return;
 
+    final ageYears = int.tryParse(_ageYearsCtrl.text);
     final hasMissingRequired =
-        _daysPerWeek == null || _planDurationInWeeks == null;
+      _daysPerWeek == null ||
+      _planDurationInWeeks == null ||
+      ageYears == null ||
+      ageYears <= 0 ||
+      _strengthLevelClass == null ||
+      _workCapacityScore == null ||
+      _recoveryHistoryScore == null;
     final hasExperienceError =
         _yearsTotalStrengthTraining != null &&
         _yearsContinuousStrengthTraining != null &&
@@ -1379,6 +1365,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // ✅ Dispose de controllers de peso y estatura
     _heightCmCtrl.dispose();
     _weightKgCtrl.dispose();
+    _ageYearsCtrl.dispose();
 
     // V2 Controllers
     _avgWeeklySetsPerMuscleCtrl.dispose();
@@ -1453,6 +1440,11 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
               child: _buildInjuries(),
             ),
             ClinicSectionSurface(
+              icon: Icons.fact_check,
+              title: 'Evaluación rápida (obligatoria)',
+              child: _buildQuickEvaluation(),
+            ),
+            ClinicSectionSurface(
               icon: Icons.accessibility_new,
               title: '6. Prioridades Musculares',
               child: _buildMuscles(),
@@ -1461,16 +1453,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
               icon: Icons.emoji_events,
               title: '7. PRs Opcionales (Fuerza)',
               child: _buildPRs(),
-            ),
-            ClinicSectionSurface(
-              icon: Icons.edit_note,
-              title: '8. Datos Individualizados (Override Opcional)',
-              child: _buildIndividualizedDataOverrides(),
-            ),
-            ClinicSectionSurface(
-              icon: Icons.trending_up,
-              title: '9. Evaluación Avanzada V2 (Científica 2025)',
-              child: _buildAdvancedEvaluationV2(),
             ),
             const SizedBox(height: 32),
             Align(
@@ -1531,6 +1513,23 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         ),
         SizedBox(
           width: 380,
+          child: TextField(
+            controller: _ageYearsCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Edad (años) *',
+              prefixIcon: Icon(Icons.cake),
+              errorText:
+                  _showValidationErrors &&
+                          int.tryParse(_ageYearsCtrl.text) == null
+                      ? 'Requerido'
+                      : null,
+            ),
+            onChanged: (_) => _markDirty(),
+          ),
+        ),
+        SizedBox(
+          width: 380,
           child: EnumGlassDropdown<TrainingDiscipline>(
             label: 'Disciplina principal de entrenamiento',
             value: _discipline,
@@ -1538,42 +1537,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
             labelBuilder: (d) => d.label,
             onChanged: (v) {
               setState(() => _discipline = v);
-              _markDirty();
-            },
-          ),
-        ),
-        SizedBox(
-          width: 380,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              EnumGlassDropdown<TrainingLevel>(
-                label: 'Auto-percepción de nivel (opcional)',
-                value: _trainingLevel,
-                values: TrainingLevel.values,
-                labelBuilder: (l) => l.label,
-                onChanged: (v) {
-                  setState(() => _trainingLevel = v);
-                  _markDirty();
-                },
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'El motor prioriza tu historia real (años, pausas, continuidad).',
-                style: TextStyle(color: Colors.white54, fontSize: 11),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(
-          width: 380,
-          child: EnumGlassDropdown<TrainingAgeBucket>(
-            label: 'Años entrenando de forma continua',
-            value: _trainingAge,
-            values: TrainingAgeBucket.values,
-            labelBuilder: (a) => a.label,
-            onChanged: (v) {
-              setState(() => _trainingAge = v);
               _markDirty();
             },
           ),
@@ -1775,42 +1738,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       children: [
         SizedBox(
           width: 380,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              EnumGlassDropdown<VolumeTolerance>(
-                label: 'Tolerancia al volumen',
-                value: _volumeTolerance,
-                values: VolumeTolerance.values,
-                labelBuilder: (v) => v.label,
-                onChanged: (v) {
-                  setState(() => _volumeTolerance = v);
-                  _markDirty();
-                },
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Anclaje: Con 10-12 series/músculo/semana...',
-                style: TextStyle(color: Colors.white54, fontSize: 11),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(
-          width: 380,
-          child: EnumGlassDropdown<IntensityTolerance>(
-            label: 'Frecuencia de entrenamiento cercano al fallo',
-            value: _intensityTolerance,
-            values: IntensityTolerance.values,
-            labelBuilder: (i) => i.label,
-            onChanged: (v) {
-              setState(() => _intensityTolerance = v);
-              _markDirty();
-            },
-          ),
-        ),
-        SizedBox(
-          width: 380,
           child: EnumGlassDropdown<RestProfile>(
             label: 'Descansos típicos entre series',
             value: _restProfile,
@@ -1854,19 +1781,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
             labelBuilder: (s) => s.label,
             onChanged: (v) {
               setState(() => _stressLevel = v);
-              _markDirty();
-            },
-          ),
-        ),
-        SizedBox(
-          width: 250,
-          child: EnumGlassDropdown<RecoveryQuality>(
-            label: 'Sensación general de recuperación',
-            value: _recoveryQuality,
-            values: RecoveryQuality.values,
-            labelBuilder: (r) => r.label,
-            onChanged: (v) {
-              setState(() => _recoveryQuality = v);
               _markDirty();
             },
           ),
@@ -1969,13 +1883,81 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     );
   }
 
+  Widget _buildQuickEvaluation() {
+    final strengthError = _showValidationErrors && _strengthLevelClass == null;
+    final workCapacityError =
+        _showValidationErrors && _workCapacityScore == null;
+    final recoveryHistoryError =
+        _showValidationErrors && _recoveryHistoryScore == null;
+
+    return Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        SizedBox(
+          width: 380,
+          child: DropdownButtonFormField<String>(
+            value: _strengthLevelClass,
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(value: 'B', child: Text('Principiante')),
+              DropdownMenuItem(value: 'M', child: Text('Intermedio')),
+              DropdownMenuItem(value: 'A', child: Text('Avanzado')),
+              DropdownMenuItem(value: 'MA', child: Text('Muy avanzado')),
+            ],
+            onChanged: (v) {
+              setState(() => _strengthLevelClass = v);
+              _markDirty();
+            },
+            dropdownColor: kBackgroundColor,
+            iconEnabledColor: kTextColor,
+            style: const TextStyle(color: kTextColor),
+            decoration: InputDecoration(
+              labelText: 'Nivel de fuerza actual (estimacion del coach) *',
+              errorText: strengthError ? 'Requerido' : null,
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 380,
+          child: _buildIntDropdown(
+            label: 'Capacidad de trabajo (1-5) *',
+            value: _workCapacityScore,
+            options: const [1, 2, 3, 4, 5],
+            helperText:
+                '1 = Me fatigo muy rapido, 3 = Promedio, 5 = Alta tolerancia al volumen',
+            errorText: workCapacityError ? 'Requerido' : null,
+            onChanged: (v) {
+              setState(() => _workCapacityScore = v);
+              _markDirty();
+            },
+          ),
+        ),
+        SizedBox(
+          width: 380,
+          child: _buildIntDropdown(
+            label: 'Historial de recuperacion (1-5) *',
+            value: _recoveryHistoryScore,
+            options: const [1, 2, 3, 4, 5],
+            helperText: '1 = Me cuesta recuperar, 3 = Promedio, 5 = Recupero muy bien',
+            errorText: recoveryHistoryError ? 'Requerido' : null,
+            onChanged: (v) {
+              setState(() => _recoveryHistoryScore = v);
+              _markDirty();
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   // 6. PRIORIDADES MUSCULARES
   Widget _buildMuscles() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Seleccione los músculos por prioridad (máximo 3 por categoría)',
+          'Seleccione los músculos por prioridad',
           style: TextStyle(color: Colors.white70, fontSize: 12),
         ),
         const SizedBox(height: 12),
@@ -2058,288 +2040,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
             ],
           ),
         ],
-      ],
-    );
-  }
-
-  // 8. DATOS INDIVIDUALIZADOS (OVERRIDE OPCIONAL)
-  Widget _buildIndividualizedDataOverrides() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Estos valores se calculan automáticamente desde los buckets seleccionados arriba. '
-          'Puede editarlos manualmente si desea especificar valores exactos.',
-          style: TextStyle(color: Colors.white70, fontSize: 12),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            SizedBox(
-              width: 250,
-              child: GlassNumericField(
-                controller: _yearsTrainingCtrl,
-                label: 'Años de entrenamiento continuo',
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 250,
-              child: GlassNumericField(
-                controller: _sessionDurationCtrl,
-                label: 'Duración sesión (minutos)',
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 250,
-              child: GlassNumericField(
-                controller: _restBetweenSetsCtrl,
-                label: 'Descanso entre series (seg)',
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 250,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Horas promedio de sueño',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  SizedBox(
-                    height: 48,
-                    child: TextFormField(
-                      controller: _avgSleepHoursCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      onChanged: (_) => _markDirty(),
-                      style: const TextStyle(color: Colors.white),
-                      decoration: hcsDecoration(
-                        context,
-                        labelText: 'Horas promedio de sueño',
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // 9. EVALUACIÓN AVANZADA V2 (2025)
-  Widget _buildAdvancedEvaluationV2() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // SUBSECCIÓN: VOLUMEN
-        Text(
-          'Capacidad de Volumen',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: kPrimaryColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _avgWeeklySetsPerMuscleCtrl,
-                label: '¿Cuántos sets DUROS haces por músculo/semana? *',
-                hintText:
-                    'Ejemplo: 12 (si haces pecho 2 días, 6 sets cada día)',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _consecutiveWeeksTrainingCtrl,
-                label: '¿Cuántas semanas consecutivas llevas entrenando? *',
-                hintText: 'Ejemplo: 16 (sin parar >1 semana)',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _maxWeeklySetsCtrl,
-                label: '¿Máximo sets/semana tolerados? (opcional)',
-                hintText: 'Ejemplo: 20 (máximo sin sobreentrenarte)',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _deloadFrequencyCtrl,
-                label: '¿Cada cuántas semanas necesitas descarga? (opcional)',
-                hintText: 'Ejemplo: 4 (deload cada 4 semanas)',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 32),
-        const Divider(),
-        const SizedBox(height: 16),
-
-        // SUBSECCIÓN: RECUPERACIÓN Y READINESS
-        Text(
-          'Recuperación y Estado de Readiness',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: kPrimaryColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _perceivedRecoveryStatusCtrl,
-                label: '¿Cómo te sientes antes de entrenar? (PRS 1-10) *',
-                hintText: '1=Agotado, 10=Fresco',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _soreness48hCtrl,
-                label: '¿Qué tan adolorido quedas a las 48h? (DOMS 1-10)',
-                hintText: '1=Sin dolor, 10=Dolor extremo',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _periodBreaksCtrl,
-                label: '¿Pausas >2 semanas en el último año?',
-                hintText: 'Ejemplo: 2 (dos pausas largas)',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 32),
-        const Divider(),
-        const SizedBox(height: 16),
-
-        // SUBSECCIÓN: INTENSIDAD Y ESFUERZO
-        Text(
-          'Intensidad y Esfuerzo Percibido',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: kPrimaryColor,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _averageRIRCtrl,
-                label: '¿Cuántas reps dejas en reserva? (RIR 0-5) *',
-                hintText: '0=Fallo, 2=Óptimo hipertrofia, 5=Muy fácil',
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 380,
-              child: CustomTextFormField(
-                controller: _averageSessionRPECtrl,
-                label: '¿Qué tan duro entrenas? (RPE 1-10) *',
-                hintText: '1=Muy fácil, 10=Máximo esfuerzo',
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            SizedBox(
-              width: 380,
-              child: EnumGlassDropdown<PerformanceTrend>(
-                label: 'Tendencia de rendimiento actual',
-                value: _performanceTrend,
-                values: PerformanceTrend.values,
-                labelBuilder: (trend) => trend.label,
-                onChanged: (v) {
-                  setState(() => _performanceTrend = v);
-                  _markDirty();
-                },
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 16),
-
-        // Nota informativa
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: kPrimaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: kPrimaryColor.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.info_outline, color: kPrimaryColor),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Los campos marcados con * son OBLIGATORIOS para el Motor de entrenamiento. '
-                  'Los opcionales mejoran la precisión de la prescripción.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: kTextColor.withValues(alpha: 0.8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

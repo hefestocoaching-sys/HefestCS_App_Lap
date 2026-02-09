@@ -155,14 +155,6 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
   ) {
     setState(() {
       if (isSelected) {
-        if (!currentSet.contains(muscleKey) && currentSet.length >= 3) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Máximo 3 músculos por categoría.'),
-            ),
-          );
-          return;
-        }
         if (currentSet != _primary) {
           _primary.remove(muscleKey);
         }

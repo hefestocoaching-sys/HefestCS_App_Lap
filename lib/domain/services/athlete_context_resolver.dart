@@ -52,12 +52,19 @@ class AthleteContextResolver {
   AthleteContext resolve(Client client) {
     // 1. Edad desde birthDate (obligatorio)
     final birthDate = client.profile.birthDate;
+    int ageYears;
     if (birthDate == null) {
-      throw ArgumentError(
-        'Cliente ${client.id}: birthDate es requerido para calcular la edad',
-      );
+      final ageFromExtra =
+          (client.training.extra[TrainingExtraKeys.ageYears] as num?)?.toInt();
+      if (ageFromExtra == null) {
+        throw ArgumentError(
+          'Cliente ${client.id}: birthDate es requerido para calcular la edad',
+        );
+      }
+      ageYears = ageFromExtra;
+    } else {
+      ageYears = _calculateAge(birthDate);
     }
-    final ageYears = _calculateAge(birthDate);
 
     // 2. Sexo desde profile (obligatorio)
     final sex = client.profile.gender;

@@ -348,8 +348,41 @@ class VolumeIndividualizationService {
     }
   }
 
+  String? _resolveNonPhysicalStressLevel(Map<String, dynamic> extra) {
+    final direct = extra[TrainingExtraKeys.nonPhysicalStressLevel2] as String?;
+    if (direct != null) return direct;
+    final fallback = extra[TrainingExtraKeys.stressLevel] as String?;
+    switch (fallback) {
+      case 'low':
+        return 'B';
+      case 'moderate':
+        return 'P';
+      case 'high':
+        return 'A';
+      default:
+        return null;
+    }
+  }
+
+  String? _resolveRestQuality(Map<String, dynamic> extra) {
+    final direct = extra[TrainingExtraKeys.restQuality2] as String?;
+    if (direct != null) return direct;
+    final fallback = extra[TrainingExtraKeys.sleepBucket] as String?;
+    switch (fallback) {
+      case 'moreThanEight':
+      case 'sevenToEight':
+        return 'A';
+      case 'sixToSeven':
+        return 'P';
+      case 'lessThan6':
+        return 'B';
+      default:
+        return null;
+    }
+  }
+
   double _getMevNonPhysicalStressAdjust(Map<String, dynamic> extra) {
-    final stress = extra[TrainingExtraKeys.nonPhysicalStressLevel2] as String?;
+    final stress = _resolveNonPhysicalStressLevel(extra);
     if (stress == null) return 0.0;
     switch (stress) {
       case 'B':
@@ -364,7 +397,7 @@ class VolumeIndividualizationService {
   }
 
   double _getMevRestQualityAdjust(Map<String, dynamic> extra) {
-    final quality = extra[TrainingExtraKeys.restQuality2] as String?;
+    final quality = _resolveRestQuality(extra);
     if (quality == null) return 0.0;
     switch (quality) {
       case 'A':
@@ -545,7 +578,7 @@ class VolumeIndividualizationService {
   }
 
   double _getMrvNonPhysicalStressAdjust(Map<String, dynamic> extra) {
-    final stress = extra[TrainingExtraKeys.nonPhysicalStressLevel2] as String?;
+    final stress = _resolveNonPhysicalStressLevel(extra);
     if (stress == null) return 0.0;
     switch (stress) {
       case 'B':
@@ -560,7 +593,7 @@ class VolumeIndividualizationService {
   }
 
   double _getMrvRestQualityAdjust(Map<String, dynamic> extra) {
-    final quality = extra[TrainingExtraKeys.restQuality2] as String?;
+    final quality = _resolveRestQuality(extra);
     if (quality == null) return 0.0;
     switch (quality) {
       case 'A':

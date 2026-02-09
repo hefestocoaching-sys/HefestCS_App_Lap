@@ -31,6 +31,7 @@ class _NoopClientRemoteDataSource implements ClientRemoteDataSource {
   @override
   Future<List<RemoteClientSnapshot>> fetchClients({
     required String coachId,
+    int? limit,
     DateTime? since,
   }) async {
     return const [];

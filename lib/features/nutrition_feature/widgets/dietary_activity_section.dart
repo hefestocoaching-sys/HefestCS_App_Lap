@@ -575,7 +575,7 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
     );
   }
 
-  void _showAddActivityDialog(String day) {
+  Future<void> _showAddActivityDialog(String day) async {
     String? selectedCategory;
     MetActivity? selectedActivity;
     double? selectedMetValue;
@@ -590,209 +590,204 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
     List<MetActivity> filteredActivities = [];
     List<double> metOptions = [];
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateSB) {
-            return AlertDialog(
-              backgroundColor: kCardColor,
-              title: Text('Añadir Actividad: $day'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              minWidth: 200,
-                              maxWidth: 320,
-                            ),
-                            child: CustomDropdownButton<String>(
-                              label: 'Categoría',
-                              value: selectedCategory,
-                              items: categories,
-                              itemLabelBuilder: (cat) => cat,
-                              onChanged: (String? newValue) {
-                                setStateSB(() {
-                                  selectedCategory = newValue;
-                                  selectedActivity = null;
-                                  selectedMetValue = null;
-
-                                  if (selectedCategory != null) {
-                                    filteredActivities = metLibrary
-                                        .where(
-                                          (act) =>
-                                              act.category == selectedCategory,
-                                        )
-                                        .toList();
-                                  } else {
-                                    filteredActivities = [];
-                                  }
-                                  metOptions = [];
-                                });
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              minWidth: 220,
-                              maxWidth: 340,
-                            ),
-                            child: CustomDropdownButton<MetActivity>(
-                              label: 'Actividad Específica',
-                              value: selectedActivity,
-                              items: filteredActivities,
-                              itemLabelBuilder: (act) => act.activityName,
-                              onChanged: (MetActivity? newValue) {
-                                setStateSB(() {
-                                  selectedActivity = newValue;
-                                  selectedMetValue = null;
-
-                                  if (selectedActivity != null) {
-                                    metOptions = selectedActivity!.metOptions
-                                        .toList();
-                                    selectedMetValue =
-                                        metOptions[metOptions.length ~/ 2];
-                                  } else {
-                                    metOptions = [];
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (selectedActivity != null)
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: kAppBarColor.withAlpha(150),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: kPrimaryColor.withAlpha(100),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setStateSB) {
+              return AlertDialog(
+                backgroundColor: kCardColor,
+                title: Text('Añadir Actividad: $day'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
-                              'Cómo se siente:',
-                              style: TextStyle(
-                                color: kPrimaryColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minWidth: 200,
+                                maxWidth: 320,
+                              ),
+                              child: CustomDropdownButton<String>(
+                                label: 'Categoría',
+                                value: selectedCategory,
+                                items: categories,
+                                itemLabelBuilder: (cat) => cat,
+                                onChanged: (String? newValue) {
+                                  setStateSB(() {
+                                    selectedCategory = newValue;
+                                    selectedActivity = null;
+                                    selectedMetValue = null;
+                                    filteredActivities = selectedCategory == null
+                                        ? []
+                                        : metLibrary
+                                            .where(
+                                              (activity) =>
+                                                  activity.category ==
+                                                  selectedCategory,
+                                            )
+                                            .toList();
+                                    metOptions = [];
+                                  });
+                                },
                               ),
                             ),
-                            Text(
-                              selectedActivity!.userFeel,
-                              style: const TextStyle(
-                                color: kTextColor,
-                                fontSize: 13,
+                            const SizedBox(width: 16),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minWidth: 200,
+                                maxWidth: 320,
                               ),
-                            ),
-                            const Divider(
-                              height: 16,
-                              color: kTextColorSecondary,
-                            ),
-                            const Text(
-                              'Ejemplos:',
-                              style: TextStyle(
-                                color: kPrimaryColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              selectedActivity!.examples,
-                              style: const TextStyle(
-                                color: kTextColor,
-                                fontSize: 13,
+                              child: CustomDropdownButton<MetActivity>(
+                                label: 'Actividad',
+                                value: selectedActivity,
+                                items: filteredActivities,
+                                itemLabelBuilder: (activity) =>
+                                    activity.activityName,
+                                onChanged: (MetActivity? newValue) {
+                                  setStateSB(() {
+                                    selectedActivity = newValue;
+                                    metOptions = newValue?.metOptions.toList() ??
+                                        [];
+                                    selectedMetValue = metOptions.isNotEmpty
+                                        ? metOptions[metOptions.length ~/ 2]
+                                        : null;
+                                  });
+                                },
                               ),
                             ),
                           ],
                         ),
                       ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: CustomDropdownButton<double>(
-                            label: 'MET Específico',
-                            value: selectedMetValue,
-                            items: metOptions,
-                            itemLabelBuilder: (met) => met.toString(),
-                            onChanged: (double? newValue) {
-                              setStateSB(() {
-                                selectedMetValue = newValue;
-                              });
-                            },
+                      const SizedBox(height: 16),
+                      if (selectedActivity != null)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: kAppBarColor.withAlpha(150),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: kPrimaryColor.withAlpha(100),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 1,
-                          child: CustomTextFormField(
-                            controller: durationController,
-                            label: 'Dur (min)',
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Cómo se siente:',
+                                style: TextStyle(
+                                  color: kPrimaryColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                selectedActivity!.userFeel,
+                                style: const TextStyle(
+                                  color: kTextColor,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const Divider(
+                                height: 16,
+                                color: kTextColorSecondary,
+                              ),
+                              const Text(
+                                'Ejemplos:',
+                                style: TextStyle(
+                                  color: kPrimaryColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                selectedActivity!.examples,
+                                style: const TextStyle(
+                                  color: kTextColor,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    durationController.dispose();
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text(
-                    'Cancelar',
-                    style: TextStyle(color: kTextColorSecondary),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: CustomDropdownButton<double>(
+                              label: 'MET Específico',
+                              value: selectedMetValue,
+                              items: metOptions,
+                              itemLabelBuilder: (met) => met.toString(),
+                              onChanged: (double? newValue) {
+                                setStateSB(() {
+                                  selectedMetValue = newValue;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 1,
+                            child: CustomTextFormField(
+                              controller: durationController,
+                              label: 'Dur (min)',
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    final duration = int.tryParse(durationController.text) ?? 0;
-                    if (selectedActivity != null &&
-                        selectedMetValue != null &&
-                        duration > 0) {
-                      widget.onAddActivity(
-                        day,
-                        UserActivity(
-                          day: day,
-                          metActivity: selectedActivity!,
-                          metValue: selectedMetValue!,
-                          durationMinutes: duration,
-                        ),
-                      );
-                      durationController.dispose();
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  child: const Text('Añadir'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      'Cancelar',
+                      style: TextStyle(color: kTextColorSecondary),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      final duration =
+                          int.tryParse(durationController.text) ?? 0;
+                      if (selectedActivity != null &&
+                          selectedMetValue != null &&
+                          duration > 0) {
+                        widget.onAddActivity(
+                          day,
+                          UserActivity(
+                            day: day,
+                            metActivity: selectedActivity!,
+                            metValue: selectedMetValue!,
+                            durationMinutes: duration,
+                          ),
+                        );
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: const Text('Añadir'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      durationController.dispose();
+    }
   }
 
   void _showCopyDayDialog(String fromDay, List<UserActivity> activities) {

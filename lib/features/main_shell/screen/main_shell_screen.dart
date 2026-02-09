@@ -145,8 +145,10 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       case 5:
         return _equivalentsTableKey.currentState;
       case 6:
+        return null; // Reserved for future
+      case 7:
         return _mealPlanKey.currentState;
-      case 8:
+      case 9:
         return _biochemistryKey.currentState;
       default:
         return null;
@@ -365,6 +367,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                               EquivalentsTableScreen(
                                                 key: _equivalentsTableKey,
                                               ), // 5
+                                              const SizedBox.shrink(), // 6 (reserved for future)
                                               currentActiveClient != null
                                                   ? MealPlanScreen(
                                                       key: _mealPlanKey,
@@ -381,13 +384,13 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                                                 );
                                                           },
                                                     )
-                                                  : const SizedBox.shrink(), // 6
-                                              TrainingScreen(), // 7
+                                                  : const SizedBox.shrink(), // 7
+                                              TrainingScreen(), // 8
                                               BiochemistryScreen(
                                                 key: _biochemistryKey,
-                                              ), // 8
-                                              SettingsScreen(), // 9
-                                              const ClientOverviewScreen(), // 10
+                                              ), // 9
+                                              SettingsScreen(), // 10
+                                              const ClientOverviewScreen(), // 11
                                             ],
                                           ),
                                         ),

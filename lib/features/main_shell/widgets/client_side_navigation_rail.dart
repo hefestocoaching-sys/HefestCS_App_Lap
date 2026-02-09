@@ -53,7 +53,7 @@ class ClientSideNavigationRail extends ConsumerWidget {
     ),
     _ClientNavItem(
       icon: Icons.menu_book_outlined,
-      label: 'Diseño de Menu',
+      label: 'Diseño de Menú',
       index: 7,
     ),
     _ClientNavItem(
@@ -61,7 +61,11 @@ class ClientSideNavigationRail extends ConsumerWidget {
       label: 'Entrenamiento',
       index: 8,
     ),
-    _ClientNavItem(icon: Icons.science_outlined, label: 'Bioquimica', index: 9),
+    _ClientNavItem(
+      icon: Icons.science_outlined,
+      label: 'Bioquímica',
+      index: 9,
+    ),
   ];
 
   @override

@@ -1,706 +1,714 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hcs_app_lap/core/contracts/saveable_module.dart';
-import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
-import 'package:hcs_app_lap/features/nutrition_feature/providers/nutrition_plan_engine_provider.dart';
-import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_calculator.dart';
-import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_definition.dart';
-import 'package:hcs_app_lap/nutrition_engine/planning/meal_targets.dart';
-import 'package:hcs_app_lap/utils/theme.dart';
-import 'package:hcs_app_lap/ui/clinic_section_surface.dart';
+import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
+import 'package:hcs_app_lap/core/models/equivalent_definition.dart';
+import 'package:hcs_app_lap/core/models/meal_equivalent.dart';
+import 'package:hcs_app_lap/features/clients/providers/clients_provider.dart';
+import 'package:hcs_app_lap/features/nutrition_feature/models/nutrition_plan_result.dart';
+import 'package:hcs_app_lap/features/nutrition_feature/providers/nutrition_plan_provider.dart';
+import 'package:hcs_app_lap/shared/widgets/saveable_module.dart';
 
-/// Professional equivalents table screen inspired by SMAE, Nutrimind, Avena Team.
 class EquivalentsTableScreen extends ConsumerStatefulWidget {
-  const EquivalentsTableScreen({super.key});
+  const EquivalentsTableScreen({Key? key}) : super(key: key);
 
   @override
   ConsumerState<EquivalentsTableScreen> createState() =>
       _EquivalentsTableScreenState();
 }
 
-class _EquivalentsTableScreenState
-    extends ConsumerState<EquivalentsTableScreen>
-    with AutomaticKeepAliveClientMixin
+class _EquivalentsTableScreenState extends ConsumerState<EquivalentsTableScreen>
+    with TickerProviderStateMixin
     implements SaveableModule {
-  @override
-  bool get wantKeepAlive => true;
+  late TabController _tabController;
 
-  // Estado: Equivalentes ajustados por comida
-  Map<int, Map<String, double>> _equivalentsByMeal = {};
-  bool _isDirty = false;
+  // Tab 1: General equivalents (aggregate daily totals)
+  late Map<String, double> _generalEquivalents;
+
+  // Tab 2: Distribution by meals (matrix: groups × meal times)
+  late Map<String, Map<int, double>> _equivalentsByMealAndGroup;
+
+  // Track dirty state for each tab
+  bool _isGeneralDirty = false;
+  bool _isMealsDirty = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeFromPlan();
-    });
+    _tabController = TabController(length: 2, vsync: this);
+    _initializeData();
   }
 
-  /// Inicializar desde el plan calculado
-  void _initializeFromPlan() {
-    final planResult = ref.read(nutritionPlanResultProvider);
-    if (planResult != null && planResult.mealEquivalents != null) {
-      final newMap = <int, Map<String, double>>{};
-      for (int i = 0; i < planResult.mealEquivalents!.length; i++) {
-        newMap[i] = Map<String, double>.from(
-          planResult.mealEquivalents![i].equivalents,
-        );
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _initializeData() {
+    // Initialize from current nutrition plan
+    _generalEquivalents = {};
+    _equivalentsByMealAndGroup = {};
+
+    // Initialize with zeros for all groups
+    for (var def in EquivalentCatalog.v1Definitions) {
+      _generalEquivalents[def.groupId] = 0.0;
+    }
+
+    final nutritionPlan = ref.read(nutritionPlanResultProvider);
+    if (nutritionPlan != null) {
+      // Load general equivalents from extra data
+      final clientId = ref.read(clientsProvider).activeClientId;
+      if (clientId != null) {
+        final client = ref.read(clientsProvider).clients[clientId];
+        if (client != null) {
+          final extraData = client.nutrition?.extra ?? {};
+          final savedEquivalents =
+              extraData[NutritionExtraKeys.equivalentsByDay] as Map?;
+          if (savedEquivalents != null) {
+            for (var entry in savedEquivalents.entries) {
+              _generalEquivalents[entry.key] = (entry.value as num).toDouble();
+            }
+          }
+        }
       }
-      setState(() {
-        _equivalentsByMeal = newMap;
-      });
+
+      // Initialize meals matrix from nutritionPlan.mealEquivalents if available
+      int mealsPerDay = nutritionPlan.mealsPerDay ?? 3;
+      for (var def in EquivalentCatalog.v1Definitions) {
+        _equivalentsByMealAndGroup[def.groupId] = {};
+        for (int mealIdx = 0; mealIdx < mealsPerDay; mealIdx++) {
+          _equivalentsByMealAndGroup[def.groupId]![mealIdx] = 0.0;
+        }
+      }
+
+      // Load from nutritionPlan.mealEquivalents if available
+      if (nutritionPlan.mealEquivalents != null) {
+        for (int mealIdx = 0;
+            mealIdx < nutritionPlan.mealEquivalents!.length;
+            mealIdx++) {
+          final mealEquiv = nutritionPlan.mealEquivalents![mealIdx];
+          for (var def in EquivalentCatalog.v1Definitions) {
+            if (mealEquiv.equivalentsByGroup.containsKey(def.groupId)) {
+              _equivalentsByMealAndGroup[def.groupId]![mealIdx] =
+                  (mealEquiv.equivalentsByGroup[def.groupId] ?? 0.0)
+                      .toDouble();
+            }
+          }
+        }
+      }
     }
   }
 
+  // Save current state to client
   @override
   Future<void> saveIfDirty() async {
-    if (!_isDirty) return;
-    setState(() {
-      _isDirty = false;
-    });
+    if (!_isGeneralDirty && !_isMealsDirty) return;
+
+    final clientId = ref.read(clientsProvider).activeClientId;
+    if (clientId == null) return;
+
+    final clientsNotifier = ref.read(clientsProvider.notifier);
+    final currentClient = ref.read(clientsProvider).clients[clientId];
+    if (currentClient == null) return;
+
+    // Prepare extra data updates
+    final extraUpdates = <String, dynamic>{
+      NutritionExtraKeys.equivalentsByDay: _generalEquivalents,
+    };
+
+    await clientsNotifier.updateActiveClient(
+      nutrition: (currentClient.nutrition ?? NutritionProfile()).copyWith(
+        extra: {...?currentClient.nutrition?.extra, ...extraUpdates},
+      ),
+    );
+
+    _isGeneralDirty = false;
+    _isMealsDirty = false;
   }
 
+  // Reset drafts
   @override
-  void resetDrafts() {
-    _initializeFromPlan();
-    setState(() {
-      _isDirty = false;
-    });
-  }
-
-  void _markDirty() {
-    if (!_isDirty) {
-      setState(() {
-        _isDirty = true;
-      });
+  Future<void> resetDrafts() async {
+    _initializeData();
+    _isGeneralDirty = false;
+    _isMealsDirty = false;
+    if (mounted) {
+      setState(() {});
     }
   }
 
-  void _addEquivalentGroup(int mealIndex, String groupId, double initialValue) {
-    setState(() {
-      _equivalentsByMeal[mealIndex] ??= {};
-      _equivalentsByMeal[mealIndex]![groupId] = initialValue;
-      _markDirty();
-    });
+  // Calculate daily totals from general equivalents
+  Map<String, double> _calculateGeneralTotals() {
+    Map<String, double> totals = {
+      'kcal': 0.0,
+      'protein': 0.0,
+      'fat': 0.0,
+      'carbs': 0.0,
+    };
+
+    for (var def in EquivalentCatalog.v1Definitions) {
+      final count = _generalEquivalents[def.groupId] ?? 0.0;
+      totals['kcal'] = (totals['kcal'] ?? 0.0) + (def.kcalPerEquivalent * count);
+      totals['protein'] =
+          (totals['protein'] ?? 0.0) + (def.proteinPerEquivalent * count);
+      totals['fat'] = (totals['fat'] ?? 0.0) + (def.fatPerEquivalent * count);
+      totals['carbs'] =
+          (totals['carbs'] ?? 0.0) + (def.carbsPerEquivalent * count);
+    }
+
+    return totals;
   }
 
-  void _updateEquivalentValue(int mealIndex, String groupId, double newValue) {
-    setState(() {
-      if (_equivalentsByMeal[mealIndex] != null) {
-        _equivalentsByMeal[mealIndex]![groupId] = newValue;
-        _markDirty();
-      }
-    });
+  // Calculate meal macros for a specific meal
+  Map<String, double> _calculateMealMacros(int mealIdx) {
+    Map<String, double> totals = {
+      'kcal': 0.0,
+      'protein': 0.0,
+      'fat': 0.0,
+      'carbs': 0.0,
+    };
+
+    for (var def in EquivalentCatalog.v1Definitions) {
+      final count = _equivalentsByMealAndGroup[def.groupId]?[mealIdx] ?? 0.0;
+      totals['kcal'] = (totals['kcal'] ?? 0.0) + (def.kcalPerEquivalent * count);
+      totals['protein'] =
+          (totals['protein'] ?? 0.0) + (def.proteinPerEquivalent * count);
+      totals['fat'] = (totals['fat'] ?? 0.0) + (def.fatPerEquivalent * count);
+      totals['carbs'] =
+          (totals['carbs'] ?? 0.0) + (def.carbsPerEquivalent * count);
+    }
+
+    return totals;
   }
 
-  void _removeEquivalentGroup(int mealIndex, String groupId) {
-    setState(() {
-      _equivalentsByMeal[mealIndex]?.remove(groupId);
-      _markDirty();
-    });
+  // Get color for SMAE group
+  Color _getGroupColor(String groupId) {
+    final groupColors = {
+      'verduras': Colors.green.shade100,
+      'frutas': Colors.yellow.shade100,
+      'cereales': Colors.amber.shade100,
+      'leguminosas': Colors.red.shade100,
+      'alimentos_origen_animal': Colors.purple.shade100,
+      'grasas': Colors.orange.shade100,
+      'azucares': Colors.pink.shade100,
+      'bebidas': Colors.blue.shade100,
+      'productos_lacteos': Colors.indigo.shade100,
+      'preparados': Colors.teal.shade100,
+      'alimentos_preparados': Colors.cyan.shade100,
+      'condimentos': Colors.brown.shade100,
+      'alimentos_libres': Colors.grey.shade100,
+      'suplementos': Colors.blueGrey.shade100,
+    };
+    return groupColors[groupId] ?? Colors.grey.shade100;
+  }
+
+  // Build Tab 1: General Equivalents
+  Widget _buildGeneralTab() {
+    final nutritionPlan = ref.watch(nutritionPlanResultProvider);
+    final targets = nutritionPlan;
+
+    final totals = _calculateGeneralTotals();
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Header with targets
+          Container(
+            color: Colors.red.shade900,
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DIETOCALCULO DEL PLAN DE ALIMENTACION',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildTargetInfo(
+                        'KCAL',
+                        '${targets?.kcalTargetDay?.toStringAsFixed(0) ?? 'N/A'}',
+                        Colors.white),
+                    _buildTargetInfo(
+                        'PROT',
+                        '${targets?.proteinTargetDay?.toStringAsFixed(1) ?? 'N/A'}g',
+                        Colors.white),
+                    _buildTargetInfo(
+                        'GRASAS',
+                        '${targets?.fatTargetDay?.toStringAsFixed(1) ?? 'N/A'}g',
+                        Colors.white),
+                    _buildTargetInfo(
+                        'CARBS',
+                        '${targets?.carbsTargetDay?.toStringAsFixed(1) ?? 'N/A'}g',
+                        Colors.white),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // SMAE Table
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Table(
+              border: TableBorder.all(),
+              columnWidths: {
+                0: FractionColumnWidth(0.35),
+                1: FractionColumnWidth(0.15),
+                2: FractionColumnWidth(0.15),
+                3: FractionColumnWidth(0.15),
+                4: FractionColumnWidth(0.2),
+              },
+              children: [
+                // Table header
+                TableRow(
+                  decoration: BoxDecoration(color: Colors.grey.shade300),
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text('Grupo SMAE',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Center(
+                        child: Text('Equiv',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Center(
+                        child: Text('−',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 18)),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Center(
+                        child: Text('+',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 18)),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Center(
+                        child: Text('Acciones',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+                // Table rows for each SMAE group
+                ...EquivalentCatalog.v1Definitions.map((def) {
+                  final count = _generalEquivalents[def.groupId] ?? 0.0;
+                  return TableRow(
+                    decoration:
+                        BoxDecoration(color: _getGroupColor(def.groupId)),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text(def.groupLabel ?? 'Grupo ${def.groupId}'),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Center(
+                          child: Text(count.toStringAsFixed(1)),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: IconButton(
+                          icon: Icon(Icons.remove_circle_outline),
+                          iconSize: 20,
+                          onPressed: () {
+                            setState(() {
+                              _generalEquivalents[def.groupId] =
+                                  (_generalEquivalents[def.groupId] ?? 0.0) - 1;
+                              if (_generalEquivalents[def.groupId]! < 0) {
+                                _generalEquivalents[def.groupId] = 0.0;
+                              }
+                              _isGeneralDirty = true;
+                            });
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: IconButton(
+                          icon: Icon(Icons.add_circle_outline),
+                          iconSize: 20,
+                          onPressed: () {
+                            setState(() {
+                              _generalEquivalents[def.groupId] =
+                                  (_generalEquivalents[def.groupId] ?? 0.0) + 1;
+                              _isGeneralDirty = true;
+                            });
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Center(
+                          child: Icon(Icons.more_vert, size: 16),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+          // Totals Section
+          Container(
+            color: Colors.blue.shade50,
+            padding: EdgeInsets.all(16),
+            margin: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('TOTALES GENERALES',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildTotalInfo('KCAL', totals['kcal']?.toStringAsFixed(0),
+                        targets?.kcalTargetDay),
+                    _buildTotalInfo('PROT', totals['protein']?.toStringAsFixed(1),
+                        targets?.proteinTargetDay),
+                    _buildTotalInfo('GRASAS', totals['fat']?.toStringAsFixed(1),
+                        targets?.fatTargetDay),
+                    _buildTotalInfo('CARBS', totals['carbs']?.toStringAsFixed(1),
+                        targets?.carbsTargetDay),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build Tab 2: Distribution by Meals
+  Widget _buildMealsTab() {
+    final nutritionPlan = ref.watch(nutritionPlanResultProvider);
+    final mealsPerDay = nutritionPlan?.mealsPerDay ?? 3;
+    final targets = nutritionPlan;
+
+    // Calculate meal names
+    List<String> mealNames = [
+      'Desayuno',
+      'Almuerzo',
+      'Comida',
+      'Merienda',
+      'Cena',
+      'Postres',
+      'Bebidas',
+    ];
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Header with targets
+          Container(
+            color: Colors.red.shade900,
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DIETOCALCULO DEL PLAN DE ALIMENTACION',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildTargetInfo(
+                        'KCAL',
+                        '${targets?.kcalTargetDay?.toStringAsFixed(0) ?? 'N/A'}',
+                        Colors.white),
+                    _buildTargetInfo(
+                        'PROT',
+                        '${targets?.proteinTargetDay?.toStringAsFixed(1) ?? 'N/A'}g',
+                        Colors.white),
+                    _buildTargetInfo(
+                        'GRASAS',
+                        '${targets?.fatTargetDay?.toStringAsFixed(1) ?? 'N/A'}g',
+                        Colors.white),
+                    _buildTargetInfo(
+                        'CARBS',
+                        '${targets?.carbsTargetDay?.toStringAsFixed(1) ?? 'N/A'}g',
+                        Colors.white),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Meals Matrix
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Table(
+                border: TableBorder.all(),
+                children: [
+                  // Header row with meal names
+                  TableRow(
+                    decoration: BoxDecoration(color: Colors.grey.shade300),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text('Grupo SMAE',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      ...List.generate(
+                        mealsPerDay,
+                        (idx) => Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Center(
+                            child: Text(mealNames[idx],
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Group rows
+                  ...EquivalentCatalog.v1Definitions.map((def) {
+                    return TableRow(
+                      decoration:
+                          BoxDecoration(color: _getGroupColor(def.groupId)),
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Text(def.groupLabel ?? 'Grupo ${def.groupId}'),
+                        ),
+                        ...List.generate(
+                          mealsPerDay,
+                          (mealIdx) {
+                            final count =
+                                _equivalentsByMealAndGroup[def.groupId]
+                                    ?[mealIdx] ??
+                                0.0;
+                            return Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    width: 60,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 24,
+                                          child: IconButton(
+                                            icon:
+                                                Icon(Icons.remove_circle_outline),
+                                            iconSize: 16,
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              setState(() {
+                                                _equivalentsByMealAndGroup[def
+                                                        .groupId]![mealIdx] =
+                                                    (_equivalentsByMealAndGroup[
+                                                                def.groupId]![
+                                                            mealIdx] ??
+                                                        0.0) -
+                                                    1;
+                                                if (_equivalentsByMealAndGroup[
+                                                        def.groupId]![mealIdx] <
+                                                    0) {
+                                                  _equivalentsByMealAndGroup[def
+                                                      .groupId]![mealIdx] = 0.0;
+                                                }
+                                                _isMealsDirty = true;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Center(
+                                          child: Text(
+                                            count.toStringAsFixed(1),
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 24,
+                                          child: IconButton(
+                                            icon:
+                                                Icon(Icons.add_circle_outline),
+                                            iconSize: 16,
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              setState(() {
+                                                _equivalentsByMealAndGroup[def
+                                                        .groupId]![mealIdx] =
+                                                    (_equivalentsByMealAndGroup[
+                                                                def.groupId]![
+                                                            mealIdx] ??
+                                                        0.0) +
+                                                    1;
+                                                _isMealsDirty = true;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                  // Total row per meal
+                  TableRow(
+                    decoration: BoxDecoration(color: Colors.yellow.shade100),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text('TOTAL',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      ...List.generate(
+                        mealsPerDay,
+                        (mealIdx) {
+                          final mealMacros = _calculateMealMacros(mealIdx);
+                          return Padding(
+                            padding: EdgeInsets.all(8),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    '${mealMacros['kcal']?.toStringAsFixed(0) ?? '0'} kcal',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10),
+                                  ),
+                                  Text(
+                                    '${mealMacros['protein']?.toStringAsFixed(1) ?? '0'}g P',
+                                    style: TextStyle(fontSize: 9),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTargetInfo(String label, String value, Color textColor) {
+    return Column(
+      children: [
+        Text(label,
+            style: TextStyle(fontSize: 10, color: textColor.withOpacity(0.7))),
+        SizedBox(height: 4),
+        Text(value,
+            style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.bold, color: textColor)),
+      ],
+    );
+  }
+
+  Widget _buildTotalInfo(String label, String? value, double? target) {
+    final isDifference = (double.tryParse(value ?? '0') ?? 0) <
+        (target ?? 0); // Simplified logic for color
+    return Column(
+      children: [
+        Text(label,
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text(value ?? '0',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDifference ? Colors.orange : Colors.green,
+            )),
+        if (target != null)
+          Text('(t: ${target.toStringAsFixed(0)})',
+              style: TextStyle(fontSize: 9, color: Colors.grey)),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    final client = ref.watch(clientsProvider).value?.activeClient;
-    final planResult = ref.watch(nutritionPlanResultProvider);
-
-    if (client == null) {
-      return const Center(
-        child: Text(
-          'Selecciona un cliente',
-          style: TextStyle(color: kTextColorSecondary),
-        ),
-      );
-    }
-
-    if (planResult == null) {
-      return _buildEmptyState();
-    }
-
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(
+        title: Text('Equivalentes'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(text: 'EQUIVALENTES GENERALES'),
+            Tab(text: 'DISTRIBUCION POR COMIDAS'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildGeneralTab(),
+          _buildMealsTab(),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildHeader(planResult),
-            const SizedBox(height: 24),
-            _buildMealsSection(planResult),
-            const SizedBox(height: 32),
-            _buildActionButtons(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.restaurant_menu,
-            size: 80,
-            color: kTextColorSecondary.withOpacity(0.5),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Primero calcula calorias y macros',
-            style: TextStyle(
-              fontSize: 18,
-              color: kTextColorSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Ve a "Gasto Energetico" y "Macronutrientes"\npara generar el plan base',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: kTextColorSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(planResult) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            kPrimaryColor.withOpacity(0.15),
-            kCardColor.withOpacity(0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: kPrimaryColor.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.table_chart, color: kPrimaryColor, size: 28),
-              const SizedBox(width: 12),
-              const Text(
-                'Tabla de Equivalentes (SMAE)',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: kTextColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildSummaryRow(planResult),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryRow(planResult) {
-    return Wrap(
-      spacing: 24,
-      runSpacing: 12,
-      children: [
-        _buildSummaryChip(
-          'Objetivo:',
-          '${planResult.kcalTargetDay.toStringAsFixed(0)} kcal',
-          Icons.local_fire_department,
-          Colors.orange,
-        ),
-        _buildSummaryChip(
-          'Proteinas:',
-          '${planResult.proteinTargetDay.toStringAsFixed(0)}g',
-          Icons.egg,
-          Colors.blue,
-        ),
-        _buildSummaryChip(
-          'Carbos:',
-          '${planResult.carbTargetDay.toStringAsFixed(0)}g',
-          Icons.rice_bowl,
-          Colors.amber,
-        ),
-        _buildSummaryChip(
-          'Grasas:',
-          '${planResult.fatTargetDay.toStringAsFixed(0)}g',
-          Icons.water_drop,
-          Colors.purple,
-        ),
-        _buildSummaryChip(
-          'Comidas:',
-          '${planResult.mealsPerDay}',
-          Icons.restaurant,
-          kPrimaryColor,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSummaryChip(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: kTextColorSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              color: kTextColor,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMealsSection(planResult) {
-    return Column(
-      children: List.generate(
-        planResult.mealTargets.length,
-        (index) => Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: _buildMealCard(
-            index,
-            planResult.mealTargets[index],
-            planResult.mealEquivalents?[index],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMealCard(
-    int mealIndex,
-    MealTargets mealTarget,
-    MealEquivalents? mealEq,
-  ) {
-    final equivalents = _equivalentsByMeal[mealIndex] ?? {};
-
-    return ClinicSectionSurface(
-      icon: _getMealIcon(mealIndex),
-      title: 'COMIDA ${mealIndex + 1}',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: _buildMealSummary(mealTarget),
-          ),
-          const SizedBox(height: 12),
-          _buildEquivalentsTable(mealIndex, equivalents, mealEq),
-          const SizedBox(height: 12),
-          _buildAddGroupButton(mealIndex, equivalents),
-        ],
-      ),
-    );
-  }
-
-  IconData _getMealIcon(int index) {
-    const icons = [
-      Icons.wb_sunny_outlined,
-      Icons.lunch_dining,
-      Icons.dinner_dining,
-      Icons.nightlight_outlined,
-      Icons.fastfood_outlined,
-      Icons.cookie_outlined,
-    ];
-    return icons[index % icons.length];
-  }
-
-  Widget _buildMealSummary(MealTargets meal) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          '${meal.kcal.toStringAsFixed(0)} kcal',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Colors.orange,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'P: ${meal.proteinG.toStringAsFixed(1)}g  '
-          'C: ${meal.carbG.toStringAsFixed(1)}g  '
-          'G: ${meal.fatG.toStringAsFixed(1)}g',
-          style: const TextStyle(
-            fontSize: 11,
-            color: kTextColorSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEquivalentsTable(
-    int mealIndex,
-    Map<String, double> equivalents,
-    MealEquivalents? mealEq,
-  ) {
-    if (equivalents.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: kCardColor.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: kTextColorSecondary.withOpacity(0.2),
-          ),
-        ),
-        child: const Center(
-          child: Text(
-            'Sin equivalentes asignados',
-            style: TextStyle(
-              color: kTextColorSecondary,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Table(
-      columnWidths: const {
-        0: FlexColumnWidth(3),
-        1: FlexColumnWidth(2),
-        2: FlexColumnWidth(2),
-        3: FixedColumnWidth(40),
-      },
-      border: TableBorder.all(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      children: [
-        TableRow(
-          decoration: BoxDecoration(
-            color: kPrimaryColor.withOpacity(0.15),
-          ),
-          children: const [
-            _TableHeaderCell('Grupo de Alimentos'),
-            _TableHeaderCell('Equivalentes'),
-            _TableHeaderCell('Alimentos Ejemplo'),
-            _TableHeaderCell(''),
-          ],
-        ),
-        ...equivalents.entries.map((entry) {
-          final def = EquivalentCatalog.v1Definitions.firstWhere(
-            (d) => d.id == entry.key,
-            orElse: () => EquivalentCatalog.v1Definitions.first,
-          );
-
-          final suggestedFood = _getSuggestedFood(def, entry.value);
-
-          return TableRow(
-            children: [
-              _TableCell(_getGroupLabel(entry.key)),
-              TableCell(
-                verticalAlignment: TableCellVerticalAlignment.middle,
-                child: _buildEquivalentCounter(mealIndex, entry.key, entry.value),
-              ),
-              _TableCell(suggestedFood),
-              TableCell(
-                verticalAlignment: TableCellVerticalAlignment.middle,
-                child: IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  color: Colors.red.withOpacity(0.7),
-                  onPressed: () => _removeEquivalentGroup(mealIndex, entry.key),
-                ),
-              ),
-            ],
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildEquivalentCounter(int mealIndex, String groupId, double current) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.remove_circle_outline, size: 20),
-          color: kPrimaryColor,
-          onPressed: current > 0.5
-              ? () => _updateEquivalentValue(mealIndex, groupId, current - 0.5)
-              : null,
-        ),
-        Container(
-          constraints: const BoxConstraints(minWidth: 50),
-          child: Text(
-            current.toStringAsFixed(1),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: kTextColor,
-            ),
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.add_circle_outline, size: 20),
-          color: kPrimaryColor,
-          onPressed: () =>
-              _updateEquivalentValue(mealIndex, groupId, current + 0.5),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAddGroupButton(int mealIndex, Map<String, double> current) {
-    return ElevatedButton.icon(
-      onPressed: () => _showAddGroupDialog(mealIndex, current),
-      icon: const Icon(Icons.add),
-      label: const Text('Agregar Grupo de Alimentos'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: kPrimaryColor.withOpacity(0.2),
-        foregroundColor: kPrimaryColor,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-      ),
-    );
-  }
-
-  void _showAddGroupDialog(int mealIndex, Map<String, double> currentGroups) {
-    final availableGroups = EquivalentCatalog.v1Definitions
-        .where((def) => !currentGroups.containsKey(def.id))
-        .toList();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: kCardColor,
-          title: Row(
-            children: [
-              Icon(Icons.add_circle, color: kPrimaryColor),
-              const SizedBox(width: 8),
-              const Text(
-                'Seleccionar Grupo',
-                style: TextStyle(color: kTextColor),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: availableGroups.length,
-              itemBuilder: (context, index) {
-                final def = availableGroups[index];
-                return _buildGroupOption(def, mealIndex);
+            ElevatedButton.icon(
+              icon: Icon(Icons.refresh),
+              label: Text('Restablecer'),
+              onPressed: () async {
+                await resetDrafts();
               },
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildGroupOption(EquivalentDefinition def, int mealIndex) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: _getGroupColor(def.group).withOpacity(0.2),
-        child: Icon(
-          _getGroupIcon(def.group),
-          color: _getGroupColor(def.group),
-          size: 20,
-        ),
-      ),
-      title: Text(
-        _getGroupLabel(def.id),
-        style: const TextStyle(color: kTextColor, fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        'P: ${def.proteinG}g | C: ${def.carbG}g | G: ${def.fatG}g | ${def.kcal} kcal',
-        style: TextStyle(
-          fontSize: 11,
-          color: kTextColorSecondary,
-        ),
-      ),
-      onTap: () {
-        _addEquivalentGroup(mealIndex, def.id, 1.0);
-        Navigator.pop(context);
-      },
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: resetDrafts,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Restablecer'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+            ElevatedButton.icon(
+              icon: Icon(Icons.save),
+              label: Text('Guardar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+              ),
+              onPressed: () async {
+                await saveIfDirty();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Equivalentes guardados')),
+                  );
+                }
+              },
             ),
-          ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 2,
-          child: ElevatedButton.icon(
-            onPressed: () {
-              // Usuario avanza al diseno de menu
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('✓ Equivalentes configurados. Ve a "Diseno de Menu"'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            icon: const Icon(Icons.restaurant_menu),
-            label: const Text('Guardar Configuracion'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
-  }
-
-  String _getGroupLabel(String groupId) {
-    const labels = {
-      'aoa_bajo_grasa': 'AOA Bajo en Grasa',
-      'aoa_medio_grasa': 'AOA Moderado en Grasa',
-      'aoa_alto_grasa': 'AOA Alto en Grasa',
-      'cereal_sin_grasa': 'Cereales Sin Grasa',
-      'cereal_con_grasa': 'Cereales Con Grasa',
-      'fruta': 'Frutas',
-      'verdura': 'Verduras',
-      'leguminosa': 'Leguminosas',
-      'leche_descremada': 'Leche Descremada',
-      'leche_semidescremada': 'Leche Semidescremada',
-      'leche_entera': 'Leche Entera',
-      'aceite_sin_proteina': 'Aceites y Grasas',
-      'aceite_con_proteina': 'Grasas con Proteina',
-      'azucar_sin_grasa': 'Azucares Sin Grasa',
-    };
-    return labels[groupId] ?? groupId;
-  }
-
-  Color _getGroupColor(String group) {
-    const colors = {
-      'alimentos_origen_animal': Colors.blue,
-      'cereales': Colors.amber,
-      'frutas': Colors.pink,
-      'verduras': Colors.green,
-      'leguminosas': Colors.brown,
-      'leche': Colors.cyan,
-      'grasas': Colors.purple,
-      'azucares': Colors.red,
-    };
-    return colors[group] ?? kPrimaryColor;
-  }
-
-  IconData _getGroupIcon(String group) {
-    const icons = {
-      'alimentos_origen_animal': Icons.egg,
-      'cereales': Icons.rice_bowl,
-      'frutas': Icons.apple,
-      'verduras': Icons.spa,
-      'leguminosas': Icons.grain,
-      'leche': Icons.local_drink,
-      'grasas': Icons.water_drop,
-      'azucares': Icons.cookie,
-    };
-    return icons[group] ?? Icons.restaurant;
-  }
-
-  String _getSuggestedFood(EquivalentDefinition def, double qty) {
-    const examples = {
-      'aoa_bajo_grasa': '~30g pechuga de pollo',
-      'cereal_sin_grasa': '~30g arroz cocido',
-      'fruta': '1 manzana mediana',
-      'verdura': '1 taza cocida',
-      'aceite_sin_proteina': '1 cucharadita',
-    };
-
-    final base = examples[def.id] ?? 'Ver catalogo';
-    return '${qty.toStringAsFixed(1)}x ($base)';
   }
 }
 
 typedef EquivalentsTableScreenState = _EquivalentsTableScreenState;
-
-class _TableHeaderCell extends StatelessWidget {
-  final String text;
-  const _TableHeaderCell(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: kPrimaryColor,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
-
-class _TableCell extends StatelessWidget {
-  final String text;
-  const _TableCell(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 13,
-          color: kTextColor,
-        ),
-      ),
-    );
-  }
-}

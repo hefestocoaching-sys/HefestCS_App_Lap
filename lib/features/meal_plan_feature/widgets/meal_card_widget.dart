@@ -80,57 +80,60 @@ class _MealCardWidgetState extends State<MealCardWidget> {
     widget.onDeleteItem(item);
   }
 
-  void _showEditGramsDialog(BuildContext context, FoodItem item) {
+  Future<void> _showEditGramsDialog(BuildContext context, FoodItem item) async {
     final gramsDialogController = TextEditingController(
       text: item.grams.toStringAsFixed(0),
     );
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: kCardColor,
-          title: Text(
-            "Ajustar Porción: ${item.name}",
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
-          content: TextField(
-            controller: gramsDialogController,
-            keyboardType: TextInputType.number,
-            style: const TextStyle(color: Colors.white),
-            decoration: hcsDecoration(context, labelText: "Gramos").copyWith(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: kCardColor,
+            title: Text(
+              "Ajustar Porción: ${item.name}",
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+            content: TextField(
+              controller: gramsDialogController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(color: Colors.white),
+              decoration: hcsDecoration(context, labelText: "Gramos").copyWith(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                "Cancelar",
-                style: TextStyle(color: kTextColorSecondary),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                  "Cancelar",
+                  style: TextStyle(color: kTextColorSecondary),
+                ),
               ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final newGrams =
-                    double.tryParse(gramsDialogController.text) ?? 0.0;
-                if (newGrams > 0) {
-                  _syncModel(item, newGrams);
-                  Navigator.of(context).pop();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
-                foregroundColor: kTextColor,
+              ElevatedButton(
+                onPressed: () {
+                  final newGrams =
+                      double.tryParse(gramsDialogController.text) ?? 0.0;
+                  if (newGrams > 0) {
+                    _syncModel(item, newGrams);
+                    Navigator.of(context).pop();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrimaryColor,
+                  foregroundColor: kTextColor,
+                ),
+                child: const Text("Guardar"),
               ),
-              child: const Text("Guardar"),
-            ),
-          ],
-        );
-      },
-    );
+            ],
+          );
+        },
+      );
+    } finally {
+      gramsDialogController.dispose();
+    }
   }
 
   @override
