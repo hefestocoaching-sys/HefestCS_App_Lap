@@ -1,6 +1,6 @@
 // lib/domain/training_v3/engines/volume_engine.dart
 
-import 'dart:developer' as developer;
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 
 /// Motor de cálculo de volumen óptimo por músculo
 ///
@@ -82,19 +82,21 @@ class VolumeEngine {
     // PASO 4: Validar contra MRV (safety)
     // Semana 1, Imagen 16-20
     if (targetVolume > mrv) {
-      developer.log(
-        '⚠️  WARNING: Volumen ($targetVolume) excede MRV ($mrv) para $muscle',
-      );
-      developer.log('   Reduciendo a MRV para prevenir sobreentrenamiento.');
+      logger.warning('Target volume exceeds MRV, reducing to safe limit', {
+        'muscle': muscle,
+        'targetVolume': targetVolume,
+        'mrv': mrv,
+      });
       targetVolume = mrv;
     }
 
     // PASO 5: Validar que no sea menor a VME
     if (targetVolume < vme) {
-      developer.log(
-        '⚠️  WARNING: Volumen ($targetVolume) por debajo de VME ($vme) para $muscle',
-      );
-      developer.log('   Aumentando a VME para garantizar estímulo mínimo.');
+      logger.warning('Target volume below VME, increasing to minimum', {
+        'muscle': muscle,
+        'targetVolume': targetVolume,
+        'vme': vme,
+      });
       targetVolume = vme;
     }
 

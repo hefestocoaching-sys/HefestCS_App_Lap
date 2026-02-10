@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:developer' as developer;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/data/datasources/remote/anthropometry_firestore_datasource.dart';
 import 'package:hcs_app_lap/data/datasources/remote/record_firestore_datasource.dart';
 import 'package:hcs_app_lap/domain/entities/anthropometry_record.dart';
@@ -50,7 +49,10 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      developer.log('Warning: No authenticated user - skipping Firestore sync');
+      logger.warning(
+        'No authenticated user, skipping Firestore sync',
+        {'clientId': clientId},
+      );
       return;
     }
 
@@ -90,7 +92,10 @@ class ClinicalRecordsRepository {
       } catch (e) {
         // If client check/creation fails, continue anyway
         // Local storage will still work
-        developer.log('Warning: Could not ensure client exists in Firestore: $e');
+        logger.warning('Failed to ensure client exists in Firestore', {
+          'clientId': clientId,
+          'error': e,
+        });
       }
 
       // Now push the anthropometry record
@@ -104,10 +109,14 @@ class ClinicalRecordsRepository {
             const Duration(seconds: 15),
             onTimeout: () => throw TimeoutException('Record push timeout'),
           );
-    } catch (e) {
+    } catch (e, st) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      developer.log('Note: Firestore sync failed (local save succeeded): $e');
+      logger.error(
+        'Firestore sync failed (local save succeeded)',
+        e,
+        st,
+      );
     }
   }
 
@@ -126,7 +135,10 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      developer.log('Warning: No authenticated user - skipping Firestore sync');
+      logger.warning(
+        'No authenticated user, skipping Firestore sync',
+        {'clientId': clientId},
+      );
       return;
     }
 
@@ -161,7 +173,10 @@ class ClinicalRecordsRepository {
               );
         }
       } catch (e) {
-          developer.log('Warning: Could not ensure client exists in Firestore: $e');
+        logger.warning('Failed to ensure client exists in Firestore', {
+          'clientId': clientId,
+          'error': e,
+        });
       }
 
       final dateKey = _dateFormat.format(record.date);
@@ -187,10 +202,14 @@ class ClinicalRecordsRepository {
             const Duration(seconds: 15),
             onTimeout: () => throw TimeoutException('Record push timeout'),
           );
-    } catch (e) {
+    } catch (e, st) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-        developer.log('Note: Firestore sync failed (local save succeeded): $e');
+      logger.error(
+        'Firestore sync failed (local save succeeded)',
+        e,
+        st,
+      );
     }
   }
 
@@ -214,7 +233,10 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      developer.log('Warning: No authenticated user - skipping Firestore sync');
+      logger.warning(
+        'No authenticated user, skipping Firestore sync',
+        {'clientId': clientId},
+      );
       return;
     }
 
@@ -249,7 +271,10 @@ class ClinicalRecordsRepository {
               );
         }
       } catch (e) {
-          developer.log('Warning: Could not ensure client exists in Firestore: $e');
+        logger.warning('Failed to ensure client exists in Firestore', {
+          'clientId': clientId,
+          'error': e,
+        });
       }
 
       final dateKey = _dateFormat.format(date);
@@ -266,10 +291,14 @@ class ClinicalRecordsRepository {
             const Duration(seconds: 15),
             onTimeout: () => throw TimeoutException('Record push timeout'),
           );
-    } catch (e) {
+    } catch (e, st) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-        developer.log('Note: Firestore sync failed (local save succeeded): $e');
+      logger.error(
+        'Firestore sync failed (local save succeeded)',
+        e,
+        st,
+      );
     }
   }
 
@@ -296,7 +325,10 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      developer.log('Warning: No authenticated user - skipping Firestore sync');
+      logger.warning(
+        'No authenticated user, skipping Firestore sync',
+        {'clientId': clientId},
+      );
       return;
     }
 
@@ -331,7 +363,10 @@ class ClinicalRecordsRepository {
               );
         }
       } catch (e) {
-          developer.log('Warning: Could not ensure client exists in Firestore: $e');
+        logger.warning('Failed to ensure client exists in Firestore', {
+          'clientId': clientId,
+          'error': e,
+        });
       }
 
       final dateKey = _dateFormat.format(date);
@@ -348,10 +383,14 @@ class ClinicalRecordsRepository {
             const Duration(seconds: 15),
             onTimeout: () => throw TimeoutException('Record push timeout'),
           );
-    } catch (e) {
+    } catch (e, st) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-        developer.log('Note: Firestore sync failed (local save succeeded): $e');
+      logger.error(
+        'Firestore sync failed (local save succeeded)',
+        e,
+        st,
+      );
     }
   }
 
@@ -364,8 +403,7 @@ class ClinicalRecordsRepository {
         try {
           await operation();
         } catch (e, st) {
-            developer.log('Background push failed: $e');
-            developer.log(st.toString());
+          logger.error('Background push failed', e, st);
         }
       }),
     );

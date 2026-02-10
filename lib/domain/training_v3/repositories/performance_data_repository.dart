@@ -1,7 +1,6 @@
 // lib/domain/training_v3/repositories/performance_data_repository.dart
 
-import 'dart:developer' as developer;
-
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
 
 /// Repositorio de datos de rendimiento agregados
@@ -28,7 +27,9 @@ class PerformanceDataRepository {
     return id;
     */
 
-    developer.log('📊 [MOCK] Guardando PerformanceMetrics: ${metrics.targetId}');
+    logger.debug('Saving performance metrics (MOCK)', {
+      'targetId': metrics.targetId,
+    });
     return '${metrics.targetId}_${DateTime.now().millisecondsSinceEpoch}';
   }
 
@@ -63,7 +64,7 @@ class PerformanceDataRepository {
     return PerformanceMetrics.fromJson(snapshot.docs.first.data());
     */
 
-    developer.log('📊 [MOCK] Obteniendo métricas de $muscle');
+    logger.debug('Fetching muscle metrics (MOCK)', {'muscle': muscle});
     return null;
   }
 
@@ -75,7 +76,9 @@ class PerformanceDataRepository {
     required DateTime endDate,
   }) async {
     // PLACEHOLDER: Consultar Firestore
-    developer.log('📊 [MOCK] Obteniendo métricas de ejercicio $exerciseId');
+    logger.debug('Fetching exercise metrics (MOCK)', {
+      'exerciseId': exerciseId,
+    });
     return null;
   }
 
@@ -103,7 +106,9 @@ class PerformanceDataRepository {
         .toList();
     */
 
-    developer.log('📊 [MOCK] Obteniendo histórico de $targetId');
+    logger.debug('Fetching metrics history (MOCK)', {
+      'targetId': targetId,
+    });
     return [];
   }
 
@@ -135,7 +140,7 @@ class PerformanceDataRepository {
     return metricsByMuscle;
     */
 
-    developer.log('📊 [MOCK] Obteniendo métricas de todos los músculos');
+    logger.debug('Fetching latest metrics for all muscles (MOCK)');
     return {};
   }
 
@@ -152,7 +157,7 @@ class PerformanceDataRepository {
         .update(metrics.toJson());
     */
 
-    developer.log('✏️  [MOCK] Actualizando métricas: $metricsId');
+    logger.debug('Updating metrics (MOCK)', {'metricsId': metricsId});
   }
 
   /// Elimina métricas antiguas (limpieza periódica)
@@ -173,7 +178,7 @@ class PerformanceDataRepository {
     return snapshot.docs.length;
     */
 
-    developer.log('🗑️  [MOCK] Eliminando métricas antiguas');
+    logger.debug('Deleting old metrics (MOCK)');
     return 0;
   }
 

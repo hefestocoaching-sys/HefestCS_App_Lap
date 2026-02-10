@@ -1,13 +1,11 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
             "name": "hcs_app_lap",
             "request": "launch",
             "type": "dart",
+            "program": "${workspaceFolder}/lib/main.dart",
             "stopOnEntry": false,
             "enableAsserts": true
         },
@@ -15,6 +13,7 @@
             "name": "hcs_app_lap (profile mode)",
             "request": "launch",
             "type": "dart",
+            "program": "${workspaceFolder}/lib/main.dart",
             "flutterMode": "profile",
             "stopOnEntry": false
         },
@@ -22,6 +21,7 @@
             "name": "hcs_app_lap (release mode)",
             "request": "launch",
             "type": "dart",
+            "program": "${workspaceFolder}/lib/main.dart",
             "flutterMode": "release",
             "stopOnEntry": false
         }

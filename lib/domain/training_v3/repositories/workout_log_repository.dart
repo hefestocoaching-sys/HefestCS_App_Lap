@@ -1,7 +1,6 @@
 // lib/domain/training_v3/repositories/workout_log_repository.dart
 
-import 'dart:developer' as developer;
-
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
 
 /// Repositorio de persistencia de logs de entrenamiento
@@ -29,7 +28,7 @@ class WorkoutLogRepository {
     // PLACEHOLDER: Guardar en Firestore
     // await _firestore.collection('workout_logs').doc(log.id).set(log.toJson());
 
-    developer.log('📝 [MOCK] Guardando WorkoutLog: ${log.id}');
+    logger.debug('Saving workout log (MOCK)', {'logId': log.id});
     return log.id;
   }
 
@@ -69,7 +68,7 @@ class WorkoutLogRepository {
     return snapshot.docs.map((doc) => WorkoutLog.fromJson(doc.data())).toList();
     */
 
-    developer.log('📖 [MOCK] Obteniendo logs de usuario: $userId');
+    logger.debug('Fetching user workout logs (MOCK)', {'userId': userId});
     return []; // Mock vacío
   }
 
@@ -78,7 +77,9 @@ class WorkoutLogRepository {
     required String programId,
   }) async {
     // PLACEHOLDER: Consultar Firestore
-    developer.log('📖 [MOCK] Obteniendo logs de programa: $programId');
+    logger.debug('Fetching program workout logs (MOCK)', {
+      'programId': programId,
+    });
     return [];
   }
 
@@ -123,7 +124,7 @@ class WorkoutLogRepository {
     // PLACEHOLDER: Actualizar en Firestore
     // await _firestore.collection('workout_logs').doc(log.id).update(log.toJson());
 
-    developer.log('✏️  [MOCK] Actualizando WorkoutLog: ${log.id}');
+    logger.debug('Updating workout log (MOCK)', {'logId': log.id});
   }
 
   /// Elimina un log
@@ -131,7 +132,7 @@ class WorkoutLogRepository {
     // PLACEHOLDER: Eliminar de Firestore
     // await _firestore.collection('workout_logs').doc(logId).delete();
 
-    developer.log('🗑️  [MOCK] Eliminando WorkoutLog: $logId');
+    logger.debug('Deleting workout log (MOCK)', {'logId': logId});
   }
 
   /// Cuenta logs de un usuario

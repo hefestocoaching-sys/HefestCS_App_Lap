@@ -1,8 +1,7 @@
 // lib/domain/training_v3/ml_integration/prediction_recorder_v3.dart
 
-import 'dart:developer' as developer;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
@@ -98,9 +97,9 @@ class PredictionRecorderV3 {
           .doc(predictionId)
           .set(sanitizeForFirestore(payload));
 
-      developer.log('✅ Predicción ML registrada: $predictionId');
-    } catch (e) {
-      developer.log('❌ Error al registrar predicción ML: $e');
+      logger.info('ML prediction recorded', {'predictionId': predictionId});
+    } catch (e, st) {
+      logger.error('Failed to record ML prediction', e, st);
       // No lanzar error - el registro es opcional
     }
   }
@@ -165,9 +164,11 @@ class PredictionRecorderV3 {
         'status': 'completed',
       });
 
-      developer.log('✅ Outcome registrado para predicción: $predictionId');
-    } catch (e) {
-      developer.log('❌ Error al registrar outcome: $e');
+      logger.info('Prediction outcome recorded', {
+        'predictionId': predictionId,
+      });
+    } catch (e, st) {
+      logger.error('Failed to record prediction outcome', e, st);
     }
   }
 
@@ -186,8 +187,8 @@ class PredictionRecorderV3 {
           .get();
 
       return snapshot.docs.map((doc) => doc.data()).toList();
-    } catch (e) {
-      developer.log('❌ Error al obtener predicciones pendientes: $e');
+    } catch (e, st) {
+      logger.error('Failed to fetch pending predictions', e, st);
       return [];
     }
   }
@@ -254,8 +255,8 @@ class PredictionRecorderV3 {
         'readiness_accuracy': readinessAccuracy,
         'overall_accuracy': ((1.0 - avgVolumeError) + readinessAccuracy) / 2,
       };
-    } catch (e) {
-      developer.log('❌ Error al calcular accuracy: $e');
+    } catch (e, st) {
+      logger.error('Failed to calculate prediction accuracy', e, st);
       return {'has_data': false, 'error': e.toString()};
     }
   }
@@ -285,10 +286,10 @@ class PredictionRecorderV3 {
         deletedCount++;
       }
 
-      developer.log('✅ Limpiadas $deletedCount predicciones antiguas');
+      logger.info('Old predictions cleaned up', {'deletedCount': deletedCount});
       return deletedCount;
-    } catch (e) {
-      developer.log('❌ Error al limpiar predicciones: $e');
+    } catch (e, st) {
+      logger.error('Failed to clean up old predictions', e, st);
       return 0;
     }
   }

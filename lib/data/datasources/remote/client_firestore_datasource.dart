@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:developer' as developer;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
@@ -199,15 +197,15 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     if (_enableFirestoreAudit) {
       rawInvalidPaths = listInvalidFirestorePaths(clientJson, limit: 12);
       if (rawInvalidPaths.isNotEmpty) {
-        developer.log(
-          '🔥 Firestore raw payload invalid paths: ${rawInvalidPaths.join(' | ')}',
-        );
+        logger.debug('Firestore raw payload invalid paths detected', {
+          'invalidPaths': rawInvalidPaths,
+        });
       }
       rawAuditFindings = listFirestoreAuditFindings(clientJson, limit: 12);
       if (rawAuditFindings.isNotEmpty) {
-        developer.log(
-          '🔥 Firestore raw payload audit findings: ${rawAuditFindings.join(' | ')}',
-        );
+        logger.debug('Firestore raw payload audit findings detected', {
+          'auditFindings': rawAuditFindings,
+        });
       }
     }
 
@@ -220,7 +218,9 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
 
     final jsonStr = jsonEncode(fullPayload);
     if (jsonStr.length > 900000) {
-      debugPrint('⚠️ Client document too large: ${jsonStr.length} bytes');
+      logger.warning('Client document exceeds Firestore size limit', {
+        'bytes': jsonStr.length,
+      });
       throw Exception(
         'Client document exceeds Firestore limit (${jsonStr.length} bytes). '
         'Consider moving large arrays to subcollections.',
@@ -232,29 +232,27 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     List<String> auditFindings = const [];
     if (_enableFirestoreAudit) {
       invalidPath = findInvalidFirestorePath(fullPayload);
-      if (invalidPath != null) {
-        developer.log('🔥 Firestore payload invalid at: $invalidPath');
-      }
       invalidPaths = listInvalidFirestorePaths(fullPayload, limit: 12);
-      if (invalidPaths.isNotEmpty) {
-        developer.log(
-          '🔥 Firestore payload invalid paths: ${invalidPaths.join(' | ')}',
-        );
-      }
       auditFindings = listFirestoreAuditFindings(fullPayload, limit: 12);
-      if (auditFindings.isNotEmpty) {
-        developer.log(
-          '🔥 Firestore payload audit findings: ${auditFindings.join(' | ')}',
-        );
+      final hasAuditFindings =
+          invalidPath != null ||
+          invalidPaths.isNotEmpty ||
+          auditFindings.isNotEmpty;
+      if (hasAuditFindings) {
+        logger.debug('Firestore payload audit findings detected', {
+          'invalidPath': invalidPath,
+          'invalidPaths': invalidPaths,
+          'auditFindings': auditFindings,
+        });
       }
 
-      debugPrint('🔥 Upserting client ${client.id} to Firestore...');
-      debugPrint(
-        '   training.extra keys: ${client.training.extra.keys.join(', ')}',
-      );
-      debugPrint(
-        '   payload.training.extra is Map: ${(fullPayload['payload'] as Map)['training'] is Map}',
-      );
+      final training = fullPayload['payload'] as Map<String, dynamic>;
+      final trainingPayload = training['training'] as Map<String, dynamic>?;
+      logger.debug('Preparing client upsert for Firestore', {
+        'clientId': client.id,
+        'trainingExtraKeys': client.training.extra.keys.toList(),
+        'trainingExtraIsMap': trainingPayload?['extra'] is Map,
+      });
     }
 
     if (_enableFirestoreAudit) {
@@ -265,8 +263,15 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
           invalidPaths.isNotEmpty ||
           auditFindings.isNotEmpty;
       if (hasAuditIssues) {
-        debugPrint(
-          '⚠️ Skipping remote client sync due to invalid Firestore payload.',
+        logger.warning(
+          'Skipping remote client sync due to invalid Firestore payload',
+          {
+            'hasRawInvalidPaths': rawInvalidPaths.isNotEmpty,
+            'hasRawAuditFindings': rawAuditFindings.isNotEmpty,
+            'hasInvalidPath': invalidPath != null,
+            'hasInvalidPaths': invalidPaths.isNotEmpty,
+            'hasAuditFindings': auditFindings.isNotEmpty,
+          },
         );
         return;
       }
@@ -275,35 +280,27 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     try {
       // ✅ OBLIGATORIO: SetOptions(merge: true) para no perder datos en concurrencia
       await ref.set(fullPayload, SetOptions(merge: true));
-      debugPrint('✅ Client ${client.id} synced to Firestore successfully');
+      logger.info('Client synced to Firestore', {'clientId': client.id});
     } catch (e, st) {
       final failInvalidPath = findInvalidFirestorePath(fullPayload);
-      if (failInvalidPath != null) {
-        developer.log('🔥 Firestore payload invalid at: $failInvalidPath');
-      }
       final failInvalidPaths = listInvalidFirestorePaths(
         fullPayload,
         limit: 12,
       );
-      if (failInvalidPaths.isNotEmpty) {
-        developer.log(
-          '🔥 Firestore payload invalid paths: ${failInvalidPaths.join(' | ')}',
-        );
-      }
       final failAuditFindings = listFirestoreAuditFindings(
         fullPayload,
         limit: 12,
       );
-      if (failAuditFindings.isNotEmpty) {
-        developer.log(
-          '🔥 Firestore payload audit findings: ${failAuditFindings.join(' | ')}',
-        );
-      }
-      debugPrint(
-        '🔥 Firestore upsert failed for client ${client.id}: ${e.runtimeType} $e',
-      );
-      debugPrint('Full payload keys: ${fullPayload.keys.join(', ')}');
-      debugPrint(st.toString());
+      logger.error('Firestore upsert failed', e, st);
+      logger.debug('Firestore payload audit findings after failure', {
+        'clientId': client.id,
+        'invalidPath': failInvalidPath,
+        'invalidPaths': failInvalidPaths,
+        'auditFindings': failAuditFindings,
+      });
+      logger.debug('Firestore payload keys', {
+        'keys': fullPayload.keys.toList(),
+      });
       rethrow;
     }
   }
@@ -325,8 +322,9 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
     if (_enableFirestoreAudit) {
       final invalidPath = findInvalidFirestorePath(sanitizedMeta);
       if (invalidPath != null) {
-        debugPrint(
-          '⚠️ Skipping remote client meta sync due to invalid Firestore payload.',
+        logger.warning(
+          'Skipping remote client meta sync due to invalid Firestore payload',
+          {'invalidPath': invalidPath},
         );
         return;
       }

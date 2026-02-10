@@ -4,8 +4,7 @@
 // Este archivo se conserva solo como referencia histórica.
 // No debe usarse en flujos activos ni en producción.
 
-import 'dart:developer' as developer;
-
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:uuid/uuid.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
@@ -65,7 +64,7 @@ class HybridOrchestratorV3 {
     // FASE 1: GENERACIÓN CIENTÍFICA PURA
     // ═══════════════════════════════════════════════════
 
-    developer.log('🔬 [Fase 1] Generando programa científico...');
+    logger.info('Generating scientific program');
 
     final scientificResult = await MotorV3Orchestrator.generateProgram(
       userProfile: userProfile,
@@ -100,16 +99,22 @@ class HybridOrchestratorV3 {
       };
     }
 
-    developer.log('✅ Programa científico generado: ${scientificProgram.id}');
-    developer.log(
-      '   Volumen total: ${scientificProgram.weeklyVolumeByMuscle.values.fold(0.0, (sum, v) => sum + v)} sets',
-    );
+    logger.info('Scientific program generated', {
+      'programId': scientificProgram.id,
+      'totalSets': scientificProgram.weeklyVolumeByMuscle.values.fold(
+        0.0,
+        (sum, v) => sum + v,
+      ),
+    });
 
     // ═══════════════════════════════════════════════════
     // FASE 2: OBTENER DATOS HISTÓRICOS
     // ═══════════════════════════════════════════════════
 
-    developer.log('📊 [Fase 2] Obteniendo logs históricos...');
+    logger.info('Fetching recent workout logs', {
+      'limit': 20,
+      'days': 28,
+    });
 
     final recentLogs = await WorkoutLogRepository.getLogsByUser(
       userId: userProfile.id,
@@ -117,13 +122,15 @@ class HybridOrchestratorV3 {
       startDate: timestamp.subtract(Duration(days: 28)), // Últimas 4 semanas
     );
 
-    developer.log('   Logs encontrados: ${recentLogs.length}');
+    logger.info('Recent workout logs fetched', {
+      'count': recentLogs.length,
+    });
 
     // ═══════════════════════════════════════════════════
     // FASE 3: REFINAMIENTO ML
     // ═══════════════════════════════════════════════════
 
-    developer.log('🤖 [Fase 3] Aplicando refinamientos ML...');
+    logger.info('Applying ML refinements');
 
     final mlResult = await _mlAdapter.applyMLRefinements(
       scientificProgram: scientificProgram,
@@ -137,17 +144,15 @@ class HybridOrchestratorV3 {
     if (mlApplied) {
       final adjustments = mlResult['adjustments'] as Map<String, dynamic>;
       final confidence = mlResult['confidence'] as double?;
-      developer.log(
-        '✅ ML aplicado: ${adjustments['volume_change_pct']}% volumen',
-      );
-      developer.log('   Readiness: ${adjustments['readiness_level']}');
-      if (confidence != null) {
-        developer.log(
-          '   Confianza: ${(confidence * 100).toStringAsFixed(0)}%',
-        );
-      }
+      logger.info('ML refinements applied', {
+        'volumeChangePct': adjustments['volume_change_pct'],
+        'readinessLevel': adjustments['readiness_level'],
+        'confidence': confidence,
+      });
     } else {
-      developer.log('⚠️  ML no aplicado: ${mlResult['ml_reason']}');
+      logger.warning('ML refinements not applied', {
+        'reason': mlResult['ml_reason'],
+      });
     }
 
     // ═══════════════════════════════════════════════════
@@ -157,7 +162,7 @@ class HybridOrchestratorV3 {
     String? predictionId;
 
     if (mlApplied && config.enablePredictionLogging) {
-      developer.log('💾 [Fase 4] Registrando predicción ML...');
+      logger.info('Recording ML prediction');
 
       predictionId = _uuid.v4();
 
@@ -185,7 +190,9 @@ class HybridOrchestratorV3 {
         finalProgram: finalProgram,
       );
 
-      developer.log('✅ Predicción registrada: $predictionId');
+      logger.info('ML prediction recorded', {
+        'predictionId': predictionId,
+      });
     }
 
     // ═══════════════════════════════════════════════════
@@ -195,7 +202,7 @@ class HybridOrchestratorV3 {
     Map<String, dynamic>? explainability;
 
     if (mlApplied && config.enableExplainability) {
-      developer.log('📋 [Fase 5] Generando explicabilidad...');
+      logger.info('Generating explainability');
 
       final features = FeatureExtractorV3.extractFeatures(
         profile: userProfile,
@@ -269,16 +276,11 @@ class HybridOrchestratorV3 {
       'version': 'hybrid_v3_1.0.0',
     };
 
-    developer.log('');
-    developer.log('═══════════════════════════════════════════════════');
-    developer.log('✅ PROGRAMA HÍBRIDO GENERADO EXITOSAMENTE');
-    developer.log('═══════════════════════════════════════════════════');
-    developer.log('ID: ${finalProgram.id}');
-    developer.log('ML aplicado: $mlApplied');
-    developer.log(
-      'Volumen final: ${(result['comparison'] as Map)['final_volume']} sets',
-    );
-    developer.log('═══════════════════════════════════════════════════');
+    logger.info('Hybrid program generated', {
+      'programId': finalProgram.id,
+      'mlApplied': mlApplied,
+      'finalVolume': (result['comparison'] as Map)['final_volume'],
+    });
 
     return result;
   }
