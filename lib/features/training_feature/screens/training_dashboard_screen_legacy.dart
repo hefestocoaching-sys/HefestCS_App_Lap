@@ -604,6 +604,7 @@ class _TrainingDashboardScreenState
                 await ref
                     .read(trainingPlanProvider.notifier)
                     .generatePlanFromActiveCycle(now);
+                if (!mounted) return;
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
