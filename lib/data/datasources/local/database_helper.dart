@@ -14,6 +14,7 @@ import 'package:hcs_app_lap/domain/entities/training_interview.dart';
 import 'package:hcs_app_lap/features/training_feature/domain/training_interview_validator.dart';
 import 'package:hcs_app_lap/data/datasources/local/sync_queue_helper.dart';
 import 'package:hcs_app_lap/core/utils/json_helpers.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 
 List<Client> _parseClientsIsolate(List<Map<String, dynamic>> snapshot) {
   return snapshot
@@ -49,18 +50,24 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final path = await _resolveDbPath(filePath);
 
-    return await openDatabase(
-      path,
-      version: _dbVersion,
-      onCreate: _createDB,
-      onUpgrade: _onUpgrade,
-      onOpen: (db) async {
-        await _ensureAppStateTable(db);
-        await SyncQueueHelper.ensureTable(db);
-        await db.execute('PRAGMA journal_mode=WAL');
-        await db.execute('PRAGMA foreign_keys=ON');
-      },
-    );
+    try {
+      return await openDatabase(
+        path,
+        version: _dbVersion,
+        onCreate: _createDB,
+        onUpgrade: _onUpgrade,
+        onOpen: (db) async {
+          await _ensureAppStateTable(db);
+          await _ensureTrainingInterviewsTable(db);
+          await SyncQueueHelper.ensureTable(db);
+          await db.execute('PRAGMA journal_mode=WAL');
+          await db.execute('PRAGMA foreign_keys=ON');
+        },
+      );
+    } catch (e, stackTrace) {
+      logger.error('Database open failed', e, stackTrace);
+      rethrow;
+    }
   }
 
   Future<String> _resolveDbPath(String filePath) async {
@@ -123,20 +130,30 @@ class DatabaseHelper {
       await _ensureTrainingInterviewsTable(db);
     }
     if (oldVersion < 6) {
-      try {
-        await db.execute(
-          'ALTER TABLE training_interviews ADD COLUMN updated_at TEXT',
-        );
-      } catch (e) {
-        debugPrint('Column updated_at already exists or error: $e');
+      await _ensureTrainingInterviewsTable(db);
+
+      final hasUpdatedAt =
+          await _columnExists(db, 'training_interviews', 'updated_at');
+      if (!hasUpdatedAt) {
+        try {
+          await db.execute(
+            'ALTER TABLE training_interviews ADD COLUMN updated_at TEXT',
+          );
+        } catch (e) {
+          debugPrint('Column updated_at already exists or error: $e');
+        }
       }
 
-      try {
-        await db.execute(
-          'ALTER TABLE training_interviews ADD COLUMN is_synced INTEGER DEFAULT 0',
-        );
-      } catch (e) {
-        debugPrint('Column is_synced already exists or error: $e');
+      final hasIsSynced =
+          await _columnExists(db, 'training_interviews', 'is_synced');
+      if (!hasIsSynced) {
+        try {
+          await db.execute(
+            'ALTER TABLE training_interviews ADD COLUMN is_synced INTEGER DEFAULT 0',
+          );
+        } catch (e) {
+          debugPrint('Column is_synced already exists or error: $e');
+        }
       }
 
       await SyncQueueHelper.ensureTable(db);
@@ -179,16 +196,25 @@ class DatabaseHelper {
       )
     ''');
 
-    try {
-      await db.execute(
-        'ALTER TABLE training_interviews ADD COLUMN is_synced INTEGER DEFAULT 0',
-      );
-    } catch (_) {}
+    final hasIsSynced =
+        await _columnExists(db, 'training_interviews', 'is_synced');
+    if (!hasIsSynced) {
+      try {
+        await db.execute(
+          'ALTER TABLE training_interviews ADD COLUMN is_synced INTEGER DEFAULT 0',
+        );
+      } catch (_) {}
+    }
 
     await db.execute('''
       CREATE INDEX IF NOT EXISTS idx_training_interviews_synced
       ON training_interviews(is_synced)
     ''');
+  }
+
+  Future<bool> _columnExists(Database db, String table, String column) async {
+    final result = await db.rawQuery('PRAGMA table_info($table)');
+    return result.any((row) => row['name'] == column);
   }
 
   // -------------------------------
@@ -323,13 +349,19 @@ class DatabaseHelper {
 
   Future<TrainingInterview?> getActiveTrainingInterview(String clientId) async {
     final db = await database;
-    final result = await db.query(
-      'training_interviews',
-      where: 'client_id = ?',
-      whereArgs: [clientId],
-      orderBy: 'version DESC',
-      limit: 1,
-    );
+    late final List<Map<String, Object?>> result;
+    try {
+      result = await db.query(
+        'training_interviews',
+        where: 'client_id = ?',
+        whereArgs: [clientId],
+        orderBy: 'version DESC',
+        limit: 1,
+      );
+    } catch (e, stackTrace) {
+      logger.error('Database query failed: training_interviews', e, stackTrace);
+      rethrow;
+    }
 
     if (result.isEmpty) return null;
     return TrainingInterview.fromMap(result.first);
@@ -389,13 +421,19 @@ class DatabaseHelper {
 
   Future<String?> getActiveClientId() async {
     final db = await database;
-    final result = await db.query(
-      'app_state',
-      columns: ['value'],
-      where: 'key = ?',
-      whereArgs: [_activeClientKey],
-      limit: 1,
-    );
+    late final List<Map<String, Object?>> result;
+    try {
+      result = await db.query(
+        'app_state',
+        columns: ['value'],
+        where: 'key = ?',
+        whereArgs: [_activeClientKey],
+        limit: 1,
+      );
+    } catch (e, stackTrace) {
+      logger.error('Database query failed: app_state', e, stackTrace);
+      rethrow;
+    }
     if (result.isEmpty) return null;
     final value = result.first['value'] as String?;
     if (value == null || value.isEmpty) return null;
