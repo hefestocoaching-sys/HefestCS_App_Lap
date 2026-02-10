@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hcs_app_lap/core/services/sync_service.dart';
+import 'package:hcs_app_lap/core/config/feature_flags.dart';
 import 'package:hcs_app_lap/services/food_database_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:intl/intl.dart';
@@ -46,7 +47,9 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  SyncService.instance.start();
+  if (FeatureFlags.enableBackgroundSync) {
+    SyncService.instance.start();
+  }
 
   PaintingBinding.instance.imageCache.maximumSize = 100;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 50 << 20;

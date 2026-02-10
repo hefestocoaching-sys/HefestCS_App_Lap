@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hcs_app_lap/core/config/feature_flags.dart';
+import 'package:hcs_app_lap/features/main_shell/providers/client_derived_providers.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/providers/equivalents_by_day_provider.dart';
 import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_definition.dart';
@@ -172,26 +174,31 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     double fatTarget = 0;
     double carbTarget = 0;
 
-    final client = ref.watch(clientsProvider).value?.activeClient;
-    if (client != null) {
-      final weeklySettings = client.nutrition.weeklyMacroSettings;
-      final daySettings =
-          weeklySettings?[widget.dayKey] ?? weeklySettings?[widget.dayLabel];
+    final resolvedSettings = FeatureFlags.enableGranularProviders
+        ? () {
+            final daySettings = ref.watch(
+              dayMacroSettingsProvider(widget.dayKey),
+            );
+            final weeklySettings = ref.watch(weeklyMacroSettingsProvider);
+            return daySettings ?? weeklySettings?[widget.dayLabel];
+          }()
+        : () {
+            final client = ref.watch(clientsProvider).value?.activeClient;
+            final weeklySettings = client?.nutrition.weeklyMacroSettings;
+            return weeklySettings?[widget.dayKey] ??
+                weeklySettings?[widget.dayLabel];
+          }();
+    final weight = FeatureFlags.enableGranularProviders
+        ? ref.watch(clientWeightProvider) ?? 70.0
+        : (ref.watch(clientsProvider).value?.activeClient?.lastWeight ?? 70.0);
 
-      if (daySettings != null) {
-        final weight = client.lastWeight ?? 70.0;
-        proteinTarget = daySettings.proteinSelected * weight;
-        fatTarget = daySettings.fatSelected * weight;
-        carbTarget = daySettings.carbSelected * weight;
-        kcalTarget = daySettings.totalCalories > 0
-            ? daySettings.totalCalories
-            : (proteinTarget * 4) + (fatTarget * 9) + (carbTarget * 4);
-      } else {
-        kcalTarget = widget.planResult.kcalTargetDay ?? 0.0;
-        proteinTarget = widget.planResult.proteinTargetDay ?? 0.0;
-        fatTarget = widget.planResult.fatTargetDay ?? 0.0;
-        carbTarget = widget.planResult.carbTargetDay ?? 0.0;
-      }
+    if (resolvedSettings != null) {
+      proteinTarget = resolvedSettings.proteinSelected * weight;
+      fatTarget = resolvedSettings.fatSelected * weight;
+      carbTarget = resolvedSettings.carbSelected * weight;
+      kcalTarget = resolvedSettings.totalCalories > 0
+          ? resolvedSettings.totalCalories
+          : (proteinTarget * 4) + (fatTarget * 9) + (carbTarget * 4);
     } else {
       kcalTarget = widget.planResult.kcalTargetDay ?? 0.0;
       proteinTarget = widget.planResult.proteinTargetDay ?? 0.0;

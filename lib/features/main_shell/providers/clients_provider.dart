@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hcs_app_lap/core/config/feature_flags.dart';
 import 'package:hcs_app_lap/core/utils/update_lock.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
@@ -150,6 +151,9 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
   }
 
   Future<void> updateActiveClient(Client Function(Client) transform) async {
+    if (FeatureFlags.useLegacyClientUpdate) {
+      return _updateActiveClientLegacy(transform);
+    }
     return UpdateLock.instance.safeClientUpdate(() async {
       final current = state.value;
       if (current == null) return;
@@ -222,6 +226,74 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
         );
       }
     });
+  }
+
+  Future<void> _updateActiveClientLegacy(
+    Client Function(Client) transform,
+  ) async {
+    final current = state.value;
+    if (current == null) return;
+    final active = current.activeClient;
+    if (active == null) return;
+    state = AsyncValue.data(current.copyWith(isLoading: true, error: null));
+    try {
+      final clientId = active.id;
+      final previous = _clientWriteLocks[clientId] ?? Future.value();
+
+      final next = previous.then((_) async {
+        final persisted = await _repository.getClientById(clientId) ?? active;
+        final updated = transform(persisted);
+
+        final mergedTrainingExtra = Map<String, dynamic>.from(
+          persisted.training.extra,
+        );
+        mergedTrainingExtra.addAll(updated.training.extra);
+
+        final mergedNutrition = _safeMergeNutrition(
+          persisted.nutrition,
+          updated.nutrition,
+        );
+
+        final mergedTraining = updated.training.copyWith(
+          extra: mergedTrainingExtra,
+        );
+
+        final mergedClient = persisted.copyWith(
+          profile: updated.profile,
+          history: updated.history,
+          nutrition: mergedNutrition,
+          training: mergedTraining,
+          trainingPlans: updated.trainingPlans,
+          trainingWeeks: updated.trainingWeeks,
+          trainingSessions: updated.trainingSessions,
+          status: updated.status,
+        );
+
+        await _repository.saveClient(mergedClient);
+
+        final updatedClients = current.clients
+            .map(
+              (client) => client.id == mergedClient.id ? mergedClient : client,
+            )
+            .toList();
+        final sortedClients = _sortClients(updatedClients);
+        state = AsyncValue.data(
+          current.copyWith(
+            clients: sortedClients,
+            activeClientId: mergedClient.id,
+            isLoading: false,
+            error: null,
+          ),
+        );
+      });
+
+      _clientWriteLocks[clientId] = next;
+      await next;
+    } catch (e) {
+      state = AsyncValue.data(
+        current.copyWith(isLoading: false, error: e.toString()),
+      );
+    }
   }
 
   NutritionSettings _safeMergeNutrition(

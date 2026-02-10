@@ -62,15 +62,15 @@ class SyncQueueHelper {
 
   static Future<void> markFailure(String id, String error) async {
     final db = await DatabaseHelper.instance.database;
-    await db.update(
-      _tableName,
-      {
-        'retry_count': 'retry_count + 1',
-        'last_attempt': DateTime.now().toIso8601String(),
-        'error_message': error,
-      },
-      where: 'id = ?',
-      whereArgs: [id],
+    await db.rawUpdate(
+      '''
+      UPDATE $_tableName
+      SET retry_count = retry_count + 1,
+          last_attempt = ?,
+          error_message = ?
+      WHERE id = ?
+      ''',
+      [DateTime.now().toIso8601String(), error, id],
     );
   }
 }

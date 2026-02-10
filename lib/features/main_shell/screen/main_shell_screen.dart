@@ -346,6 +346,34 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                       children: [
                                         // Contenido principal
                                         Expanded(
+                                          // TODO: Evaluar reemplazar IndexedStack con PageView.builder para lazy loading.
+                                          // Problema actual: Todas las pantallas se construyen en memoria aunque no se usen.
+                                          // Solucion propuesta: PageView.builder con cache de 2-3 pantallas adyacentes.
+                                          //
+                                          // IndexedStack(
+                                          //   index: selectedIndex,
+                                          //   children: [
+                                          //     const WorkspaceHomeScreen(), // 0
+                                          //     HistoryClinicScreen(key: _historyClinicKey), // 1
+                                          //     // ... todas las pantallas ...
+                                          //   ],
+                                          // )
+                                          //
+                                          // Reemplazar con:
+                                          // PageView.builder(
+                                          //   controller: PageController(initialPage: selectedIndex),
+                                          //   physics: NeverScrollableScrollPhysics(),
+                                          //   itemCount: 11,
+                                          //   itemBuilder: (context, index) {
+                                          //     switch (index) {
+                                          //       case 0:
+                                          //         return const WorkspaceHomeScreen();
+                                          //       case 1:
+                                          //         return HistoryClinicScreen(key: _historyClinicKey);
+                                          //       // ...
+                                          //     }
+                                          //   },
+                                          // )
                                           child: IndexedStack(
                                             index: selectedIndex,
                                             children: [

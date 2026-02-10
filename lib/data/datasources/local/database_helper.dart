@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -12,6 +13,23 @@ import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/training_interview.dart';
 import 'package:hcs_app_lap/features/training_feature/domain/training_interview_validator.dart';
 import 'package:hcs_app_lap/data/datasources/local/sync_queue_helper.dart';
+import 'package:hcs_app_lap/core/utils/json_helpers.dart';
+
+List<Client> _parseClientsIsolate(List<Map<String, dynamic>> snapshot) {
+  return snapshot
+      .map((row) {
+        try {
+          final json = SafeJson.decode(row['json'] as String?);
+          if (json == null) return null;
+          return Client.fromJson(json);
+        } catch (e) {
+          debugPrint('Error parsing client ${row['id']}: $e');
+          return null;
+        }
+      })
+      .whereType<Client>()
+      .toList();
+}
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -20,7 +38,7 @@ class DatabaseHelper {
   DatabaseHelper._init();
 
   static const String _dbName = 'hcs_app_lap_v4.db';
-  static const int _dbVersion = 5;
+  static const int _dbVersion = 6;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -88,12 +106,51 @@ class DatabaseHelper {
     await _ensureTrainingInterviewsTable(db);
     await _ensureAppStateTable(db);
     await SyncQueueHelper.ensureTable(db);
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_clients_synced ON clients(isSynced)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_clients_deleted ON clients(isDeleted)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_clients_updated ON clients(updatedAt)',
+    );
   }
 
   // Non-destructive upgrade: keep table to avoid data loss.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 5) {
       await _ensureTrainingInterviewsTable(db);
+    }
+    if (oldVersion < 6) {
+      try {
+        await db.execute(
+          'ALTER TABLE training_interviews ADD COLUMN updated_at TEXT',
+        );
+      } catch (e) {
+        debugPrint('Column updated_at already exists or error: $e');
+      }
+
+      try {
+        await db.execute(
+          'ALTER TABLE training_interviews ADD COLUMN is_synced INTEGER DEFAULT 0',
+        );
+      } catch (e) {
+        debugPrint('Column is_synced already exists or error: $e');
+      }
+
+      await SyncQueueHelper.ensureTable(db);
+
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_clients_synced ON clients(isSynced)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_clients_deleted ON clients(isDeleted)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_training_interviews_synced '
+        'ON training_interviews(is_synced)',
+      );
     }
   }
 
@@ -155,7 +212,10 @@ class DatabaseHelper {
   }
 
   Client _unwrapClientJson(Map<String, dynamic> map) {
-    final decoded = jsonDecode(map["json"]);
+    final decoded = SafeJson.decode(map['json'] as String?);
+    if (decoded == null) {
+      throw const FormatException('Invalid client JSON payload');
+    }
     return Client.fromJson(decoded);
   }
 
@@ -202,8 +262,8 @@ class DatabaseHelper {
     final db = await database;
 
     final result = await db.query('clients', where: 'isDeleted = 0');
-
-    return result.map(_unwrapClientJson).toList();
+    if (result.isEmpty) return [];
+    return compute(_parseClientsIsolate, result);
   }
 
   Future<void> softDeleteClient(String id) async {
@@ -261,9 +321,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<TrainingInterview?> getActiveTrainingInterview(
-    String clientId,
-  ) async {
+  Future<TrainingInterview?> getActiveTrainingInterview(String clientId) async {
     final db = await database;
     final result = await db.query(
       'training_interviews',
@@ -286,13 +344,13 @@ class DatabaseHelper {
     final now = DateTime.now();
     final lastData = last?.data;
     final isSameData =
-      lastData != null &&
-      const DeepCollectionEquality().equals(data, lastData);
+        lastData != null &&
+        const DeepCollectionEquality().equals(data, lastData);
     final version = last == null
         ? 1
         : isSameData
-            ? last.version
-            : last.version + 1;
+        ? last.version
+        : last.version + 1;
     final createdAt = isSameData ? last!.createdAt : now;
 
     return TrainingInterview(
