@@ -60,7 +60,7 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
     }
 
     // Tab 2: Inicializar matriz por comidas
-    int mealsPerDay = planResult.mealsPerDay;
+    final mealsPerDay = _normalizeMealsPerDay(planResult.mealsPerDay);
     for (var def in EquivalentCatalog.v1Definitions) {
       _equivalentsByMealAndGroup[def.id] = {};
       for (int mealIdx = 0; mealIdx < mealsPerDay; mealIdx++) {
@@ -127,6 +127,11 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
       carbs += def.carbG * count;
     }
     return {'kcal': kcal, 'protein': protein, 'fat': fat, 'carbs': carbs};
+  }
+
+  int _normalizeMealsPerDay(int? rawMealsPerDay) {
+    final normalized = rawMealsPerDay ?? 3;
+    return normalized < 1 ? 1 : normalized;
   }
 
   Color _getGroupColor(String groupId) {
@@ -396,12 +401,22 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
   // ─────────────────────────────────────────────────────────────
   Widget _buildMealsDistributionTab() {
     final planResult = ref.watch(nutritionPlanResultProvider);
-    final mealsPerDay = planResult?.mealsPerDay ?? 3;
+    final mealsPerDay = _normalizeMealsPerDay(planResult?.mealsPerDay);
     final macroTargetPerMeal = planResult != null
         ? (planResult.kcalTargetDay / mealsPerDay)
         : 0.0;
 
-    final mealNames = ['Desayuno', 'Almuerzo', 'Comida', 'Merienda', 'Cena'];
+    final baseMealNames = [
+      'Desayuno',
+      'Almuerzo',
+      'Comida',
+      'Merienda',
+      'Cena',
+    ];
+    final mealNames = List.generate(
+      mealsPerDay,
+      (i) => i < baseMealNames.length ? baseMealNames[i] : 'Comida ${i + 1}',
+    );
 
     return SingleChildScrollView(
       child: Column(

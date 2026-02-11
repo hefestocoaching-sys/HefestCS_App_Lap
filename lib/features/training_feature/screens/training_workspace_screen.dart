@@ -1428,22 +1428,48 @@ class _TrainingWorkspaceScreenState
   }
 
   double _parseDouble(String raw) {
-    return double.tryParse(raw.replaceAll(',', '.')) ?? 0.0;
+    final normalized = raw.replaceAll(',', '.').trim();
+    final value = double.tryParse(normalized);
+    if (value == null) {
+      if (normalized.isNotEmpty) {
+        debugPrint('[TrainingWorkspace] Invalid double input: "$raw"');
+      }
+      return 0.0;
+    }
+    return value;
   }
 
   int _parseInt(String raw) {
-    return int.tryParse(raw.replaceAll(',', '.')) ?? 0;
+    final normalized = raw.replaceAll(',', '.').trim();
+    final value = int.tryParse(normalized);
+    if (value == null) {
+      if (normalized.isNotEmpty) {
+        debugPrint('[TrainingWorkspace] Invalid int input: "$raw"');
+      }
+      return 0;
+    }
+    return value;
   }
 
   String _formatDouble(num value) {
     return value == 0 ? '' : value.toString();
   }
 
-  Future<void> _commitInterview() async {
+  Future<bool> _commitInterview() async {
     try {
       await _interviewTabKey.currentState?.commit();
+      return true;
     } catch (e) {
       debugPrint('[TrainingWorkspace] commit interview failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo guardar la entrevista.'),
+            backgroundColor: kErrorColor,
+          ),
+        );
+      }
+      return false;
     }
   }
 
@@ -1457,7 +1483,8 @@ class _TrainingWorkspaceScreenState
       return;
     }
     // E2: Verificar que la acci├│n est├® permitida
-    await _commitInterview();
+    final committed = await _commitInterview();
+    if (!committed) return;
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
@@ -1505,8 +1532,10 @@ class _TrainingWorkspaceScreenState
     }
   }
 
-  void _regenerarPlan() {
-    unawaited(_commitInterview());
+  Future<void> _regenerarPlan() async {
+    final committed = await _commitInterview();
+    if (!committed) return;
+    if (!mounted) return;
     // E2: Verificar que la acci├│n est├® permitida
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
@@ -1553,7 +1582,8 @@ class _TrainingWorkspaceScreenState
   }
 
   Future<void> _adaptarPlan() async {
-    await _commitInterview();
+    final committed = await _commitInterview();
+    if (!committed) return;
     // E2: Verificar que la acci├│n est├® permitida
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
