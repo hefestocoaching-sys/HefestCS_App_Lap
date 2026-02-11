@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:flutter/services.dart';
 import '../../../domain/entities/exercise.dart';
 
@@ -9,29 +9,41 @@ class ExerciseCatalogLoader {
   static bool _validateV3(Map<String, dynamic> e, int i) {
     final id = e['id'];
     if (id is! String || id.trim().isEmpty) {
-      debugPrint('[ExerciseCatalogV3] idx=$i: falta id');
+      logger.warning('ExerciseCatalogV3 missing id', {'index': i});
       return false;
     }
     final name = e['name'];
     if (name is String) {
       if (name.trim().isEmpty) {
-        debugPrint('[ExerciseCatalogV3] idx=$i id=$id: falta name');
+        logger.warning('ExerciseCatalogV3 missing name', {
+          'index': i,
+          'exerciseId': id,
+        });
         return false;
       }
     } else if (name is Map) {
       final es = name['es']?.toString() ?? '';
       final en = name['en']?.toString() ?? '';
       if (es.trim().isEmpty && en.trim().isEmpty) {
-        debugPrint('[ExerciseCatalogV3] idx=$i id=$id: falta name');
+        logger.warning('ExerciseCatalogV3 missing name', {
+          'index': i,
+          'exerciseId': id,
+        });
         return false;
       }
     } else {
-      debugPrint('[ExerciseCatalogV3] idx=$i id=$id: falta name');
+      logger.warning('ExerciseCatalogV3 missing name', {
+        'index': i,
+        'exerciseId': id,
+      });
       return false;
     }
     final pm = e['primaryMuscles'];
     if (pm is! List || pm.isEmpty) {
-      debugPrint('[ExerciseCatalogV3] idx=$i id=$id: falta primaryMuscles');
+      logger.warning('ExerciseCatalogV3 missing primaryMuscles', {
+        'index': i,
+        'exerciseId': id,
+      });
       return false;
     }
     return true;
@@ -47,14 +59,14 @@ class ExerciseCatalogLoader {
 
       // V3: root object con { schemaVersion, lastUpdated, notes, exercises: [] }
       if (decoded is! Map<String, dynamic>) {
-        debugPrint('[ExerciseCatalogV3] Root inválido: se esperaba Map');
+        logger.error('ExerciseCatalogV3 invalid root type');
         _cache = const <Exercise>[];
         return _cache!;
       }
 
       final list = decoded['exercises'];
       if (list is! List) {
-        debugPrint('[ExerciseCatalogV3] Root inválido: falta exercises[]');
+        logger.error('ExerciseCatalogV3 missing exercises list');
         _cache = const <Exercise>[];
         return _cache!;
       }
@@ -63,7 +75,9 @@ class ExerciseCatalogLoader {
       for (var i = 0; i < list.length; i++) {
         final item = list[i];
         if (item is! Map<String, dynamic>) {
-          debugPrint('[ExerciseCatalogV3] idx=$i: no es Map');
+          logger.warning('ExerciseCatalogV3 item is not a map', {
+            'index': i,
+          });
           continue;
         }
         if (!_validateV3(item, i)) continue;
@@ -71,7 +85,9 @@ class ExerciseCatalogLoader {
       }
 
       _cache = out;
-      debugPrint('[ExerciseCatalogV3] Loaded: ${_cache!.length} exercises');
+      logger.info('ExerciseCatalogV3 loaded', {
+        'count': _cache!.length,
+      });
 
       // Diagnóstico: conteo por músculo primario
       final counts = <String, int>{};
@@ -81,12 +97,13 @@ class ExerciseCatalogLoader {
             : ex.muscleKey;
         counts[k] = (counts[k] ?? 0) + 1;
       }
-      debugPrint('[ExerciseCatalogV3] By primary: $counts');
+      logger.debug('ExerciseCatalogV3 by primary muscle', {
+        'counts': counts,
+      });
 
       return _cache!;
     } catch (e, st) {
-      debugPrint('ERROR cargando catálogo v3: $e');
-      debugPrint(st.toString());
+      logger.error('Failed to load exercise catalog v3', e, st);
       _cache = const <Exercise>[];
       return _cache!;
     }

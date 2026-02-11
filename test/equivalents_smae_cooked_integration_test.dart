@@ -24,7 +24,7 @@ void main() {
 
         // SMAE: 1 equivalente cereales ≈ 15g carbs
         final equivalenteCereales = EquivalentCatalog.v1Definitions.firstWhere(
-          (e) => e.id == 'cereal_sin_grasa',
+          (e) => e.id == 'cereales_sin_grasa',
         );
 
         final result = FoodToEquivalentEngine.convertFoodToEquivalent(
@@ -50,7 +50,7 @@ void main() {
 
         // SMAE: 1 equivalente AOA bajo grasa ≈ 7g protein
         final equivalenteAOA = EquivalentCatalog.v1Definitions.firstWhere(
-          (e) => e.id == 'aoa_bajo_grasa',
+          (e) => e.id == 'aoa_bajo',
         );
 
         final result = FoodToEquivalentEngine.convertFoodToEquivalent(
@@ -80,7 +80,7 @@ void main() {
 
         // Ahora usar motor de equivalentes
         final equivalenteCereales = EquivalentCatalog.v1Definitions.firstWhere(
-          (e) => e.id == 'cereal_sin_grasa',
+          (e) => e.id == 'cereales_sin_grasa',
         );
 
         final result = FoodToEquivalentEngine.convertFoodToEquivalent(
@@ -129,7 +129,7 @@ void main() {
 
         final arrozCocido = await repository.getFoodById('arroz_blanco_cocido');
         final equivalenteCereales = EquivalentCatalog.v1Definitions.firstWhere(
-          (e) => e.id == 'cereal_sin_grasa',
+          (e) => e.id == 'cereales_sin_grasa',
         );
 
         final result = FoodToEquivalentEngine.convertFoodToEquivalent(

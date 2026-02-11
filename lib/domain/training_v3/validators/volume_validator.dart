@@ -222,6 +222,11 @@ class VolumeValidator {
         'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
         'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},
       },
+      'back': {
+        'novice': {'vme': 12, 'mav': 18, 'mrv': 24},
+        'intermediate': {'vme': 14, 'mav': 20, 'mrv': 28},
+        'advanced': {'vme': 16, 'mav': 24, 'mrv': 32},
+      },
       // Hombros divididos en 3 cabezas
       'deltoide_anterior': {
         'novice': {'vme': 4, 'mav': 6, 'mrv': 8},

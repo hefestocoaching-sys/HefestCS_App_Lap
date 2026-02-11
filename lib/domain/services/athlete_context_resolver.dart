@@ -1,7 +1,6 @@
-import 'dart:developer' as developer;
-
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 
 /// Contexto del atleta resuelto desde múltiples fuentes del cliente
@@ -73,9 +72,9 @@ class AthleteContextResolver {
         client.training.gender ??
         _resolveSexFromTrainingExtra(client.training.extra);
     if (sex == null) {
-      developer.log(
-        'Warning: Client ${client.id} missing gender; defaulting to other.',
-      );
+      logger.warning('Client missing gender; defaulting to other', {
+        'clientId': client.id,
+      });
       sex = Gender.other;
     }
 

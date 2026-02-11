@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_print
-import 'dart:developer' as developer;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/data/datasources/remote/record_firestore_datasource.dart';
 import 'package:hcs_app_lap/domain/entities/anthropometry_record.dart';
 import 'package:intl/intl.dart';
@@ -52,8 +52,8 @@ class AnthropometryFirestoreDataSource {
         payload: record.toJson(),
         deleted: deleted,
       );
-    } catch (e) {
-      developer.log('Error in upsertAnthropometryRecord: $e');
+    } catch (e, st) {
+      logger.error('Failed to upsert anthropometry record', e, st);
       rethrow;
     }
   }

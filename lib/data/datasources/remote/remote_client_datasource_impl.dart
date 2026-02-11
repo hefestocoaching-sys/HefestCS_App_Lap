@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import './remote_client_datasource.dart';
 import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
@@ -31,7 +31,7 @@ class RemoteClientDataSourceImpl implements RemoteClientDataSource {
     final sanitized = sanitizeForFirestore(client.toJson());
     final invalidPath = findInvalidFirestorePath(sanitized);
     if (invalidPath != null) {
-      debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+      logger.warning('Firestore payload invalid', {'path': invalidPath});
     }
     await docRef.set(sanitized);
   }

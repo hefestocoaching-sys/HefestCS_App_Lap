@@ -68,10 +68,22 @@ void main() {
       };
 
       final prescriptions = intensities.map((id, intensity) {
+        final repRange = switch (intensity) {
+          'heavy' => [5, 8],
+          'moderate' => [8, 12],
+          'light' => [12, 20],
+          _ => [8, 12],
+        };
+        final restSeconds = switch (intensity) {
+          'heavy' => 180,
+          'moderate' => 120,
+          'light' => 90,
+          _ => 120,
+        };
         return MapEntry(id, {
           'target_rir': 2,
-          'rep_range': [8, 12],
-          'rest_seconds': 120,
+          'rep_range': repRange,
+          'rest_seconds': restSeconds,
         });
       });
 

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +8,6 @@ import 'package:hcs_app_lap/core/services/sync_service.dart';
 import 'package:hcs_app_lap/core/config/feature_flags.dart';
 import 'package:hcs_app_lap/services/food_database_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite_common/sqlite_api.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -39,9 +37,6 @@ Future<void> main() async {
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
-    if (kDebugMode) {
-      await databaseFactory.debugSetLogLevel(sqfliteLogLevelVerbose);
-    }
   }
 
   // Es una buena práctica inicializar el locale antes de establecerlo como default.

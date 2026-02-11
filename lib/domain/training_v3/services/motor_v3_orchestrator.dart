@@ -13,6 +13,7 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_session.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/exercise_prescription.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 
@@ -113,7 +114,12 @@ class MotorV3Orchestrator {
         '📊 Volumen por músculo calculado: ${volumeTargets.length} grupos',
       );
 
-      await ExerciseCatalogV3.ensureLoaded();
+      if (exercises.isNotEmpty) {
+        final seeded = exercises.whereType<Exercise>().toList();
+        ExerciseCatalogV3.loadFromExercises(seeded);
+      } else {
+        await ExerciseCatalogV3.ensureLoaded();
+      }
 
       // ✅ PASO 5: Resolver split efectivo (UI → Motor V3)
       final daysPerWeek = trainingDaysPerWeek ?? userProfile.availableDays;
@@ -200,10 +206,20 @@ class MotorV3Orchestrator {
         '[Motor V3] Plan generado: weeks=${planConfig.weeks.length} sessions=$totalSessions exercises=$totalExercises split=$resolvedSplit daysPerWeek=$daysPerWeek',
       );
 
+      final program = _buildProgramFromPlanConfig(
+        planConfig: planConfig,
+        split: resolvedSplit,
+        daysPerWeek: daysPerWeek,
+        durationWeeks: durationWeeks,
+        userProfile: userProfile,
+        volumeTargets: volumeTargets,
+      );
+
       return {
         'success': true,
         'errors': [],
         'warnings': warnings,
+        'program': program,
         'planConfig': planConfig,
         'clientProfile': clientProfile,
         'optimizations_applied': 0,
@@ -619,6 +635,50 @@ class MotorV3Orchestrator {
       TrainingSplit.fullBody => 'fullBody',
       TrainingSplit.pushPullLegs => 'pushPullLegs',
     };
+  }
+
+  static SplitConfig _splitToConfig(TrainingSplit split, int daysPerWeek) {
+    switch (split) {
+      case TrainingSplit.upperLower:
+        return SplitConfig.upperLower4x();
+      case TrainingSplit.pushPullLegs:
+        if (daysPerWeek >= 6) return SplitConfig.pushPullLegs6x();
+        return SplitConfig.pushPullLegs3x();
+      case TrainingSplit.fullBody:
+        return SplitConfig.fullBody3x();
+    }
+  }
+
+  static TrainingProgram _buildProgramFromPlanConfig({
+    required TrainingPlanConfig planConfig,
+    required TrainingSplit split,
+    required int daysPerWeek,
+    required int durationWeeks,
+    required UserProfile userProfile,
+    required Map<String, int> volumeTargets,
+  }) {
+    final weeks = planConfig.weeks.whereType<TrainingWeek>().toList();
+    final sessions = weeks.isNotEmpty
+        ? weeks.first.sessions.whereType<TrainingSession>().toList()
+        : const <TrainingSession>[];
+
+    return TrainingProgram(
+      id: 'program_${planConfig.id}',
+      userId: userProfile.id,
+      name: 'Motor V3 ${planConfig.split ?? _splitToString(split)}',
+      split: _splitToConfig(split, daysPerWeek),
+      phase: planConfig.phase ?? 'accumulation',
+      durationWeeks: durationWeeks,
+      sessions: sessions,
+      weeklyVolumeByMuscle: volumeTargets.map(
+        (k, v) => MapEntry(k, v.toDouble()),
+      ),
+      startDate: planConfig.startDate,
+      estimatedEndDate: planConfig.startDate.add(
+        Duration(days: durationWeeks * 7),
+      ),
+      createdAt: planConfig.createdAt,
+    );
   }
 
   /// Calcula score de calidad total del programa generado

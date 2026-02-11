@@ -214,7 +214,7 @@ class DeloadTriggerEngine {
       score += value * (weights[key] ?? 0.0);
     });
 
-    return score;
+    return score * 10;
   }
 
   /// Toma decisión basada en score total

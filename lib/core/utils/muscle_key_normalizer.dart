@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/core/constants/muscle_keys.dart';
 import 'package:hcs_app_lap/core/registry/muscle_registry.dart' as registry;
 
@@ -21,7 +21,10 @@ String normalizeMuscleKey(String raw) {
   if (canonical != null) {
     // Log temporal para debugging (TAREA A6)
     if (raw.toLowerCase() != canonical) {
-      debugPrint('[VOP][Normalizer] "$raw" → "$canonical"');
+      logger.debug('Normalizer mapped muscle key', {
+        'raw': raw,
+        'canonical': canonical,
+      });
     }
     return canonical;
   }
@@ -33,14 +36,16 @@ String normalizeMuscleKey(String raw) {
     // Es un grupo válido, retornar el TOKEN CANÓNICO del grupo
     // P0: Mapear variantes españolas a tokens estándar ingleses
     final groupToken = _mapGroupVariantToCanonicalToken(raw);
-    debugPrint(
-      '[VOP][Normalizer] Grupo "$raw" → $groupToken (expande a ${expanded.join(", ")})',
-    );
+    logger.debug('Normalizer mapped group key', {
+      'raw': raw,
+      'groupToken': groupToken,
+      'expanded': expanded,
+    });
     return groupToken;
   }
 
   // Si no es nada conocido, retornar como-está (log advertencia)
-  debugPrint('⚠️  [VOP][Normalizer] Clave desconocida: "$raw"');
+  logger.warning('Unknown muscle key', {'raw': raw});
   return raw.toLowerCase();
 }
 

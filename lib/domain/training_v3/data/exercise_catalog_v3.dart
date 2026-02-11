@@ -9,6 +9,33 @@ class ExerciseCatalogV3 {
   static final Map<String, String> _exerciseTypeById = {};
   static bool _loaded = false;
 
+  static void loadFromExercises(List<Exercise> exercises) {
+    _exercisesByMuscle.clear();
+    _exerciseTypeById.clear();
+
+    for (final exercise in exercises) {
+      _exerciseTypeById[exercise.id] = 'compound';
+
+      final keys = exercise.primaryMuscles.isNotEmpty
+          ? exercise.primaryMuscles
+          : (exercise.muscleKey.isNotEmpty ? [exercise.muscleKey] : const []);
+      for (final rawKey in keys) {
+        final key = rawKey.trim().toLowerCase();
+        if (key.isEmpty) continue;
+        final bucket = _exercisesByMuscle.putIfAbsent(
+          key,
+          () => <Exercise>[],
+        );
+        bucket.add(exercise);
+      }
+    }
+
+    _loaded = true;
+    debugPrint(
+      '[ExerciseCatalogV3] Loaded from list: ${_exercisesByMuscle.length} keys',
+    );
+  }
+
   static Future<void> ensureLoaded() async {
     if (_loaded) return;
 

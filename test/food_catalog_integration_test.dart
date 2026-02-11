@@ -31,7 +31,7 @@ void main() {
         );
 
         final target = EquivalentCatalog.v1Definitions.firstWhere(
-          (def) => def.id == 'aoa_bajo_grasa',
+          (def) => def.id == 'aoa_bajo',
         );
 
         final result = FoodToEquivalentEngine.convertFoodToEquivalent(
@@ -40,7 +40,7 @@ void main() {
         );
 
         // Verificaciones
-        expect(result.equivalentId, 'aoa_bajo_grasa');
+        expect(result.equivalentId, 'aoa_bajo');
         expect(result.grams, greaterThan(0)); // Debe calcular gramos
         expect(result.estimatedMacros['protein'], greaterThan(0));
       },

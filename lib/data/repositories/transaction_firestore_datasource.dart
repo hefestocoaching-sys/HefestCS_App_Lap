@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hcs_app_lap/domain/entities/transaction.dart'
     as app_transaction;
@@ -85,7 +85,7 @@ class TransactionFirestoreDataSource {
       final payload = sanitizeForFirestore(transaction.toJson());
       final invalidPath = findInvalidFirestorePath(payload);
       if (invalidPath != null) {
-        debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+        logger.warning('Firestore payload invalid', {'path': invalidPath});
       }
       await collection.doc(transaction.id).set(payload);
     } catch (e) {
@@ -104,7 +104,7 @@ class TransactionFirestoreDataSource {
       final payload = sanitizeForFirestore(transaction.toJson());
       final invalidPath = findInvalidFirestorePath(payload);
       if (invalidPath != null) {
-        debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+        logger.warning('Firestore payload invalid', {'path': invalidPath});
       }
       await collection.doc(transaction.id).update(payload);
     } catch (e) {

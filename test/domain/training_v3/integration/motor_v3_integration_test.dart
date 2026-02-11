@@ -5,6 +5,8 @@ import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Motor V3 Integration Tests', () {
     test(
       'Genera plan completo para usuario intermedio con Full Body split',
@@ -170,6 +172,61 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['triceps'],
       equipment: 'barbell',
       difficulty: 'intermediate',
+      gifUrl: '',
+    ),
+    Exercise(
+      id: 'biceps_curl',
+      externalId: 'ext_biceps_curl',
+      name: 'Biceps Curl',
+      muscleKey: 'biceps',
+      primaryMuscles: ['biceps'],
+      secondaryMuscles: [],
+      equipment: 'dumbbells',
+      difficulty: 'beginner',
+      gifUrl: '',
+    ),
+    Exercise(
+      id: 'triceps_extension',
+      externalId: 'ext_triceps_extension',
+      name: 'Triceps Extension',
+      muscleKey: 'triceps',
+      primaryMuscles: ['triceps'],
+      secondaryMuscles: [],
+      equipment: 'cable',
+      difficulty: 'beginner',
+      gifUrl: '',
+    ),
+    Exercise(
+      id: 'hip_thrust',
+      externalId: 'ext_hip_thrust',
+      name: 'Hip Thrust',
+      muscleKey: 'glutes',
+      primaryMuscles: ['glutes'],
+      secondaryMuscles: ['hamstrings'],
+      equipment: 'barbell',
+      difficulty: 'intermediate',
+      gifUrl: '',
+    ),
+    Exercise(
+      id: 'standing_calf_raise',
+      externalId: 'ext_calf_raise',
+      name: 'Standing Calf Raise',
+      muscleKey: 'gastrocnemio',
+      primaryMuscles: ['gastrocnemio'],
+      secondaryMuscles: [],
+      equipment: 'machine',
+      difficulty: 'beginner',
+      gifUrl: '',
+    ),
+    Exercise(
+      id: 'crunch',
+      externalId: 'ext_crunch',
+      name: 'Crunch',
+      muscleKey: 'abs',
+      primaryMuscles: ['abs'],
+      secondaryMuscles: [],
+      equipment: 'bodyweight',
+      difficulty: 'beginner',
       gifUrl: '',
     ),
   ];

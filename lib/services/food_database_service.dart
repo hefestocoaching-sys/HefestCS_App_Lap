@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 List<FoodItem> _parseAndDecode(String responseBody) {
@@ -78,14 +79,18 @@ class FoodDatabaseService {
 
         if (await file.exists()) {
           raw = await file.readAsString();
-          debugPrint('✅ SMAE cargada desde desktop: $assetPath');
+          logger.info('SMAE loaded from desktop path', {
+            'path': assetPath,
+          });
         } else {
           // Intento alternativo
           final altPath = 'assets/data/smae_food_catalog.json';
           final altFile = File(altPath);
           if (await altFile.exists()) {
             raw = await altFile.readAsString();
-            debugPrint('✅ SMAE cargada desde path alternativo: $altPath');
+            logger.info('SMAE loaded from alternate path', {
+              'path': altPath,
+            });
           } else {
             throw FileSystemException(
               'Asset no encontrado. Intentadas rutas:\n- $assetPath\n- $altPath',
@@ -95,18 +100,20 @@ class FoodDatabaseService {
       } else {
         // En mobile/web: usar rootBundle
         raw = await rootBundle.loadString('assets/data/smae_food_catalog.json');
-        debugPrint('✅ SMAE cargada desde rootBundle');
+        logger.info('SMAE loaded from rootBundle');
       }
 
       _foods = await compute(_parseAndDecode, raw);
-      debugPrint('✅ Base SMAE parseada: ${_foods.length} alimentos');
+      logger.info('SMAE catalog parsed', {
+        'count': _foods.length,
+      });
     } on FlutterError catch (e) {
-      debugPrint('❌ Error Flutter al cargar SMAE: $e');
+      logger.error('Flutter error loading SMAE', e, e.stackTrace);
       _foods = [];
     } catch (e, st) {
-      debugPrint('⚠️ No se pudo cargar la base SMAE: $e');
+      logger.error('Failed to load SMAE catalog', e, st);
       if (!kReleaseMode) {
-        debugPrint('Stack trace: $st');
+        logger.debug('SMAE load stack trace', {'stackTrace': st.toString()});
       }
       _foods = [];
     }

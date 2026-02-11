@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/entities/appointment.dart';
 import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
@@ -30,14 +30,14 @@ class AppointmentFirestoreDataSource {
   Stream<List<Appointment>> watchAppointments() {
     final collection = _appointmentsCollection();
     if (collection == null) {
-      debugPrint('⚠️ AppointmentFirestore.watch: Usuario no autenticado');
+      logger.warning('Appointment watch requested without auth');
       return Stream.value([]);
     }
 
     return collection.snapshots().map((snapshot) {
-      debugPrint(
-        '🔄 AppointmentFirestore.watch: ${snapshot.docs.length} documentos',
-      );
+      logger.debug('Appointment watch snapshot received', {
+        'count': snapshot.docs.length,
+      });
       return snapshot.docs
           .map((doc) {
             try {
@@ -45,9 +45,10 @@ class AppointmentFirestoreDataSource {
               data['id'] = doc.id;
               return Appointment.fromJson(data);
             } catch (e) {
-              debugPrint(
-                '⚠️ AppointmentFirestore.watch: Error parseando ${doc.id}: $e',
-              );
+              logger.warning('Appointment watch parse failed', {
+                'appointmentId': doc.id,
+                'error': e.toString(),
+              });
               return null;
             }
           })
@@ -60,16 +61,16 @@ class AppointmentFirestoreDataSource {
   Future<List<Appointment>> getAppointments() async {
     final collection = _appointmentsCollection();
     if (collection == null) {
-      debugPrint('⚠️ AppointmentFirestore: Usuario no autenticado');
+      logger.warning('Appointment list requested without auth');
       return [];
     }
 
     try {
-      debugPrint('📥 AppointmentFirestore: Cargando citas...');
+      logger.debug('Loading appointments');
       final snapshot = await collection.get();
-      debugPrint(
-        '✅ AppointmentFirestore: ${snapshot.docs.length} documentos obtenidos',
-      );
+      logger.debug('Appointments loaded', {
+        'count': snapshot.docs.length,
+      });
 
       return snapshot.docs
           .map((doc) {
@@ -78,17 +79,17 @@ class AppointmentFirestoreDataSource {
               data['id'] = doc.id;
               return Appointment.fromJson(data);
             } catch (e) {
-              debugPrint(
-                '⚠️ AppointmentFirestore: Error parseando documento ${doc.id}: $e',
-              );
+              logger.warning('Appointment parse failed', {
+                'appointmentId': doc.id,
+                'error': e.toString(),
+              });
               return null;
             }
           })
           .whereType<Appointment>()
           .toList();
     } catch (e, stack) {
-      debugPrint('❌ AppointmentFirestore.getAppointments ERROR: $e');
-      debugPrint('Stack trace: $stack');
+      logger.error('Failed to load appointments', e, stack);
       return [];
     }
   }
@@ -102,7 +103,7 @@ class AppointmentFirestoreDataSource {
       final payload = sanitizeForFirestore(appointment.toJson());
       final invalidPath = findInvalidFirestorePath(payload);
       if (invalidPath != null) {
-        debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+        logger.warning('Firestore payload invalid', {'path': invalidPath});
       }
       await collection.doc(appointment.id).set(payload);
     } catch (e) {
@@ -119,7 +120,7 @@ class AppointmentFirestoreDataSource {
       final payload = sanitizeForFirestore(appointment.toJson());
       final invalidPath = findInvalidFirestorePath(payload);
       if (invalidPath != null) {
-        debugPrint('🔥 Firestore payload invalid at: $invalidPath');
+        logger.warning('Firestore payload invalid', {'path': invalidPath});
       }
       await collection.doc(appointment.id).update(payload);
     } catch (e) {

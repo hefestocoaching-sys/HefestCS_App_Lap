@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hcs_app_lap/services/exercise_catalog_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('ExerciseCatalogService no lanza excepciones', () async {
     final service = ExerciseCatalogService();
 

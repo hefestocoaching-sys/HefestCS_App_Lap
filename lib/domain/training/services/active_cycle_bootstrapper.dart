@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training/training_cycle.dart';
 
@@ -21,7 +21,7 @@ class ActiveCycleBootstrapper {
     required String clientId,
     required List<Exercise> exercises,
   }) {
-    debugPrint('🧩 [Bootstrap] Creando ciclo para clientId: $clientId');
+    logger.info('Bootstrap creating cycle', {'clientId': clientId});
 
     // Agrupar ejercicios por músculo primario (YA normalizado)
     final Map<String, List<String>> grouped = {};
@@ -37,13 +37,14 @@ class ActiveCycleBootstrapper {
       grouped[muscle]!.add(ex.id);
     }
 
-    debugPrint('═══════════════════════════════════════════');
-    debugPrint('📚 [Catalog] IDs de ejercicios por músculo:');
+    logger.debug('Catalog exercise ids by muscle (sample)');
     for (final muscle in grouped.keys.take(5)) {
       final ids = grouped[muscle]!.take(5).toList();
-      debugPrint('   $muscle: $ids');
+      logger.debug('Catalog muscle sample', {
+        'muscle': muscle,
+        'exerciseIds': ids,
+      });
     }
-    debugPrint('═══════════════════════════════════════════');
 
     // 🔴 CLAVE: forzar presencia de las 14 keys canónicas
     const canonicalMuscles = [
@@ -70,7 +71,9 @@ class ActiveCycleBootstrapper {
 
       if (list.isEmpty) {
         baseExercisesByMuscle[muscle] = [];
-        debugPrint('   ⚠️  $muscle: sin ejercicios en catálogo');
+        logger.warning('Catalog muscle has no exercises', {
+          'muscle': muscle,
+        });
         continue;
       }
 
@@ -86,15 +89,21 @@ class ActiveCycleBootstrapper {
       final selected = shuffled.take(10).toList();
       baseExercisesByMuscle[muscle] = selected;
 
-      debugPrint(
-        '   ✅ $muscle: ${selected.length} ejercicios (seed=$muscleSeed, primero=${selected.isNotEmpty ? selected.first : 'N/A'})',
-      );
+      logger.debug('Catalog muscle selection', {
+        'muscle': muscle,
+        'count': selected.length,
+        'seed': muscleSeed,
+        'firstExerciseId': selected.isNotEmpty ? selected.first : null,
+      });
     }
 
     final cycleId = 'cycle_${DateTime.now().millisecondsSinceEpoch}';
     final now = DateTime.now();
 
-    debugPrint('🎯 [Bootstrap] Ciclo $cycleId creado para cliente $clientId');
+    logger.info('Bootstrap cycle created', {
+      'cycleId': cycleId,
+      'clientId': clientId,
+    });
 
     return TrainingCycle(
       cycleId: cycleId,
