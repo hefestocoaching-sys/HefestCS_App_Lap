@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
@@ -216,7 +217,7 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       'deleted': deleted,
     };
 
-    final jsonStr = jsonEncode(fullPayload);
+    final jsonStr = _safeJsonEncode(fullPayload);
     if (jsonStr.length > 900000) {
       logger.warning('Client document exceeds Firestore size limit', {
         'bytes': jsonStr.length,
@@ -374,4 +375,42 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       );
     }).toList();
   }
+}
+
+String _safeJsonEncode(Object value) {
+  return jsonEncode(_normalizeForJson(value));
+}
+
+dynamic _normalizeForJson(dynamic value) {
+  if (value == null) return null;
+  if (value is String || value is bool || value is num) return value;
+  if (value is Timestamp) {
+    return value.toDate().toIso8601String();
+  }
+  if (value is FieldValue) {
+    return value.toString();
+  }
+  if (value is Blob) {
+    return 'Blob(${value.bytes.length})';
+  }
+  if (value is GeoPoint) {
+    return {'lat': value.latitude, 'lng': value.longitude};
+  }
+  if (value is Uint8List) {
+    return 'Uint8List(${value.length})';
+  }
+  if (value is Enum) {
+    return value.name;
+  }
+  if (value is Iterable) {
+    return value.map(_normalizeForJson).toList();
+  }
+  if (value is Map) {
+    final normalized = <String, dynamic>{};
+    value.forEach((key, nestedValue) {
+      normalized[key.toString()] = _normalizeForJson(nestedValue);
+    });
+    return normalized;
+  }
+  return value.toString();
 }

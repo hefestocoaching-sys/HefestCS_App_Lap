@@ -1,9 +1,11 @@
 import 'package:hcs_app_lap/domain/entities/clinical_restriction_profile.dart';
 import 'package:hcs_app_lap/domain/entities/digestive_intolerances.dart';
 import 'package:hcs_app_lap/domain/entities/clinical_conditions.dart';
+import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
 
 import 'daily_macro_settings.dart';
 import 'daily_meal_plan.dart';
+import 'daily_nutrition_plan.dart';
 
 class NutritionSettings {
   final String? planType; // "Mensual", etc.
@@ -17,6 +19,9 @@ class NutritionSettings {
 
   /// Mapa de planes de comidas diarios, usando el día como clave (ej. "Lunes")
   final Map<String, DailyMealPlan>? dailyMealPlans;
+
+  /// Historial de planes nutricionales v3 (snapshot versionado)
+  final List<PlanSnapshot>? nutritionPlansV3;
 
   /// Perfil clínico computable P0 (motor de nutrición)
   /// Si no existe, defaults seguros (sin restricciones)
@@ -32,6 +37,7 @@ class NutritionSettings {
     this.dailyKcal,
     this.weeklyMacroSettings,
     this.dailyMealPlans,
+    this.nutritionPlansV3,
     ClinicalRestrictionProfile? clinicalRestrictionProfile,
     this.extra = const {},
   }) : clinicalRestrictionProfile =
@@ -62,6 +68,7 @@ class NutritionSettings {
     Map<String, int>? dailyKcal,
     Map<String, DailyMacroSettings>? weeklyMacroSettings,
     Map<String, DailyMealPlan>? dailyMealPlans,
+    List<PlanSnapshot>? nutritionPlansV3,
     ClinicalRestrictionProfile? clinicalRestrictionProfile,
     Map<String, dynamic>? extra,
   }) {
@@ -73,6 +80,7 @@ class NutritionSettings {
       dailyKcal: dailyKcal ?? this.dailyKcal,
       weeklyMacroSettings: weeklyMacroSettings ?? this.weeklyMacroSettings,
       dailyMealPlans: dailyMealPlans ?? this.dailyMealPlans,
+        nutritionPlansV3: nutritionPlansV3 ?? this.nutritionPlansV3,
       clinicalRestrictionProfile:
           clinicalRestrictionProfile ?? this.clinicalRestrictionProfile,
       extra: extra ?? this.extra,
@@ -92,6 +100,7 @@ class NutritionSettings {
       'dailyMealPlans': dailyMealPlans?.map(
         (key, value) => MapEntry(key, value.toJson()),
       ),
+      'nutritionPlansV3': nutritionPlansV3?.map((s) => s.toJson()).toList(),
       'clinicalRestrictionProfile': clinicalRestrictionProfile.toMap(),
       'extra': extra,
     };
@@ -108,6 +117,10 @@ class NutritionSettings {
       // Si no existe, usar defaults
       clinicalRestrictionProfile = ClinicalRestrictionProfile.defaults();
     }
+
+    final extra = Map<String, dynamic>.from(json['extra'] as Map? ?? {});
+    final rawPlans = json['nutritionPlansV3'] ??
+      extra[NutritionExtraKeys.nutritionPlansV3];
 
     return NutritionSettings(
       planType: json['planType'] as String?,
@@ -141,8 +154,9 @@ class NutritionSettings {
               ),
             )
           : null,
+      nutritionPlansV3: _parsePlanSnapshots(rawPlans),
       clinicalRestrictionProfile: clinicalRestrictionProfile,
-      extra: Map<String, dynamic>.from(json['extra'] as Map? ?? {}),
+      extra: extra,
     );
   }
 
@@ -150,7 +164,7 @@ class NutritionSettings {
   String toString() {
     return '''NutritionSettings(planType: $planType, planStartDate: $planStartDate, planEndDate: $planEndDate, kcal: $kcal, 
     dailyKcal: $dailyKcal, weeklyMacroSettings: $weeklyMacroSettings, dailyMealPlans: $dailyMealPlans, 
-    clinicalRestrictionProfile: $clinicalRestrictionProfile, extra: $extra)''';
+    nutritionPlansV3: $nutritionPlansV3, clinicalRestrictionProfile: $clinicalRestrictionProfile, extra: $extra)''';
   }
 
   @override
@@ -165,6 +179,7 @@ class NutritionSettings {
           dailyKcal == other.dailyKcal &&
           weeklyMacroSettings == other.weeklyMacroSettings &&
           dailyMealPlans == other.dailyMealPlans &&
+          nutritionPlansV3 == other.nutritionPlansV3 &&
           clinicalRestrictionProfile == other.clinicalRestrictionProfile &&
           extra == other.extra;
 
@@ -177,6 +192,15 @@ class NutritionSettings {
       dailyKcal.hashCode ^
       weeklyMacroSettings.hashCode ^
       dailyMealPlans.hashCode ^
+      nutritionPlansV3.hashCode ^
       clinicalRestrictionProfile.hashCode ^
       extra.hashCode;
 }
+
+    List<PlanSnapshot>? _parsePlanSnapshots(dynamic raw) {
+      if (raw is! List) return null;
+      return raw
+      .whereType<Map>()
+      .map((entry) => PlanSnapshot.fromJson(Map<String, dynamic>.from(entry)))
+      .toList();
+    }

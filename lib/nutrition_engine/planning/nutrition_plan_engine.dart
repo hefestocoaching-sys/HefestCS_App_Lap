@@ -6,6 +6,8 @@ import 'meal_distribution_service.dart';
 import 'meal_targets.dart';
 import 'nutrition_plan_result.dart';
 import 'package:hcs_app_lap/domain/entities/clinical_restriction_profile.dart';
+import 'package:hcs_app_lap/domain/entities/daily_nutrition_plan.dart';
+import 'package:uuid/uuid.dart';
 
 class NutritionPlanEngine {
   final MealDistributionService mealDistributionService;
@@ -66,6 +68,7 @@ class NutritionPlanEngine {
             proteinG: m.proteinG,
             carbG: m.carbG,
             fatG: m.fatG,
+            minProteinPerMeal: minProteinPerMeal,
             needsReview: (!allMealsMeetThreshold) || m.needsReview,
             note: m.note,
           ),
@@ -115,6 +118,65 @@ class NutritionPlanEngine {
       mealTargets: mealTargets,
       mealEquivalents: equivalents,
       proteinFactor: proteinFactor,
+    );
+  }
+
+  DailyNutritionPlan buildDailyPlan({
+    required String dateIso,
+    required double kcalTargetDay,
+    required double proteinTargetDay,
+    required double carbTargetDay,
+    required double fatTargetDay,
+    required int mealsPerDay,
+    required double bodyWeightKg,
+    required String goal,
+    ClinicalRestrictionProfile? clinicalProfile,
+    bool isTemplate = false,
+  }) {
+    final result = buildTargets(
+      kcalTargetDay: kcalTargetDay,
+      proteinTargetDay: proteinTargetDay,
+      carbTargetDay: carbTargetDay,
+      fatTargetDay: fatTargetDay,
+      mealsPerDay: mealsPerDay,
+      bodyWeightKg: bodyWeightKg,
+      goal: goal,
+      clinicalProfile: clinicalProfile,
+    );
+
+    final equivalentsByMeal = <int, Map<String, double>>{};
+    if (result.mealEquivalents != null) {
+      for (var i = 0; i < result.mealEquivalents!.length; i++) {
+        equivalentsByMeal[i] = Map<String, double>.from(
+          result.mealEquivalents![i].equivalents,
+        );
+      }
+    }
+
+    final equivalentsByGroup = <String, double>{};
+    for (final meal in equivalentsByMeal.values) {
+      for (final entry in meal.entries) {
+        equivalentsByGroup[entry.key] =
+            (equivalentsByGroup[entry.key] ?? 0) + entry.value;
+      }
+    }
+
+    return DailyNutritionPlan(
+      id: const Uuid().v4(),
+      dateIso: dateIso,
+      isTemplate: isTemplate,
+      kcalTarget: result.kcalTargetDay,
+      proteinTargetG: result.proteinTargetDay,
+      carbTargetG: result.carbTargetDay,
+      fatTargetG: result.fatTargetDay,
+      mealTargets: result.mealTargets,
+      equivalentsByGroup: equivalentsByGroup,
+      equivalentsByMeal: equivalentsByMeal,
+      meals: const [],
+      createdAt: DateTime.now(),
+      validationStatus: const ValidationStatus(),
+      warnings: const [],
+      clinicalRestrictionProfile: clinicalProfile,
     );
   }
 }

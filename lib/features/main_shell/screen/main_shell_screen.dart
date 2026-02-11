@@ -13,6 +13,7 @@ import 'package:hcs_app_lap/features/macros_feature/screen/macros_screen.dart';
 import 'package:hcs_app_lap/features/meal_plan_feature/screen/meal_plan_screen.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/screen/nutrition_screen.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/screens/equivalents_by_day_screen.dart';
+import 'package:hcs_app_lap/features/nutrition_feature/screens/unified_day_planning_screen.dart';
 import 'package:hcs_app_lap/features/training_feature/training_screen.dart';
 import 'package:hcs_app_lap/features/main_shell/screen/client_selection_screen.dart';
 import 'package:hcs_app_lap/features/main_shell/widgets/global_side_navigation_rail.dart';
@@ -25,6 +26,7 @@ import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/core/contracts/saveable_module.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
+import 'package:hcs_app_lap/core/config/feature_flag_service.dart';
 
 class MainShellScreen extends ConsumerStatefulWidget {
   const MainShellScreen({super.key, this.initialClientId, this.openOrigin});
@@ -60,6 +62,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
   final _nutritionKey = GlobalKey<NutritionScreenState>();
   final _macrosKey = GlobalKey<MacrosScreenState>();
   final _equivalentsKey = GlobalKey<EquivalentsByDayScreenState>();
+  final _unifiedPlanKey = GlobalKey<UnifiedDayPlanningScreenState>();
   final _mealPlanKey = GlobalKey<MealPlanScreenState>();
   final _biochemistryKey = GlobalKey<BiochemistryScreenState>();
 
@@ -131,6 +134,10 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
   }
 
   SaveableModule? _moduleFromIndex(int index) {
+    final useUnifiedPlan =
+        ref.read(featureFlagServiceProvider).isEnabled(
+              FeatureFlagKey.useUnifiedNutritionPlan,
+            );
     switch (index) {
       case 0:
         return null; // Dashboard (no saveable)
@@ -143,7 +150,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       case 4:
         return _macrosKey.currentState;
       case 5:
-        return _equivalentsKey.currentState;
+        return useUnifiedPlan
+            ? _unifiedPlanKey.currentState
+            : _equivalentsKey.currentState;
       case 6:
         return _mealPlanKey.currentState;
       case 8:
@@ -154,12 +163,18 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
   }
 
   Iterable<SaveableModule> _allModules() sync* {
+    final useUnifiedPlan =
+        ref.read(featureFlagServiceProvider).isEnabled(
+              FeatureFlagKey.useUnifiedNutritionPlan,
+            );
     final modules = <SaveableModule?>[
       _historyClinicKey.currentState,
       _anthropometryKey.currentState,
       _nutritionKey.currentState,
       _macrosKey.currentState,
-      _equivalentsKey.currentState,
+      useUnifiedPlan
+          ? _unifiedPlanKey.currentState
+          : _equivalentsKey.currentState,
       _mealPlanKey.currentState,
       _biochemistryKey.currentState,
     ];
@@ -342,6 +357,11 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                 )
                               : currentClientsAsync.when(
                                   data: (state) {
+                                    final useUnifiedPlan = ref
+                                        .watch(featureFlagServiceProvider)
+                                        .isEnabled(
+                                          FeatureFlagKey.useUnifiedNutritionPlan,
+                                        );
                                     return Column(
                                       children: [
                                         // Contenido principal
@@ -378,13 +398,21 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                                       )
                                                     : _macrosKey,
                                               ), // 4
-                                              EquivalentsByDayScreen(
-                                                key: currentActiveClient != null
-                                                    ? ValueKey(
-                                                        'equivalents_${currentActiveClient.id}',
-                                                      )
-                                                    : _equivalentsKey,
-                                              ), // 5
+                                              useUnifiedPlan
+                                                  ? UnifiedDayPlanningScreen(
+                                                      key: currentActiveClient != null
+                                                          ? ValueKey(
+                                                              'unified_plan_${currentActiveClient.id}',
+                                                            )
+                                                          : _unifiedPlanKey,
+                                                    )
+                                                  : EquivalentsByDayScreen(
+                                                      key: currentActiveClient != null
+                                                          ? ValueKey(
+                                                              'equivalents_${currentActiveClient.id}',
+                                                            )
+                                                          : _equivalentsKey,
+                                                    ), // 5
                                               currentActiveClient != null
                                                   ? MealPlanScreen(
                                                       key: ValueKey(

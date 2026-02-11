@@ -310,6 +310,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
       weeklyMacroSettings:
           updated.weeklyMacroSettings ?? current.weeklyMacroSettings,
       dailyMealPlans: updated.dailyMealPlans ?? current.dailyMealPlans,
+      nutritionPlansV3: updated.nutritionPlansV3 ?? current.nutritionPlansV3,
       clinicalRestrictionProfile: updated.clinicalRestrictionProfile,
       extra: mergedExtra,
     );

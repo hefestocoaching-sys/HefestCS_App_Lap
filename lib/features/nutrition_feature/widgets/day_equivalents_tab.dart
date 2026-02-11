@@ -35,21 +35,50 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
   void initState() {
     super.initState();
     _subTabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final mealsCount = widget.planResult.mealsPerDay;
-      final groupIds = EquivalentCatalog.v1Definitions
-          .map((def) => def.id)
-          .toList();
-      ref
-          .read(equivalentsByDayProvider.notifier)
-          .ensureDay(widget.dayKey, mealsCount, groupIds);
-    });
+    _ensureDaySetup();
+  }
+
+  @override
+  void didUpdateWidget(covariant DayEquivalentsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.dayKey != widget.dayKey ||
+        oldWidget.planResult.mealsPerDay != widget.planResult.mealsPerDay) {
+      _ensureDaySetup();
+    }
   }
 
   @override
   void dispose() {
     _subTabController.dispose();
     super.dispose();
+  }
+
+  void _ensureDaySetup() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final mealsCount = widget.planResult.mealsPerDay;
+      final groupIds = EquivalentCatalog.v1Definitions
+          .map((def) => def.id)
+          .toList();
+      final state = ref.read(equivalentsByDayProvider);
+      final dayEquivalents = state.dayEquivalents[widget.dayKey];
+      final dayMeals = state.dayMealEquivalents[widget.dayKey];
+      final hasAllGroups = dayEquivalents != null &&
+          groupIds.every(dayEquivalents.containsKey);
+      final hasAllMeals = dayMeals != null &&
+          groupIds.every((id) {
+            final meals = dayMeals[id];
+            if (meals == null) return false;
+            for (var i = 0; i < mealsCount; i++) {
+              if (!meals.containsKey(i)) return false;
+            }
+            return true;
+          });
+      if (hasAllGroups && hasAllMeals) return;
+      ref
+          .read(equivalentsByDayProvider.notifier)
+          .ensureDay(widget.dayKey, mealsCount, groupIds);
+    });
   }
 
   @override
