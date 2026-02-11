@@ -42,7 +42,6 @@ class _BinaryDetailField extends StatelessWidget {
       controller: controller,
       label: label,
       hintText: hintText,
-      maxLines: 1,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       onChanged: onDetailChanged,
     );
@@ -88,7 +87,6 @@ class _TypicalDayMealsTable extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 1,
                   child: CustomTextFormField(
                     controller: controllers.timeController,
                     label: 'Hora',
@@ -400,7 +398,7 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
         _draftNutrition.extra[NutritionExtraKeys.typicalDayEating],
       );
       if (legacy.isNotEmpty) {
-        _addMealEntry(time: '', description: legacy);
+        _addMealEntry(description: legacy);
       }
     }
   }
@@ -596,7 +594,6 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
                                 child: CustomTextFormField(
                                   controller: _preferencesController,
                                   label: 'Preferencias y Aversiones',
-                                  maxLines: 1,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 12,
                                     vertical: 12,
@@ -715,7 +712,6 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
                     children: [
                       InputDecorator(
                         isFocused: true,
-                        isEmpty: false,
                         decoration: hcsDecoration(
                           context,
                           labelText: 'Describe un día típico de alimentación',
@@ -886,7 +882,6 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
                         controller: _eatingBehaviorNotesController,
                         label:
                             'Notas sobre relación con la comida (atracones, ansiedad, etc.)',
-                        maxLines: 1,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 12,
@@ -1122,7 +1117,6 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
                             CustomTextFormField(
                               controller: _pharmacologyProtocolController,
                               label: 'Protocolo Farmacológico (si aplica)',
-                              maxLines: 1,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 12,
@@ -1138,7 +1132,6 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
                             CustomTextFormField(
                               controller: _peakWeekHistoryController,
                               label: 'Experiencia en Peak Week',
-                              maxLines: 1,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 12,

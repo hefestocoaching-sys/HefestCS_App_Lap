@@ -15,7 +15,7 @@ class ClinicSectionExample extends StatelessWidget {
   Widget build(BuildContext context) {
     // ========== EJEMPLO 1: Sección de Alergias ==========
     return SingleChildScrollView(
-      padding: EdgeInsets.all(DesignTokens.spaceLg),
+      padding: const EdgeInsets.all(DesignTokens.spaceLg),
       child: Column(
         spacing: DesignTokens.spaceLg,
         children: [
@@ -71,7 +71,7 @@ class ClinicSectionExample extends StatelessWidget {
           ),
 
           // MEDICAMENTOS
-          ClinicSection(
+          const ClinicSection(
             title: 'Medicamentos Activos',
             icon: Icons.medication,
             bgColor: DesignTokens.medicationBg,
@@ -98,7 +98,7 @@ class ClinicSectionExample extends StatelessWidget {
           ),
 
           // ANTECEDENTES QUIRÚRGICOS
-          ClinicSection(
+          const ClinicSection(
             title: 'Antecedentes Quirúrgicos',
             icon: Icons.healing,
             bgColor: DesignTokens.surgeryBg,
@@ -113,7 +113,7 @@ class ClinicSectionExample extends StatelessWidget {
             ],
           ),
 
-          SizedBox(height: DesignTokens.spaceLg),
+          const SizedBox(height: DesignTokens.spaceLg),
         ],
       ),
     );

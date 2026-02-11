@@ -40,13 +40,13 @@ Future<DateTime?> showCustomDatePicker(
     builder: (context, child) {
       return Theme(
         data: ThemeData.dark().copyWith(
-          colorScheme: ColorScheme.dark(
+          colorScheme: const ColorScheme.dark(
             primary: kPrimaryColor,
             onPrimary: kTextColor,
             surface: kCardColor,
             onSurface: kTextColor,
             // Destacar fechas con registros
-            secondary: const Color(0xFF00E676),
+            secondary: Color(0xFF00E676),
           ),
           dialogTheme: DialogThemeData(
             backgroundColor: kBackgroundColor,

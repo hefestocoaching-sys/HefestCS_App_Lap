@@ -6,7 +6,7 @@ void main() {
   group('MealDistributionService', () {
     test('3 comidas, proteína suficiente cumple umbral y suma objetivos', () {
       final service = MealDistributionService();
-      final config = MealDistributionConfig(mealsPerDay: 3);
+      const config = MealDistributionConfig(mealsPerDay: 3);
 
       final meals = service.distributeDay(
         kcalTarget: 2400,
@@ -35,7 +35,7 @@ void main() {
 
     test('6 comidas, proteína diaria insuficiente marca needsReview', () {
       final service = MealDistributionService();
-      final config = MealDistributionConfig(mealsPerDay: 6);
+      const config = MealDistributionConfig(mealsPerDay: 6);
 
       final meals = service.distributeDay(
         kcalTarget: 1800,

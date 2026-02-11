@@ -473,7 +473,7 @@ class Client extends Equatable {
       trainingWeeks.isEmpty ? null : trainingWeeks.last;
 
   double? get initialHeightCm {
-    final resolver = LatestRecordResolver();
+    const resolver = LatestRecordResolver();
     final latest = resolver.latestAnthropometry(anthropometry);
     return latest?.heightCm;
   }

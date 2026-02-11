@@ -55,24 +55,16 @@ void main() {
       final logs = [
         createLog(
           sessionDate: DateTime(2025, 1, 13), // lunes
-          completedSets: 4,
-          plannedSets: 4,
           avgReportedRIR: 2.5,
           perceivedEffort: 6,
         ),
         createLog(
           sessionDate: DateTime(2025, 1, 15), // miércoles
-          completedSets: 4,
-          plannedSets: 4,
-          avgReportedRIR: 2.0,
           perceivedEffort: 6,
         ),
         createLog(
           sessionDate: DateTime(2025, 1, 17), // viernes
-          completedSets: 4,
-          plannedSets: 4,
           avgReportedRIR: 2.5,
-          perceivedEffort: 7,
         ),
       ];
 
@@ -104,10 +96,6 @@ void main() {
       final logs = [
         createLog(
           sessionDate: DateTime(2025, 1, 13),
-          completedSets: 4,
-          plannedSets: 4,
-          avgReportedRIR: 2.0,
-          perceivedEffort: 7,
           painFlag: true, // DOLOR
         ),
       ];
@@ -136,7 +124,6 @@ void main() {
         createLog(
           sessionDate: DateTime(2025, 1, 13),
           completedSets: 2,
-          plannedSets: 4,
           avgReportedRIR: 1.0,
           perceivedEffort: 9,
           stoppedEarly: true, // DETENCIÓN TEMPRANA
@@ -163,15 +150,11 @@ void main() {
       final logs = [
         createLog(
           sessionDate: DateTime(2025, 1, 13),
-          completedSets: 4,
-          plannedSets: 4,
           avgReportedRIR: 0.5,
           perceivedEffort: 9, // ESFUERZO ALTO
         ),
         createLog(
           sessionDate: DateTime(2025, 1, 15),
-          completedSets: 4,
-          plannedSets: 4,
           avgReportedRIR: 0.5,
           perceivedEffort: 9,
         ),
@@ -193,13 +176,7 @@ void main() {
     test('negative_signal_when_adherence_very_low', () {
       final referenceDate = DateTime(2025, 1, 15);
       final logs = [
-        createLog(
-          sessionDate: DateTime(2025, 1, 13),
-          completedSets: 2,
-          plannedSets: 4,
-          avgReportedRIR: 2.0,
-          perceivedEffort: 7,
-        ),
+        createLog(sessionDate: DateTime(2025, 1, 13), completedSets: 2),
       ];
 
       final summary = service.summarizeWeek(
@@ -226,8 +203,6 @@ void main() {
       final logs = [
         createLog(
           sessionDate: DateTime(2025, 1, 13),
-          completedSets: 4,
-          plannedSets: 4,
           avgReportedRIR: 2.5,
           perceivedEffort: 6,
           formDegradation: true, // DEGRADACIÓN TÉCNICA
@@ -252,20 +227,8 @@ void main() {
     test('moderate_fatigue_when_avg_effort_moderate', () {
       final referenceDate = DateTime(2025, 1, 15);
       final logs = [
-        createLog(
-          sessionDate: DateTime(2025, 1, 13),
-          completedSets: 4,
-          plannedSets: 4,
-          avgReportedRIR: 2.0,
-          perceivedEffort: 7, // ESFUERZO MODERADO (7.0-8.49)
-        ),
-        createLog(
-          sessionDate: DateTime(2025, 1, 15),
-          completedSets: 4,
-          plannedSets: 4,
-          avgReportedRIR: 2.0,
-          perceivedEffort: 8,
-        ),
+        createLog(sessionDate: DateTime(2025, 1, 13)),
+        createLog(sessionDate: DateTime(2025, 1, 15), perceivedEffort: 8),
       ];
 
       final summary = service.summarizeWeek(
@@ -287,14 +250,12 @@ void main() {
         createLog(
           sessionDate: DateTime(2025, 1, 13),
           completedSets: 3,
-          plannedSets: 4,
           avgReportedRIR: 2.5,
           perceivedEffort: 6,
         ),
         createLog(
           sessionDate: DateTime(2025, 1, 15),
           completedSets: 3,
-          plannedSets: 4,
           avgReportedRIR: 2.5,
           perceivedEffort: 6,
         ),
@@ -319,12 +280,7 @@ void main() {
     test('weighted_average_by_completed_sets', () {
       final referenceDate = DateTime(2025, 1, 15);
       final logs = [
-        createLog(
-          sessionDate: DateTime(2025, 1, 13),
-          completedSets: 4,
-          avgReportedRIR: 2.0,
-          perceivedEffort: 8,
-        ),
+        createLog(sessionDate: DateTime(2025, 1, 13), perceivedEffort: 8),
         createLog(
           sessionDate: DateTime(2025, 1, 15),
           completedSets: 2,
@@ -349,13 +305,7 @@ void main() {
 
     test('adherence_ratio_clamped_and_zero_when_planned_zero', () {
       final referenceDate = DateTime(2025, 1, 15);
-      final logs = [
-        createLog(
-          sessionDate: DateTime(2025, 1, 13),
-          completedSets: 4,
-          plannedSets: 4,
-        ),
-      ];
+      final logs = [createLog(sessionDate: DateTime(2025, 1, 13))];
 
       // Sin plannedSetsThisWeek (default 0)
       final summary = service.summarizeWeek(
@@ -374,7 +324,6 @@ void main() {
         clientId: 'client-1',
         referenceDate: referenceDate,
         logs: [],
-        plannedSetsThisWeek: 0,
       );
 
       expect(summary2.adherenceRatio, equals(0.0));
@@ -444,12 +393,12 @@ void main() {
     test('filters_logs_from_different_client', () {
       final referenceDate = DateTime(2025, 1, 15);
       final logs = [
-        createLog(sessionDate: DateTime(2025, 1, 13), clientId: 'client-1'),
+        createLog(sessionDate: DateTime(2025, 1, 13)),
         createLog(
           sessionDate: DateTime(2025, 1, 14),
           clientId: 'client-2', // DIFERENTE CLIENTE
         ),
-        createLog(sessionDate: DateTime(2025, 1, 15), clientId: 'client-1'),
+        createLog(sessionDate: DateTime(2025, 1, 15)),
       ];
 
       final summary = service.summarizeWeek(
@@ -499,7 +448,6 @@ void main() {
           createLog(
             sessionDate: DateTime(2025, 1, 13),
             completedSets: 2,
-            plannedSets: 4,
             avgReportedRIR: 2.5,
             perceivedEffort: 6,
           ),
@@ -519,13 +467,7 @@ void main() {
 
     test('serialization_and_deserialization', () {
       final referenceDate = DateTime(2025, 1, 15);
-      final logs = [
-        createLog(
-          sessionDate: DateTime(2025, 1, 13),
-          completedSets: 4,
-          plannedSets: 4,
-        ),
-      ];
+      final logs = [createLog(sessionDate: DateTime(2025, 1, 13))];
 
       final summary = service.summarizeWeek(
         clientId: 'client-1',

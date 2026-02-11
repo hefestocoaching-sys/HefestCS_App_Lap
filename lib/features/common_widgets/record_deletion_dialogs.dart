@@ -121,7 +121,6 @@ void showDeleteErrorSnackbar(BuildContext context, Exception error) {
     SnackBar(
       content: Text('Error al borrar: ${error.toString()}'),
       backgroundColor: Colors.red,
-      duration: const Duration(seconds: 4),
     ),
   );
 }

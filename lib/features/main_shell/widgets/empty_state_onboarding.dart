@@ -46,7 +46,7 @@ class EmptyStateOnboarding extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Mensaje principal
-            Text(
+            const Text(
               'Aún no tienes clientes registrados',
               style: TextStyle(
                 fontSize: 16,
@@ -112,13 +112,12 @@ class EmptyStateOnboarding extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: kAccentColor.withValues(alpha: 0.3),
-                  width: 1,
                 ),
               ),
-              child: Row(
+              child: const Row(
                 children: [
                   Icon(Icons.lightbulb_outline, color: kAccentColor, size: 20),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Tip: Puedes importar clientes desde otro sistema más adelante',
@@ -149,7 +148,7 @@ class EmptyStateOnboarding extends StatelessWidget {
         Container(
           width: 32,
           height: 32,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: kAccentColor,
             shape: BoxShape.circle,
           ),
@@ -181,7 +180,7 @@ class EmptyStateOnboarding extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 description,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   color: kTextColorSecondary,
                   height: 1.4,

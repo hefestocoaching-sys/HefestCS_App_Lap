@@ -194,7 +194,7 @@ class MacrosContentState extends ConsumerState<MacrosContent>
     final client = ref.watch(clientsProvider).value?.activeClient;
 
     if (client == null) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -203,7 +203,7 @@ class MacrosContentState extends ConsumerState<MacrosContent>
               size: 64,
               color: Colors.white24,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               "Selecciona un cliente o crea uno nuevo",
               style: TextStyle(color: kTextColorSecondary),
@@ -260,7 +260,6 @@ class MacrosContentState extends ConsumerState<MacrosContent>
       floatingActionButton: _buildActionButtons(targetDateIsoForActions),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: PopScope(
-        canPop: true,
         onPopInvokedWithResult: (didPop, result) {
           if (!didPop) {
             return;
@@ -289,7 +288,6 @@ class MacrosContentState extends ConsumerState<MacrosContent>
                 color: Colors.transparent,
                 child: TabBar(
                   controller: _tabController,
-                  isScrollable: false,
                   padding: const EdgeInsets.only(bottom: 8),
                   indicatorColor: kPrimaryColor,
                   indicatorWeight: 3,
@@ -532,12 +530,11 @@ class MacrosContentState extends ConsumerState<MacrosContent>
                   width: 1.5,
                 ),
               ),
-              child: Column(
+              child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(Icons.add, size: 48, color: kPrimaryColor),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(
                     'Nuevo registro',
                     style: TextStyle(
@@ -606,7 +603,6 @@ class MacrosContentState extends ConsumerState<MacrosContent>
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   day,
@@ -1014,7 +1010,7 @@ class _MacroDayViewState extends ConsumerState<_MacroDayView>
                           ],
                         ),
                         const SizedBox(height: 20),
-                        Divider(color: Colors.white10, height: 1),
+                        const Divider(color: Colors.white10, height: 1),
                         const SizedBox(height: 16),
                         _ClinicalValidationCard(
                           proteinGPerKg: _settings.proteinSelected,
@@ -1153,14 +1149,13 @@ class _MacroTableRow extends StatelessWidget {
           // Header: Título + Icono + Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Título + Icono de edición vs calculado
               Row(
                 children: [
                   Text(
                     data.label,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -1169,7 +1164,7 @@ class _MacroTableRow extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   if (data.enabled)
-                    Icon(Icons.edit, size: 14, color: Colors.white54)
+                    const Icon(Icons.edit, size: 14, color: Colors.white54)
                   else
                     Tooltip(
                       message: 'Calculado automáticamente por el sistema',
@@ -1211,9 +1206,9 @@ class _MacroTableRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Categoría',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white54,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
@@ -1266,9 +1261,9 @@ class _MacroTableRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'g/kg',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white54,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
@@ -1328,11 +1323,11 @@ class _MacroTableRow extends StatelessWidget {
           ),
           // Texto explicativo para carbohidratos calculados
           if (!data.enabled)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
               child: Text(
                 'Calculado automáticamente según kcal objetivo',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white54,
                   fontSize: 10,
                   fontStyle: FontStyle.italic,
@@ -1349,9 +1344,9 @@ class _MacroTableRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Total',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white54,
                         fontSize: 9,
                       ),
@@ -1372,9 +1367,9 @@ class _MacroTableRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
+                    const Text(
                       'kcal',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white54,
                         fontSize: 9,
                       ),
@@ -1422,7 +1417,7 @@ class _MacroChartDonutState extends State<_MacroChartDonut> {
 
     // Si no hay datos, mostrar placeholder para evitar error o gráfica vacía
     if (total <= 0) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1431,7 +1426,7 @@ class _MacroChartDonutState extends State<_MacroChartDonut> {
               color: Colors.white24,
               size: 48,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               'Sin datos para mostrar',
               style: TextStyle(color: Colors.white54),
@@ -1562,8 +1557,8 @@ class _MacroChartLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pColor = Colors.greenAccent.shade400;
-    final fColor = Colors.orangeAccent;
-    final cColor = Colors.lightBlueAccent;
+    const fColor = Colors.orangeAccent;
+    const cColor = Colors.lightBlueAccent;
     final total = proteinKcal + fatKcal + carbKcal;
 
     if (total <= 0) {
@@ -1597,7 +1592,6 @@ class _MacroChartLegend extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.08),
-          width: 1,
         ),
       ),
       child: Row(
@@ -1780,7 +1774,6 @@ class _EnergySummaryHeader extends StatelessWidget {
                   border: Border.all(color: strategyColor.withAlpha(102)),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Icon(strategyIcon, color: strategyColor, size: 16),
                     const SizedBox(height: 4),
@@ -1820,9 +1813,9 @@ class _EnergySummaryHeader extends StatelessWidget {
                       top: Radius.circular(8),
                     ),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Expanded(
                         flex: 2,
                         child: Text(
@@ -1879,8 +1872,8 @@ class _EnergySummaryHeader extends StatelessWidget {
                   Colors.greenAccent.shade400,
                 ),
                 // Divider
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Divider(color: Colors.white10, height: 0.5),
                 ),
                 // Fila: Grasas
@@ -1892,8 +1885,8 @@ class _EnergySummaryHeader extends StatelessWidget {
                   Colors.orangeAccent,
                 ),
                 // Divider
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Divider(color: Colors.white10, height: 0.5),
                 ),
                 // Fila: Carbohidratos
@@ -2031,7 +2024,7 @@ class _ClinicalValidationCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'ANÁLISIS CLÍNICO DEL DÍA',
           style: TextStyle(
             color: kPrimaryColor,
@@ -2169,7 +2162,6 @@ class _ClinicalMetricRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: statusConfig.color.withValues(alpha: 0.3),
-          width: 1,
         ),
       ),
       child: Column(

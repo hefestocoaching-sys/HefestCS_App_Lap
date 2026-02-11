@@ -12,7 +12,7 @@ void main() {
           {'name': 'Desayuno', 'items': []},
         ],
       },
-      'Martes': DailyMealPlan(dayKey: 'Martes', meals: []),
+      'Martes': const DailyMealPlan(dayKey: 'Martes', meals: []),
     };
 
     final parsed = parseDailyMealPlans(raw);
@@ -51,7 +51,7 @@ void main() {
     expect(logFor27 != null, true);
 
     // Upsert: replace 2025-12-28 record
-    final newLog = NutritionAdherenceLog(
+    const newLog = NutritionAdherenceLog(
       dateIso: '2025-12-28',
       targetCalories: 2200,
       actualCalories: 2000,

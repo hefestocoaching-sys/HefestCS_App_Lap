@@ -87,11 +87,11 @@ class _SeriesDistributionEditorState extends State<SeriesDistributionEditor> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(Icons.psychology, color: kPrimaryColor),
-              const SizedBox(width: 12),
-              const Text(
+              SizedBox(width: 12),
+              Text(
                 'Distribución de Intensidad',
                 style: TextStyle(
                   fontSize: 18,
@@ -102,7 +102,7 @@ class _SeriesDistributionEditorState extends State<SeriesDistributionEditor> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
+          const Text(
             'Las series se clasifican en 3 intensidades según evidencia científica:',
             style: TextStyle(color: kTextColorSecondary, fontSize: 13),
           ),
@@ -169,7 +169,7 @@ class _SeriesDistributionEditorState extends State<SeriesDistributionEditor> {
                 const SizedBox(height: 4),
                 Text(
                   range,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     color: kTextColorSecondary,
                     fontStyle: FontStyle.italic,
@@ -183,7 +183,7 @@ class _SeriesDistributionEditorState extends State<SeriesDistributionEditor> {
                 const SizedBox(height: 2),
                 Text(
                   reference,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
                     color: kTextColorSecondary,
                     fontStyle: FontStyle.italic,
@@ -328,7 +328,6 @@ class _SeriesDistributionEditorState extends State<SeriesDistributionEditor> {
         const SizedBox(height: 8),
         Slider(
           value: value,
-          min: 0,
           max: 100,
           divisions: 20,
           activeColor: color,
@@ -386,10 +385,10 @@ class _SeriesDistributionEditorState extends State<SeriesDistributionEditor> {
             ),
             columnWidths: const {
               0: FlexColumnWidth(2),
-              1: FlexColumnWidth(1),
-              2: FlexColumnWidth(1),
-              3: FlexColumnWidth(1),
-              4: FlexColumnWidth(1),
+              1: FlexColumnWidth(),
+              2: FlexColumnWidth(),
+              3: FlexColumnWidth(),
+              4: FlexColumnWidth(),
             },
             children: [
               // Header
@@ -447,7 +446,7 @@ class _SeriesDistributionEditorState extends State<SeriesDistributionEditor> {
               color: kTextColorSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Genera un plan primero para ver la distribución',
               style: TextStyle(color: kTextColorSecondary, fontSize: 14),
               textAlign: TextAlign.center,

@@ -47,10 +47,9 @@ class DecisionTrace extends Equatable {
   }) {
     return DecisionTrace(
       phase: phase,
-      timestamp: timestamp ?? DateTime(2025, 1, 1), // Fallback determinista
+      timestamp: timestamp ?? DateTime(2025), // Fallback determinista
       category: category,
       description: description,
-      severity: 'info',
       context: context,
       action: action,
     );
@@ -67,7 +66,7 @@ class DecisionTrace extends Equatable {
   }) {
     return DecisionTrace(
       phase: phase,
-      timestamp: timestamp ?? DateTime(2025, 1, 1), // Fallback determinista
+      timestamp: timestamp ?? DateTime(2025), // Fallback determinista
       category: category,
       description: description,
       severity: 'warning',
@@ -87,7 +86,7 @@ class DecisionTrace extends Equatable {
   }) {
     return DecisionTrace(
       phase: phase,
-      timestamp: timestamp ?? DateTime(2025, 1, 1), // Fallback determinista
+      timestamp: timestamp ?? DateTime(2025), // Fallback determinista
       category: category,
       description: description,
       severity: 'critical',

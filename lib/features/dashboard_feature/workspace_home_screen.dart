@@ -342,7 +342,7 @@ class _KpiCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: kCardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withAlpha(24), width: 1),
+            border: Border.all(color: Colors.white.withAlpha(24)),
           ),
           child: Row(
             children: [

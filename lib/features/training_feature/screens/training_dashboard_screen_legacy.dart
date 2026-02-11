@@ -234,7 +234,7 @@ class _TrainingDashboardScreenState
         data: (state) {
           final client = state.activeClient;
           if (client == null) {
-            return Center(
+            return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -243,7 +243,7 @@ class _TrainingDashboardScreenState
                     size: 64,
                     color: Colors.white24,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     "Selecciona un cliente o crea uno nuevo",
                     style: TextStyle(color: kTextColorSecondary),
@@ -355,7 +355,7 @@ class _TrainingDashboardScreenState
                       data: (state) {
                         final client = state.activeClient;
                         if (client == null) {
-                          return Center(
+                          return const Center(
                             child: Text(
                               'No hay cliente activo',
                               style: TextStyle(color: kTextColorSecondary),
@@ -390,7 +390,7 @@ class _TrainingDashboardScreenState
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.error_outline,
                                   size: 48,
                                   color: kErrorColor,
@@ -426,7 +426,7 @@ class _TrainingDashboardScreenState
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.error_outline,
                               size: 48,
                               color: kErrorColor,
@@ -471,7 +471,7 @@ class _TrainingDashboardScreenState
                       data: (state) {
                         final client = state.activeClient;
                         if (client == null) {
-                          return Center(
+                          return const Center(
                             child: Text(
                               'No hay cliente activo',
                               style: TextStyle(color: kTextColorSecondary),
@@ -502,7 +502,7 @@ class _TrainingDashboardScreenState
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.error_outline,
                                   size: 48,
                                   color: kErrorColor,
@@ -538,7 +538,7 @@ class _TrainingDashboardScreenState
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.error_outline,
                               size: 48,
                               color: kErrorColor,
@@ -660,8 +660,8 @@ class _TrainingDashboardScreenState
 
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Plan Motor V3 generado correctamente'),
+                  const SnackBar(
+                    content: Text('Plan Motor V3 generado correctamente'),
                     backgroundColor: kSuccessColor,
                   ),
                 );
@@ -692,7 +692,6 @@ class _TrainingDashboardScreenState
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ExpansionTile(
-        initiallyExpanded: false,
         backgroundColor: kCardColor.withValues(alpha: 0.5),
         collapsedBackgroundColor: kCardColor.withValues(alpha: 0.3),
         shape: RoundedRectangleBorder(
@@ -928,7 +927,6 @@ class _TrainingDashboardScreenState
               // Tab 1: Volumen (VME / VMR / Target por músculo + Rol)
               VolumeRangeMuscleTable(
                 trainingExtra: hasV2Volume ? trainingExtra : null,
-                planJson: null,
                 planConfig: hasV2Volume ? null : planConfigForUi,
               ),
               // Tab 2: Intensidad (Heavy / Medium / Light)
@@ -996,13 +994,13 @@ class _TrainingDashboardScreenState
                   ),
                   Text(
                     '${currentWeek.sessions.length} sesiones',
-                    style: TextStyle(color: kTextColorSecondary, fontSize: 12),
+                    style: const TextStyle(color: kTextColorSecondary, fontSize: 12),
                   ),
                 ],
               ),
               Text(
                 'Volumen: ${currentWeek.sessions.fold<int>(0, (sum, s) => sum + s.prescriptions.length)} ejercicios',
-                style: TextStyle(color: kPrimaryColor, fontSize: 12),
+                style: const TextStyle(color: kPrimaryColor, fontSize: 12),
               ),
             ],
           ),
@@ -1034,7 +1032,7 @@ class _TrainingDashboardScreenState
                     ),
                     Text(
                       '${session.prescriptions.length} ejercicios',
-                      style: TextStyle(color: kPrimaryColor, fontSize: 12),
+                      style: const TextStyle(color: kPrimaryColor, fontSize: 12),
                     ),
                   ],
                 ),
@@ -1056,7 +1054,7 @@ class _TrainingDashboardScreenState
                               ),
                               Text(
                                 '${exercise.sets} series × ${exercise.reps} (RIR: ${exercise.rir})',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: kTextColorSecondary,
                                   fontSize: 11,
                                 ),

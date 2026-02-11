@@ -35,8 +35,6 @@ class TrainingFeedback {
       avgRir: 2.5,
       sleepHours: 7.5,
       stressLevel: 5.0,
-      heavySets: 0.0,
-      lightSets: 0.0,
     );
   }
 

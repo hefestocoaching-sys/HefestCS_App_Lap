@@ -37,7 +37,7 @@ class ClientSelectionScreen extends ConsumerWidget {
                 .toList();
 
             if (clients.isEmpty) {
-              return Center(
+              return const Center(
                 child: Text(
                   'No hay clientes activos',
                   style: TextStyle(color: kTextColorSecondary),
@@ -292,7 +292,6 @@ class _ClientCardState extends State<_ClientCard>
                     0xFF00D9FF,
                   ).withAlpha((10 * (_elevationAnimation.value / 8)).toInt()),
                   blurRadius: _elevationAnimation.value,
-                  spreadRadius: 0,
                   offset: Offset(0, _elevationAnimation.value / 2),
                 ),
               ],
@@ -387,7 +386,6 @@ class _ClientCardState extends State<_ClientCard>
                           color: widget.hasActivePlan
                               ? Colors.green.withAlpha(60)
                               : Colors.grey.withAlpha(60),
-                          width: 1,
                         ),
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -429,7 +427,7 @@ class _ClientCardState extends State<_ClientCard>
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 11,
-                          color: Color(0xFF94A3B8).withAlpha(200),
+                          color: const Color(0xFF94A3B8).withAlpha(200),
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -507,11 +505,11 @@ class _NewClientCard extends StatelessWidget {
             CircleAvatar(
               radius: 40,
               backgroundColor: kPrimaryColor.withAlpha(60),
-              child: Icon(Icons.add, color: kPrimaryColor, size: 48),
+              child: const Icon(Icons.add, color: kPrimaryColor, size: 48),
             ),
             const SizedBox(height: 12),
             // Texto
-            Text(
+            const Text(
               'Nuevo\nCliente',
               textAlign: TextAlign.center,
               style: TextStyle(

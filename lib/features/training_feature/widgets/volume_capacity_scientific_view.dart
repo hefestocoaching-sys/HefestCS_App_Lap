@@ -35,19 +35,19 @@ class VolumeCapacityScientificView extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.info_outline, size: 64, color: Colors.blue),
-            SizedBox(height: 16),
-            Text(
+            const Icon(Icons.info_outline, size: 64, color: Colors.blue),
+            const SizedBox(height: 16),
+            const Text(
               'Sin datos de volumen',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               'Este plan no contiene datos de volumen del Motor V3.',
               style: TextStyle(color: Colors.grey),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Genera un nuevo plan para ver la distribución volumétrica.',
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
@@ -71,25 +71,25 @@ class VolumeCapacityScientificView extends ConsumerWidget {
     // ═══════════════════════════════════════════════════════════════════════
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // HEADER
-          Text(
+          const Text(
             'Volumen Semanal por Músculo',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Motor V3 - Volumen calculado según fase y split',
             style: TextStyle(color: Colors.grey[400], fontSize: 12),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // METADATA
           Container(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.grey[850],
               borderRadius: BorderRadius.circular(8),
@@ -108,12 +108,12 @@ class VolumeCapacityScientificView extends ConsumerWidget {
               ],
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
 
           // TABLA
           Table(
             border: TableBorder.all(color: Colors.grey.shade700),
-            columnWidths: {
+            columnWidths: const {
               0: FlexColumnWidth(3),
               1: FlexColumnWidth(2),
               2: FlexColumnWidth(2),
@@ -152,11 +152,11 @@ class VolumeCapacityScientificView extends ConsumerWidget {
             ],
           ),
 
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
 
           // LEYENDA
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.grey.shade900,
               borderRadius: BorderRadius.circular(8),
@@ -164,11 +164,11 @@ class VolumeCapacityScientificView extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Información:',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   '• Sets/semana: Volumen total calculado por Motor V3',
                   style: TextStyle(fontSize: 12, color: Colors.grey[300]),
@@ -181,7 +181,7 @@ class VolumeCapacityScientificView extends ConsumerWidget {
                   '• Split: Determina agrupación de músculos por sesión',
                   style: TextStyle(fontSize: 12, color: Colors.grey[300]),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
                   'Basado en: Volume Engine (MEV/MAV/MRV landmarks)',
                   style: TextStyle(
@@ -202,7 +202,7 @@ class VolumeCapacityScientificView extends ConsumerWidget {
     return Column(
       children: [
         Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
@@ -238,7 +238,7 @@ class VolumeCapacityScientificView extends ConsumerWidget {
     }
 
     return Padding(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       child: Text(
         text,
         style: TextStyle(

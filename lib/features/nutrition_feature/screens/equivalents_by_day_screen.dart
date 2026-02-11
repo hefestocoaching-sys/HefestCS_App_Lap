@@ -41,7 +41,10 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     // Load equivalents when active client changes, outside build.
     _clientSubscription = ref.listenManual(clientsProvider, (previous, next) {
       final client = next.value?.activeClient;
-      ref.read(equivalentsByDayProvider.notifier).loadFromClient(client);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(equivalentsByDayProvider.notifier).loadFromClient(client);
+      });
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final client = ref.read(clientsProvider).value?.activeClient;

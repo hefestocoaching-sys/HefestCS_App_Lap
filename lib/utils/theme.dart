@@ -140,7 +140,7 @@ final ThemeData appThemeData = ThemeData(
   tabBarTheme: TabBarThemeData(
     labelColor: kTextColor,
     unselectedLabelColor: kTextColorSecondary,
-    indicator: UnderlineTabIndicator(
+    indicator: const UnderlineTabIndicator(
       borderSide: BorderSide(color: kPrimaryColor, width: 3.0),
     ),
     overlayColor: WidgetStateProperty.resolveWith<Color?>((

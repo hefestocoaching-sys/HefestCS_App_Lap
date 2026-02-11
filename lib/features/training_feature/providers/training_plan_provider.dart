@@ -81,13 +81,9 @@ class TrainingPlanState {
     List<String> missingFields = const [],
   }) {
     return TrainingPlanState(
-      isLoading: false,
-      error: null,
       blockReason: reason,
       suggestions: suggestions,
-      plan: null,
       missingFields: missingFields,
-      vopByMuscle: const {},
     );
   }
 }
@@ -111,7 +107,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     // El plan se guarda en client.trainingPlans (persistencia local vía Client.toJson()).
     // Por defecto, exponer el plan más reciente para que el UI muestre el último registro.
     if (client.trainingPlans.isEmpty) {
-      return TrainingPlanState(plan: null, vopByMuscle: vopByMuscle);
+      return TrainingPlanState(vopByMuscle: vopByMuscle);
     }
 
     final active = _findActivePlanConfigById(client);
@@ -220,7 +216,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       if (client.trainingPlans.isEmpty) {
-        state = const TrainingPlanState(plan: null);
+        state = const TrainingPlanState();
         return;
       }
 
@@ -229,19 +225,12 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final chosen = activeConfig ?? _findLatestPlan(client.trainingPlans);
 
       if (chosen == null) {
-        state = const TrainingPlanState(plan: null);
+        state = const TrainingPlanState();
         return;
       }
 
       final derived = TrainingPlanMapper.toGeneratedPlan(chosen);
-      state = TrainingPlanState(
-        isLoading: false,
-        error: null,
-        blockReason: null,
-        suggestions: null,
-        plan: derived,
-        missingFields: const [],
-      );
+      state = TrainingPlanState(plan: derived);
     } catch (e) {
       debugPrint('❌ Error en loadPersistedActivePlanIfAny: $e');
       state = state.copyWith(
@@ -363,11 +352,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     required TrainingProfile profile,
     String? forDateIso,
   }) async {
-    state = state.copyWith(
-      isLoading: true,
-      error: null,
-      missingFields: const [],
-    );
+    state = state.copyWith(isLoading: true, missingFields: const []);
     try {
       // Preparar inputs
       final normalizedProfile = profile.normalizedFromExtra();
@@ -459,14 +444,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         debugPrint(
           '[TrainingPlanProvider] activePlanId encontrado -> skip regen',
         );
-        state = TrainingPlanState(
-          isLoading: false,
-          error: null,
-          blockReason: null,
-          suggestions: null,
-          plan: derived,
-          missingFields: const [],
-        );
+        state = TrainingPlanState(plan: derived);
         return;
       }
 
@@ -530,14 +508,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           );
         }
 
-        state = TrainingPlanState(
-          isLoading: false,
-          error: null,
-          blockReason: null,
-          suggestions: null,
-          plan: derived,
-          missingFields: const [],
-        );
+        state = TrainingPlanState(plan: derived);
         return;
       }
 
@@ -569,7 +540,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // Crear Motor V3 con estrategia científica pura (RuleBasedStrategy)
       final motorV3 = TrainingOrchestratorV3(
         strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
-        recordPredictions: false, // No guardar predicciones ML
       );
 
       // Generar plan con Motor V3 REAL
@@ -579,7 +549,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           client: freshClient,
           exercises: exercises,
           asOfDate: startDate,
-          recordPrediction: false, // No ML logging
         );
       } catch (e, stackTrace) {
         debugPrint('❌ [Motor V3] Error durante generación: $e');
@@ -762,7 +731,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
         // PASO 2: Enforce 14 keys como SSOT (con 0 si faltan)
         // Importante para que el snapshot siempre sea estable.
-        final all = MuscleKeys.all;
+        const all = MuscleKeys.all;
         final stabilized = <String, int>{};
         for (final k in all) {
           stabilized[k] = canonicalVop[k] ?? 0;
@@ -904,8 +873,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       state = state.copyWith(
         isLoading: false,
         plan: plan,
-        blockReason: null,
-        suggestions: null,
         missingFields: const [],
       );
     } on TrainingPlanBlockedException catch (blocked) {
@@ -913,15 +880,12 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       state = TrainingPlanState.blocked(
         reason: blocked.reason,
         suggestions: blocked.suggestions,
-        missingFields: const [],
       );
     } catch (e) {
       // Error técnico inesperado
       state = state.copyWith(
         isLoading: false,
         error: 'Error técnico: ${e.toString()}',
-        blockReason: null,
-        suggestions: null,
         missingFields: const [],
       );
     }
@@ -965,20 +929,9 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     // ─────────────────────────────────────────────
     // FORZAR INVALIDACIÓN DE ESTADO (REGENERACIÓN)
     // ─────────────────────────────────────────────
-    state = state.copyWith(
-      isLoading: false,
-      error: null,
-      plan: null,
-      blockReason: null,
-      suggestions: null,
-      missingFields: const [],
-    );
+    state = state.copyWith(isLoading: false, missingFields: const []);
 
-    state = state.copyWith(
-      isLoading: true,
-      error: null,
-      missingFields: const [],
-    );
+    state = state.copyWith(isLoading: true, missingFields: const []);
 
     try {
       // 1. Obtener cliente activo
@@ -1231,7 +1184,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // Crear Motor V3 con estrategia científica pura (sin ML)
       final motorV3 = TrainingOrchestratorV3(
         strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
-        recordPredictions: false, // No guardar predicciones ML (no hay ML)
       );
 
       // Generar plan con Motor V3 REAL
@@ -1241,7 +1193,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           client: workingClient,
           exercises: exercises,
           asOfDate: selectedDate,
-          recordPrediction: false, // No ML logging
         );
       } catch (e, stackTrace) {
         debugPrint('❌ [Motor V3] Error durante generación: $e');
@@ -1477,15 +1428,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final plan = TrainingPlanMapper.toGeneratedPlan(planConfig);
 
       // 5. Actualizar state (reemplazo completo)
-      state = TrainingPlanState(
-        isLoading: false,
-        error: null,
-        blockReason: null,
-        suggestions: null,
-        plan: plan,
-        missingFields: const [],
-        vopByMuscle: state.vopByMuscle,
-      );
+      state = TrainingPlanState(plan: plan, vopByMuscle: state.vopByMuscle);
 
       debugPrint(
         '🎉 [Motor V3] Plan persistido con activePlanId=${planConfig.id}',
@@ -1517,7 +1460,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       state = TrainingPlanState.blocked(
         reason: blocked.reason,
         suggestions: blocked.suggestions,
-        missingFields: const [],
       );
       return null;
     } catch (e, s) {
@@ -1665,12 +1607,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   Future<void> generatePlanV3({required DateTime selectedDate}) async {
     debugPrint('🚀 [generatePlanV3] Iniciando generación Motor V3...');
 
-    state = state.copyWith(
-      isLoading: true,
-      error: null,
-      blockReason: null,
-      suggestions: null,
-    );
+    state = state.copyWith(isLoading: true);
 
     try {
       // ─────────────────────────────────────────────
@@ -1712,10 +1649,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // ─────────────────────────────────────────────
       // PASO 3: CREAR MOTOR V3 Y GENERAR PLAN
       // ─────────────────────────────────────────────
-      final motorV3 = TrainingOrchestratorV3(
-        strategy: RuleBasedStrategy(),
-        recordPredictions: false,
-      );
+      final motorV3 = TrainingOrchestratorV3(strategy: RuleBasedStrategy());
 
       debugPrint('🔬 [generatePlanV3] Llamando Motor V3...');
 
@@ -1723,7 +1657,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         client: client,
         exercises: exercises,
         asOfDate: selectedDate,
-        recordPrediction: false,
       );
 
       // ─────────────────────────────────────────────
@@ -1781,17 +1714,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       debugPrint('   Plan ID: ${planConfigV3.id}');
       debugPrint('   Semanas: ${planConfigV3.weeks.length}');
 
-      // ═══════════════════════════════════════════════════════════════
-      // TODO: CONVERTIR TrainingPlanConfig (V3) → GeneratedPlan (V2)
-      // ═══════════════════════════════════════════════════════════════
-      //
-      // PENDIENTE: Implementar conversor externo que transforme:
-      //   - TrainingPlanConfig.weeks → GeneratedPlan.weeks
-      //   - TrainingWeek V3 → TrainingWeek V2
-      //   - TrainingSession V3 → TrainingSession V2
-      //   - Prescription V3 → Exercise V2
-      //
-      // Por ahora, usar TrainingPlanMapper.toGeneratedPlan() como workaround:
+      // Conversion notes (V3 -> V2): keep mapper until external converter exists.
       final generatedPlanV2 = TrainingPlanMapper.toGeneratedPlan(planConfigV3);
 
       debugPrint('✅ [generatePlanV3] Conversión V3→V2 completada (mapper)');
@@ -1799,13 +1722,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // ─────────────────────────────────────────────
       // PASO 6: ACTUALIZAR STATE CON PLAN V2
       // ─────────────────────────────────────────────
-      state = state.copyWith(
-        isLoading: false,
-        error: null,
-        plan: generatedPlanV2,
-        blockReason: null,
-        suggestions: null,
-      );
+      state = state.copyWith(isLoading: false, plan: generatedPlanV2);
 
       debugPrint('✅ [generatePlanV3] State actualizado con GeneratedPlan V2');
     } catch (e, stackTrace) {
@@ -1904,14 +1821,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       );
 
       // Resetear state
-      state = TrainingPlanState(
-        isLoading: false,
-        error: null,
-        plan: null,
-        blockReason: null,
-        suggestions: null,
-        missingFields: [],
-      );
+      state = const TrainingPlanState();
     } catch (e, stackTrace) {
       debugPrint('❌ Error en clearActivePlan: $e');
       debugPrint('Stack: $stackTrace');

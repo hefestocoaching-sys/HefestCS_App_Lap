@@ -248,7 +248,6 @@ class InactiveClientsScreen extends ConsumerWidget {
                   SnackBar(
                     content: Text('Exportado a: $filePath'),
                     backgroundColor: Colors.green[700],
-                    duration: const Duration(seconds: 4),
                   ),
                 );
 

@@ -504,7 +504,7 @@ class _DailyMealPlanTabState extends ConsumerState<DailyMealPlanTab> {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
+                      const Text(
                         "KCAL",
                         style: TextStyle(
                           color: Colors.white38,

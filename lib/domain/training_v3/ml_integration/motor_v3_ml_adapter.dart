@@ -217,7 +217,6 @@ class MotorV3MLAdapter {
     // PLACEHOLDER: Por ahora retornamos el Map
     // En producción, instanciar FeatureVector legacy correctamente
 
-    // TODO: Implementar conversión real cuando integremos con ML legacy
     // final legacyVector = FeatureVector(
     //   ageYearsNorm: features['age_norm']!,
     //   genderMaleEncoded: features['gender_male']!,

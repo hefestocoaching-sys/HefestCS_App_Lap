@@ -101,7 +101,7 @@ class ActiveDateHeader extends ConsumerWidget {
               label: const Text('Cambiar fecha'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: kPrimaryColor,
-                side: const BorderSide(color: kPrimaryColor, width: 1),
+                side: const BorderSide(color: kPrimaryColor),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
             ),

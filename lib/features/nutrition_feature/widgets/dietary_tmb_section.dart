@@ -136,9 +136,9 @@ class _DietaryTmbSectionState extends State<DietaryTmbSection> {
                           color: Colors.white.withAlpha((255 * 0.2).round()),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(Icons.check, size: 12, color: Colors.white),
                             SizedBox(width: 4),
                             Text(
@@ -337,7 +337,6 @@ class _DietaryTmbSectionState extends State<DietaryTmbSection> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: kPrimaryColor.withAlpha((255 * 0.3).round()),
-                width: 1,
               ),
             ),
             child: Row(
@@ -454,18 +453,17 @@ class _DietaryTmbSectionState extends State<DietaryTmbSection> {
         maxY: maxY,
         minY: 0,
         gridData: FlGridData(
-          show: true,
           drawVerticalLine: false,
           horizontalInterval: 500,
           getDrawingHorizontalLine: (value) =>
-              FlLine(color: Colors.white10, strokeWidth: 1, dashArray: [5, 5]),
+              const FlLine(color: Colors.white10, strokeWidth: 1, dashArray: [5, 5]),
         ),
         titlesData: FlTitlesData(
           rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
+            
           ),
           topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
+            
           ),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
@@ -594,7 +592,6 @@ class _DietaryTmbSectionState extends State<DietaryTmbSection> {
           },
         ),
       ),
-      duration: const Duration(milliseconds: 150),
       curve: Curves.easeOutQuad,
     );
   }

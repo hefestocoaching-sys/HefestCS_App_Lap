@@ -202,8 +202,8 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
                     size: 80,
                     color: kPrimaryColor.withValues(alpha: 0.6),
                   ),
-                  SizedBox(height: 24),
-                  Text(
+                  const SizedBox(height: 24),
+                  const Text(
                     'Entrevista de Entrenamiento Migrada',
                     style: TextStyle(
                       fontSize: 20,
@@ -211,8 +211,8 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
                       color: kTextColor,
                     ),
                   ),
-                  SizedBox(height: 12),
-                  Text(
+                  const SizedBox(height: 12),
+                  const Text(
                     'La entrevista de entrenamiento ahora está en el módulo Entrenamiento (primera pestaña).',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, color: kTextColorSecondary),
@@ -242,7 +242,7 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
               children: [
                 // Header con tabs integrados
                 ClinicClientHeaderWithTabs(
-                  avatar: Icon(
+                  avatar: const Icon(
                     Icons.person,
                     color: kTextColorSecondary,
                     size: 40,

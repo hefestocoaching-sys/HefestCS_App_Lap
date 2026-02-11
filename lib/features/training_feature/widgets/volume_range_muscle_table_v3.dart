@@ -43,12 +43,12 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
       ..sort((a, b) => a.key.compareTo(b.key));
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // HEADER
-          Text(
+          const Text(
             'Volumen Semanal por Músculo',
             style: TextStyle(
               fontSize: 18,
@@ -56,20 +56,20 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
               color: kTextColor,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Motor V3 - Volumen calculado según fase $phaseName',
-            style: TextStyle(fontSize: 12, color: kTextColorSecondary),
+            style: const TextStyle(fontSize: 12, color: kTextColorSecondary),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // TABLA
           Table(
             border: TableBorder.all(color: Colors.grey.shade700),
-            columnWidths: {
+            columnWidths: const {
               0: FlexColumnWidth(2),
               1: FlexColumnWidth(1.5),
-              2: FlexColumnWidth(1),
+              2: FlexColumnWidth(),
             },
             children: [
               // HEADER ROW
@@ -102,7 +102,7 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
             ],
           ),
 
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
 
           // LEYENDA
           _buildLegend(),
@@ -112,7 +112,7 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
   }
 
   Widget _buildNoDataState() {
-    return Center(
+    return const Center(
       child: Padding(
         padding: EdgeInsets.all(24),
         child: Column(
@@ -142,10 +142,10 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
 
   Widget _buildHeaderCell(String text) {
     return Padding(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       child: Text(
         text,
-        style: TextStyle(
+        style: const TextStyle(
           fontWeight: FontWeight.bold,
           color: Colors.white,
           fontSize: 13,
@@ -157,7 +157,7 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
 
   Widget _buildDataCell(String text, {Color? color}) {
     return Padding(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       child: Text(
         text,
         style: TextStyle(
@@ -172,7 +172,7 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
 
   Widget _buildLegend() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey.shade900,
         borderRadius: BorderRadius.circular(8),
@@ -181,7 +181,7 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Zonas de volumen (basadas en MEV/MAV/MRV):',
             style: TextStyle(
               fontWeight: FontWeight.bold,
@@ -189,22 +189,22 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
               color: kTextColor,
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Row(
             children: [
               _buildLegendItem('Óptimo', Colors.green, '12-20 sets'),
-              SizedBox(width: 24),
+              const SizedBox(width: 24),
               _buildLegendItem('Bajo', Colors.orange, '<12 sets'),
-              SizedBox(width: 24),
+              const SizedBox(width: 24),
               _buildLegendItem('Alto', Colors.amber, '>20 sets'),
             ],
           ),
-          SizedBox(height: 12),
-          Text(
+          const SizedBox(height: 12),
+          const Text(
             '• Volumen generado por Motor V3 (VolumeEngine)',
             style: TextStyle(fontSize: 11, color: kTextColorSecondary),
           ),
-          Text(
+          const Text(
             '• Respeta landmarks MEV/MAV/MRV científicos',
             style: TextStyle(fontSize: 11, color: kTextColorSecondary),
           ),
@@ -224,10 +224,10 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
           ),
         ),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Text(
           '$label ($range)',
-          style: TextStyle(fontSize: 11, color: kTextColorSecondary),
+          style: const TextStyle(fontSize: 11, color: kTextColorSecondary),
         ),
       ],
     );

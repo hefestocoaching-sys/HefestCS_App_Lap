@@ -41,11 +41,11 @@ class _MLOutcomeFeedbackDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Row(
+      title: const Row(
         children: [
           Icon(Icons.feedback, color: kPrimaryColor, size: 28),
-          const SizedBox(width: 12),
-          const Expanded(
+          SizedBox(width: 12),
+          Expanded(
             child: Text(
               'Feedback de Ejecución (ML)',
               style: TextStyle(fontSize: 18),
@@ -62,7 +62,7 @@ class _MLOutcomeFeedbackDialogState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Estos datos se usarán para mejorar las predicciones del motor IA.',
                   style: TextStyle(
                     fontSize: 12,
@@ -156,12 +156,12 @@ class _MLOutcomeFeedbackDialogState
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                      const Icon(Icons.info_outline, size: 16, color: Colors.blue),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'ML ID: ${widget.mlExampleId.substring(0, 16)}...',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 10,
                             fontFamily: 'monospace',
                             color: kTextColorSecondary,

@@ -66,7 +66,6 @@ class _TrainingDashboardScreenState
     _tabController = TabController(
       length: 9, // 9 tabs Motor V3 (1 entrevista + 8 tabs)
       vsync: this,
-      initialIndex: 0,
     );
     _tabListener = () {
       if (_tabController.indexIsChanging) {
@@ -157,7 +156,7 @@ class _TrainingDashboardScreenState
             isPlanOutdated,
           );
         },
-        loading: () => Center(
+        loading: () => const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -174,16 +173,19 @@ class _TrainingDashboardScreenState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: kErrorColor),
-              SizedBox(height: 16),
-              Text(
+              const Icon(Icons.error_outline, size: 64, color: kErrorColor),
+              const SizedBox(height: 16),
+              const Text(
                 'Error al cargar entrenamiento',
                 style: TextStyle(color: kTextColor, fontSize: 16),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 error.toString(),
-                style: TextStyle(color: kTextColorSecondary, fontSize: 12),
+                style: const TextStyle(
+                  color: kTextColorSecondary,
+                  fontSize: 12,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -207,7 +209,7 @@ class _TrainingDashboardScreenState
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Plan de Entrenamiento Motor V3',
             style: TextStyle(
               fontSize: 18,
@@ -215,10 +217,10 @@ class _TrainingDashboardScreenState
               color: kTextColor,
             ),
           ),
-          SizedBox(height: 2),
+          const SizedBox(height: 2),
           Text(
             'Cliente: $clientName • ${DateFormat('dd/MM/yyyy').format(planDate)}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               color: kTextColorSecondary,
               fontWeight: FontWeight.normal,
@@ -228,19 +230,18 @@ class _TrainingDashboardScreenState
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.refresh, color: kPrimaryColor),
+          icon: const Icon(Icons.refresh, color: kPrimaryColor),
           tooltip: 'Regenerar plan',
-          onPressed:
-              interviewStatus == TrainingInterviewStatus.valid
-                  ? () => _regenerarPlan()
-                  : null,
+          onPressed: interviewStatus == TrainingInterviewStatus.valid
+              ? () => _regenerarPlan()
+              : null,
         ),
         IconButton(
-          icon: Icon(Icons.download, color: kPrimaryColor),
+          icon: const Icon(Icons.download, color: kPrimaryColor),
           tooltip: 'Exportar PDF',
           onPressed: () => _exportarPDF(),
         ),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
       ],
     );
   }
@@ -249,7 +250,7 @@ class _TrainingDashboardScreenState
     return AppBar(
       backgroundColor: kAppBarColor,
       elevation: 0,
-      title: Column(
+      title: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -278,7 +279,7 @@ class _TrainingDashboardScreenState
     return AppBar(
       backgroundColor: kAppBarColor,
       elevation: 0,
-      title: Column(
+      title: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -315,9 +316,9 @@ class _TrainingDashboardScreenState
 
     return FloatingActionButton.extended(
       onPressed: () => _generarPlan(),
-      icon: Icon(Icons.auto_awesome),
-      label: Text('Generar Plan Motor V3'),
-      backgroundColor: Color(0xFF00D9FF),
+      icon: const Icon(Icons.auto_awesome),
+      label: const Text('Generar Plan Motor V3'),
+      backgroundColor: const Color(0xFF00D9FF),
       foregroundColor: Colors.white,
     );
   }
@@ -340,17 +341,17 @@ class _TrainingDashboardScreenState
         // Header con acciones (arriba de tabs)
         Container(
           color: kAppBarColor,
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Row(
             children: [
               // Generar (solo si NO hay plan activo)
               if (!hasPlan)
                 ElevatedButton.icon(
                   onPressed: () => _generarPlan(),
-                  icon: Icon(Icons.auto_awesome, size: 18),
-                  label: Text('Generar Plan'),
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('Generar Plan'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF00D9FF),
+                    backgroundColor: const Color(0xFF00D9FF),
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -358,24 +359,23 @@ class _TrainingDashboardScreenState
                 // Regenerar
                 ElevatedButton.icon(
                   onPressed: canRegenerate ? () => _regenerarPlan() : null,
-                  icon: Icon(Icons.refresh, size: 18),
-                  label: Text('Regenerar'),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Regenerar'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
                     foregroundColor: Colors.white,
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 // Adaptar
                 Tooltip(
-                  message:
-                      isPlanOutdated
-                          ? 'El plan está desactualizado. Regenera antes de adaptar.'
-                          : 'Adaptar plan',
+                  message: isPlanOutdated
+                      ? 'El plan está desactualizado. Regenera antes de adaptar.'
+                      : 'Adaptar plan',
                   child: ElevatedButton.icon(
                     onPressed: isPlanOutdated ? null : () => _adaptarPlan(),
-                    icon: Icon(Icons.tune, size: 18),
-                    label: Text('Adaptar'),
+                    icon: const Icon(Icons.tune, size: 18),
+                    label: const Text('Adaptar'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
@@ -414,7 +414,7 @@ class _TrainingDashboardScreenState
         // TabBarView ocupa resto del espacio
         Expanded(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(24, 12, 24, 24),
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -462,41 +462,41 @@ class _TrainingDashboardScreenState
           Card(
             color: kCardColor,
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: kPrimaryColor.withAlpha(30),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.auto_awesome,
                           color: kPrimaryColor,
                           size: 28,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               plan.name,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: kTextColor,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               '${plan.splitId} • ${plan.microcycleLengthInWeeks} semanas',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: kTextColorSecondary,
                               ),
@@ -516,7 +516,7 @@ class _TrainingDashboardScreenState
                           Icons.calendar_today,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: _buildProgramStat(
                           'Semanas',
@@ -530,9 +530,9 @@ class _TrainingDashboardScreenState
               ),
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           // Stats
-          Text(
+          const Text(
             'Resumen Ejecutivo',
             style: TextStyle(
               fontSize: 18,
@@ -540,15 +540,15 @@ class _TrainingDashboardScreenState
               color: kTextColor,
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Card(
             color: kCardColor,
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Programa científico basado en:',
                     style: TextStyle(
                       fontSize: 14,
@@ -556,7 +556,7 @@ class _TrainingDashboardScreenState
                       color: kTextColor,
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   _buildBulletPoint('Volumen: MEV/MAV/MRV (Israetel 2020)'),
                   _buildBulletPoint(
                     'Distribución: 25/50/25 Heavy/Moderate/Light',
@@ -585,13 +585,13 @@ class _TrainingDashboardScreenState
             size: 64,
             color: Colors.white.withAlpha(60),
           ),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'Catálogo de Ejercicios',
             style: TextStyle(fontSize: 18, color: kTextColorSecondary),
           ),
-          SizedBox(height: 8),
-          Text(
+          const SizedBox(height: 8),
+          const Text(
             'Selección científica Motor V3 - Próximamente',
             style: TextStyle(fontSize: 12, color: kTextColorSecondary),
           ),
@@ -606,13 +606,13 @@ class _TrainingDashboardScreenState
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.trending_up, size: 64, color: Colors.white.withAlpha(60)),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'Periodización 52 Semanas',
             style: TextStyle(fontSize: 18, color: kTextColorSecondary),
           ),
-          SizedBox(height: 8),
-          Text(
+          const SizedBox(height: 8),
+          const Text(
             'Timeline de progresión - Próximamente',
             style: TextStyle(fontSize: 12, color: kTextColorSecondary),
           ),
@@ -627,13 +627,13 @@ class _TrainingDashboardScreenState
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.description, size: 64, color: Colors.white.withAlpha(60)),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'Decisiones Científicas',
             style: TextStyle(fontSize: 18, color: kTextColorSecondary),
           ),
-          SizedBox(height: 8),
-          Text(
+          const SizedBox(height: 8),
+          const Text(
             'Trazabilidad Motor V3 - Próximamente',
             style: TextStyle(fontSize: 12, color: kTextColorSecondary),
           ),
@@ -648,13 +648,13 @@ class _TrainingDashboardScreenState
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.analytics, size: 64, color: Colors.white.withAlpha(60)),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'Monitoreo y Ajustes',
             style: TextStyle(fontSize: 18, color: kTextColorSecondary),
           ),
-          SizedBox(height: 8),
-          Text(
+          const SizedBox(height: 8),
+          const Text(
             'Adherencia y métricas - Próximamente',
             style: TextStyle(fontSize: 12, color: kTextColorSecondary),
           ),
@@ -671,8 +671,8 @@ class _TrainingDashboardScreenState
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.person_off, size: 80, color: Colors.white.withAlpha(60)),
-          SizedBox(height: 24),
-          Text(
+          const SizedBox(height: 24),
+          const Text(
             'No hay cliente activo',
             style: TextStyle(
               fontSize: 20,
@@ -680,8 +680,8 @@ class _TrainingDashboardScreenState
               color: kTextColor,
             ),
           ),
-          SizedBox(height: 8),
-          Text(
+          const SizedBox(height: 8),
+          const Text(
             'Selecciona un cliente para ver su plan de entrenamiento',
             style: TextStyle(fontSize: 13, color: kTextColorSecondary),
           ),
@@ -698,10 +698,10 @@ class _TrainingDashboardScreenState
           Icon(
             Icons.fitness_center,
             size: 80,
-            color: Color(0xFF00D9FF).withAlpha(150),
+            color: const Color(0xFF00D9FF).withAlpha(150),
           ),
-          SizedBox(height: 24),
-          Text(
+          const SizedBox(height: 24),
+          const Text(
             'Sin plan Motor V3 activo',
             style: TextStyle(
               fontSize: 20,
@@ -709,20 +709,20 @@ class _TrainingDashboardScreenState
               color: kTextColor,
             ),
           ),
-          SizedBox(height: 8),
-          Text(
+          const SizedBox(height: 8),
+          const Text(
             'Genera un plan científico basado en 7 fundamentos',
             style: TextStyle(fontSize: 13, color: kTextColorSecondary),
           ),
-          SizedBox(height: 32),
+          const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () => _generarPlan(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF00D9FF),
+              backgroundColor: const Color(0xFF00D9FF),
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.auto_awesome),
@@ -741,9 +741,9 @@ class _TrainingDashboardScreenState
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 80, color: kErrorColor),
-          SizedBox(height: 24),
-          Text(
+          const Icon(Icons.error_outline, size: 80, color: kErrorColor),
+          const SizedBox(height: 24),
+          const Text(
             'Plan no encontrado',
             style: TextStyle(
               fontSize: 20,
@@ -751,24 +751,24 @@ class _TrainingDashboardScreenState
               color: kTextColor,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'ID: $planId',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               color: kTextColorSecondary,
               fontFamily: 'monospace',
             ),
           ),
-          SizedBox(height: 32),
+          const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () => _generarPlan(),
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.refresh),
@@ -788,17 +788,17 @@ class _TrainingDashboardScreenState
     return Row(
       children: [
         Icon(icon, color: kPrimaryColor, size: 16),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 11, color: kTextColorSecondary),
+              style: const TextStyle(fontSize: 11, color: kTextColorSecondary),
             ),
             Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: kTextColor,
@@ -812,15 +812,18 @@ class _TrainingDashboardScreenState
 
   Widget _buildBulletPoint(String text) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('• ', style: TextStyle(color: kPrimaryColor, fontSize: 14)),
+          const Text(
+            '• ',
+            style: TextStyle(color: kPrimaryColor, fontSize: 14),
+          ),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 13, color: kTextColor),
+              style: const TextStyle(fontSize: 13, color: kTextColor),
             ),
           ),
         ],
@@ -842,7 +845,7 @@ class _TrainingDashboardScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Plan Motor V3 generado correctamente'),
             backgroundColor: kSuccessColor,
           ),
@@ -864,19 +867,19 @@ class _TrainingDashboardScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Regenerar Plan'),
-        content: Text('¿Regenerar plan completo Motor V3?'),
+        title: const Text('Regenerar Plan'),
+        content: const Text('¿Regenerar plan completo Motor V3?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _generarPlan();
             },
-            child: Text('Regenerar'),
+            child: const Text('Regenerar'),
           ),
         ],
       ),
@@ -885,12 +888,11 @@ class _TrainingDashboardScreenState
 
   void _exportarPDF() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Exportando a PDF...'),
         backgroundColor: kPrimaryColor,
       ),
     );
-    // TODO: Implementar exportación
   }
 
   Future<void> _adaptarPlan() async {
@@ -902,7 +904,7 @@ class _TrainingDashboardScreenState
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Plan adaptado correctamente'),
             backgroundColor: kSuccessColor,
           ),

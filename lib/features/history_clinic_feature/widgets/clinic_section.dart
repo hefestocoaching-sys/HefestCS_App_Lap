@@ -93,11 +93,11 @@ class _ClinicSectionState extends State<ClinicSection>
     final accentColor = widget.accentColor ?? DesignTokens.primaryBlue;
 
     return Container(
-      margin: EdgeInsets.only(bottom: DesignTokens.spaceMd),
+      margin: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        border: Border.all(color: Colors.grey[300]!),
       ),
       child: Column(
         children: [
@@ -108,7 +108,7 @@ class _ClinicSectionState extends State<ClinicSection>
               onTap: _toggleExpanded,
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding: EdgeInsets.all(DesignTokens.spaceMd),
+                padding: const EdgeInsets.all(DesignTokens.spaceMd),
                 child: Row(
                   children: [
                     // Icono
@@ -125,7 +125,7 @@ class _ClinicSectionState extends State<ClinicSection>
                         child: Icon(widget.icon, color: accentColor, size: 20),
                       ),
                     ),
-                    SizedBox(width: DesignTokens.spaceMd),
+                    const SizedBox(width: DesignTokens.spaceMd),
 
                     // Título y contador
                     Expanded(
@@ -143,7 +143,7 @@ class _ClinicSectionState extends State<ClinicSection>
                           ),
                           if (widget.itemCount != null)
                             Padding(
-                              padding: EdgeInsets.only(
+                              padding: const EdgeInsets.only(
                                 top: DesignTokens.spaceSm,
                               ),
                               child: Text(
@@ -208,7 +208,7 @@ class _ClinicSectionState extends State<ClinicSection>
                           entry.value,
                           if (!isLast)
                             Padding(
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: DesignTokens.spaceMd,
                               ),
                               child: Divider(
@@ -223,7 +223,7 @@ class _ClinicSectionState extends State<ClinicSection>
                   ),
                 ),
 
-                SizedBox(height: DesignTokens.spaceMd),
+                const SizedBox(height: DesignTokens.spaceMd),
               ],
             ),
           ),
@@ -286,7 +286,7 @@ class _ClinicSectionItemState extends State<ClinicSectionItem> {
           onTap: widget.onTap,
           child: AnimatedContainer(
             duration: DesignTokens.durationFast,
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: DesignTokens.spaceMd,
               vertical: DesignTokens.spaceMd,
             ),
@@ -310,7 +310,7 @@ class _ClinicSectionItemState extends State<ClinicSectionItem> {
                     ),
                   ),
                 if (widget.indicatorColor != null)
-                  SizedBox(width: DesignTokens.spaceMd),
+                  const SizedBox(width: DesignTokens.spaceMd),
 
                 // Contenido principal
                 Expanded(
@@ -319,7 +319,7 @@ class _ClinicSectionItemState extends State<ClinicSectionItem> {
                     children: [
                       Text(widget.title, style: DesignTokens.labelLarge),
                       if (widget.subtitle != null) ...[
-                        SizedBox(height: DesignTokens.spaceSm),
+                        const SizedBox(height: DesignTokens.spaceSm),
                         Text(
                           widget.subtitle!,
                           style: DesignTokens.caption,
@@ -331,7 +331,7 @@ class _ClinicSectionItemState extends State<ClinicSectionItem> {
                   ),
                 ),
 
-                SizedBox(width: DesignTokens.spaceMd),
+                const SizedBox(width: DesignTokens.spaceMd),
 
                 // Trailing widget (ej: icono de favorito)
                 if (widget.trailing != null) widget.trailing!,

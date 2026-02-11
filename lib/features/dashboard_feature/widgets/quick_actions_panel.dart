@@ -18,7 +18,7 @@ class QuickActionsPanel extends ConsumerWidget {
       decoration: BoxDecoration(
         color: kCardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+        border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +73,6 @@ class QuickActionsPanel extends ConsumerWidget {
                   color: Colors.green[400]!,
                   isDisabled: true,
                   onPressed: () {
-                    // TODO: Navegar a Payments cuando esté disponible
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Módulo de pagos próximamente'),
@@ -141,7 +140,6 @@ class _QuickActionButton extends StatelessWidget {
                   color: isDisabled
                       ? Colors.grey.withAlpha(30)
                       : color.withAlpha(51),
-                  width: 1,
                 ),
               ),
               child: Column(

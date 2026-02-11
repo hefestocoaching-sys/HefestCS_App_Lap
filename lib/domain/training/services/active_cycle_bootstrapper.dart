@@ -21,7 +21,7 @@ class ActiveCycleBootstrapper {
     required String clientId,
     required List<Exercise> exercises,
   }) {
-    logger.info('Bootstrap creating cycle', {'clientId': clientId});
+    logger.info('Creating training cycle', {'clientId': clientId});
 
     // Agrupar ejercicios por músculo primario (YA normalizado)
     final Map<String, List<String>> grouped = {};
@@ -37,13 +37,10 @@ class ActiveCycleBootstrapper {
       grouped[muscle]!.add(ex.id);
     }
 
-    logger.debug('Catalog exercise ids by muscle (sample)');
+    logger.debug('Exercise IDs by muscle catalog');
     for (final muscle in grouped.keys.take(5)) {
       final ids = grouped[muscle]!.take(5).toList();
-      logger.debug('Catalog muscle sample', {
-        'muscle': muscle,
-        'exerciseIds': ids,
-      });
+      logger.debug('Exercises by muscle', {'muscle': muscle, 'ids': ids});
     }
 
     // 🔴 CLAVE: forzar presencia de las 14 keys canónicas
@@ -71,7 +68,7 @@ class ActiveCycleBootstrapper {
 
       if (list.isEmpty) {
         baseExercisesByMuscle[muscle] = [];
-        logger.warning('Catalog muscle has no exercises', {
+        logger.warning('No exercises in catalog for muscle', {
           'muscle': muscle,
         });
         continue;
@@ -89,18 +86,18 @@ class ActiveCycleBootstrapper {
       final selected = shuffled.take(10).toList();
       baseExercisesByMuscle[muscle] = selected;
 
-      logger.debug('Catalog muscle selection', {
+      logger.debug('Exercises selected for muscle', {
         'muscle': muscle,
         'count': selected.length,
         'seed': muscleSeed,
-        'firstExerciseId': selected.isNotEmpty ? selected.first : null,
+        'firstExercise': selected.isNotEmpty ? selected.first : 'N/A',
       });
     }
 
     final cycleId = 'cycle_${DateTime.now().millisecondsSinceEpoch}';
     final now = DateTime.now();
 
-    logger.info('Bootstrap cycle created', {
+    logger.info('Training cycle created', {
       'cycleId': cycleId,
       'clientId': clientId,
     });
@@ -108,7 +105,6 @@ class ActiveCycleBootstrapper {
     return TrainingCycle(
       cycleId: cycleId,
       startDate: now,
-      endDate: null,
       goal: 'hipertrofia_general',
       priorityMuscles: const [],
       splitType: 'torso_pierna_4d',

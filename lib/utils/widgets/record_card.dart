@@ -55,8 +55,8 @@ class NewRecordCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: kPrimaryColor.withAlpha(80), width: 1.5),
         ),
-        child: Row(
-          children: const [
+        child: const Row(
+          children: [
             Icon(Icons.add, color: kPrimaryColor, size: 20),
             SizedBox(width: 12),
             Text(

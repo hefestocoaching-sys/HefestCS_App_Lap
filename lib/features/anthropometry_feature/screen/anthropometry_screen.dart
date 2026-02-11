@@ -157,8 +157,8 @@ class AnthropometryScreenState extends ConsumerState<AnthropometryScreen>
             onStateChanged: () => setState(() {}),
             onViewStateChanged: _onMeasuresViewStateChanged,
           ),
-          AnthropometryInterpretationTab(),
-          AnthropometryGraphsTab(),
+          const AnthropometryInterpretationTab(),
+          const AnthropometryGraphsTab(),
         ];
 
         return PopScope(
@@ -178,7 +178,7 @@ class AnthropometryScreenState extends ConsumerState<AnthropometryScreen>
                 // Header con tabs integrados (solo cuando NO está en overview)
                 if (_showHeader)
                   ClinicClientHeaderWithTabs(
-                    avatar: Icon(
+                    avatar: const Icon(
                       Icons.person,
                       color: kTextColorSecondary,
                       size: 40,

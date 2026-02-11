@@ -15,7 +15,7 @@ void main() {
     });
 
     test('Cuota de fallo se reduce cuando frecuencia sube de 2 a 3', () {
-      final legPressMachine = const ExerciseEntry(
+      const legPressMachine = ExerciseEntry(
         code: 'leg_press_machine',
         name: 'Leg Press Machine',
         muscleGroup: MuscleGroup.quads,
@@ -65,7 +65,7 @@ void main() {
     });
 
     test('Cuota de fallo se reduce significativamente en frecuencia 4', () {
-      final cableFlyCheap = const ExerciseEntry(
+      const cableFlyCheap = ExerciseEntry(
         code: 'cable_pec_deck',
         name: 'Cable Pec Deck',
         muscleGroup: MuscleGroup.chest,
@@ -113,7 +113,7 @@ void main() {
     });
 
     test('Verifica que distribución es determinista por dayIndex', () {
-      final chainePulldown = const ExerciseEntry(
+      const chainePulldown = ExerciseEntry(
         code: 'lat_pulldown_machine',
         name: 'Lat Pulldown Machine',
         muscleGroup: MuscleGroup.back,
@@ -162,7 +162,7 @@ void main() {
     });
 
     test('Razones registran reducción por frecuencia', () {
-      final dumbbellFly = const ExerciseEntry(
+      const dumbbellFly = ExerciseEntry(
         code: 'dumbbell_fly',
         name: 'Dumbbell Fly',
         muscleGroup: MuscleGroup.chest,

@@ -43,8 +43,6 @@ List<Exercise> canonicalExercises() {
       name: 'Bench Press',
       muscleKey: 'chest',
       equipment: 'barbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'incline_db_press',
@@ -52,8 +50,6 @@ List<Exercise> canonicalExercises() {
       name: 'Incline DB Press',
       muscleKey: 'chest',
       equipment: 'dumbbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'machine_chest_press',
@@ -61,8 +57,6 @@ List<Exercise> canonicalExercises() {
       name: 'Machine Chest Press',
       muscleKey: 'chest',
       equipment: 'machine',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'cable_fly',
@@ -70,8 +64,6 @@ List<Exercise> canonicalExercises() {
       name: 'Cable Fly',
       muscleKey: 'chest',
       equipment: 'cable',
-      difficulty: '',
-      gifUrl: '',
     ),
     // Back
     Exercise(
@@ -80,8 +72,6 @@ List<Exercise> canonicalExercises() {
       name: 'Barbell Row',
       muscleKey: 'back',
       equipment: 'barbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'lat_pulldown',
@@ -89,8 +79,6 @@ List<Exercise> canonicalExercises() {
       name: 'Lat Pulldown',
       muscleKey: 'back',
       equipment: 'machine',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'seated_row',
@@ -98,8 +86,6 @@ List<Exercise> canonicalExercises() {
       name: 'Seated Row',
       muscleKey: 'back',
       equipment: 'machine',
-      difficulty: '',
-      gifUrl: '',
     ),
     // Shoulders
     Exercise(
@@ -108,8 +94,6 @@ List<Exercise> canonicalExercises() {
       name: 'Overhead Press',
       muscleKey: 'shoulders',
       equipment: 'barbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'lateral_raise',
@@ -117,8 +101,6 @@ List<Exercise> canonicalExercises() {
       name: 'Lateral Raise',
       muscleKey: 'shoulders',
       equipment: 'dumbbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     // Quads
     Exercise(
@@ -127,8 +109,6 @@ List<Exercise> canonicalExercises() {
       name: 'Back Squat',
       muscleKey: 'quads',
       equipment: 'barbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'front_squat',
@@ -136,8 +116,6 @@ List<Exercise> canonicalExercises() {
       name: 'Front Squat',
       muscleKey: 'quads',
       equipment: 'barbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'leg_press',
@@ -145,8 +123,6 @@ List<Exercise> canonicalExercises() {
       name: 'Leg Press',
       muscleKey: 'quads',
       equipment: 'machine',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'leg_extension',
@@ -154,8 +130,6 @@ List<Exercise> canonicalExercises() {
       name: 'Leg Extension',
       muscleKey: 'quads',
       equipment: 'machine',
-      difficulty: '',
-      gifUrl: '',
     ),
     // Hamstrings
     Exercise(
@@ -164,8 +138,6 @@ List<Exercise> canonicalExercises() {
       name: 'Romanian Deadlift',
       muscleKey: 'hamstrings',
       equipment: 'barbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'leg_curl',
@@ -173,8 +145,6 @@ List<Exercise> canonicalExercises() {
       name: 'Leg Curl',
       muscleKey: 'hamstrings',
       equipment: 'machine',
-      difficulty: '',
-      gifUrl: '',
     ),
     // Glutes
     Exercise(
@@ -183,8 +153,6 @@ List<Exercise> canonicalExercises() {
       name: 'Hip Thrust',
       muscleKey: 'glutes',
       equipment: 'barbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'glute_bridge',
@@ -192,8 +160,6 @@ List<Exercise> canonicalExercises() {
       name: 'Glute Bridge',
       muscleKey: 'glutes',
       equipment: 'bodyweight',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'cable_abduction',
@@ -201,8 +167,6 @@ List<Exercise> canonicalExercises() {
       name: 'Cable Abduction',
       muscleKey: 'glutes',
       equipment: 'cable',
-      difficulty: '',
-      gifUrl: '',
     ),
     // Full body (para fallback de días sin músculos específicos)
     Exercise(
@@ -211,8 +175,6 @@ List<Exercise> canonicalExercises() {
       name: 'Full Body Circuit',
       muscleKey: 'fullBody',
       equipment: 'bodyweight',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'machine_circuit',
@@ -220,8 +182,6 @@ List<Exercise> canonicalExercises() {
       name: 'Machine Circuit',
       muscleKey: 'fullBody',
       equipment: 'machine',
-      difficulty: '',
-      gifUrl: '',
     ),
     // Arms / Core
     Exercise(
@@ -230,8 +190,6 @@ List<Exercise> canonicalExercises() {
       name: 'Barbell Curl',
       muscleKey: 'biceps',
       equipment: 'barbell',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'triceps_pushdown',
@@ -239,8 +197,6 @@ List<Exercise> canonicalExercises() {
       name: 'Triceps Pushdown',
       muscleKey: 'triceps',
       equipment: 'cable',
-      difficulty: '',
-      gifUrl: '',
     ),
     Exercise(
       id: 'crunches',
@@ -248,8 +204,6 @@ List<Exercise> canonicalExercises() {
       name: 'Crunches',
       muscleKey: 'abs',
       equipment: 'bodyweight',
-      difficulty: '',
-      gifUrl: '',
     ),
   ];
 }

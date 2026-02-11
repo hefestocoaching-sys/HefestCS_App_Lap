@@ -241,15 +241,15 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
                 // Header
                 TableRow(
                   decoration: BoxDecoration(color: Colors.grey.shade200),
-                  children: [
-                    const Padding(
+                  children: const [
+                    Padding(
                       padding: EdgeInsets.all(8),
                       child: Text(
                         'Grupo SMAE',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(8),
                       child: Center(
                         child: Text(
@@ -259,24 +259,24 @@ class _EquivalentsScreenState extends ConsumerState<EquivalentsScreen>
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(8),
                       child: Center(
                         child: IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
+                          icon: Icon(Icons.remove_circle_outline),
                           onPressed: null,
                         ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(8),
                       child: Center(
                         child: IconButton(
-                          icon: const Icon(Icons.add_circle_outline),
+                          icon: Icon(Icons.add_circle_outline),
                           onPressed: null,
                         ),
                       ),
                     ),
-                    const SizedBox(),
+                    SizedBox(),
                   ],
                 ),
                 // Rows

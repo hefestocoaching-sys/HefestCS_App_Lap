@@ -15,22 +15,22 @@ import 'package:hcs_app_lap/domain/policies/day_exercise_ordering_policy.dart';
 void main() {
   group('Invariantes RirTarget', () {
     test('RirTarget.label nunca contiene decimales', () {
-      expect(RirTarget.single(2).label, equals('2'));
-      expect(RirTarget.range(2, 3).label, equals('2 - 3'));
-      expect(RirTarget.range(0, 1).label, equals('0 - 1'));
-      expect(RirTarget.single(4).label, equals('4'));
+      expect(const RirTarget.single(2).label, equals('2'));
+      expect(const RirTarget.range(2, 3).label, equals('2 - 3'));
+      expect(const RirTarget.range(0, 1).label, equals('0 - 1'));
+      expect(const RirTarget.single(4).label, equals('4'));
 
       // Verificar que no contiene puntos (decimales)
       final targets = [
-        RirTarget.single(0),
-        RirTarget.single(1),
-        RirTarget.single(2),
-        RirTarget.single(3),
-        RirTarget.single(4),
-        RirTarget.range(0, 1),
-        RirTarget.range(1, 2),
-        RirTarget.range(2, 3),
-        RirTarget.range(3, 4),
+        const RirTarget.single(0),
+        const RirTarget.single(1),
+        const RirTarget.single(2),
+        const RirTarget.single(3),
+        const RirTarget.single(4),
+        const RirTarget.range(0, 1),
+        const RirTarget.range(1, 2),
+        const RirTarget.range(2, 3),
+        const RirTarget.range(3, 4),
       ];
 
       for (final target in targets) {
@@ -44,27 +44,27 @@ void main() {
 
     test('RirTarget.label match patrón "n" o "n - n"', () {
       expect(
-        RegExp(r'^\d+( - \d+)?$').hasMatch(RirTarget.single(2).label),
+        RegExp(r'^\d+( - \d+)?$').hasMatch(const RirTarget.single(2).label),
         isTrue,
       );
       expect(
-        RegExp(r'^\d+( - \d+)?$').hasMatch(RirTarget.range(2, 3).label),
+        RegExp(r'^\d+( - \d+)?$').hasMatch(const RirTarget.range(2, 3).label),
         isTrue,
       );
 
       // Verificar formato exacto con espacio-guion-espacio
-      expect(RirTarget.range(2, 3).label, equals('2 - 3'));
-      expect(RirTarget.range(1, 2).label, equals('1 - 2'));
+      expect(const RirTarget.range(2, 3).label, equals('2 - 3'));
+      expect(const RirTarget.range(1, 2).label, equals('1 - 2'));
     });
 
     test('RirTarget invariantes: min<=max y 0<=min<=4', () {
       final targets = [
-        RirTarget.single(0),
-        RirTarget.single(2),
-        RirTarget.single(4),
-        RirTarget.range(0, 1),
-        RirTarget.range(2, 3),
-        RirTarget.range(0, 4),
+        const RirTarget.single(0),
+        const RirTarget.single(2),
+        const RirTarget.single(4),
+        const RirTarget.range(0, 1),
+        const RirTarget.range(2, 3),
+        const RirTarget.range(0, 4),
       ];
 
       for (final target in targets) {
@@ -100,7 +100,7 @@ void main() {
 
   group('Invariantes ExercisePrescription', () {
     test('rirTarget getter convierte correctamente desde rir string', () {
-      final ep1 = ExercisePrescription(
+      const ep1 = ExercisePrescription(
         id: 'ex1',
         sessionId: 'sess1',
         muscleGroup: MuscleGroup.chest,
@@ -108,7 +108,7 @@ void main() {
         label: 'A',
         exerciseName: 'Bench Press',
         sets: 3,
-        repRange: const RepRange(8, 12),
+        repRange: RepRange(8, 12),
         rir: '2',
         restMinutes: 3,
       );
@@ -119,7 +119,7 @@ void main() {
     });
 
     test('copyWithRirTarget actualiza rir field correctamente', () {
-      final original = ExercisePrescription(
+      const original = ExercisePrescription(
         id: 'ex1',
         sessionId: 'sess1',
         muscleGroup: MuscleGroup.back,
@@ -127,12 +127,12 @@ void main() {
         label: 'B',
         exerciseName: 'Row',
         sets: 4,
-        repRange: const RepRange(8, 10),
+        repRange: RepRange(8, 10),
         rir: '2 - 3',
         restMinutes: 2,
       );
 
-      final updated = original.copyWithRirTarget(RirTarget.single(3));
+      final updated = original.copyWithRirTarget(const RirTarget.single(3));
 
       expect(updated.rir, equals('3'));
       expect(updated.rirTarget.label, equals('3'));
@@ -140,11 +140,11 @@ void main() {
     });
 
     test('RepRange.min<=max en todas las prescriptions', () {
-      final validRanges = [
-        const RepRange(4, 8),
-        const RepRange(8, 12),
-        const RepRange(12, 15),
-        const RepRange(1, 20),
+      const validRanges = <RepRange>[
+        RepRange(4, 8),
+        RepRange(8, 12),
+        RepRange(12, 15),
+        RepRange(1, 20),
       ];
 
       for (final range in validRanges) {
@@ -159,7 +159,7 @@ void main() {
 
   group('Invariantes Orden de Día AA', () {
     test('Primer ejercicio del día debe ser primario si existe compuesto', () {
-      final primario = ExercisePrescription(
+      const primario = ExercisePrescription(
         id: 'bench',
         sessionId: 'day1',
         muscleGroup: MuscleGroup.chest,
@@ -167,12 +167,12 @@ void main() {
         label: 'A',
         exerciseName: 'Barbell Bench Press',
         sets: 4,
-        repRange: const RepRange(6, 8),
+        repRange: RepRange(6, 8),
         rir: '2',
         restMinutes: 3,
       );
 
-      final secondary = ExercisePrescription(
+      const secondary = ExercisePrescription(
         id: 'incline',
         sessionId: 'day1',
         muscleGroup: MuscleGroup.chest,
@@ -180,12 +180,12 @@ void main() {
         label: 'B',
         exerciseName: 'Incline Bench',
         sets: 3,
-        repRange: const RepRange(8, 10),
+        repRange: RepRange(8, 10),
         rir: '2 - 3',
         restMinutes: 2,
       );
 
-      final accesorio = ExercisePrescription(
+      const accesorio = ExercisePrescription(
         id: 'fly',
         sessionId: 'day1',
         muscleGroup: MuscleGroup.chest,
@@ -193,7 +193,7 @@ void main() {
         label: 'C',
         exerciseName: 'Pec Fly',
         sets: 3,
-        repRange: const RepRange(12, 15),
+        repRange: RepRange(12, 15),
         rir: '1 - 2',
         restMinutes: 1,
       );
@@ -207,7 +207,7 @@ void main() {
     });
 
     test('Labels reasignados secuencialmente tras ordenamiento', () {
-      final ex1 = ExercisePrescription(
+      const ex1 = ExercisePrescription(
         id: 'ex1',
         sessionId: 'day1',
         muscleGroup: MuscleGroup.quads,
@@ -215,12 +215,12 @@ void main() {
         label: 'Z', // label inicial diferente
         exerciseName: 'Squat',
         sets: 4,
-        repRange: const RepRange(6, 8),
+        repRange: RepRange(6, 8),
         rir: '2',
         restMinutes: 3,
       );
 
-      final ex2 = ExercisePrescription(
+      const ex2 = ExercisePrescription(
         id: 'ex2',
         sessionId: 'day1',
         muscleGroup: MuscleGroup.hamstrings,
@@ -228,7 +228,7 @@ void main() {
         label: 'Y',
         exerciseName: 'Leg Curl',
         sets: 3,
-        repRange: const RepRange(12, 15),
+        repRange: RepRange(12, 15),
         rir: '1 - 2',
         restMinutes: 1,
       );
@@ -243,7 +243,7 @@ void main() {
     });
 
     test('Evita músculos consecutivos cuando hay alternativas', () {
-      final chest1 = ExercisePrescription(
+      const chest1 = ExercisePrescription(
         id: 'bench',
         sessionId: 'day1',
         muscleGroup: MuscleGroup.chest,
@@ -251,12 +251,12 @@ void main() {
         label: 'A',
         exerciseName: 'Bench',
         sets: 4,
-        repRange: const RepRange(6, 8),
+        repRange: RepRange(6, 8),
         rir: '2',
         restMinutes: 3,
       );
 
-      final chest2 = ExercisePrescription(
+      const chest2 = ExercisePrescription(
         id: 'incline',
         sessionId: 'day1',
         muscleGroup: MuscleGroup.chest,
@@ -264,12 +264,12 @@ void main() {
         label: 'B',
         exerciseName: 'Incline',
         sets: 3,
-        repRange: const RepRange(8, 10),
+        repRange: RepRange(8, 10),
         rir: '2 - 3',
         restMinutes: 2,
       );
 
-      final back = ExercisePrescription(
+      const back = ExercisePrescription(
         id: 'row',
         sessionId: 'day1',
         muscleGroup: MuscleGroup.back,
@@ -277,7 +277,7 @@ void main() {
         label: 'C',
         exerciseName: 'Row',
         sets: 4,
-        repRange: const RepRange(6, 8),
+        repRange: RepRange(6, 8),
         rir: '2',
         restMinutes: 3,
       );
@@ -310,7 +310,7 @@ void main() {
       // Esto es más bien una verificación del código fuente,
       // pero podemos verificar que el motor produce RIR válidos
 
-      final sample = ExercisePrescription(
+      const sample = ExercisePrescription(
         id: 'test',
         sessionId: 'day',
         muscleGroup: MuscleGroup.chest,
@@ -318,7 +318,7 @@ void main() {
         label: 'A',
         exerciseName: 'Bench',
         sets: 3,
-        repRange: const RepRange(8, 12),
+        repRange: RepRange(8, 12),
         rir: '2 - 3', // Debe ser parseable como RirTarget
         restMinutes: 2,
       );

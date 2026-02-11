@@ -11,8 +11,7 @@ class AnthropometryRecordsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // TODO: Implementar Riverpod provider para obtener registros
-    // Por ahora, usaremos una lista vacía como placeholder
+    // Por ahora, usaremos una lista vacia como placeholder
     final records = <Map<String, String>>[
       {'date': '23 de enero 2026', 'status': 'Completo'},
       {'date': '15 de enero 2026', 'status': 'En progreso'},

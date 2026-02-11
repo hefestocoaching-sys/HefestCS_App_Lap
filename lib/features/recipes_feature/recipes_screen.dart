@@ -46,7 +46,6 @@ class RecipesScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: Colors.white.withAlpha(20),
-                    width: 1,
                   ),
                 ),
                 child: Column(

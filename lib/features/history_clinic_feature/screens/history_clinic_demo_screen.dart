@@ -45,13 +45,13 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(DesignTokens.spaceLg),
+        padding: const EdgeInsets.all(DesignTokens.spaceLg),
         child: Column(
           spacing: DesignTokens.spaceLg,
           children: [
             // HEADER
             Container(
-              padding: EdgeInsets.all(DesignTokens.spaceMd),
+              padding: const EdgeInsets.all(DesignTokens.spaceMd),
               decoration: BoxDecoration(
                 color: DesignTokens.primaryBlue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
@@ -59,7 +59,7 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
                   color: DesignTokens.primaryBlue.withValues(alpha: 0.3),
                 ),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Historia Clínica Rediseñada', style: DesignTokens.h3),
@@ -124,7 +124,7 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
             ),
 
             // MEDICAMENTOS
-            ClinicSection(
+            const ClinicSection(
               title: 'Medicamentos Activos',
               icon: Icons.medication,
               bgColor: DesignTokens.medicationBg,
@@ -165,7 +165,7 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
               accentColor: Colors.teal,
               expandedByDefault: !_isCompactMode,
               itemCount: 2,
-              items: [
+              items: const [
                 ClinicSectionItem(
                   title: 'Apendicectomía',
                   subtitle:
@@ -184,11 +184,11 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
             ClinicSection(
               title: 'Antecedentes Familiares',
               icon: Icons.family_restroom,
-              bgColor: Color(0xFFE1F5FE),
+              bgColor: const Color(0xFFE1F5FE),
               accentColor: Colors.indigo,
               expandedByDefault: !_isCompactMode,
               itemCount: 3,
-              items: [
+              items: const [
                 ClinicSectionItem(
                   title: 'Padre - Infarto de Miocardio',
                   subtitle: 'Edad de presentación: 58 años',
@@ -209,7 +209,7 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
 
             // INFORMACIÓN ADICIONAL
             Container(
-              padding: EdgeInsets.all(DesignTokens.spaceMd),
+              padding: const EdgeInsets.all(DesignTokens.spaceMd),
               decoration: BoxDecoration(
                 color: DesignTokens.elevation2,
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
@@ -217,11 +217,11 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     '✨ Características de este rediseño:',
                     style: DesignTokens.h4,
                   ),
-                  SizedBox(height: DesignTokens.spaceMd),
+                  const SizedBox(height: DesignTokens.spaceMd),
                   _buildFeatureRow(
                     '📱 Interface Limpia',
                     'Solo muestra lo esencial, usuario expande a demanda',
@@ -250,7 +250,7 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
               ),
             ),
 
-            SizedBox(height: DesignTokens.spaceLg),
+            const SizedBox(height: DesignTokens.spaceLg),
           ],
         ),
       ),
@@ -259,7 +259,7 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
 
   Widget _buildFeatureRow(String title, String description) {
     return Padding(
-      padding: EdgeInsets.only(bottom: DesignTokens.spaceMd),
+      padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -268,7 +268,7 @@ class _HistoryClinicDemoScreenState extends State<HistoryClinicDemoScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: DesignTokens.labelLarge),
-                SizedBox(height: DesignTokens.spaceSm),
+                const SizedBox(height: DesignTokens.spaceSm),
                 Text(description, style: DesignTokens.caption),
               ],
             ),

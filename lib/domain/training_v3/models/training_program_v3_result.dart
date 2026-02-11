@@ -70,9 +70,6 @@ class TrainingProgramV3Result {
       isBlocked: true,
       blockReason: reason,
       suggestions: suggestions,
-      plan: null,
-      trace: null,
-      metadata: null,
     );
   }
 
@@ -89,8 +86,6 @@ class TrainingProgramV3Result {
   }) {
     return TrainingProgramV3Result(
       isBlocked: false,
-      blockReason: null,
-      suggestions: null,
       plan: plan,
       trace: trace,
       metadata: metadata,

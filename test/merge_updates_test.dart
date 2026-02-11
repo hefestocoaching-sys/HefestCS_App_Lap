@@ -6,7 +6,7 @@ import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/entities/nutrition_settings.dart';
 
 Client buildBaseClient() {
-  final profile = ClientProfile(
+  const profile = ClientProfile(
     id: 'p1',
     fullName: 'Test',
     email: 't@example.com',

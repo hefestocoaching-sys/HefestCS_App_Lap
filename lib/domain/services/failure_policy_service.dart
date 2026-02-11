@@ -120,7 +120,7 @@ class FailurePolicyService {
 
     // 6. Colocación: volumen muy alto => solo últimos días
     if (exercise.isCompound && muscleWeeklySets > 30) {
-      final allowedDaysFromEnd = 2;
+      const allowedDaysFromEnd = 2;
       final firstDisallowedDay = daysPerWeek - allowedDaysFromEnd;
 
       if (dayIndex < firstDisallowedDay && dayIndex > 0) {

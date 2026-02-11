@@ -31,7 +31,7 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
     final totalWeeks = widget.plan.weeks.length;
 
     if (totalWeeks == 0) {
-      return Center(
+      return const Center(
         child: Text(
           'Plan sin semanas disponibles',
           style: TextStyle(color: kTextColorSecondary),
@@ -40,7 +40,7 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
     }
 
     if (_selectedWeekIndex < 0 || _selectedWeekIndex >= totalWeeks) {
-      return Center(
+      return const Center(
         child: Text(
           'Error: semana fuera de rango',
           style: TextStyle(color: kTextColorSecondary),
@@ -60,7 +60,7 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
         const SizedBox(height: 12),
         Expanded(
           child: sessions.isEmpty
-              ? Center(
+              ? const Center(
                   child: Text(
                     'Semana sin sesiones configuradas',
                     style: TextStyle(color: kTextColorSecondary),
@@ -175,7 +175,7 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(color: kTextColorSecondary, fontSize: 11),
+                  style: const TextStyle(color: kTextColorSecondary, fontSize: 11),
                 ),
               ],
             ),
@@ -194,11 +194,10 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
     }).toList();
 
     if (prescriptions.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
+      return const Padding(
+        padding: EdgeInsets.only(bottom: 12),
         child: HcsGlassContainer(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          borderRadius: 12,
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Text(
             'Sin ejercicios configurados',
             style: TextStyle(color: kTextColorSecondary),
@@ -215,7 +214,6 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: HcsGlassContainer(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          borderRadius: 12,
           child: ExpansionTile(
             tilePadding: const EdgeInsets.symmetric(horizontal: 4),
             title: Text(

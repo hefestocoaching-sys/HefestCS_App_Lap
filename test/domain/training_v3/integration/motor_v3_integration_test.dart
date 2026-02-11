@@ -22,19 +22,21 @@ void main() {
           weightKg: 75,
           yearsTraining: 2,
           trainingLevel: 'intermediate',
-          consecutiveWeeks: 0,
           availableDays: 3,
           sessionDuration: 60,
           primaryGoal: 'hypertrophy',
-          musclePriorities: {
+          musclePriorities: const {
             'chest': 1, // Alta prioridad
             'lats': 1, // Alta prioridad
             'quads': 2, // Media prioridad
             'deltoide_anterior': 3, // Baja prioridad
           },
-          availableEquipment: ['barbell', 'dumbbells', 'machine', 'cable'],
-          injuryHistory: {},
-          excludedExercises: [],
+          availableEquipment: const [
+            'barbell',
+            'dumbbells',
+            'machine',
+            'cable',
+          ],
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -89,10 +91,8 @@ void main() {
         availableDays: 3,
         sessionDuration: 60,
         primaryGoal: 'hypertrophy',
-        musclePriorities: {},
-        availableEquipment: [],
-        injuryHistory: {},
-        excludedExercises: [],
+        musclePriorities: const {},
+        availableEquipment: const [],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -139,7 +139,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['triceps', 'deltoide_anterior'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'squat',
@@ -150,7 +149,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['glutes', 'hamstrings'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'barbell_row',
@@ -161,7 +159,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['biceps', 'traps'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'overhead_press',
@@ -172,7 +169,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['triceps'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'biceps_curl',
@@ -183,7 +179,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'dumbbells',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'triceps_extension',
@@ -194,7 +189,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'cable',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'hip_thrust',
@@ -205,7 +199,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['hamstrings'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'standing_calf_raise',
@@ -216,7 +209,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'machine',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'crunch',
@@ -227,7 +219,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'bodyweight',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
   ];
 }

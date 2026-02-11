@@ -68,11 +68,12 @@ class AthleteContextResolver {
     }
 
     // 2. Sexo desde profile (con fallback seguro)
-    var sex = client.profile.gender ??
+    var sex =
+        client.profile.gender ??
         client.training.gender ??
         _resolveSexFromTrainingExtra(client.training.extra);
     if (sex == null) {
-      logger.warning('Client missing gender; defaulting to other', {
+      logger.warning('Client missing gender, defaulting to other', {
         'clientId': client.id,
       });
       sex = Gender.other;

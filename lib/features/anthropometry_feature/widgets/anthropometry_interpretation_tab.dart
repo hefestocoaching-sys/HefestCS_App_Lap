@@ -303,7 +303,7 @@ class _AnthropometryInterpretationTabState
     // Si el Time Travel nos dejó sin registros (fecha muy antigua), mostramos vacío o el más viejo
     if (_compareRecordB == null && records.isNotEmpty) {
       // Fallback visual si no hay datos en esa fecha
-      return Center(
+      return const Center(
         child: Text(
           "No hay datos registrados antes de esta fecha.",
           style: TextStyle(color: kTextColorSecondary),
@@ -411,7 +411,6 @@ class _AnthropometryInterpretationTabState
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: kTextColorSecondary.withValues(alpha: 0.3),
-                    width: 1,
                   ),
                 ),
                 child: const Icon(
@@ -425,7 +424,6 @@ class _AnthropometryInterpretationTabState
                   label: "Fecha actual",
                   value: right,
                   items: records,
-                  allowNull: false,
                   onDelete: () => _deleteRecord(right!),
                   onChanged: (v) => setState(() {
                     if (v != null) _compareRecordB = v;
@@ -732,7 +730,7 @@ class _AnthropometryInterpretationTabState
       decoration: BoxDecoration(
         color: diffColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: diffColor.withValues(alpha: 0.5), width: 1),
+        border: Border.all(color: diffColor.withValues(alpha: 0.5)),
       ),
       child: Text(
         "${diff > 0 ? '+' : ''}${formatNumber(diff)}",
@@ -847,8 +845,6 @@ class _AnthropometryInterpretationTabState
                   borderRadius: BorderRadius.circular(4),
                   gradient: LinearGradient(
                     colors: [color.withValues(alpha: 0.6), color],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
                   ),
                   boxShadow: isPrev
                       ? []
@@ -857,7 +853,6 @@ class _AnthropometryInterpretationTabState
                           BoxShadow(
                             color: color.withValues(alpha: 0.6),
                             blurRadius: 10,
-                            offset: const Offset(0, 0),
                             spreadRadius: 1,
                           ),
                         ],
@@ -893,9 +888,9 @@ class _AnthropometryInterpretationTabState
           ),
           const SizedBox(height: 20),
           if (insights.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: const Text(
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
                 "No hay suficientes datos para generar un análisis.",
                 style: TextStyle(color: kTextColorSecondary),
               ),
@@ -1065,7 +1060,6 @@ class _MetricDropdown extends StatelessWidget {
               items: [
                 if (allowNull)
                   DropdownMenuItem(
-                    value: null,
                     child: Text(
                       "Sin referencia previa",
                       style: TextStyle(

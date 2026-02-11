@@ -160,8 +160,8 @@ class _EquivalentsGeneralScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.table_chart, color: Color(0xFFD32F2F), size: 28),
               SizedBox(width: 12),
               Expanded(
@@ -270,18 +270,18 @@ class _EquivalentsGeneralScreenState
         color: const Color(0xFFD32F2F).withValues(alpha: 0.2),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
       ),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Expanded(
             flex: 3,
             child: _HeaderCell('Grupo en el Sistema de Equivalentes'),
           ),
           Expanded(flex: 2, child: _HeaderCell('Subgrupos')),
-          Expanded(flex: 1, child: _HeaderCell('Equiv.')),
-          Expanded(flex: 1, child: _HeaderCell('Energia\n(kcal)')),
-          Expanded(flex: 1, child: _HeaderCell('Proteina\n(g)')),
-          Expanded(flex: 1, child: _HeaderCell('Lipidos\n(g)')),
-          Expanded(flex: 1, child: _HeaderCell('H.C.\n(g)')),
+          Expanded(child: _HeaderCell('Equiv.')),
+          Expanded(child: _HeaderCell('Energia\n(kcal)')),
+          Expanded(child: _HeaderCell('Proteina\n(g)')),
+          Expanded(child: _HeaderCell('Lipidos\n(g)')),
+          Expanded(child: _HeaderCell('H.C.\n(g)')),
           SizedBox(width: 40),
         ],
       ),
@@ -340,23 +340,18 @@ class _EquivalentsGeneralScreenState
             ),
           ),
           Expanded(
-            flex: 1,
             child: _buildEquivalentCounter(groupId, qty),
           ),
           Expanded(
-            flex: 1,
             child: _buildValueCell((def.kcal * qty).toStringAsFixed(0)),
           ),
           Expanded(
-            flex: 1,
             child: _buildValueCell((def.proteinG * qty).toStringAsFixed(1)),
           ),
           Expanded(
-            flex: 1,
             child: _buildValueCell((def.fatG * qty).toStringAsFixed(1)),
           ),
           Expanded(
-            flex: 1,
             child: _buildValueCell((def.carbG * qty).toStringAsFixed(1)),
           ),
           SizedBox(
@@ -446,9 +441,9 @@ class _EquivalentsGeneralScreenState
           ),
           borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.add_circle_outline, size: 18, color: kPrimaryColor),
             SizedBox(width: 8),
             Text(
@@ -643,8 +638,8 @@ class _EquivalentsGeneralScreenState
       builder: (context) {
         return AlertDialog(
           backgroundColor: kCardColor,
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.add_circle, color: kPrimaryColor),
               SizedBox(width: 8),
               Text(

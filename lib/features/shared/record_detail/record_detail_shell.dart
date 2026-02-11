@@ -51,7 +51,6 @@ class RecordDetailShell extends StatelessWidget {
             child: TabBar(
               controller: tabController,
               tabs: tabs,
-              isScrollable: false,
             ),
           ),
 

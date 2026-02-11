@@ -89,7 +89,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
   Future<void> refresh() async {
     final current = state.value;
     if (current == null) return;
-    state = AsyncValue.data(current.copyWith(isLoading: true, error: null));
+    state = AsyncValue.data(current.copyWith(isLoading: true));
     try {
       final clients = await _loadClients();
       final activeId = _resolveActiveClientId(clients, current.activeClientId);
@@ -99,7 +99,6 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
           clients: clients,
           activeClientId: activeId,
           isLoading: false,
-          error: null,
         ),
       );
     } catch (e) {
@@ -112,7 +111,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
   Future<void> createClient(Client client) async {
     final current = state.value;
     if (current == null) return;
-    state = AsyncValue.data(current.copyWith(isLoading: true, error: null));
+    state = AsyncValue.data(current.copyWith(isLoading: true));
     try {
       await _repository.saveClient(client);
       final clients = await _loadClients();
@@ -123,7 +122,6 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
           clients: clients,
           activeClientId: activeId,
           isLoading: false,
-          error: null,
         ),
       );
     } catch (e) {
@@ -140,9 +138,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
     if (!exists) return;
     try {
       await _persistActiveClientId(id);
-      state = AsyncValue.data(
-        current.copyWith(activeClientId: id, error: null),
-      );
+      state = AsyncValue.data(current.copyWith(activeClientId: id));
     } catch (e) {
       state = AsyncValue.data(
         current.copyWith(activeClientId: id, error: e.toString()),
@@ -159,7 +155,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
       if (current == null) return;
       final active = current.activeClient;
       if (active == null) return;
-      state = AsyncValue.data(current.copyWith(isLoading: true, error: null));
+      state = AsyncValue.data(current.copyWith(isLoading: true));
       try {
         // Serialize writes per-client to avoid lost-update races.
         final clientId = active.id;
@@ -213,7 +209,6 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
               clients: sortedClients,
               activeClientId: mergedClient.id,
               isLoading: false,
-              error: null,
             ),
           );
         });
@@ -235,7 +230,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
     if (current == null) return;
     final active = current.activeClient;
     if (active == null) return;
-    state = AsyncValue.data(current.copyWith(isLoading: true, error: null));
+    state = AsyncValue.data(current.copyWith(isLoading: true));
     try {
       final clientId = active.id;
       final previous = _clientWriteLocks[clientId] ?? Future.value();
@@ -282,7 +277,6 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
             clients: sortedClients,
             activeClientId: mergedClient.id,
             isLoading: false,
-            error: null,
           ),
         );
       });
@@ -329,9 +323,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
     final current = state.value;
     if (current == null) return;
     await _persistActiveClientId(null);
-    state = AsyncValue.data(
-      current.copyWith(activeClientId: null, error: null),
-    );
+    state = AsyncValue.data(current.copyWith());
   }
 }
 

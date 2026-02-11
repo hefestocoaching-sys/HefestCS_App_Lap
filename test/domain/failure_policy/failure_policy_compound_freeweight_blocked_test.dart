@@ -15,7 +15,7 @@ void main() {
     });
 
     test('Bloquea fallo en compound barbell incluso con advanced level', () {
-      final barbellRow = const ExerciseEntry(
+      const barbellRow = ExerciseEntry(
         code: 'barbell_row',
         name: 'Barbell Row',
         muscleGroup: MuscleGroup.back,
@@ -55,7 +55,7 @@ void main() {
     });
 
     test('Bloquea fallo en compound dumbbell (pesa libre)', () {
-      final dbPress = const ExerciseEntry(
+      const dbPress = ExerciseEntry(
         code: 'dumbbell_press',
         name: 'Dumbbell Press',
         muscleGroup: MuscleGroup.shoulders,
@@ -83,7 +83,7 @@ void main() {
     test(
       'Verifica que RIR insuficiente también bloquea (barbell compound)',
       () {
-        final benchLowRIR = const ExerciseEntry(
+        const benchLowRIR = ExerciseEntry(
           code: 'bench_barbell',
           name: 'Barbell Bench Press',
           muscleGroup: MuscleGroup.chest,
@@ -118,7 +118,7 @@ void main() {
     );
 
     test('Bloquea fallo cuando volumen compound es muy alto', () {
-      final heavyCompound = const ExerciseEntry(
+      const heavyCompound = ExerciseEntry(
         code: 'deadlift_barbell',
         name: 'Deadlift',
         muscleGroup: MuscleGroup.hamstrings,

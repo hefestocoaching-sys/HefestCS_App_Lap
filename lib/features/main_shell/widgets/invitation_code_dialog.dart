@@ -54,7 +54,7 @@ class InvitationCodeDialog extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Sección de código
-            Text(
+            const Text(
               '📋 CÓDIGO DE ACCESO',
               style: TextStyle(
                 fontSize: 14,
@@ -189,8 +189,8 @@ class InvitationCodeDialog extends StatelessWidget {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: const [
+        content: const Row(
+          children: [
             Icon(Icons.check_circle, color: Colors.white, size: 20),
             SizedBox(width: 12),
             Text('Código copiado al portapapeles'),
@@ -233,8 +233,8 @@ Descarga la app HCS Client y usa este código para acceder a:
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Row(
-                children: const [
+              content: const Row(
+                children: [
                   Icon(Icons.error_outline, color: Colors.white, size: 20),
                   SizedBox(width: 12),
                   Expanded(

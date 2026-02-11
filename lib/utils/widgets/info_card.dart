@@ -31,7 +31,7 @@ class InfoCard extends StatelessWidget {
           context,
         ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+        border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

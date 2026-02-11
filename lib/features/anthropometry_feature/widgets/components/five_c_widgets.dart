@@ -294,12 +294,8 @@ class FiveCCombinedBarChart extends StatelessWidget {
           child: BarChart(
             BarChartData(
               maxY: maxY <= 0 ? 1 : maxY,
-              minY: 0,
               gridData: FlGridData(
-                show: true,
-                drawVerticalLine: true,
                 horizontalInterval: maxY <= 0 ? 1 : maxY / 4,
-                verticalInterval: 1,
                 getDrawingHorizontalLine: (value) => FlLine(
                   color: kTextColorSecondary.withAlpha(30),
                   strokeWidth: 1,
@@ -313,12 +309,6 @@ class FiveCCombinedBarChart extends StatelessWidget {
               barGroups: barGroups,
               groupsSpace: 16,
               titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,

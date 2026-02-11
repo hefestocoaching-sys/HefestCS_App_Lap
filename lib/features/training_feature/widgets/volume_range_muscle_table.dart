@@ -212,7 +212,6 @@ class VolumeRangeMapper {
             mev: mev,
             targetSets: targetSets,
             mrv: mrv,
-            percentile: null,
             role: role,
           ),
         );
@@ -298,7 +297,6 @@ class VolumeRangeMapper {
             mev: mev,
             targetSets: targetSets, // null si no existe -> mostrará "--"
             mrv: mrv,
-            percentile: null, // El motor legacy no guarda percentiles
             role: role,
           ),
         );
@@ -409,8 +407,8 @@ class VolumeRangeMuscleTable extends StatelessWidget {
             Table(
               columnWidths: const {
                 0: FlexColumnWidth(2.5),
-                1: FlexColumnWidth(1.0),
-                2: FlexColumnWidth(1.0),
+                1: FlexColumnWidth(),
+                2: FlexColumnWidth(),
                 3: FlexColumnWidth(1.2),
                 4: FlexColumnWidth(1.5),
                 5: FixedColumnWidth(70),
@@ -679,27 +677,21 @@ class VolumeRangeMuscleTable extends StatelessWidget {
       decoration: BoxDecoration(
         color: kAppBarColor.withValues(alpha: 0.3),
         border: Border(
-          bottom: BorderSide(
-            color: kPrimaryColor.withValues(alpha: 0.1),
-            width: 1,
-          ),
+          bottom: BorderSide(color: kPrimaryColor.withValues(alpha: 0.1)),
         ),
       ),
       children: [
         _buildTableCell(
           _formatMuscleName(muscle),
-          isHeader: false,
           alignment: TextAlign.left,
           fontWeight: FontWeight.w600,
         ),
         _buildTableCell(
           data.vme.toString(),
-          isHeader: false,
           color: Colors.orange.withValues(alpha: 0.7),
         ),
         _buildTableCell(
           data.vmr.toString(),
-          isHeader: false,
           color: Colors.red.withValues(alpha: 0.7),
         ),
         Padding(
@@ -857,12 +849,7 @@ class VolumeRangeMuscleTable extends StatelessWidget {
       SnackBar(
         content: Text('Override guardado para $muscle'),
         backgroundColor: Colors.green,
-        action: SnackBarAction(
-          label: 'Deshacer',
-          onPressed: () {
-            // TODO: Implementar undo
-          },
-        ),
+        action: SnackBarAction(label: 'Deshacer', onPressed: () {}),
       ),
     );
   }

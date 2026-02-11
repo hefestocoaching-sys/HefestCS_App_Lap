@@ -101,7 +101,6 @@ class _FinancialSummaryWidgetState
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: const Color(0xFF00D9FF).withAlpha(50),
-                    width: 1,
                   ),
                 ),
                 child: const Icon(
@@ -127,7 +126,6 @@ class _FinancialSummaryWidgetState
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: Colors.white.withAlpha(10),
-                    width: 1,
                   ),
                 ),
                 child: Row(

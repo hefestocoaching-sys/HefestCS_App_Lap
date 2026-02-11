@@ -165,13 +165,13 @@ class _VolumeChart extends StatelessWidget {
             ),
           ),
           leftTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
+            
           ),
           topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
+            
           ),
           rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
+            
           ),
         ),
         gridData: const FlGridData(show: false),

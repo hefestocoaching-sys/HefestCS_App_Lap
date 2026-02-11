@@ -30,7 +30,7 @@ void main() {
         availableDays: 4,
         sessionDuration: 60,
         primaryGoal: 'hypertrophy',
-        musclePriorities: {
+        musclePriorities: const {
           'chest': 5,
           'lats': 5,
           'upper_back': 5,
@@ -42,8 +42,13 @@ void main() {
           'biceps': 3,
           'triceps': 3,
         },
-        injuryHistory: {},
-        availableEquipment: ['barbell', 'dumbbell', 'machine', 'bench', 'rack'],
+        availableEquipment: const [
+          'barbell',
+          'dumbbell',
+          'machine',
+          'bench',
+          'rack',
+        ],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -57,11 +62,7 @@ void main() {
       );
 
       // THEN: Debe ser exitoso
-      expect(
-        result['success'],
-        isTrue,
-        reason: 'Errores: ${result['errors']}',
-      );
+      expect(result['success'], isTrue, reason: 'Errores: ${result['errors']}');
       expect(result['program'], isNotNull);
       expect(result['errors'], isEmpty);
 
@@ -91,9 +92,8 @@ void main() {
         availableDays: 0, // INVÁLIDO
         sessionDuration: 60,
         primaryGoal: 'hypertrophy',
-        musclePriorities: {},
-        injuryHistory: {},
-        availableEquipment: [],
+        musclePriorities: const {},
+        availableEquipment: const [],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -123,7 +123,7 @@ void main() {
         availableDays: 4,
         sessionDuration: 60,
         primaryGoal: 'hypertrophy',
-        musclePriorities: {
+        musclePriorities: const {
           'chest': 5,
           'lats': 5,
           'upper_back': 5,
@@ -133,8 +133,7 @@ void main() {
           'deltoide_lateral': 5,
           'deltoide_anterior': 4,
         },
-        injuryHistory: {},
-        availableEquipment: ['barbell', 'dumbbell'],
+        availableEquipment: const ['barbell', 'dumbbell'],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -146,11 +145,7 @@ void main() {
         exercises: _getMockExercises(),
       );
 
-      expect(
-        result['success'],
-        isTrue,
-        reason: 'Errores: ${result['errors']}',
-      );
+      expect(result['success'], isTrue, reason: 'Errores: ${result['errors']}');
       expect(result['program'], isNotNull);
 
       final program = result['program'];
@@ -178,7 +173,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['triceps', 'deltoide_anterior'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'lat_pulldown',
@@ -189,7 +183,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['biceps'],
       equipment: 'machine',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'upper_back_row',
@@ -200,7 +193,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['biceps'],
       equipment: 'cable',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'traps_shrug',
@@ -211,7 +203,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'squat',
@@ -222,7 +213,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['glutes', 'hamstrings'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'romanian_deadlift',
@@ -233,7 +223,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['glutes'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'lateral_raise',
@@ -244,7 +233,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'front_raise',
@@ -255,7 +243,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'reverse_fly',
@@ -266,7 +253,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'biceps_curl',
@@ -277,7 +263,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'triceps_extension',
@@ -288,7 +273,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'cable',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'hip_thrust',
@@ -299,7 +283,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: ['hamstrings'],
       equipment: 'barbell',
       difficulty: 'intermediate',
-      gifUrl: '',
     ),
     Exercise(
       id: 'standing_calf_raise',
@@ -310,7 +293,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'machine',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'seated_calf_raise',
@@ -321,7 +303,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'machine',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
     Exercise(
       id: 'crunch',
@@ -332,7 +313,6 @@ List<Exercise> _getMockExercises() {
       secondaryMuscles: [],
       equipment: 'bodyweight',
       difficulty: 'beginner',
-      gifUrl: '',
     ),
   ];
 }

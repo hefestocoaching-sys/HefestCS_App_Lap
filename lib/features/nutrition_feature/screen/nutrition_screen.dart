@@ -154,7 +154,7 @@ class NutritionScreenState extends ConsumerState<NutritionScreen>
                 // Header con tabs integrados (solo fuera de overview)
                 if (_selectedRecordDateIso.isNotEmpty)
                   ClinicClientHeaderWithTabs(
-                    avatar: Icon(
+                    avatar: const Icon(
                       Icons.person,
                       color: kTextColorSecondary,
                       size: 40,

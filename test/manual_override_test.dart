@@ -18,10 +18,10 @@ void main() {
     });
 
     test('validate: override válido sin warnings', () {
-      final override = ManualOverride(
+      const override = ManualOverride(
         volumeOverrides: {
-          'chest': const VolumeOverride(mev: 6, mav: 12, mrv: 18),
-          'back': const VolumeOverride(mrv: 20),
+          'chest': VolumeOverride(mev: 6, mav: 12, mrv: 18),
+          'back': VolumeOverride(mrv: 20),
         },
         priorityOverrides: {'chest': 'primary', 'back': 'secondary'},
         rirTargetOverride: 2.0,
@@ -34,10 +34,8 @@ void main() {
     });
 
     test('validate: MEV inválido < 0 registra warning', () {
-      final override = ManualOverride(
-        volumeOverrides: {
-          'chest': const VolumeOverride(mev: -5, mav: 12, mrv: 18),
-        },
+      const override = ManualOverride(
+        volumeOverrides: {'chest': VolumeOverride(mev: -5, mav: 12, mrv: 18)},
       );
 
       final warnings = override.validate();
@@ -46,10 +44,8 @@ void main() {
     });
 
     test('validate: MEV > MAV registra warning', () {
-      final override = ManualOverride(
-        volumeOverrides: {
-          'chest': const VolumeOverride(mev: 15, mav: 12, mrv: 18),
-        },
+      const override = ManualOverride(
+        volumeOverrides: {'chest': VolumeOverride(mev: 15, mav: 12, mrv: 18)},
       );
 
       final warnings = override.validate();
@@ -58,10 +54,8 @@ void main() {
     });
 
     test('validate: MAV > MRV registra warning', () {
-      final override = ManualOverride(
-        volumeOverrides: {
-          'chest': const VolumeOverride(mev: 6, mav: 20, mrv: 18),
-        },
+      const override = ManualOverride(
+        volumeOverrides: {'chest': VolumeOverride(mev: 6, mav: 20, mrv: 18)},
       );
 
       final warnings = override.validate();
@@ -70,9 +64,9 @@ void main() {
     });
 
     test('validate: músculo inválido registra warning', () {
-      final override = ManualOverride(
+      const override = ManualOverride(
         volumeOverrides: {
-          'invalid_muscle': const VolumeOverride(mev: 6, mav: 12, mrv: 18),
+          'invalid_muscle': VolumeOverride(mev: 6, mav: 12, mrv: 18),
         },
       );
 
@@ -82,7 +76,7 @@ void main() {
     });
 
     test('validate: prioridad inválida registra warning', () {
-      final override = ManualOverride(
+      const override = ManualOverride(
         priorityOverrides: {'chest': 'invalid_priority'},
       );
 
@@ -92,7 +86,7 @@ void main() {
     });
 
     test('validate: RIR > 4.0 registra warning', () {
-      final override = ManualOverride(rirTargetOverride: 5.0);
+      const override = ManualOverride(rirTargetOverride: 5.0);
 
       final warnings = override.validate();
       expect(warnings.length, greaterThan(0));
@@ -100,14 +94,14 @@ void main() {
     });
 
     test('validate: RIR < 0 registra warning', () {
-      final override = ManualOverride(rirTargetOverride: -1.0);
+      const override = ManualOverride(rirTargetOverride: -1.0);
 
       final warnings = override.validate();
       expect(warnings.length, greaterThan(0));
     });
 
     test('validate: intensificationMaxPerWeek < 0 registra warning', () {
-      final override = ManualOverride(intensificationMaxPerWeek: -5);
+      const override = ManualOverride(intensificationMaxPerWeek: -5);
 
       final warnings = override.validate();
       expect(warnings.length, greaterThan(0));
@@ -118,22 +112,19 @@ void main() {
     });
 
     test('hasAnyOverride: false cuando todo es nulo/defaults', () {
-      final override = const ManualOverride(
-        allowIntensification: false,
-        intensificationMaxPerWeek: 0,
-      );
+      const override = ManualOverride(intensificationMaxPerWeek: 0);
       expect(override.hasAnyOverride, false);
     });
 
     test('hasAnyOverride: true cuando hay volumeOverrides', () {
-      final override = ManualOverride(
-        volumeOverrides: {'chest': const VolumeOverride(mrv: 20)},
+      const override = ManualOverride(
+        volumeOverrides: {'chest': VolumeOverride(mrv: 20)},
       );
       expect(override.hasAnyOverride, true);
     });
 
     test('hasAnyOverride: true cuando hay rirTargetOverride', () {
-      final override = ManualOverride(rirTargetOverride: 2.0);
+      const override = ManualOverride(rirTargetOverride: 2.0);
       expect(override.hasAnyOverride, true);
     });
 
@@ -162,8 +153,8 @@ void main() {
     test(
       'determinismo: múltiples validaciones con mismos datos → mismos warnings',
       () {
-        final override = ManualOverride(
-          volumeOverrides: {'chest': const VolumeOverride(mev: 15, mav: 10)},
+        const override = ManualOverride(
+          volumeOverrides: {'chest': VolumeOverride(mev: 15, mav: 10)},
         );
 
         final w1 = override.validate();
@@ -173,12 +164,12 @@ void main() {
     );
 
     test('VolumeOverride.isEmpty: true cuando todo es null', () {
-      final vol = const VolumeOverride();
+      const vol = VolumeOverride();
       expect(vol.isEmpty, true);
     });
 
     test('VolumeOverride.isEmpty: false cuando hay algún valor', () {
-      final vol = const VolumeOverride(mrv: 20);
+      const vol = VolumeOverride(mrv: 20);
       expect(vol.isEmpty, false);
     });
   });

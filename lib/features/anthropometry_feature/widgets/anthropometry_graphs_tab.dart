@@ -147,10 +147,10 @@ class _AnthropometryGraphsTabState extends ConsumerState<AnthropometryGraphsTab>
     if (spots.isEmpty) {
       return LineChartData(
         titlesData: const FlTitlesData(
-          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(),
+          bottomTitles: AxisTitles(),
+          topTitles: AxisTitles(),
+          rightTitles: AxisTitles(),
         ),
         gridData: const FlGridData(show: false),
         borderData: FlBorderData(show: false),
@@ -196,7 +196,6 @@ class _AnthropometryGraphsTabState extends ConsumerState<AnthropometryGraphsTab>
         ]);
       }).toList(),
       lineTouchData: LineTouchData(
-        enabled: true,
         handleBuiltInTouches: false,
         touchCallback: (FlTouchEvent event, LineTouchResponse? response) {
           if (response == null || response.lineBarSpots == null) {
@@ -225,7 +224,6 @@ class _AnthropometryGraphsTabState extends ConsumerState<AnthropometryGraphsTab>
                 return TouchedSpotIndicatorData(
                   const FlLine(color: kAccentColor),
                   FlDotData(
-                    show: true,
                     getDotPainter: (spot, percent, barData, index) =>
                         FlDotCirclePainter(
                           radius: 8,
@@ -323,16 +321,15 @@ class _AnthropometryGraphsTabState extends ConsumerState<AnthropometryGraphsTab>
             ),
           ),
           axisNameSize: 32,
-          sideTitles: const SideTitles(showTitles: false),
         ),
         rightTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
+          
         ),
       ),
       gridData: const FlGridData(show: false),
       borderData: FlBorderData(
         show: true,
-        border: Border.all(color: kAppBarColor.withAlpha(153), width: 1),
+        border: Border.all(color: kAppBarColor.withAlpha(153)),
       ),
     );
   }

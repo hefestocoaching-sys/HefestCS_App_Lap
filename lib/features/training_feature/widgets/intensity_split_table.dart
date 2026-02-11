@@ -113,7 +113,7 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
       widget.trainingExtra['priorityMusclesTertiary'],
     );
 
-    final intensityVolumeSplit = _seriesSplit;
+    const intensityVolumeSplit = _seriesSplit;
 
     // Agrupar espalda como bloque único
     final vopByMuscle = _aggregateForDisplay(vopRaw);
@@ -137,14 +137,14 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
             ),
           ] else ...[
             const SizedBox(height: 12),
-            Card(
+            const Card(
               margin: EdgeInsets.zero,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(Icons.info_outline, size: 16, color: Colors.blue),
                         SizedBox(width: 8),
@@ -160,8 +160,8 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
+                    SizedBox(height: 8),
+                    Text(
                       'Este split se aplicará cuando el motor genere el plan de entrenamiento.',
                       style: TextStyle(
                         color: kTextColorSecondary,
@@ -726,7 +726,7 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
                       style: const TextStyle(color: Colors.teal, fontSize: 12),
                     ),
                   ),
-                  Expanded(
+                  const Expanded(
                     flex: 2,
                     child: Text(
                       status,

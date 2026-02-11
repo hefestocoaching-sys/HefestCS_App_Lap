@@ -15,7 +15,7 @@ void main() {
     });
 
     test('Permite fallo en aislado machine con cuota limitada', () {
-      final legExtensionMachine = const ExerciseEntry(
+      const legExtensionMachine = ExerciseEntry(
         code: 'leg_extension_machine',
         name: 'Leg Extension Machine',
         muscleGroup: MuscleGroup.quads,
@@ -54,7 +54,7 @@ void main() {
     });
 
     test('Permite fallo en cable aislado (intermediate level válido)', () {
-      final cableFly = const ExerciseEntry(
+      const cableFly = ExerciseEntry(
         code: 'cable_fly',
         name: 'Cable Fly',
         muscleGroup: MuscleGroup.chest,
@@ -86,7 +86,7 @@ void main() {
     test(
       'Verifica que la cuota de fallo es conservadora: 1-2 slots máximo',
       () {
-        final cableAdjustableMultiple = const ExerciseEntry(
+        const cableAdjustableMultiple = ExerciseEntry(
           code: 'chest_fly_cable',
           name: 'Cable Pec Deck',
           muscleGroup: MuscleGroup.chest,
@@ -116,7 +116,7 @@ void main() {
     );
 
     test('Bloquea fallo en aislado si RIR es demasiado bajo', () {
-      final dumbbellCurl = const ExerciseEntry(
+      const dumbbellCurl = ExerciseEntry(
         code: 'dumbbell_curl',
         name: 'Dumbbell Curl',
         muscleGroup: MuscleGroup.biceps,
@@ -146,7 +146,7 @@ void main() {
     });
 
     test('Permite fallo en aislado con RIR >= 2 (límite inferior)', () {
-      final cbBarCurl = const ExerciseEntry(
+      const cbBarCurl = ExerciseEntry(
         code: 'ez_bar_curl',
         name: 'EZ Bar Curl',
         muscleGroup: MuscleGroup.biceps,

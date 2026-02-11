@@ -22,7 +22,7 @@ class PendingTasksSection extends ConsumerWidget {
       decoration: BoxDecoration(
         color: kCardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+        border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,7 +100,7 @@ class PendingTasksSection extends ConsumerWidget {
                       color: kSuccessColor.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 12),
-                    Text(
+                    const Text(
                       'No hay pendientes',
                       style: TextStyle(
                         color: kTextColorSecondary,
@@ -141,7 +141,6 @@ class PendingTasksSection extends ConsumerWidget {
                           ref
                               .read(clientsProvider.notifier)
                               .setActiveClientById(client.id);
-                          // TODO: Cambiar a módulo clínico
                         }
                       },
                     );
@@ -192,7 +191,7 @@ class _PendingTaskItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: kAppBarColor.withAlpha(100),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+          border: Border.all(color: Colors.white.withAlpha(20)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +231,7 @@ class _PendingTaskItem extends StatelessWidget {
                       Expanded(
                         child: Text(
                           client?.fullName ?? 'Cliente desconocido',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             color: kTextColorSecondary,
                           ),

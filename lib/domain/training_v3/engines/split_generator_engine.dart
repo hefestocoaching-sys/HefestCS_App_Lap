@@ -73,7 +73,7 @@ class SplitGeneratorEngine {
 
   /// Genera PPL modificado para 5 días (subóptimo)
   static SplitConfig _generatePPL5Days() {
-    return SplitConfig(
+    return const SplitConfig(
       id: 'ppl_5x',
       name: 'Push/Pull/Legs 5x (modificado)',
       type: 'push_pull_legs',

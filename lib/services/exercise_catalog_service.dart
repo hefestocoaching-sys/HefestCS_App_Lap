@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 import 'package:hcs_app_lap/core/constants/muscle_keys.dart';
 import 'package:hcs_app_lap/domain/entities/exercise_entity.dart';
@@ -31,12 +31,14 @@ class ExerciseCatalogService {
       await _loadFromAssets();
       _loaded = true;
       lastLoadError = null;
-      debugPrint(
-        '✓ ExerciseCatalogService: Successfully loaded exercise catalog',
+      logger.info(
+        'ExerciseCatalogService: Successfully loaded exercise catalog',
       );
     } catch (e) {
       lastLoadError = e.toString();
-      debugPrint('⚠️ ExerciseCatalogService: Error loading exercises: $e');
+      logger.warning('ExerciseCatalogService: Error loading exercises', {
+        'error': e,
+      });
       // NO relanzar el error - continuar sin datos en lugar de fallar
       _loaded = false;
     }
@@ -79,7 +81,7 @@ class ExerciseCatalogService {
         final ex = ExerciseEntity.fromJson(raw);
         if (ex.id.isEmpty || ex.nameEs.isEmpty) {
           skippedCount++;
-          debugPrint('[Catalog] Skipped exercise: empty id or name');
+          logger.debug('Catalog: Skipped exercise with empty id or name');
           continue;
         }
 
@@ -88,9 +90,10 @@ class ExerciseCatalogService {
 
         final keys = _canonicalKeysFor(ex);
         if (keys.isEmpty) {
-          debugPrint(
-            '[Catalog] No canonical keys for ${ex.id} (${ex.primaryMuscle})',
-          );
+          logger.debug('Catalog: No canonical keys for exercise', {
+            'id': ex.id,
+            'primaryMuscle': ex.primaryMuscle,
+          });
         }
         for (final key in keys) {
           _byPrimaryMuscle.putIfAbsent(key, () => []).add(ex);
@@ -98,19 +101,24 @@ class ExerciseCatalogService {
         successCount++;
       } catch (e) {
         failedCount++;
-        debugPrint('[Catalog] Failed exercise ${raw['id']}: $e');
+        logger.warning('Catalog: Failed to parse exercise', {
+          'id': raw['id'],
+          'error': e,
+        });
       }
     }
 
-    debugPrint(
-      '[Catalog] Parsed: $successCount success, $skippedCount skipped, $failedCount failed',
-    );
+    logger.debug('Catalog: Parsed exercises', {
+      'success': successCount,
+      'skipped': skippedCount,
+      'failed': failedCount,
+    });
 
     if (_byId.isEmpty) {
       throw Exception('No exercises loaded after parsing');
     }
 
-    debugPrint('[Catalog] Loaded $successCount exercises');
+    logger.info('Catalog: Loaded exercises', {'count': successCount});
   }
 
   ExerciseEntity? getById(String id) => _byId[id];

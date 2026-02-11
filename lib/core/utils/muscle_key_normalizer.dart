@@ -21,10 +21,7 @@ String normalizeMuscleKey(String raw) {
   if (canonical != null) {
     // Log temporal para debugging (TAREA A6)
     if (raw.toLowerCase() != canonical) {
-      logger.debug('Normalizer mapped muscle key', {
-        'raw': raw,
-        'canonical': canonical,
-      });
+      logger.debug('Muscle key normalized', {'from': raw, 'to': canonical});
     }
     return canonical;
   }
@@ -36,16 +33,16 @@ String normalizeMuscleKey(String raw) {
     // Es un grupo válido, retornar el TOKEN CANÓNICO del grupo
     // P0: Mapear variantes españolas a tokens estándar ingleses
     final groupToken = _mapGroupVariantToCanonicalToken(raw);
-    logger.debug('Normalizer mapped group key', {
-      'raw': raw,
-      'groupToken': groupToken,
-      'expanded': expanded,
+    logger.debug('Group normalized', {
+      'from': raw,
+      'to': groupToken,
+      'expandsTo': expanded.join(", "),
     });
     return groupToken;
   }
 
   // Si no es nada conocido, retornar como-está (log advertencia)
-  logger.warning('Unknown muscle key', {'raw': raw});
+  logger.warning('Unknown muscle key', {'key': raw});
   return raw.toLowerCase();
 }
 

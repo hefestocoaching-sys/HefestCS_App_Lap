@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 
 class ErrorHandler {
   static void handleError(
@@ -7,9 +8,8 @@ class ErrorHandler {
     String? userMessage,
     bool showSnackbar = true,
   }) {
-    debugPrint('Error: $error');
+    logger.error('Error handled', error);
 
-    // TODO: Enviar a Sentry/Firebase Crashlytics
     // FirebaseCrashlytics.instance.recordError(error, stackTrace);
 
     if (showSnackbar && context.mounted) {

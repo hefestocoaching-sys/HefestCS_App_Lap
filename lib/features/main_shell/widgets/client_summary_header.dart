@@ -24,7 +24,6 @@ class ClientSummaryHeader extends ConsumerWidget {
         border: Border(
           bottom: BorderSide(
             color: kAppBarColor.withAlpha((255 * 0.3).round()),
-            width: 1,
           ),
         ),
       ),
@@ -38,7 +37,7 @@ class ClientSummaryHeader extends ConsumerWidget {
               color: kPrimaryColor.withAlpha(30),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(Icons.person, size: 24, color: kPrimaryColor),
+            child: const Icon(Icons.person, size: 24, color: kPrimaryColor),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -97,7 +96,6 @@ class ClientSummaryHeader extends ConsumerWidget {
                 color: summary.isActivePlan
                     ? Colors.green.withAlpha(100)
                     : Colors.grey.withAlpha(100),
-                width: 1,
               ),
             ),
             child: Row(

@@ -132,27 +132,37 @@ class DatabaseHelper {
     if (oldVersion < 6) {
       await _ensureTrainingInterviewsTable(db);
 
-      final hasUpdatedAt =
-          await _columnExists(db, 'training_interviews', 'updated_at');
+      final hasUpdatedAt = await _columnExists(
+        db,
+        'training_interviews',
+        'updated_at',
+      );
       if (!hasUpdatedAt) {
         try {
           await db.execute(
             'ALTER TABLE training_interviews ADD COLUMN updated_at TEXT',
           );
         } catch (e) {
-          debugPrint('Column updated_at already exists or error: $e');
+          logger.debug('Column updated_at already exists or error', {
+            'error': e,
+          });
         }
       }
 
-      final hasIsSynced =
-          await _columnExists(db, 'training_interviews', 'is_synced');
+      final hasIsSynced = await _columnExists(
+        db,
+        'training_interviews',
+        'is_synced',
+      );
       if (!hasIsSynced) {
         try {
           await db.execute(
             'ALTER TABLE training_interviews ADD COLUMN is_synced INTEGER DEFAULT 0',
           );
         } catch (e) {
-          debugPrint('Column is_synced already exists or error: $e');
+          logger.debug('Column is_synced already exists or error', {
+            'error': e,
+          });
         }
       }
 
@@ -196,8 +206,11 @@ class DatabaseHelper {
       )
     ''');
 
-    final hasIsSynced =
-        await _columnExists(db, 'training_interviews', 'is_synced');
+    final hasIsSynced = await _columnExists(
+      db,
+      'training_interviews',
+      'is_synced',
+    );
     if (!hasIsSynced) {
       try {
         await db.execute(

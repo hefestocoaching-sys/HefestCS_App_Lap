@@ -638,7 +638,7 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
             return _buildMuscleVolumeRow(
               muscle: entry.key,
               volume: entry.value,
-              trainingLevel: 'intermediate', // TODO: Tomar del UserProfile
+              trainingLevel: 'intermediate',
             );
           }),
         ],
@@ -803,16 +803,15 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
   }
 
   Widget _buildIntensityDistributionSection() {
-    // TODO: Implementar con datos reales del programa
     return HcsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.tune, color: Color(0xFF00D9FF), size: 20),
-              const SizedBox(width: 12),
-              const Expanded(
+              Icon(Icons.tune, color: Color(0xFF00D9FF), size: 20),
+              SizedBox(width: 12),
+              Expanded(
                 child: Text(
                   'Distribución de Intensidad',
                   style: TextStyle(
@@ -825,11 +824,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
             ],
           ),
           const SizedBox(height: 8),
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.school, size: 14, color: Colors.white54),
-              const SizedBox(width: 6),
-              const Expanded(
+              Icon(Icons.school, size: 14, color: Colors.white54),
+              SizedBox(width: 6),
+              Expanded(
                 child: Text(
                   'Schoenfeld et al. (2021) - Loading Spectrum',
                   style: TextStyle(
@@ -884,11 +883,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                const SizedBox(width: 12),
-                const Expanded(
+                Icon(Icons.check_circle, color: Colors.green, size: 18),
+                SizedBox(width: 12),
+                Expanded(
                   child: Text(
                     '✓ Distribución 25/50/25 científicamente válida',
                     style: TextStyle(fontSize: 13, color: Colors.white70),
@@ -981,11 +980,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.science, color: Color(0xFF00D9FF), size: 20),
-              const SizedBox(width: 12),
-              const Expanded(
+              Icon(Icons.science, color: Color(0xFF00D9FF), size: 20),
+              SizedBox(width: 12),
+              Expanded(
                 child: Text(
                   'Fundamento Científico',
                   style: TextStyle(
@@ -1369,11 +1368,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
           ),
         ),
         const SizedBox(height: 8),
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.school, size: 16, color: Color(0xFF00D9FF)),
-            const SizedBox(width: 8),
-            const Expanded(
+            Icon(Icons.school, size: 16, color: Color(0xFF00D9FF)),
+            SizedBox(width: 8),
+            Expanded(
               child: Text(
                 'Solo ajustes dentro de rangos científicos validados',
                 style: TextStyle(
@@ -1395,15 +1394,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
               color: const Color(0xFF00D9FF).withValues(alpha: 0.3),
             ),
           ),
-          child: Row(
+          child: const Row(
             children: [
-              const Icon(
-                Icons.info_outline,
-                color: Color(0xFF00D9FF),
-                size: 18,
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
+              Icon(Icons.info_outline, color: Color(0xFF00D9FF), size: 18),
+              SizedBox(width: 12),
+              Expanded(
                 child: Text(
                   'El volumen por músculo se ajusta automáticamente con bitácora y rendimiento. Aquí solo puedes cambiar distribución de intensidad.',
                   style: TextStyle(fontSize: 12, color: Colors.white70),
@@ -1421,11 +1416,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.tune, color: Color(0xFF00D9FF), size: 20),
-              const SizedBox(width: 12),
-              const Expanded(
+              Icon(Icons.tune, color: Color(0xFF00D9FF), size: 20),
+              SizedBox(width: 12),
+              Expanded(
                 child: Text(
                   'Distribución de Intensidad',
                   style: TextStyle(
@@ -1687,11 +1682,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.preview, color: Color(0xFF00D9FF), size: 20),
-              const SizedBox(width: 12),
-              const Text(
+              Icon(Icons.preview, color: Color(0xFF00D9FF), size: 20),
+              SizedBox(width: 12),
+              Text(
                 'Preview de Cambios',
                 style: TextStyle(
                   fontSize: 18,
@@ -1757,11 +1752,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.warning, color: Colors.orange, size: 18),
-                const SizedBox(width: 12),
-                const Expanded(
+                Icon(Icons.warning, color: Colors.orange, size: 18),
+                SizedBox(width: 12),
+                Expanded(
                   child: Text(
                     'Aplicar cambios regenerará el programa completo',
                     style: TextStyle(fontSize: 12, color: Colors.white70),
@@ -1860,11 +1855,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
   }
 
   Widget _buildAdjustmentsHistorySection() {
-    return HcsCard(
+    return const HcsCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Historial de Ajustes',
             style: TextStyle(
               fontSize: 18,
@@ -1872,13 +1867,13 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Sin ajustes manuales aún',
             style: TextStyle(fontSize: 13, color: Colors.white54),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Los ajustes aparecerán aquí cuando modifiques la distribución de intensidad.',
             style: TextStyle(fontSize: 12, color: Colors.white38),
           ),
@@ -1892,11 +1887,11 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.lightbulb, color: Colors.amber, size: 20),
-              const SizedBox(width: 12),
-              const Text(
+              Icon(Icons.lightbulb, color: Colors.amber, size: 20),
+              SizedBox(width: 12),
+              Text(
                 'Recomendaciones del Motor',
                 style: TextStyle(
                   fontSize: 18,
@@ -2011,7 +2006,7 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
       availableDays: 4,
       sessionDuration: 90,
       primaryGoal: 'hypertrophy',
-      musclePriorities: {
+      musclePriorities: const {
         // PRIMARIOS (usuario dijo: quiero desarrollar pecho y espalda)
         'chest': 5, // → ~16-18 sets (MAV para intermedio)
         'lats': 5, // → ~16-18 sets
@@ -2030,8 +2025,7 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
         'calves': 2, // → ~6-8 sets (MEV)
         'abs': 2, // → ~8-10 sets (MEV)
       },
-      injuryHistory: {},
-      availableEquipment: [
+      availableEquipment: const [
         'barbell',
         'dumbbell',
         'machine',

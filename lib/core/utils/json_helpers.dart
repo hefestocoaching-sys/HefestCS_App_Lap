@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 
 class SafeJson {
   static Map<String, dynamic>? decode(String? jsonString) {
@@ -10,10 +10,12 @@ class SafeJson {
       if (decoded is Map<String, dynamic>) {
         return decoded;
       }
-      debugPrint('JSON decode returned non-map: ${decoded.runtimeType}');
+      logger.debug('JSON decode returned non-map', {
+        'type': decoded.runtimeType.toString(),
+      });
       return null;
     } catch (e) {
-      debugPrint('JSON decode error: $e');
+      logger.error('JSON decode error', e);
       return null;
     }
   }
@@ -22,7 +24,7 @@ class SafeJson {
     try {
       return jsonEncode(object);
     } catch (e) {
-      debugPrint('JSON encode error: $e');
+      logger.error('JSON encode error', e);
       return '{}';
     }
   }

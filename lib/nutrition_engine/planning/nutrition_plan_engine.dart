@@ -40,7 +40,6 @@ class NutritionPlanEngine {
     final config = MealDistributionConfig(
       mealsPerDay: mealsPerDay,
       minProteinPerMealPerKg: proteinFactor,
-      enforceProteinThreshold: true,
       minProteinPerMealAbsolute: minProteinPerMeal,
     );
 

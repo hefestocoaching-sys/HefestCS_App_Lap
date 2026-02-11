@@ -61,7 +61,6 @@ class ClinicalRestrictionProfile {
       clinicalConditions: ClinicalConditions.defaults(),
       dietaryPattern: 'omnivore',
       relevantMedications: {},
-      additionalNotes: null,
     );
   }
 

@@ -10,7 +10,7 @@ import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 void main() {
   group('Critical Flows - No Breaking Changes', () {
     test('Client serialization backward compatible', () {
-      final profile = ClientProfile(
+      const profile = ClientProfile(
         id: 'test',
         fullName: 'Test User',
         email: 'test@example.com',
@@ -26,8 +26,7 @@ void main() {
         profile: profile,
         history: history,
         training: training,
-        nutrition: NutritionSettings(
-          extra: const {},
+        nutrition: const NutritionSettings(
           weeklyMacroSettings: {
             'Lunes': DailyMacroSettings(
               proteinSelected: 2.0,
@@ -50,7 +49,7 @@ void main() {
     });
 
     test('Equivalents persist correctly', () async {
-      final profile = ClientProfile(
+      const profile = ClientProfile(
         id: 'test',
         fullName: 'Test User',
         email: 'test@example.com',
@@ -66,7 +65,7 @@ void main() {
         profile: profile,
         history: history,
         training: training,
-        nutrition: NutritionSettings(
+        nutrition: const NutritionSettings(
           extra: {
             'equivalents_by_day': {
               'lunes': {'grains': 2, 'vegetables': 3},

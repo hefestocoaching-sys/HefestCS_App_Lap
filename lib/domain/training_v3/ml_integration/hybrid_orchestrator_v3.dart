@@ -111,20 +111,17 @@ class HybridOrchestratorV3 {
     // FASE 2: OBTENER DATOS HISTÓRICOS
     // ═══════════════════════════════════════════════════
 
-    logger.info('Fetching recent workout logs', {
-      'limit': 20,
-      'days': 28,
-    });
+    logger.info('Fetching recent workout logs', {'limit': 20, 'days': 28});
 
     final recentLogs = await WorkoutLogRepository.getLogsByUser(
       userId: userProfile.id,
       limit: 20,
-      startDate: timestamp.subtract(Duration(days: 28)), // Últimas 4 semanas
+      startDate: timestamp.subtract(
+        const Duration(days: 28),
+      ), // Últimas 4 semanas
     );
 
-    logger.info('Recent workout logs fetched', {
-      'count': recentLogs.length,
-    });
+    logger.info('Recent workout logs fetched', {'count': recentLogs.length});
 
     // ═══════════════════════════════════════════════════
     // FASE 3: REFINAMIENTO ML
@@ -172,27 +169,23 @@ class HybridOrchestratorV3 {
         recentLogs: recentLogs,
       );
 
-      // TODO: Extraer decisiones del mlResult
       // Por ahora usamos placeholders
       await _recorder.recordPrediction(
         predictionId: predictionId,
         userId: userProfile.id,
         features: features,
         volumeDecision: VolumeDecision.maintain(), // PLACEHOLDER
-        readinessDecision: ReadinessDecision(
+        readinessDecision: const ReadinessDecision(
           level: ReadinessLevel.good,
           score: 0.7,
           confidence: 0.8,
-          recommendations: [],
         ), // PLACEHOLDER
         strategyUsed: mlResult['strategy_used'] as String,
         scientificProgram: scientificProgram,
         finalProgram: finalProgram,
       );
 
-      logger.info('ML prediction recorded', {
-        'predictionId': predictionId,
-      });
+      logger.info('ML prediction recorded', {'predictionId': predictionId});
     }
 
     // ═══════════════════════════════════════════════════
@@ -212,11 +205,10 @@ class HybridOrchestratorV3 {
       explainability = _mlAdapter.generateExplainability(
         features: features,
         volumeDecision: VolumeDecision.maintain(), // PLACEHOLDER
-        readinessDecision: ReadinessDecision(
+        readinessDecision: const ReadinessDecision(
           level: ReadinessLevel.good,
           score: 0.7,
           confidence: 0.8,
-          recommendations: [],
         ), // PLACEHOLDER
       );
     }

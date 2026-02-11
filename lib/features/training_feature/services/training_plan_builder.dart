@@ -92,7 +92,7 @@ class TrainingPlanBuilder {
     // Bloque A
     if (pickA != null && (vopByMuscle[pickA] ?? 0) > 0) {
       final setsA = max(3, min(5, vopByMuscle[pickA]!));
-      final exA = chooseExercise(pickA, preferUnilateral: false);
+      final exA = chooseExercise(pickA);
       blocks.add(
         ExerciseBlock(
           label: 'A',

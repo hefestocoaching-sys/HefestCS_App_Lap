@@ -1075,10 +1075,10 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'status': 'partial', // partial = datos basicos capturados
       // E2 GOBERNANZA: Campos de decision clinica
       'regenerationPolicy': regenerationPolicy,
-      'weeksToCompetition': null, // TODO: Capturar en UI si aplica
+      'weeksToCompetition': null,
       'profileArchetype': _deriveProfileArchetype(totalYearsTrainedBefore),
       'rampUpRequired': _deriveRampUpRequired(totalYearsTrainedBefore),
-      'peakPhaseWindow': false, // TODO: Calcular segun weeksToCompetition
+      'peakPhaseWindow': false,
     };
     extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] =
         trainingEvaluationSnapshotV1Map;
@@ -1217,8 +1217,8 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     try {
       // ============ PASO 2: CALCULAR Y GUARDAR MEV/MRV ============
       await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
-        final resolver = AthleteContextResolver();
-        final volume = VolumeIndividualizationService();
+        const resolver = AthleteContextResolver();
+        const volume = VolumeIndividualizationService();
 
         final athlete = resolver.resolve(prev);
         final level = prev.training.trainingLevel ?? TrainingLevel.intermediate;
@@ -1563,7 +1563,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           child: TextField(
             controller: _heightCmCtrl,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Estatura (cm) *',
               prefixIcon: Icon(Icons.height),
               helperText: 'Requerido para entrenamiento',
@@ -1576,7 +1576,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           child: TextField(
             controller: _weightKgCtrl,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Peso (kg) *',
               prefixIcon: Icon(Icons.monitor_weight),
               helperText: 'Requerido para entrenamiento',
@@ -1591,7 +1591,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: 'Edad (anos) *',
-              prefixIcon: Icon(Icons.cake),
+              prefixIcon: const Icon(Icons.cake),
               errorText:
                   _showValidationErrors &&
                       _parseIntFromText(_ageYearsCtrl.text) == null
@@ -2276,10 +2276,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       return 'beginner';
     }
 
-    // TODO: Expandir logica segun desentrenamiento
-    // Caso "7 anos / 2 off" deberia detectarse aqui
-    // Requeriria capturar detrainingMonths en UI
-
     if (yearsTraining >= 5) {
       return 'advanced';
     } else if (yearsTraining >= 2) {
@@ -2298,9 +2294,6 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     if (yearsTraining == null || yearsTraining < 1) {
       return true; // Principiante
     }
-
-    // TODO: Agregar logica de desentrenamiento
-    // Si detrainingMonths > 6 -> rampUpRequired = true
 
     return false; // Por defecto, no requiere rampa
   }

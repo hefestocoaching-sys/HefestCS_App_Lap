@@ -90,7 +90,7 @@ class WorkoutLogRepository {
     required String userId,
     required DateTime weekStart,
   }) async {
-    final weekEnd = weekStart.add(Duration(days: 7));
+    final weekEnd = weekStart.add(const Duration(days: 7));
 
     return await getLogsByUser(
       userId: userId,

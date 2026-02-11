@@ -139,12 +139,12 @@ class _TrainingAnalysisTabState extends ConsumerState<TrainingAnalysisTab>
 
   Widget _buildContent(Client? client) {
     if (client == null) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.assessment_outlined, size: 64, color: Colors.white24),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               "Selecciona un cliente o crea uno nuevo",
               style: TextStyle(color: kTextColorSecondary),
@@ -207,10 +207,9 @@ class _TrainingAnalysisTabState extends ConsumerState<TrainingAnalysisTab>
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: kPrimaryColor.withAlpha(80), width: 1.5),
           ),
-          child: Column(
+          child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: const [
+            children: [
               Icon(Icons.add, size: 36, color: kPrimaryColor),
               SizedBox(height: 8),
               Text(

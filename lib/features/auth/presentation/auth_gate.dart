@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/features/auth/presentation/login_screen.dart';
 import 'package:hcs_app_lap/features/auth/presentation/splash_screen.dart';
 import 'package:hcs_app_lap/features/main_shell/screen/main_shell_screen.dart';
@@ -14,7 +15,8 @@ class AuthGate extends StatelessWidget {
     Stream<User?>? authStream;
     try {
       authStream = FirebaseAuth.instance.authStateChanges();
-    } catch (_) {
+    } catch (e, st) {
+      logger.error('Failed to get auth state changes', e, st);
       return const LoginScreen();
     }
 

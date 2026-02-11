@@ -59,8 +59,8 @@ void main() {
   });
 
   test('RestPeriodCalculator calcula descanso correcto', () {
-    expect(RestPeriodCalculator.getRestSeconds(5, true, null), 240);
-    expect(RestPeriodCalculator.getRestSeconds(10, false, null), 90);
+    expect(RestPeriodCalculator.getRestSeconds(5, true), 240);
+    expect(RestPeriodCalculator.getRestSeconds(10, false), 90);
     expect(RestPeriodCalculator.formatRestTime(240), '4:00');
   });
 

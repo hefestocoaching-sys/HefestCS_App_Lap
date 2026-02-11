@@ -67,10 +67,11 @@ class AppointmentFirestoreDataSource {
 
     try {
       logger.debug('Loading appointments');
-      final snapshot = await collection.get();
-      logger.debug('Appointments loaded', {
-        'count': snapshot.docs.length,
-      });
+      final snapshot = await collection
+          .orderBy('date', descending: true)
+          .limit(100)
+          .get();
+      logger.debug('Appointments loaded', {'count': snapshot.docs.length});
 
       return snapshot.docs
           .map((doc) {

@@ -125,11 +125,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
           // No forzamos reset para mantener la selección del usuario si es posible
           ref
               .read(dietaryProvider.notifier)
-              .initialize(
-                newClient,
-                forceReset: false,
-                activeDateIso: widget.activeDateIso,
-              );
+              .initialize(newClient, activeDateIso: widget.activeDateIso);
           // 2. Then, update the local state and controllers.
           setState(() {
             _loadClientData(newClient);
@@ -297,7 +293,6 @@ class DietaryTabState extends ConsumerState<DietaryTab>
     // NEW v2: Calcular targets diarios con déficit porcentual
     final dietaryState = ref.read(dietaryProvider);
     final deficitPct = double.tryParse(_deficitPctController.text) ?? 0.15;
-    const floorPct = 0.95;
 
     final Map<String, int> dailyTarget = {};
     for (final day in dietaryState.dailyActivities.keys) {
@@ -306,7 +301,6 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         tmb: baseTMB,
         get: dailyGET,
         deficitPct: deficitPct,
-        floorPct: floorPct,
       );
       dailyTarget[day] = target.round();
     }
@@ -520,7 +514,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
     if (client == null) return;
 
     // Merge records into persisted nutrition.extra to avoid overwriting other keys
-    final recordsKey = NutritionExtraKeys.evaluationRecords;
+    const recordsKey = NutritionExtraKeys.evaluationRecords;
     ref.read(clientsProvider.notifier).updateActiveClient((current) {
       final extra = Map<String, dynamic>.from(current.nutrition.extra);
       final records = readNutritionRecordList(extra[recordsKey]);
@@ -584,7 +578,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         SnackBar(
           content: Text(feedback),
           backgroundColor: kPrimaryColor,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -981,7 +975,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
     final primaryButton = FloatingActionButton.extended(
       heroTag: 'diet_view_edit',
       onPressed: _enableEditMode,
-      label: Text(SaveMessages.buttonEditRecord),
+      label: const Text(SaveMessages.buttonEditRecord),
       icon: const Icon(Icons.edit),
       backgroundColor: kPrimaryColor,
       foregroundColor: Colors.white,
@@ -1033,7 +1027,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
                   // Notificar al parent que volvió a view
                   widget.onViewStateChanged?.call(false);
                 },
-          label: Text(SaveMessages.buttonSaveChanges),
+          label: const Text(SaveMessages.buttonSaveChanges),
           icon: const Icon(Icons.save),
           backgroundColor: kPrimaryColor,
           foregroundColor: Colors.white,
@@ -1058,7 +1052,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
                     _mode = _TabMode.view;
                   });
                 },
-          label: Text(SaveMessages.buttonCreateNew),
+          label: const Text(SaveMessages.buttonCreateNew),
           icon: const Icon(Icons.save),
           backgroundColor: kPrimaryColor,
           foregroundColor: Colors.white,
@@ -1198,12 +1192,11 @@ class DietaryTabState extends ConsumerState<DietaryTab>
                             width: 1.5,
                           ),
                         ),
-                        child: Column(
+                        child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(Icons.add, size: 48, color: kPrimaryColor),
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Text(
                               'Nuevo cálculo',
                               style: TextStyle(
@@ -1252,14 +1245,10 @@ class DietaryTabState extends ConsumerState<DietaryTab>
                       decoration: BoxDecoration(
                         color: kCardColor.withAlpha((255 * 0.30).round()),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.grey.shade700,
-                          width: 1,
-                        ),
+                        border: Border.all(color: Colors.grey.shade700),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             day,

@@ -89,12 +89,11 @@ class TrainingAdaptationService {
       ),
     );
 
-    // Reglas conservadoras de adaptación (mínimo viable)
-    // TODO: Implementar lógica de ajuste basada en:
-    // - RIR real vs target (si RIR real < target-1 consistentemente → aumentar carga, no sets)
-    // - Fatiga reportada (si fatiga alta → reducir volumen en -1 set para ese músculo)
-    // - Adherencia (si sesiones incompletas → mantener o reducir ligeramente)
-    // - Progreso de carga (si estancamiento → considerar swap de variante del mismo patrón)
+    // Reglas conservadoras de adaptacion (minimo viable)
+    // - RIR real vs target (si RIR real < target-1 consistentemente -> aumentar carga, no sets)
+    // - Fatiga reportada (si fatiga alta -> reducir volumen en -1 set para ese musculo)
+    // - Adherencia (si sesiones incompletas -> mantener o reducir ligeramente)
+    // - Progreso de carga (si estancamiento -> considerar swap de variante del mismo patron)
 
     // Por ahora: adaptación conservadora sin cambios
     decisions.add(
@@ -129,7 +128,6 @@ class TrainingAdaptationService {
     required Map<String, VolumeLimits> volumeLimits,
   }) {
     // Por ahora retornar sin modificar hasta tener mapping muscle->ejercicio
-    // TODO: Implementar lookup de músculo a partir de exerciseCode/catalogEntry
     return prescriptions;
   }
 

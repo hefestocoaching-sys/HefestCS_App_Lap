@@ -288,7 +288,7 @@ class _TrainingWorkspaceScreenState
       });
     }
 
-    final interviewBlockedTooltip =
+    const interviewBlockedTooltip =
         'Completa entrevista para habilitar generaci├│n/adaptaci├│n';
 
     // Mostrar TabBar + TabBarView con los 9 tabs Motor V3
@@ -394,7 +394,7 @@ class _TrainingWorkspaceScreenState
                 plan == null
                     ? 'Sin plan | $totalPlans total'
                     : 'Plan: ${plan.id.substring(0, 8)}... | $totalPlans total',
-                style: TextStyle(color: kTextColorSecondary, fontSize: 12),
+                style: const TextStyle(color: kTextColorSecondary, fontSize: 12),
               ),
             ),
           ],
@@ -438,7 +438,6 @@ class _TrainingWorkspaceScreenState
                 labelColor: kPrimaryColor,
                 unselectedLabelColor: kTextColorSecondary,
                 indicatorColor: kPrimaryColor,
-                indicatorWeight: 2,
               ),
 
               // TabBarView (ocupa resto espacio en Expanded)
@@ -548,10 +547,10 @@ class _TrainingWorkspaceScreenState
   }
 
   Widget _buildExercisesTabPlaceholder(TrainingPlanConfig plan) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.fitness_center, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('Tab de ejercicios (pendiente)'),
@@ -561,10 +560,10 @@ class _TrainingWorkspaceScreenState
   }
 
   Widget _buildProgressionTabPlaceholder(TrainingPlanConfig plan) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.trending_up, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('Tab de progresi├│n (pendiente)'),
@@ -574,10 +573,10 @@ class _TrainingWorkspaceScreenState
   }
 
   Widget _buildDecisionsTabPlaceholder(TrainingPlanConfig plan) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.description, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('Tab de decisiones (pendiente)'),
@@ -587,10 +586,10 @@ class _TrainingWorkspaceScreenState
   }
 
   Widget _buildMonitoringTabPlaceholder(TrainingPlanConfig plan) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.assessment, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('Tab de monitoreo (pendiente)'),
@@ -936,7 +935,7 @@ class _TrainingWorkspaceScreenState
       return TrainingProgressionStateV1.fromJson(raw.cast<String, dynamic>());
     }
 
-    return TrainingProgressionStateV1(
+    return const TrainingProgressionStateV1(
       weeksCompleted: 0,
       sessionsCompleted: 0,
       consecutiveWeeksTraining: 0,

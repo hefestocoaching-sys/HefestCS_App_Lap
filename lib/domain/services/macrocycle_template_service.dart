@@ -29,7 +29,7 @@ class MacrocycleTemplateService {
     // AA (Adaptación Anual) — Semanas 1–4
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 1,
         phase: MacroPhase.adaptation,
         block: MacroBlock.AA,
@@ -38,7 +38,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 2,
         phase: MacroPhase.adaptation,
         block: MacroBlock.AA,
@@ -47,7 +47,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 3,
         phase: MacroPhase.adaptation,
         block: MacroBlock.AA,
@@ -56,7 +56,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 4,
         phase: MacroPhase.adaptation,
         block: MacroBlock.AA,
@@ -69,7 +69,7 @@ class MacrocycleTemplateService {
     // HF1 (Hipertrofia 1) — Semanas 5–8
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 5,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF1,
@@ -78,7 +78,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 6,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF1,
@@ -87,7 +87,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 7,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF1,
@@ -96,7 +96,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 8,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF1,
@@ -109,7 +109,7 @@ class MacrocycleTemplateService {
     // HF2 (Hipertrofia 2) — Semanas 9–12
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 9,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF2,
@@ -118,7 +118,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 10,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF2,
@@ -127,7 +127,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 11,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF2,
@@ -136,7 +136,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 12,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF2,
@@ -149,7 +149,7 @@ class MacrocycleTemplateService {
     // HF3 (Hipertrofia 3) — Semanas 13–16
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 13,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF3,
@@ -158,7 +158,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 14,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF3,
@@ -167,7 +167,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 15,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF3,
@@ -176,7 +176,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 16,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF3,
@@ -189,7 +189,7 @@ class MacrocycleTemplateService {
     // HF4 (Hipertrofia 4) — Semanas 17–20
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 17,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF4,
@@ -198,7 +198,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 18,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF4,
@@ -207,7 +207,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 19,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF4,
@@ -216,7 +216,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 20,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF4,
@@ -229,7 +229,7 @@ class MacrocycleTemplateService {
     // APC1 (Apropiación 1) — Semanas 21–23
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 21,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC1,
@@ -238,7 +238,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 22,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC1,
@@ -247,7 +247,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 23,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC1,
@@ -260,7 +260,7 @@ class MacrocycleTemplateService {
     // APC2 (Apropiación 2) — Semanas 24–26
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 24,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC2,
@@ -269,7 +269,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 25,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC2,
@@ -278,7 +278,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 26,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC2,
@@ -291,7 +291,7 @@ class MacrocycleTemplateService {
     // APC3 (Apropiación 3) — Semanas 27–29
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 27,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC3,
@@ -300,7 +300,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 28,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC3,
@@ -309,7 +309,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 29,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC3,
@@ -322,7 +322,7 @@ class MacrocycleTemplateService {
     // APC4 (Apropiación 4) — Semanas 30–32
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 30,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC4,
@@ -331,7 +331,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 31,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC4,
@@ -340,7 +340,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 32,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC4,
@@ -353,7 +353,7 @@ class MacrocycleTemplateService {
     // APC5 (Apropiación 5) — Semanas 33–35
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 33,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC5,
@@ -362,7 +362,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 34,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC5,
@@ -371,7 +371,7 @@ class MacrocycleTemplateService {
       ),
     );
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 35,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC5,
@@ -398,7 +398,7 @@ class MacrocycleTemplateService {
 
     // Deload en semana 42
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 42,
         phase: MacroPhase.peaking,
         block: MacroBlock.PC,
@@ -424,7 +424,7 @@ class MacrocycleTemplateService {
     // Deload final — Semana 52
     // ════════════════════════════════════════════════════════════════════════
     weeks.add(
-      MacrocycleWeek(
+      const MacrocycleWeek(
         weekNumber: 52,
         phase: MacroPhase.deload,
         block: MacroBlock.AA, // Reinicia ciclo

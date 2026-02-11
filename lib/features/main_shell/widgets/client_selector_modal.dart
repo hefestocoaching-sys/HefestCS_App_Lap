@@ -201,7 +201,7 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
                                           ),
                                         ),
                                         const SizedBox(height: 16),
-                                        Text(
+                                        const Text(
                                           'No se encontraron clientes',
                                           style: TextStyle(
                                             fontSize: 16,
@@ -277,7 +277,6 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
                                                     ..._highlightMatches(
                                                       client.profile.email,
                                                       _lastQuery,
-                                                      matchColor: kAccentColor,
                                                       defaultStyle:
                                                           const TextStyle(
                                                             color: kTextColor,
@@ -347,10 +346,10 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: kCardColor,
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.person_add, color: kPrimaryColor),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text('Nuevo Cliente', style: TextStyle(color: kPrimaryColor)),
           ],
         ),

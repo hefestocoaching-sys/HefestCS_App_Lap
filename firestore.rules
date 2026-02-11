@@ -50,12 +50,15 @@ service cloud.firestore {
     }
     
     // ════════════════════════════════════════════════════════════
-    // ML TRAINING DATA (NUEVO - CRITICO)
+    // ✅ ML TRAINING DATA (SEGURO)
     // ════════════════════════════════════════════════════════════
-    
+
     match /ml_training_data/{exampleId} {
+      // Crear: Solo si el coachId en el documento coincide con el usuario
       allow create: if isAuthenticated() &&
         request.resource.data.coachId == request.auth.uid;
+      
+      // Leer/Actualizar/Eliminar: Solo si ya es dueño del documento
       allow read, update, delete: if isAuthenticated() &&
         resource.data.coachId == request.auth.uid;
     }

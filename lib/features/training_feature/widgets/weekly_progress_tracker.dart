@@ -184,10 +184,10 @@ class _WeeklyProgressTrackerState extends State<WeeklyProgressTracker> {
               color: kAppBarColor.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.info_outline, color: kPrimaryColor, size: 18),
-                const SizedBox(width: 12),
+                Icon(Icons.info_outline, color: kPrimaryColor, size: 18),
+                SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Esta tabla muestra cómo respondió el cliente al volumen programado. '
@@ -405,7 +405,7 @@ class _WeeklyProgressTrackerState extends State<WeeklyProgressTracker> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, color: kTextColorSecondary),
+            style: const TextStyle(fontSize: 11, color: kTextColorSecondary),
           ),
         ],
       ),
@@ -479,7 +479,7 @@ class _WeeklyProgressTrackerState extends State<WeeklyProgressTracker> {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(4),
                   ),
-                  border: Border.all(color: week.statusColor, width: 1),
+                  border: Border.all(color: week.statusColor),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -499,7 +499,7 @@ class _WeeklyProgressTrackerState extends State<WeeklyProgressTracker> {
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
                         'S${week.weekNumber}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: kTextColorSecondary,
                           fontSize: 9,
                         ),

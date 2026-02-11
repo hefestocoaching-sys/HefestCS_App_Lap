@@ -167,14 +167,14 @@ class _SeriesDistributionScreenState
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: _glass(),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(Icons.info_outline, color: kPrimaryColor, size: 20),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'Distribución de Intensidad',
                 style: TextStyle(
                   color: kPrimaryColor,
@@ -184,8 +184,8 @@ class _SeriesDistributionScreenState
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: 12),
+          Text(
             'Distribuye el volumen total en series pesadas, moderadas y ligeras '
             'sin alterar el número total de sets. Los porcentajes deben sumar 100%.',
             style: TextStyle(color: kTextColorSecondary, height: 1.5),

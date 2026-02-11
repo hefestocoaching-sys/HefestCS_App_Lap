@@ -61,9 +61,9 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 1, child: _buildWeeklyCaloriesGraphBlock(context)),
+              Expanded(child: _buildWeeklyCaloriesGraphBlock(context)),
               const SizedBox(width: 16),
-              Expanded(flex: 1, child: _buildMeasuresEvolutionBlock(context)),
+              Expanded(child: _buildMeasuresEvolutionBlock(context)),
             ],
           ),
           if (_shouldShowAdherenceBlock()) ...[
@@ -270,7 +270,6 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
         ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             flex: 3,
@@ -705,7 +704,7 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
       decoration: BoxDecoration(
         color: kBackgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kAppBarColor.withAlpha(60), width: 1),
+        border: Border.all(color: kAppBarColor.withAlpha(60)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -764,7 +763,6 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
       decoration: _cardBoxDecoration(),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             label,
@@ -793,9 +791,9 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  Text(
+                  const Text(
                     '%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: kTextColor,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -951,7 +949,7 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
     return BoxDecoration(
       color: kCardColor,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: kAppBarColor.withAlpha(60), width: 1),
+      border: Border.all(color: kAppBarColor.withAlpha(60)),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withAlpha(15),
@@ -1153,7 +1151,6 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
                 minY: adjustedMinY,
                 maxY: adjustedMaxY,
                 gridData: FlGridData(
-                  show: true,
                   drawVerticalLine: false,
                   horizontalInterval: (adjustedMaxY - adjustedMinY) / 4,
                   getDrawingHorizontalLine: (value) {
@@ -1182,10 +1179,10 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
                     ),
                   ),
                   rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                    
                   ),
                   topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                    
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -1218,11 +1215,9 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
                   border: Border(
                     left: BorderSide(
                       color: kAppBarColor.withAlpha(60),
-                      width: 1,
                     ),
                     bottom: BorderSide(
                       color: kAppBarColor.withAlpha(60),
-                      width: 1,
                     ),
                   ),
                 ),
@@ -1233,7 +1228,6 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
                     color: kPrimaryColor,
                     barWidth: 3,
                     dotData: FlDotData(
-                      show: true,
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
                           radius: 5,
@@ -1285,7 +1279,7 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
       decoration: BoxDecoration(
         color: kBackgroundColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kAppBarColor.withAlpha(60), width: 1),
+        border: Border.all(color: kAppBarColor.withAlpha(60)),
       ),
       child: DropdownButton<String>(
         value: _selectedMetric,

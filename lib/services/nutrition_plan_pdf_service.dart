@@ -68,17 +68,17 @@ class NutritionPlanPdfService {
           pw.Text(meal.name, style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 4),
           if (meal.items.isEmpty)
-            pw.Text('Sin alimentos', style: pw.TextStyle(fontSize: 10))
+            pw.Text('Sin alimentos', style: const pw.TextStyle(fontSize: 10))
           else
             pw.Table(
               border: pw.TableBorder.all(width: 0.3),
               columnWidths: const {
                 0: pw.FlexColumnWidth(3),
-                1: pw.FlexColumnWidth(1),
-                2: pw.FlexColumnWidth(1),
-                3: pw.FlexColumnWidth(1),
-                4: pw.FlexColumnWidth(1),
-                5: pw.FlexColumnWidth(1),
+                1: pw.FlexColumnWidth(),
+                2: pw.FlexColumnWidth(),
+                3: pw.FlexColumnWidth(),
+                4: pw.FlexColumnWidth(),
+                5: pw.FlexColumnWidth(),
               },
               children: [
                 pw.TableRow(

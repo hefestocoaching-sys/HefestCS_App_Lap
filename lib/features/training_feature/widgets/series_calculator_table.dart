@@ -72,11 +72,7 @@ class _SeriesCalculatorTableState extends State<SeriesCalculatorTable> {
     super.initState();
     _distributions = {
       for (var muscle in widget.baseSeries.keys)
-        muscle: const SeriesDistribution(
-          heavyPercent: 34,
-          mediumPercent: 33,
-          lightPercent: 33,
-        ),
+        muscle: const SeriesDistribution(),
     };
     // Notifica al padre los valores iniciales después del primer frame.
     WidgetsBinding.instance.addPostFrameCallback((_) => _notifyParent());
@@ -193,10 +189,10 @@ class _SeriesCalculatorTableState extends State<SeriesCalculatorTable> {
       fontSize: 12,
       fontWeight: FontWeight.w600,
     );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
-        children: const [
+        children: [
           Expanded(flex: 3, child: Text('MÚSCULO', style: headerStyle)),
           Expanded(
             flex: 2,
@@ -255,7 +251,6 @@ class MuscleDistributionRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Columna 1: Nombre del Músculo
           Expanded(

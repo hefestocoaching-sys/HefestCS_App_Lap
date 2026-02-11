@@ -9,7 +9,7 @@ void main() {
   test(
     'Clients sort by updatedAt descending with epoch fallback treated as oldest',
     () {
-      final profile = ClientProfile(
+      const profile = ClientProfile(
         id: 'p1',
         fullName: 'Test',
         email: 't@example.com',

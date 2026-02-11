@@ -94,7 +94,7 @@ class DashboardScreen extends ConsumerWidget {
                   final isWide = constraints.maxWidth > 900;
 
                   if (isWide) {
-                    return Row(
+                    return const Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Columna izquierda (60%)
@@ -102,15 +102,15 @@ class DashboardScreen extends ConsumerWidget {
                           flex: 6,
                           child: Column(
                             children: [
-                              const TodayAppointmentsWidget(),
-                              const SizedBox(height: 24),
-                              const FinancialSummaryWidget(),
+                              TodayAppointmentsWidget(),
+                              SizedBox(height: 24),
+                              FinancialSummaryWidget(),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 24),
+                        SizedBox(width: 24),
                         // Columna derecha (40%)
-                        const Expanded(flex: 4, child: AlertsPanelWidget()),
+                        Expanded(flex: 4, child: AlertsPanelWidget()),
                       ],
                     );
                   } else {
@@ -223,15 +223,12 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             QuickStatCard(
               icon: Icons.people,
-              iconColor: kPrimaryColor,
               title: 'Clientes Activos',
               value: '$activeClients',
               subtitle: 'de $totalClients totales',
               trend: activeClients > 0 ? '+$activeClients' : null,
               isPositive: true,
-              onTap: () {
-                // TODO: Navegar a lista de clientes
-              },
+              onTap: () {},
             ),
             QuickStatCard(
               icon: Icons.arrow_upward,
@@ -241,9 +238,7 @@ class DashboardScreen extends ConsumerWidget {
               subtitle: 'Total ingresado',
               trend: monthlyIncome > 0 ? '+${formatMXN(monthlyIncome)}' : null,
               isPositive: true,
-              onTap: () {
-                // TODO: Navegar a detalles financieros
-              },
+              onTap: () {},
             ),
             QuickStatCard(
               icon: Icons.arrow_downward,
@@ -253,9 +248,7 @@ class DashboardScreen extends ConsumerWidget {
               subtitle: 'Total gastado',
               trend: monthlyExpenses > 0 ? formatMXN(monthlyExpenses) : null,
               isPositive: false,
-              onTap: () {
-                // TODO: Navegar a detalles financieros
-              },
+              onTap: () {},
             ),
             QuickStatCard(
               icon: Icons.trending_up,
@@ -265,9 +258,7 @@ class DashboardScreen extends ConsumerWidget {
               subtitle: 'Ingresos - Gastos',
               trend: monthlyProfit != 0 ? formatMXN(monthlyProfit.abs()) : null,
               isPositive: monthlyProfit >= 0,
-              onTap: () {
-                // TODO: Navegar a resumen financiero
-              },
+              onTap: () {},
             ),
           ],
         );

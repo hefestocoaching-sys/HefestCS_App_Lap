@@ -380,7 +380,6 @@ class TrainingDatasetService {
   /// This method was planned for ML dataset feature but TrainingContext class doesn't exist.
   /// Keeping code commented for future reference.
   ///
-  /// TODO: Implement TrainingContext class and uncomment this method if ML dataset feature is needed
   /*
   /// Registra una predicción cuando se genera un plan
   ///
@@ -500,7 +499,6 @@ class TrainingDatasetService {
     final examples = await exportDataset(
       startDate: startDate,
       endDate: endDate,
-      onlyWithLabels: true,
     );
 
     if (examples.isEmpty) {

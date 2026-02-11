@@ -63,7 +63,7 @@ class _WeeklyPlanTabState extends State<WeeklyPlanTab> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.lock_outline, size: 64, color: kTextColorSecondary),
+              const Icon(Icons.lock_outline, size: 64, color: kTextColorSecondary),
               const SizedBox(height: 16),
               Text(
                 title,

@@ -9,7 +9,7 @@ void main() {
   test(
     'Client.fromJson invalid dates fallback to epoch (msSinceEpoch == 0)',
     () {
-      final profile = ClientProfile(
+      const profile = ClientProfile(
         id: 'p1',
         fullName: 'Test',
         email: 't@example.com',

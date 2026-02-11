@@ -92,6 +92,43 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     final dayEquivalents = state.dayEquivalents[widget.dayKey] ?? {};
     final totals = _calculateTotals(dayEquivalents);
 
+    double kcalTarget = 0;
+    double proteinTarget = 0;
+    double fatTarget = 0;
+    double carbTarget = 0;
+
+    final resolvedSettings = FeatureFlags.enableGranularProviders
+        ? () {
+            final daySettings = ref.watch(
+              dayMacroSettingsProvider(widget.dayKey),
+            );
+            final weeklySettings = ref.watch(weeklyMacroSettingsProvider);
+            return daySettings ?? weeklySettings?[widget.dayLabel];
+          }()
+        : () {
+            final client = ref.watch(clientsProvider).value?.activeClient;
+            final weeklySettings = client?.nutrition.weeklyMacroSettings;
+            return weeklySettings?[widget.dayKey] ??
+                weeklySettings?[widget.dayLabel];
+          }();
+    final weight = FeatureFlags.enableGranularProviders
+        ? ref.watch(clientWeightProvider) ?? 70.0
+        : (ref.watch(clientsProvider).value?.activeClient?.lastWeight ?? 70.0);
+
+    if (resolvedSettings != null) {
+      proteinTarget = resolvedSettings.proteinSelected * weight;
+      fatTarget = resolvedSettings.fatSelected * weight;
+      carbTarget = resolvedSettings.carbSelected * weight;
+      kcalTarget = resolvedSettings.totalCalories > 0
+          ? resolvedSettings.totalCalories
+          : (proteinTarget * 4) + (fatTarget * 9) + (carbTarget * 4);
+    } else {
+      kcalTarget = widget.planResult.kcalTargetDay ?? 0.0;
+      proteinTarget = widget.planResult.proteinTargetDay ?? 0.0;
+      fatTarget = widget.planResult.fatTargetDay ?? 0.0;
+      carbTarget = widget.planResult.carbTargetDay ?? 0.0;
+    }
+
     final groupsWithValues = allGroups
         .where((group) => (dayEquivalents[group.id] ?? 0) > 0)
         .toList();
@@ -106,7 +143,14 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
           delegate: _SummaryHeaderDelegate(
             minHeight: 240,
             maxHeight: 240,
-            child: _buildSummaryCard(context, totals),
+            child: _buildSummaryCard(
+              context,
+              totals,
+              kcalTarget: kcalTarget,
+              proteinTarget: proteinTarget,
+              fatTarget: fatTarget,
+              carbTarget: carbTarget,
+            ),
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -168,44 +212,14 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     );
   }
 
-  Widget _buildSummaryCard(BuildContext context, Map<String, double> totals) {
-    double kcalTarget = 0;
-    double proteinTarget = 0;
-    double fatTarget = 0;
-    double carbTarget = 0;
-
-    final resolvedSettings = FeatureFlags.enableGranularProviders
-        ? () {
-            final daySettings = ref.watch(
-              dayMacroSettingsProvider(widget.dayKey),
-            );
-            final weeklySettings = ref.watch(weeklyMacroSettingsProvider);
-            return daySettings ?? weeklySettings?[widget.dayLabel];
-          }()
-        : () {
-            final client = ref.watch(clientsProvider).value?.activeClient;
-            final weeklySettings = client?.nutrition.weeklyMacroSettings;
-            return weeklySettings?[widget.dayKey] ??
-                weeklySettings?[widget.dayLabel];
-          }();
-    final weight = FeatureFlags.enableGranularProviders
-        ? ref.watch(clientWeightProvider) ?? 70.0
-        : (ref.watch(clientsProvider).value?.activeClient?.lastWeight ?? 70.0);
-
-    if (resolvedSettings != null) {
-      proteinTarget = resolvedSettings.proteinSelected * weight;
-      fatTarget = resolvedSettings.fatSelected * weight;
-      carbTarget = resolvedSettings.carbSelected * weight;
-      kcalTarget = resolvedSettings.totalCalories > 0
-          ? resolvedSettings.totalCalories
-          : (proteinTarget * 4) + (fatTarget * 9) + (carbTarget * 4);
-    } else {
-      kcalTarget = widget.planResult.kcalTargetDay ?? 0.0;
-      proteinTarget = widget.planResult.proteinTargetDay ?? 0.0;
-      fatTarget = widget.planResult.fatTargetDay ?? 0.0;
-      carbTarget = widget.planResult.carbTargetDay ?? 0.0;
-    }
-
+  Widget _buildSummaryCard(
+    BuildContext context,
+    Map<String, double> totals, {
+    required double kcalTarget,
+    required double proteinTarget,
+    required double fatTarget,
+    required double carbTarget,
+  }) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       padding: const EdgeInsets.all(16),

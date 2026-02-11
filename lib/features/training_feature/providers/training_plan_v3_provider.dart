@@ -49,7 +49,7 @@ class TrainingPlanV3Notifier extends Notifier<TrainingPlanV3State> {
     required List<Exercise> exercises,
   }) async {
     // Iniciar carga
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true);
 
     try {
       // 1) Validar inputs mínimos
@@ -61,7 +61,6 @@ class TrainingPlanV3Notifier extends Notifier<TrainingPlanV3State> {
       // 2) Crear orquestador y llamar Motor V3
       final orchestrator = TrainingOrchestratorV3(
         strategy: RuleBasedStrategy(),
-        recordPredictions: false,
       );
 
       final result = await orchestrator.generatePlan(

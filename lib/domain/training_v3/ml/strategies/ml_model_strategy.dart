@@ -9,7 +9,6 @@ import 'package:hcs_app_lap/domain/training_v3/ml/feature_vector.dart';
 /// 2. Modelo entrenado (TensorFlow Lite .tflite file)
 /// 3. Integración con tflite_flutter package
 ///
-/// TODO: Implementar cuando tengamos suficientes datos (>1000 ejemplos)
 class MLModelStrategy implements DecisionStrategy {
   // Placeholder para TensorFlow Lite interpreter
   // final Interpreter _interpreter;
@@ -25,9 +24,7 @@ class MLModelStrategy implements DecisionStrategy {
 
   @override
   VolumeDecision decideVolume(FeatureVector features) {
-    // TODO: Implementar inferencia con TensorFlow Lite
-    //
-    // Pseudocódigo:
+    // Pseudocodigo:
     // 1. final input = features.toTensor();
     // 2. final output = _interpreter.run(input);
     // 3. final adjustment = output[0]; // Primera salida: factor 0.5-1.2
@@ -42,9 +39,7 @@ class MLModelStrategy implements DecisionStrategy {
 
   @override
   ReadinessDecision decideReadiness(FeatureVector features) {
-    // TODO: Implementar inferencia con TensorFlow Lite
-    //
-    // Pseudocódigo:
+    // Pseudocodigo:
     // 1. final input = features.toTensor();
     // 2. final output = _interpreterReadiness.run(input);
     // 3. final score = output[0]; // Readiness score 0-1

@@ -412,11 +412,10 @@ class _BiochemistryComparisonScreenState
         1: FlexColumnWidth(2.5),
         2: FlexColumnWidth(2),
       },
-      border: TableBorder.symmetric(
-        inside: const BorderSide(
+      border: const TableBorder.symmetric(
+        inside: BorderSide(
           color: kTextColorSecondary,
           width: 0.5,
-          style: BorderStyle.solid,
         ),
         outside: BorderSide(color: kAppBarColor, width: 2),
       ),

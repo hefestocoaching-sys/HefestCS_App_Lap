@@ -210,7 +210,6 @@ class _TodayDateBlockState extends ConsumerState<TodayDateBlock>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: kSuccessColor.withAlpha(50),
-                        width: 1,
                       ),
                     ),
                     child: const Row(
@@ -250,7 +249,6 @@ class _TodayDateBlockState extends ConsumerState<TodayDateBlock>
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: const Color(0xFFF59E0B).withAlpha(50),
-                        width: 1,
                       ),
                     ),
                     child: const Row(

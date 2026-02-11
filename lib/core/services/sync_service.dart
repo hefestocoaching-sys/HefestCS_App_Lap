@@ -30,7 +30,7 @@ class SyncService {
     if (!_isRunning) return;
 
     try {
-      final pending = await SyncQueueHelper.getPendingItems(limit: 10);
+      final pending = await SyncQueueHelper.getPendingItems();
 
       for (final item in pending) {
         try {
@@ -52,7 +52,6 @@ class SyncService {
     final dateKey = item['date_key'] as String;
     final payload = item['payload'] as String;
 
-    // TODO: Implementar sync especifico por dominio
     if (domain == 'anthropometry') {
       // Parsear payload y subir...
       debugPrint(

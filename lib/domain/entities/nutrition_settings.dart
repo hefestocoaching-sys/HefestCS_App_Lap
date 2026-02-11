@@ -48,22 +48,10 @@ class NutritionSettings {
                'soy': false,
                'sesame': false,
              },
-             digestiveIntolerances: DigestiveIntolerances(
-               lactose: DigestiveSeverity.none,
-               gluten: DigestiveSeverity.none,
-               fodmaps: DigestiveSeverity.none,
-             ),
-             clinicalConditions: ClinicalConditions(
-               diabetes: false,
-               renalDisease: false,
-               giDisorders: false,
-               thyroidDisorders: false,
-               hypertension: false,
-               dyslipidemia: false,
-             ),
+             digestiveIntolerances: DigestiveIntolerances(),
+             clinicalConditions: ClinicalConditions(),
              dietaryPattern: 'omnivore',
              relevantMedications: {},
-             additionalNotes: null,
            );
 
   NutritionSettings copyWith({

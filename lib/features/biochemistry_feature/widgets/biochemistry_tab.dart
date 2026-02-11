@@ -629,7 +629,7 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
           children: [
             Row(
               children: [
-                Icon(Icons.science, color: kPrimaryColor, size: 24),
+                const Icon(Icons.science, color: kPrimaryColor, size: 24),
                 const SizedBox(width: 8),
                 Text(
                   title,
@@ -693,7 +693,7 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
                 child: ElevatedButton.icon(
                   onPressed: _enableEditMode,
                   icon: const Icon(Icons.edit),
-                  label: Text(SaveMessages.buttonEditRecord),
+                  label: const Text(SaveMessages.buttonEditRecord),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(180, 44),
                     backgroundColor: Colors.orange,
@@ -1774,7 +1774,7 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
         primaryButton = FloatingActionButton.extended(
           heroTag: 'bio_edit',
           onPressed: _enableEditMode,
-          label: Text(SaveMessages.buttonEditRecord),
+          label: const Text(SaveMessages.buttonEditRecord),
           icon: const Icon(Icons.edit),
           backgroundColor: kPrimaryColor,
           foregroundColor: Colors.white,
@@ -1802,7 +1802,7 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
         primaryButton = FloatingActionButton.extended(
           heroTag: 'bio_save_edit',
           onPressed: _saveRecord,
-          label: Text(SaveMessages.buttonSaveChanges),
+          label: const Text(SaveMessages.buttonSaveChanges),
           icon: const Icon(Icons.save),
           backgroundColor: kPrimaryColor,
           foregroundColor: Colors.white,
@@ -1820,7 +1820,7 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
         primaryButton = FloatingActionButton.extended(
           heroTag: 'bio_save_new',
           onPressed: _saveRecord,
-          label: Text(SaveMessages.buttonCreateNew),
+          label: const Text(SaveMessages.buttonCreateNew),
           icon: const Icon(Icons.save),
           backgroundColor: kPrimaryColor,
           foregroundColor: Colors.white,
@@ -2025,10 +2025,9 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: kPrimaryColor.withAlpha(80), width: 1.5),
           ),
-          child: Column(
+          child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: const [
+            children: [
               Icon(Icons.add, size: 36, color: kPrimaryColor),
               SizedBox(height: 8),
               Text(

@@ -9,8 +9,7 @@ void main() {
       // Crear un vector con valores de prueba
       final vector = FeatureVector(
         clientId: 'test_user',
-        timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 2,
+        timestamp: DateTime(2025),
         // Biological (5)
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
@@ -82,8 +81,7 @@ void main() {
     test('toTensor() returns 38-element list', () {
       final vector = FeatureVector(
         clientId: 'test_user',
-        timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 2,
+        timestamp: DateTime(2025),
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -142,8 +140,7 @@ void main() {
     test('One-hot goal encoding sums to 1.0', () {
       final vector = FeatureVector(
         clientId: 'test_user',
-        timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 2,
+        timestamp: DateTime(2025),
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -195,8 +192,7 @@ void main() {
     test('toJson() includes all expected sections', () {
       final vector = FeatureVector(
         clientId: 'test_user',
-        timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 2,
+        timestamp: DateTime(2025),
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -267,8 +263,7 @@ void main() {
       final strategy = RuleBasedStrategy();
       final vector = FeatureVector(
         clientId: 'test_user',
-        timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 2,
+        timestamp: DateTime(2025),
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -331,8 +326,7 @@ void main() {
       // Vector con excelente readiness
       final vector = FeatureVector(
         clientId: 'test_user',
-        timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 2,
+        timestamp: DateTime(2025),
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,
@@ -391,8 +385,7 @@ void main() {
       // Vector con pobre readiness
       final vector = FeatureVector(
         clientId: 'test_user',
-        timestamp: DateTime(2025, 1, 1),
-        schemaVersion: 2,
+        timestamp: DateTime(2025),
         ageYearsNorm: 0.3,
         genderMaleEncoded: 1.0,
         heightCmNorm: 0.6,

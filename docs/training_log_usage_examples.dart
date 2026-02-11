@@ -321,37 +321,30 @@ Future<void> ejemplo10_calcularAdherenciaSemanal() async {
 // ============================================================================
 
 Future<void> _saveToLocalDB(TrainingSessionLogV2 log) async {
-  // TODO: Implementar con SQLite, Hive, SharedPreferences, etc.
   print('[DB] Guardando log: ${log.id}');
 }
 
 Future<void> _saveAllToLocalDB(List<TrainingSessionLogV2> logs) async {
-  // TODO: Implementar bulk save
   print('[DB] Guardando ${logs.length} logs');
 }
 
 Future<List<TrainingSessionLogV2>> _loadFromLocalDB() async {
-  // TODO: Implementar lectura desde DB local
   return [];
 }
 
 Future<List<TrainingSessionLogV2>> _loadPendingSyncLogs() async {
-  // TODO: Implementar filtro por syncStatus
   return [];
 }
 
 Future<List<TrainingSessionLogV2>> _loadLogsForCurrentWeek() async {
-  // TODO: Implementar filtro por fecha (lunes-domingo actual)
   return [];
 }
 
 Future<void> _sendToServer(Map<String, dynamic> json) async {
-  // TODO: Implementar HTTP POST a Firebase/backend
   print('[SYNC] Enviando a servidor: ${json['id']}');
 }
 
 Future<void> _markAsSynced(String logId) async {
-  // TODO: Actualizar flag syncStatus en DB local
   print('[SYNC] Marcado como synced: $logId');
 }
 

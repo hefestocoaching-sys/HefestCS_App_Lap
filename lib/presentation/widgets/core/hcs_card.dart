@@ -40,7 +40,7 @@ class HcsCard extends StatelessWidget {
         : const Color(0xFF1A1F2E);
 
     final defaultBorder = glassEffect
-        ? Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1)
+        ? Border.all(color: Colors.white.withValues(alpha: 0.08))
         : null;
 
     final defaultShadow = glassEffect

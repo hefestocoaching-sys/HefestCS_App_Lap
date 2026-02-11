@@ -39,7 +39,7 @@ class _NoopClientRemoteDataSource implements ClientRemoteDataSource {
 }
 
 Client buildBaseClient() {
-  final profile = ClientProfile(
+  const profile = ClientProfile(
     id: 'p1',
     fullName: 'Concurrent',
     email: 't@example.com',

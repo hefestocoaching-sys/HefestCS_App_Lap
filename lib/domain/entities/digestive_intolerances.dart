@@ -23,11 +23,7 @@ class DigestiveIntolerances {
 
   /// Defaults seguros (sin intolerancias diagnosticadas)
   factory DigestiveIntolerances.defaults() {
-    return const DigestiveIntolerances(
-      lactose: DigestiveSeverity.none,
-      gluten: DigestiveSeverity.none,
-      fodmaps: DigestiveSeverity.none,
-    );
+    return const DigestiveIntolerances();
   }
 
   /// Deserialización segura desde Map

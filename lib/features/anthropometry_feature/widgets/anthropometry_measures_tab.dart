@@ -529,7 +529,7 @@ class AnthropometryMeasuresTabState
 
       final client = _client;
       if (client == null) {
-        showErrorSnackbar(context, 'Error: Cliente no cargado', isError: true);
+        showErrorSnackbar(context, 'Error: Cliente no cargado');
         return;
       }
 
@@ -588,7 +588,6 @@ class AnthropometryMeasuresTabState
         showErrorSnackbar(
           context,
           'Error al guardar: ${e.toString()}',
-          isError: true,
         );
       }
     }
@@ -885,7 +884,7 @@ class AnthropometryMeasuresTabState
         return _buildOverviewOnly(latestRecord);
 
       case AnthropometryViewState.creatingInitial:
-        return _buildForm(referenceRecord: null);
+        return _buildForm();
 
       case AnthropometryViewState.creatingNew:
         return _buildForm(referenceRecord: latestRecord);
@@ -1834,10 +1833,10 @@ class AnthropometryMeasuresTabState
         const SizedBox(height: 12),
 
         // Header de columnas
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8.0),
           child: Row(
-            children: const [
+            children: [
               Expanded(
                 flex: 3,
                 child: Text(
@@ -2167,12 +2166,11 @@ class AnthropometryMeasuresTabState
                     width: 1.5,
                   ),
                 ),
-                child: Column(
+                child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Icon(Icons.add, size: 48, color: kPrimaryColor),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text(
                       'Nuevo registro',
                       style: TextStyle(
@@ -2267,7 +2265,7 @@ class AnthropometryMeasuresTabState
         FloatingActionButton.extended(
           heroTag: 'cancel_record',
           onPressed: _cancelEdit,
-          label: Text(SaveMessages.buttonCancel),
+          label: const Text(SaveMessages.buttonCancel),
           icon: const Icon(Icons.close),
           backgroundColor: Colors.grey.shade700,
           foregroundColor: Colors.white,
@@ -2357,7 +2355,6 @@ class _AnthropometryRecordCardState extends State<_AnthropometryRecordCard>
                     (10 * (_elevationAnimation.value / 8)).toInt(),
                   ),
                   blurRadius: _elevationAnimation.value,
-                  spreadRadius: 0,
                   offset: Offset(0, _elevationAnimation.value / 2),
                 ),
               ],

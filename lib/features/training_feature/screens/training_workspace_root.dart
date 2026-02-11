@@ -24,7 +24,7 @@ class TrainingWorkspaceRoot extends ConsumerWidget {
             ],
           ),
         ),
-        child: SafeArea(child: TrainingWorkspaceScreen()),
+        child: const SafeArea(child: TrainingWorkspaceScreen()),
       ),
     );
   }

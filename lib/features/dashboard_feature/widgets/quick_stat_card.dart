@@ -35,7 +35,7 @@ class QuickStatCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: kCardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+          border: Border.all(color: Colors.white.withAlpha(20)),
         ),
         child: SingleChildScrollView(
           child: Column(

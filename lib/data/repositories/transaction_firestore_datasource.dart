@@ -58,7 +58,10 @@ class TransactionFirestoreDataSource {
     if (collection == null) return [];
 
     try {
-      final snapshot = await collection.orderBy('date', descending: true).get();
+      final snapshot = await collection
+          .orderBy('date', descending: true)
+          .limit(100)
+          .get();
       return snapshot.docs
           .map((doc) {
             try {
@@ -132,7 +135,7 @@ class TransactionFirestoreDataSource {
     if (collection == null) return [];
 
     try {
-      final startOfMonth = DateTime(month.year, month.month, 1);
+      final startOfMonth = DateTime(month.year, month.month);
       final endOfMonth = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
 
       final snapshot = await collection

@@ -415,12 +415,12 @@ class _PremiumBackground extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned(
+          const Positioned(
             left: -120,
             top: -120,
             child: _Blob(size: 320, opacity: 0.18),
           ),
-          Positioned(
+          const Positioned(
             right: -140,
             bottom: -140,
             child: _Blob(size: 360, opacity: 0.14),

@@ -195,7 +195,6 @@ class ClientSummaryPanel extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: kTextColorSecondary.withAlpha(20),
-                          width: 1,
                         ),
                       ),
                       padding: const EdgeInsets.all(12.0),
@@ -257,7 +256,7 @@ class ClientSummaryPanel extends ConsumerWidget {
                               ),
                               child: Text(
                                 insight,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 11,
                                   color: kTextColorSecondary,
                                   fontStyle: FontStyle.italic,
@@ -283,9 +282,9 @@ class ClientSummaryPanel extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         alignment: Alignment.centerLeft,
-        child: Text(
+        child: const Text(
           'No se pudo renderizar el resumen del cliente.',
-          style: const TextStyle(color: kTextColorSecondary),
+          style: TextStyle(color: kTextColorSecondary),
         ),
       );
     }
@@ -332,7 +331,7 @@ class ClientSummaryPanel extends ConsumerWidget {
       decoration: BoxDecoration(
         color: chipColor,
         borderRadius: BorderRadius.circular(20.0),
-        border: Border.all(color: textColor.withAlpha(127), width: 1),
+        border: Border.all(color: textColor.withAlpha(127)),
       ),
       child: Text(
         status.toUpperCase(),
@@ -354,17 +353,16 @@ class ClientSummaryPanel extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white.withAlpha(100),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withAlpha(80), width: 1),
+        border: Border.all(color: color.withAlpha(80)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: color, size: 14),
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 8,
               color: kTextColorSecondary,
               fontWeight: FontWeight.w600,

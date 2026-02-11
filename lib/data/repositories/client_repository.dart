@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/data/datasources/local/local_client_datasource.dart';
 import 'package:hcs_app_lap/data/datasources/remote/client_firestore_datasource.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
@@ -25,13 +26,14 @@ class ClientRepository {
     // 2) Push remoto inmediato (fire-and-forget)
     _pendingRemotePush[client.id] = client;
     _remotePushDebounce[client.id]?.cancel();
-    _remotePushDebounce[client.id] = Timer(const Duration(milliseconds: 700), () {
-      final latest = _pendingRemotePush.remove(client.id);
-      if (latest == null) return;
-      unawaited(
-        _pushClientRemote(latest, deleted: false).catchError((_) {}),
-      );
-    });
+    _remotePushDebounce[client.id] = Timer(
+      const Duration(milliseconds: 700),
+      () {
+        final latest = _pendingRemotePush.remove(client.id);
+        if (latest == null) return;
+        unawaited(_pushClientRemote(latest, deleted: false).catchError((_) {}));
+      },
+    );
   }
 
   Future<List<Client>> getClients() => _local.getAllClients();
@@ -77,7 +79,8 @@ class ClientRepository {
     User? user;
     try {
       user = FirebaseAuth.instance.currentUser;
-    } catch (_) {
+    } catch (e, st) {
+      logger.error('Failed to get current user', e, st);
       // Firebase no inicializado (p.ej. tests). La fuente de verdad es local.
       return;
     }

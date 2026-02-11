@@ -221,12 +221,12 @@ class _MacrocycleWeeklyCalculatorExampleState
   Widget _buildExplanation() {
     return Card(
       color: Colors.amber.withValues(alpha: 0.05),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+      child: const Padding(
+        padding: EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
                 Icon(Icons.info_outline, color: Colors.amber, size: 18),
                 SizedBox(width: 8),
@@ -236,23 +236,23 @@ class _MacrocycleWeeklyCalculatorExampleState
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               '• VOP base es fijo (viene de la evaluación motor)',
               style: TextStyle(fontSize: 10, color: kTextColorSecondary),
             ),
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4),
+            Text(
               '• Macrocycle multiplica el VOP según estrategia semanal',
               style: TextStyle(fontSize: 10, color: kTextColorSecondary),
             ),
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4),
+            Text(
               '• Distribución (Pesadas/Medias/Ligeras) NO cambia',
               style: TextStyle(fontSize: 10, color: kTextColorSecondary),
             ),
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4),
+            Text(
               '• VME/VMR son SOLO referencias fisiológicas',
               style: TextStyle(fontSize: 10, color: kTextColorSecondary),
             ),

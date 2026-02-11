@@ -77,7 +77,7 @@ class LoadProgressionEngine {
 
   /// Redondea a la placa más cercana (2.5kg)
   static double _roundToNearestPlate(double weight) {
-    final plateIncrement = 2.5;
+    const plateIncrement = 2.5;
     return (weight / plateIncrement).round() * plateIncrement;
   }
 

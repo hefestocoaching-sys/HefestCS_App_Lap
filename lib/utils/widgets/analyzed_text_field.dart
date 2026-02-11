@@ -150,7 +150,7 @@ class _AnalyzedTextFieldState extends State<AnalyzedTextField> {
       decoration: BoxDecoration(
         color: result.color.withAlpha(26),
         borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: result.color.withAlpha(128), width: 1),
+        border: Border.all(color: result.color.withAlpha(128)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +178,7 @@ class _AnalyzedTextFieldState extends State<AnalyzedTextField> {
             const Divider(height: 16, color: kTextColorSecondary),
             Text(
               result.recommendation,
-              style: TextStyle(
+              style: const TextStyle(
                 color: kTextColor,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

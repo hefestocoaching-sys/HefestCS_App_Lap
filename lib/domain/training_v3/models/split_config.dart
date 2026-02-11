@@ -116,7 +116,7 @@ class SplitConfig extends Equatable {
   /// Full Body 3 días por semana
   /// Semana 6, Imagen 64: Frecuencia 3x por músculo
   factory SplitConfig.fullBody3x() {
-    return SplitConfig(
+    return const SplitConfig(
       id: 'full_body_3x',
       name: 'Full Body 3x',
       type: 'full_body',
@@ -142,7 +142,7 @@ class SplitConfig extends Equatable {
   /// Upper/Lower 4 días por semana
   /// Semana 6, Imagen 65-66: Frecuencia 2x por músculo
   factory SplitConfig.upperLower4x() {
-    return SplitConfig(
+    return const SplitConfig(
       id: 'upper_lower_4x',
       name: 'Upper/Lower 4x',
       type: 'upper_lower',
@@ -161,7 +161,7 @@ class SplitConfig extends Equatable {
   /// Push/Pull/Legs 6 días por semana
   /// Semana 6, Imagen 67-69: Frecuencia 2x por músculo
   factory SplitConfig.pushPullLegs6x() {
-    return SplitConfig(
+    return const SplitConfig(
       id: 'ppl_6x',
       name: 'Push/Pull/Legs 6x',
       type: 'push_pull_legs',
@@ -181,7 +181,7 @@ class SplitConfig extends Equatable {
   /// Push/Pull/Legs 3 días por semana
   /// Variante para personas con menos disponibilidad
   factory SplitConfig.pushPullLegs3x() {
-    return SplitConfig(
+    return const SplitConfig(
       id: 'ppl_3x',
       name: 'Push/Pull/Legs 3x',
       type: 'push_pull_legs',

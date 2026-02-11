@@ -441,7 +441,7 @@ class _MacrocycleOverviewTabState extends State<MacrocycleOverviewTab> {
               // Número de semana
               Text(
                 'S${week.weekIndex}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 10,
                   color: kTextColorSecondary,
                   fontWeight: FontWeight.w500,
@@ -593,7 +593,7 @@ Total: ${week.totalSeries} series
             Text('Leyenda', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             // Fuentes de datos
-            Text(
+            const Text(
               'Fuentes:',
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
             ),
@@ -650,32 +650,32 @@ Total: ${week.totalSeries} series
             ),
             const SizedBox(height: 12),
             // Patrones
-            Text(
+            const Text(
               'Patrones:',
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.trending_up, size: 14, color: Colors.green),
-                const SizedBox(width: 6),
-                const Text('Incremento', style: TextStyle(fontSize: 10)),
-                const SizedBox(width: 16),
-                const Icon(Icons.trending_flat, size: 14, color: Colors.blue),
-                const SizedBox(width: 6),
-                const Text('Estable', style: TextStyle(fontSize: 10)),
+                Icon(Icons.trending_up, size: 14, color: Colors.green),
+                SizedBox(width: 6),
+                Text('Incremento', style: TextStyle(fontSize: 10)),
+                SizedBox(width: 16),
+                Icon(Icons.trending_flat, size: 14, color: Colors.blue),
+                SizedBox(width: 6),
+                Text('Estable', style: TextStyle(fontSize: 10)),
               ],
             ),
             const SizedBox(height: 4),
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.trending_down, size: 14, color: Colors.orange),
-                const SizedBox(width: 6),
-                const Text('Descarga', style: TextStyle(fontSize: 10)),
-                const SizedBox(width: 16),
-                const Icon(Icons.flash_on, size: 14, color: Colors.red),
-                const SizedBox(width: 6),
-                const Text('Intensificación', style: TextStyle(fontSize: 10)),
+                Icon(Icons.trending_down, size: 14, color: Colors.orange),
+                SizedBox(width: 6),
+                Text('Descarga', style: TextStyle(fontSize: 10)),
+                SizedBox(width: 16),
+                Icon(Icons.flash_on, size: 14, color: Colors.red),
+                SizedBox(width: 6),
+                Text('Intensificación', style: TextStyle(fontSize: 10)),
               ],
             ),
           ],
@@ -965,7 +965,7 @@ Total: ${week.totalSeries} series
   /// Calcular semana actual del año
   int _calculateCurrentWeek() {
     final now = DateTime.now();
-    final startOfYear = DateTime(now.year, 1, 1);
+    final startOfYear = DateTime(now.year);
     final daysSinceStart = now.difference(startOfYear).inDays;
     final weekIndex = (daysSinceStart ~/ 7) + 1;
     return weekIndex.clamp(1, 52);
@@ -975,7 +975,7 @@ Total: ${week.totalSeries} series
   int _extractWeekNumber(String weekStartIso) {
     try {
       final date = DateTime.parse(weekStartIso);
-      final startOfYear = DateTime(date.year, 1, 1);
+      final startOfYear = DateTime(date.year);
       final daysSinceStart = date.difference(startOfYear).inDays;
       final weekIndex = (daysSinceStart ~/ 7) + 1;
       return weekIndex.clamp(1, 52);

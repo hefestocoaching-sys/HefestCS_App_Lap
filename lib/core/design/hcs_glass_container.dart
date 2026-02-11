@@ -52,7 +52,7 @@ class HcsGlassContainer extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: resolvedBackground,
-        border: Border.all(color: resolvedBorder, width: 1),
+        border: Border.all(color: resolvedBorder),
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: showShadow
             ? [

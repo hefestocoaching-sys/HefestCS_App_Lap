@@ -17,7 +17,7 @@ final Client placeholderClient = Client(
     fullName: 'Nuevo Cliente',
     email: 'cliente@ejemplo.com',
     phone: '',
-    birthDate: DateTime(1995, 1, 1),
+    birthDate: DateTime(1995),
     gender: Gender.male,
     country: 'México',
     occupation: '',
@@ -30,13 +30,12 @@ final Client placeholderClient = Client(
       HistoryExtraKeys.personalPathologicalHistory: [],
     },
   ),
-  training: TrainingProfile(
+  training: const TrainingProfile(
     id: 'default_training_profile', // ID Requerido Agregado
     globalGoal: TrainingGoal.hypertrophy,
     trainingFocus: TrainingFocus.hypertrophy,
     trainingLevel: TrainingLevel.intermediate,
     daysPerWeek: 4,
-    extra: {},
   ),
-  nutrition: const NutritionSettings(extra: {}, weeklyMacroSettings: {}),
+  nutrition: const NutritionSettings(weeklyMacroSettings: {}),
 );

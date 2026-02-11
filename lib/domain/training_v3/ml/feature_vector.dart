@@ -345,7 +345,6 @@ class FeatureVector {
   /// This factory method was planned for ML dataset feature but TrainingContext
   /// class doesn't exist. Keeping code commented for future reference.
   ///
-  /// TODO: Implement TrainingContext class if ML dataset feature is needed
   /*
   /// Crea desde TrainingContext V2
   factory FeatureVector.fromContext(

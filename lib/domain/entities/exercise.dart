@@ -129,7 +129,6 @@ class Exercise {
         muscleKey: muscleKey,
         equipment: equipment,
         difficulty: movementPattern,
-        gifUrl: '',
         primaryMuscles: primary,
         secondaryMuscles: secondary,
         tertiaryMuscles: tertiary,

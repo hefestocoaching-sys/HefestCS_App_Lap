@@ -29,7 +29,7 @@ class ChipGroupCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: kInputFillColor.withAlpha(128),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withAlpha(15), width: 1),
+        border: Border.all(color: Colors.white.withAlpha(15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,7 +101,6 @@ class ChipGroupCard extends StatelessWidget {
                   color: isSelected
                       ? color.withAlpha(128)
                       : Colors.white.withAlpha(20),
-                  width: 1,
                 ),
                 labelStyle: TextStyle(
                   color: isSelected ? kTextColor : kTextColorSecondary,

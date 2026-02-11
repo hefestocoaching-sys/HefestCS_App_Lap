@@ -23,7 +23,6 @@ extension DailyTrackingRecordFromAnthropometry on DailyTrackingRecord {
       weightKg: data.weightKg,
       abdominalFold: data.abdominalFold,
       waistCircNarrowest: data.waistCircNarrowest,
-      urineColor: null,
     );
   }
 }
@@ -808,20 +807,12 @@ class _DepletionTabState extends ConsumerState<DepletionTab>
     if (recordToday == null && recordPrev != null) {
       recordToday = recordPrev.copyWith(
         date: date,
-        weightKg: null,
-        abdominalFold: null,
-        waistCircNarrowest: null,
-        urineColor: null,
       );
     }
 
     if (recordToday == null && baseDailyRecord != null) {
       recordToday = baseDailyRecord.copyWith(
         date: date,
-        weightKg: null,
-        abdominalFold: null,
-        waistCircNarrowest: null,
-        urineColor: null,
       );
     }
 

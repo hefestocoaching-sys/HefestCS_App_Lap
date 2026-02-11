@@ -122,13 +122,12 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
                 border: Border(
                   bottom: BorderSide(
                     color: Colors.white.withAlpha(20),
-                    width: 1,
                   ),
                 ),
               ),
               child: _isExpanded
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         'HCS',
                         style: TextStyle(
@@ -138,7 +137,7 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
                         ),
                       ),
                     )
-                  : Icon(
+                  : const Icon(
                       Icons.medical_services_outlined,
                       color: kPrimaryColor,
                       size: 32,
@@ -149,7 +148,7 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   // Calcular si los items caben sin scroll
-                  final itemHeight = 48.0; // altura aproximada de cada item
+                  const itemHeight = 48.0; // altura aproximada de cada item
                   final totalItemsHeight = items.length * itemHeight;
                   final needsScroll = totalItemsHeight > constraints.maxHeight;
 
@@ -216,7 +215,7 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
             Container(
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: Colors.white.withAlpha(20), width: 1),
+                  top: BorderSide(color: Colors.white.withAlpha(20)),
                 ),
               ),
               child: _NavRailItem(

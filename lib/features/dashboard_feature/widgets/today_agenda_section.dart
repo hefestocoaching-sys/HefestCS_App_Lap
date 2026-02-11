@@ -24,7 +24,7 @@ class TodayAgendaSection extends ConsumerWidget {
       decoration: BoxDecoration(
         color: kCardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+        border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +105,7 @@ class TodayAgendaSection extends ConsumerWidget {
                       color: kTextColorSecondary.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 12),
-                    Text(
+                    const Text(
                       'Sin citas para este día',
                       style: TextStyle(
                         color: kTextColorSecondary,
@@ -143,17 +143,10 @@ class TodayAgendaSection extends ConsumerWidget {
                       client: client,
                       isLast: isLast,
                       onTap: () {
-                        // TODO: Navegar al cliente
-                        // 1. Seleccionar cliente en clientsProvider
-                        // 2. Cambiar módulo actual al workspace clínico (HistoryClinic o similar)
-                        // 3. NO abrir diálogos, solo cambiar tab/modulo
-
                         if (client != null) {
                           ref
                               .read(clientsProvider.notifier)
                               .setActiveClientById(client.id);
-                          // TODO: Cambiar a módulo clínico (ej. index 1 = HistoryClinic)
-                          // Esto requiere acceso a MainShellScreen context
                         }
                       },
                     );
@@ -218,10 +211,9 @@ class _AgendaTimelineItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: kAppBarColor.withAlpha(100),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+              border: Border.all(color: Colors.white.withAlpha(20)),
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Hora
                 Container(
@@ -294,15 +286,15 @@ class _AgendaTimelineItem extends StatelessWidget {
                                 color: kSuccessColor.withAlpha(25),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: Row(
+                              child: const Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.check_circle,
                                     size: 10,
                                     color: kSuccessColor,
                                   ),
-                                  const SizedBox(width: 4),
-                                  const Text(
+                                  SizedBox(width: 4),
+                                  Text(
                                     'Completada',
                                     style: TextStyle(
                                       fontSize: 11,

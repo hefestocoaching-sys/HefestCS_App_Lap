@@ -80,7 +80,7 @@ class ExerciseSelectionEngine {
     return ordered.take(exerciseCount).toList();
   }
 
-  /// TODO: Método refactorizado pero no integrado en flujo actual
+  /// Metodo refactorizado pero no integrado en flujo actual
   ///
   /// Verifica si tiene el equipamiento necesario
   /*
@@ -108,9 +108,9 @@ class ExerciseSelectionEngine {
   }
   */
 
-  /// TODO: Método refactorizado pero no integrado en flujo actual
+  /// Metodo refactorizado pero no integrado en flujo actual
   ///
-  /// Verifica si el ejercicio está contraindicado por lesión
+  /// Verifica si el ejercicio esta contraindicado por lesion
   ///
   /// EJEMPLO:
   /// - Lesión de hombro → evitar overhead press

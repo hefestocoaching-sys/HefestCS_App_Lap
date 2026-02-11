@@ -7,14 +7,14 @@ void main() {
   group('TrainingExample Serialization', () {
     test('toJson and fromJson round-trip preserves data', () {
       // Crear ejemplo de prueba
-      final volumeDecision = VolumeDecision(
+      const volumeDecision = VolumeDecision(
         adjustmentFactor: 1.05,
         confidence: 0.85,
         reasoning: 'Test reasoning',
         metadata: {'strategy': 'rule_based'},
       );
 
-      final readinessDecision = ReadinessDecision(
+      const readinessDecision = ReadinessDecision(
         level: ReadinessLevel.good,
         score: 0.78,
         confidence: 0.90,
@@ -23,7 +23,7 @@ void main() {
 
       final example = TrainingExample(
         exampleId: 'test-123',
-        timestamp: DateTime(2026, 1, 1, 12, 0),
+        timestamp: DateTime(2026, 1, 1, 12),
         clientId: 'client-456',
         featureTensor: List.generate(37, (i) => i * 0.1),
         featureMetadata: {'readinessScore': 0.75, 'fatigueIndex': 0.4},
@@ -67,11 +67,10 @@ void main() {
 
     test('weeklyFeedback serialization works correctly', () {
       final volumeDecision = VolumeDecision.maintain();
-      final readinessDecision = ReadinessDecision(
+      const readinessDecision = ReadinessDecision(
         level: ReadinessLevel.moderate,
         score: 0.65,
         confidence: 0.80,
-        recommendations: [],
       );
 
       final weeklyFeedback = WeeklyTrainingFeedbackSummary(
@@ -90,13 +89,13 @@ void main() {
         fatigueExpectation: 'moderate',
         progressionAllowed: true,
         deloadRecommended: false,
-        reasons: ['Good adherence', 'Moderate fatigue'],
-        debugContext: {},
+        reasons: const ['Good adherence', 'Moderate fatigue'],
+        debugContext: const {},
       );
 
       final example = TrainingExample(
         exampleId: 'test-with-feedback',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-789',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -128,17 +127,16 @@ void main() {
     });
 
     test('computedOptimalVolume uses weeklyFeedback when available', () {
-      final volumeDecision = VolumeDecision(
+      const volumeDecision = VolumeDecision(
         adjustmentFactor: 1.0,
         confidence: 0.85,
         reasoning: 'Baseline',
       );
 
-      final readinessDecision = ReadinessDecision(
+      const readinessDecision = ReadinessDecision(
         level: ReadinessLevel.good,
         score: 0.75,
         confidence: 0.85,
-        recommendations: [],
       );
 
       // CASO 1: deloadRecommended = true
@@ -158,13 +156,13 @@ void main() {
         fatigueExpectation: 'high',
         progressionAllowed: false,
         deloadRecommended: true,
-        reasons: ['High fatigue', 'Low adherence', 'Pain events'],
-        debugContext: {},
+        reasons: const ['High fatigue', 'Low adherence', 'Pain events'],
+        debugContext: const {},
       );
 
       final exampleDeload = TrainingExample(
         exampleId: 'test-deload',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -196,13 +194,17 @@ void main() {
         fatigueExpectation: 'low',
         progressionAllowed: true,
         deloadRecommended: false,
-        reasons: ['Excellent adherence', 'Low fatigue', 'Good performance'],
-        debugContext: {},
+        reasons: const [
+          'Excellent adherence',
+          'Low fatigue',
+          'Good performance',
+        ],
+        debugContext: const {},
       );
 
       final exampleProgress = TrainingExample(
         exampleId: 'test-progress',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -220,17 +222,16 @@ void main() {
 
     test('hasOutcome returns true only with adherence and fatigue', () {
       final volumeDecision = VolumeDecision.maintain();
-      final readinessDecision = ReadinessDecision(
+      const readinessDecision = ReadinessDecision(
         level: ReadinessLevel.moderate,
         score: 0.65,
         confidence: 0.80,
-        recommendations: [],
       );
 
       // Sin outcome
       final exampleNoOutcome = TrainingExample(
         exampleId: 'test-no-outcome',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -244,7 +245,7 @@ void main() {
       // Con outcome parcial (solo adherencia)
       final examplePartial = TrainingExample(
         exampleId: 'test-partial',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -259,7 +260,7 @@ void main() {
       // Con outcome completo
       final exampleComplete = TrainingExample(
         exampleId: 'test-complete',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -279,24 +280,23 @@ void main() {
     late ReadinessDecision readinessDecision;
 
     setUp(() {
-      volumeDecision = VolumeDecision(
+      volumeDecision = const VolumeDecision(
         adjustmentFactor: 1.0,
         confidence: 0.85,
         reasoning: 'Baseline',
       );
 
-      readinessDecision = ReadinessDecision(
+      readinessDecision = const ReadinessDecision(
         level: ReadinessLevel.good,
         score: 0.75,
         confidence: 0.85,
-        recommendations: [],
       );
     });
 
     test('CASO 1: Alta adherencia + baja fatiga → volumen bajo', () {
       final example = TrainingExample(
         exampleId: 'test-case1',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -315,7 +315,7 @@ void main() {
     test('CASO 2: Baja adherencia + alta fatiga → volumen alto', () {
       final example = TrainingExample(
         exampleId: 'test-case2',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -334,7 +334,7 @@ void main() {
     test('CASO 3: Lesión → volumen DEFINITIVAMENTE alto', () {
       final example = TrainingExample(
         exampleId: 'test-case3',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},
@@ -353,7 +353,7 @@ void main() {
     test('CASO 4: Progreso + adherencia + fatiga óptima → PERFECTO', () {
       final example = TrainingExample(
         exampleId: 'test-case4',
-        timestamp: DateTime(2026, 1, 1),
+        timestamp: DateTime(2026),
         clientId: 'client-test',
         featureTensor: List.generate(37, (i) => 0.5),
         featureMetadata: {},

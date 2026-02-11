@@ -109,7 +109,6 @@ class V3ToV2Converter {
     return PlanWeek(
       weekNumber: weekV3.weekNumber,
       days: planDays,
-      adaptationReason: null, // V3 no tiene adaptationReason por semana
     );
   }
 
@@ -162,7 +161,6 @@ class V3ToV2Converter {
       dayNumber: dayNumber,
       dayLabel: sessionV3.sessionName,
       muscleVolumes: muscleVolumes,
-      notes: null, // V3 no tiene notes por sesión
     );
   }
 

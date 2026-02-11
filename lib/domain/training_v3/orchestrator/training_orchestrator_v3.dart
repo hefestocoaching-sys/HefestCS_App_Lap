@@ -45,11 +45,9 @@ class TrainingOrchestratorV3 {
   // ════════════════════════════════════════════════════════════════
 
   /// Fase de periodización por defecto
-  /// TODO: Obtener del ciclo activo del cliente
   static const String _defaultPhase = 'accumulation';
 
   /// Duración en semanas por defecto
-  /// TODO: Obtener del ciclo activo del cliente
   static const int _defaultDurationWeeks = 4;
 
   /// Edad por defecto para perfiles incompletos
@@ -69,9 +67,6 @@ class TrainingOrchestratorV3 {
 
   /// Sesión de duración por defecto en minutos
   static const int _defaultSessionDuration = 60;
-
-  /// Semanas consecutivas de entrenamiento inicial (valor inicial)
-  static const int _initialConsecutiveWeeks = 0;
 
   // ════════════════════════════════════════════════════════════════
   // MIEMBROS DE INSTANCIA
@@ -142,8 +137,8 @@ class TrainingOrchestratorV3 {
     // Determinar fase y duración
     // Nota: Por ahora usamos valores por defecto definidos en constantes.
     // Estos deberían reemplazarse con valores del ciclo activo del cliente.
-    final phase = _defaultPhase;
-    final durationWeeks = _defaultDurationWeeks;
+    const phase = _defaultPhase;
+    const durationWeeks = _defaultDurationWeeks;
 
     debugPrint('🎯 [TrainingOrchestratorV3] Delegando a MotorV3Orchestrator:');
     debugPrint('   - phase: $phase');
@@ -231,26 +226,25 @@ class TrainingOrchestratorV3 {
         8;
 
     // E4 P0: Extraer yearsTrainingContinuous (prioridad: setupV1, luego SSOT, luego legacy)
-    final monthsTrainingNow =
-        _parseDouble(training.extra['monthsTrainingNow']);
+    final monthsTrainingNow = _parseDouble(training.extra['monthsTrainingNow']);
     double yearsTraining =
-      (useSsotV1 && setupV1.trainingExperienceYearsContinuous > 0
-        ? setupV1.trainingExperienceYearsContinuous.toDouble()
-        : null) ??
-      (monthsTrainingNow != null ? (monthsTrainingNow / 12.0) : null) ??
-      (_parseDouble(training.extra['trainingYears']) ??
-          _parseDouble(training.extra['yearsTraining']) ??
-          _defaultYearsTraining);
+        (useSsotV1 && setupV1.trainingExperienceYearsContinuous > 0
+            ? setupV1.trainingExperienceYearsContinuous.toDouble()
+            : null) ??
+        (monthsTrainingNow != null ? (monthsTrainingNow / 12.0) : null) ??
+        (_parseDouble(training.extra['trainingYears']) ??
+            _parseDouble(training.extra['yearsTraining']) ??
+            _defaultYearsTraining);
 
     // E4 P0: Extraer altura y peso (prioridad: extra, luego setupV1, luego legacy)
     double heightCm =
-      _parseDouble(training.extra['heightCm']) ??
-      (useSsotV1 && setupV1.heightCm > 0 ? setupV1.heightCm : null) ??
-      _defaultHeightCm;
+        _parseDouble(training.extra['heightCm']) ??
+        (useSsotV1 && setupV1.heightCm > 0 ? setupV1.heightCm : null) ??
+        _defaultHeightCm;
     double weightKg =
-      _parseDouble(training.extra['weightKg']) ??
-      (useSsotV1 && setupV1.weightKg > 0 ? setupV1.weightKg : null) ??
-      _defaultWeightKg;
+        _parseDouble(training.extra['weightKg']) ??
+        (useSsotV1 && setupV1.weightKg > 0 ? setupV1.weightKg : null) ??
+        _defaultWeightKg;
 
     // ═══════════════════════════════════════════════════════════════════════
     // E3 PRIORIDADES MUSCULARES: SSOT V1 primero (con pesos Primary=1.0, Secondary=0.66, Tertiary=0.33)
@@ -339,7 +333,6 @@ class TrainingOrchestratorV3 {
     final goal = training.extra['goal'] as String? ?? 'hypertrophy';
 
     // Crear mapa de historial de lesiones
-    // TODO: Extract actual injury status from client data (active/healed/recovered)
     final injuries = _getInjuries(training.extra);
     final injuryHistory = <String, String>{};
     for (final injury in injuries) {
@@ -363,14 +356,12 @@ class TrainingOrchestratorV3 {
       weightKg: weightKg,
       yearsTraining: yearsTraining,
       trainingLevel: trainingLevel,
-      consecutiveWeeks: _initialConsecutiveWeeks,
       availableDays: availableDays,
       sessionDuration: sessionDuration,
       primaryGoal: goal,
       musclePriorities: clampedMusclePrioritiesMap,
       availableEquipment: _getAvailableEquipment(training.extra),
       injuryHistory: injuryHistory,
-      excludedExercises: const [],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

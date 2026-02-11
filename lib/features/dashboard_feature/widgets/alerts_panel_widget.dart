@@ -25,7 +25,7 @@ class AlertsPanelWidget extends ConsumerWidget {
       decoration: BoxDecoration(
         color: kCardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+        border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +215,7 @@ class AlertsPanelWidget extends ConsumerWidget {
           decoration: BoxDecoration(
             color: color.withAlpha(15),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withAlpha(50), width: 1),
+            border: Border.all(color: color.withAlpha(50)),
           ),
           child: Row(
             children: [

@@ -122,9 +122,8 @@ class BiochemistryScreenState extends ConsumerState<BiochemistryScreen>
                         subtitle: 'Análisis de laboratorio y marcadores',
                         icon: Icons.science_outlined,
                       ),
-                      TabBar(
+                      const TabBar(
                         tabs: _tabs,
-                        isScrollable: false,
                         labelColor: kTextColor,
                         unselectedLabelColor: kTextColorSecondary,
                         indicatorColor: kPrimaryColor,

@@ -29,7 +29,6 @@ class TwoColumnModuleLayout extends StatelessWidget {
             border: Border(
               right: BorderSide(
                 color: kAppBarColor.withAlpha((255 * 0.3).round()),
-                width: 1,
               ),
             ),
           ),

@@ -22,7 +22,6 @@ class ModuleHeader extends StatelessWidget {
         border: Border(
           bottom: BorderSide(
             color: kAppBarColor.withAlpha((255 * 0.3).round()),
-            width: 1,
           ),
         ),
       ),
@@ -47,7 +46,7 @@ class ModuleHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: kTextColorSecondary,
                     fontWeight: FontWeight.w400,

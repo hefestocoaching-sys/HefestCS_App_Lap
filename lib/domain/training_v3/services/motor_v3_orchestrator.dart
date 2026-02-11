@@ -245,7 +245,6 @@ class MotorV3Orchestrator {
         muscle: muscle,
         trainingLevel: profile.trainingLevel,
         priority: priority,
-        currentVolume: null, // Primera vez, no hay volumen previo
       );
 
       volumeByMuscle[muscle] = volume;
@@ -579,7 +578,6 @@ class MotorV3Orchestrator {
           muscle: muscle,
           trainingLevel: userProfile.trainingLevel,
           priority: priority,
-          currentVolume: null,
         );
       }
       total += sets;
@@ -695,8 +693,8 @@ class MotorV3Orchestrator {
     );
 
     // PLACEHOLDER: Otros scores cuando tengamos engines completos
-    final intensityScore = 1.0;
-    final effortScore = 1.0;
+    const intensityScore = 1.0;
+    const effortScore = 1.0;
 
     final overallScore = ConfigurationValidator.calculateOverallQualityScore(
       split: program.split,

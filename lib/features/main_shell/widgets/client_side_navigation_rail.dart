@@ -21,47 +21,47 @@ class ClientSideNavigationRail extends ConsumerWidget {
   static const double width = 260.0;
 
   static final List<_ClientNavItem> _items = [
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.home_outlined,
       label: 'Resumen del Cliente',
       index: 1,
     ),
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.medical_services_outlined,
       label: 'Historia Clínica',
       index: 2,
     ),
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.accessibility_new_outlined,
       label: 'Antropometría',
       index: 3,
     ),
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.local_fire_department_outlined,
       label: 'Gasto Energético',
       index: 4,
     ),
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.restaurant_menu_outlined,
       label: 'Macronutrientes',
       index: 5,
     ),
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.table_chart_outlined,
       label: 'Tabla de Equivalentes',
       index: 6,
     ),
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.menu_book_outlined,
       label: 'Diseño de Menú',
       index: 7,
     ),
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.fitness_center_outlined,
       label: 'Entrenamiento',
       index: 8,
     ),
-    _ClientNavItem(
+    const _ClientNavItem(
       icon: Icons.science_outlined,
       label: 'Bioquímica',
       index: 9,
@@ -89,7 +89,7 @@ class ClientSideNavigationRail extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: Colors.white.withAlpha(20), width: 1),
+                bottom: BorderSide(color: Colors.white.withAlpha(20)),
               ),
             ),
             child: Column(
@@ -245,7 +245,7 @@ class _ClientNavRailItemState extends State<_ClientNavRailItem> {
                 ? Colors.white.withAlpha(10)
                 : Colors.transparent,
             border: widget.isSelected
-                ? Border(left: BorderSide(color: kPrimaryColor, width: 3))
+                ? const Border(left: BorderSide(color: kPrimaryColor, width: 3))
                 : null,
           ),
           child: Row(

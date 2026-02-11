@@ -12,7 +12,7 @@ void main() {
       'Alimento del catálogo con macrosPer100g se convierte correctamente',
       () {
         // Simular alimento del catálogo (pollo)
-        final pollo = FoodItem(
+        const pollo = FoodItem(
           name: 'Pechuga de pollo sin piel',
           grams: 100.0,
           kcal: 165.0,
@@ -47,7 +47,7 @@ void main() {
     );
 
     test('Restricción P0 bloquea alimentos correctamente', () {
-      final lecheDes = FoodItem(
+      const lecheDes = FoodItem(
         name: 'Leche descremada',
         grams: 100.0,
         kcal: 34.0,
@@ -68,7 +68,7 @@ void main() {
         relevantMedications: {},
       );
 
-      final target = EquivalentDefinition(
+      const target = EquivalentDefinition(
         id: 'leche_descremada',
         group: 'leche',
         subgroup: 'descremada',
@@ -92,7 +92,7 @@ void main() {
 
     test('Backward compatibility: FoodItem sin campos extendidos funciona', () {
       // FoodItem legacy (sin foodId, macrosPer100g, etc.)
-      final legacyFood = FoodItem(
+      const legacyFood = FoodItem(
         name: 'Alimento legacy',
         grams: 100.0,
         kcal: 150.0,
@@ -114,7 +114,7 @@ void main() {
     });
 
     test('findBestEquivalent selecciona sin errores', () {
-      final arroz = FoodItem(
+      const arroz = FoodItem(
         name: 'Test cereal',
         grams: 100.0,
         kcal: 130.0,

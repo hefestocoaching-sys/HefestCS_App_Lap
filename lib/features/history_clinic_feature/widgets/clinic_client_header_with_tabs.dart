@@ -66,7 +66,6 @@ class _HeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         _ProfileAvatar(avatar: avatar),
         const SizedBox(width: 20),

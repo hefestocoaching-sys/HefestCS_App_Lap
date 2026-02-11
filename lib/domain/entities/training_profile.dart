@@ -103,24 +103,7 @@ class TrainingProfile extends Equatable {
 
   /// FACTORY vacía segura para clientes nuevos.
   factory TrainingProfile.empty() {
-    return const TrainingProfile(
-      globalGoal: TrainingGoal.generalFitness,
-      daysPerWeek: 0,
-      timePerSessionMinutes: 0,
-      yearsTrainingContinuous: 0,
-      sessionDurationMinutes: 0,
-      restBetweenSetsSeconds: 0,
-      avgSleepHours: 0.0,
-      equipment: [],
-      movementRestrictions: [],
-      priorityMusclesPrimary: [],
-      priorityMusclesSecondary: [],
-      priorityMusclesTertiary: [],
-      baseVolumePerMuscle: {},
-      seriesDistribution: {},
-      pastVolumeTolerance: {},
-      extra: {},
-    );
+    return const TrainingProfile();
   }
 
   /// Indica si el perfil tiene lo mínimo para generar un plan real.
@@ -158,8 +141,8 @@ class TrainingProfile extends Equatable {
   ];
 
   bool hasInterviewChangedSincePlanGeneration(TrainingPlanConfig plan) {
-    final snapshotExtra = plan.trainingProfileSnapshot?.extra ??
-        const <String, dynamic>{};
+    final snapshotExtra =
+        plan.trainingProfileSnapshot?.extra ?? const <String, dynamic>{};
     if (snapshotExtra.isEmpty && extra.isEmpty) {
       return false;
     }
@@ -216,9 +199,7 @@ class TrainingProfile extends Equatable {
 
   /// Horas promedio de sueño (para cálculos de VMR) (legacy)
   double get avgSleepHoursFromExtra =>
-      (extra[TrainingInterviewLegacyKeys.avgSleepHours] ??
-          avgSleepHours ??
-          7.0)
+      (extra[TrainingInterviewLegacyKeys.avgSleepHours] ?? avgSleepHours ?? 7.0)
           .toDouble();
 
   /// Duración de sesión en minutos (lee primero de TrainingExtraKeys, luego TrainingInterviewKeys)
@@ -583,7 +564,7 @@ class TrainingProfile extends Equatable {
         (extraMap['recoveryQuality'] ?? json['recoveryQuality'])?.toString();
 
     final resolvedYearsTrainingContinuousFinal =
-      resolvedYearsTrainingContinuous > 0
+        resolvedYearsTrainingContinuous > 0
         ? resolvedYearsTrainingContinuous
         : (monthsTrainingNow ~/ 12);
 

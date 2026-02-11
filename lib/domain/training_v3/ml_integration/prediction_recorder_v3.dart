@@ -273,7 +273,7 @@ class PredictionRecorderV3 {
   /// Limpia predicciones antiguas (>6 meses)
   Future<int> cleanupOldPredictions() async {
     try {
-      final sixMonthsAgo = DateTime.now().subtract(Duration(days: 180));
+      final sixMonthsAgo = DateTime.now().subtract(const Duration(days: 180));
 
       final snapshot = await _firestore
           .collection(_collection)

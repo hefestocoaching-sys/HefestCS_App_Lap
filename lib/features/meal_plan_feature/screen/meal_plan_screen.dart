@@ -218,7 +218,6 @@ class _MealPlanDaysCardState extends State<MealPlanDaysCard>
                 color: Colors.transparent,
                 child: TabBar(
                   controller: _tabController,
-                  isScrollable: false,
                   padding: const EdgeInsets.only(bottom: 8),
                   indicatorColor: kPrimaryColor,
                   indicatorWeight: 3,
@@ -467,12 +466,11 @@ class _MealPlanDaysCardState extends State<MealPlanDaysCard>
                   width: 1.5,
                 ),
               ),
-              child: Column(
+              child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(Icons.add, size: 48, color: kPrimaryColor),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(
                     'Nuevo registro',
                     style: TextStyle(

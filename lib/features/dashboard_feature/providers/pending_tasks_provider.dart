@@ -12,7 +12,6 @@ class PendingTasksNotifier extends Notifier<List<PendingTask>> {
   @override
   List<PendingTask> build() {
     // Mock data: vacío por defecto
-    // TODO: Conectar a Firestore cuando esté listo
     return [];
   }
 

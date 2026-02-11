@@ -22,7 +22,7 @@ class TodayAppointmentsWidget extends ConsumerWidget {
         decoration: BoxDecoration(
           color: kCardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+          border: Border.all(color: Colors.white.withAlpha(20)),
         ),
         child: const Column(
           children: [
@@ -43,7 +43,7 @@ class TodayAppointmentsWidget extends ConsumerWidget {
       decoration: BoxDecoration(
         color: kCardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(20), width: 1),
+        border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +239,6 @@ class _AppointmentCardState extends State<_AppointmentCard>
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: const Color(0xFF00D9FF).withAlpha(50),
-                        width: 1,
                       ),
                     ),
                     child: Row(
@@ -280,7 +279,6 @@ class _AppointmentCardState extends State<_AppointmentCard>
                         color: _getTypeColor(
                           widget.appointment.type,
                         ).withAlpha(50),
-                        width: 1,
                       ),
                     ),
                     child: Text(
@@ -315,12 +313,12 @@ class _AppointmentCardState extends State<_AppointmentCard>
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          const Color(0xFF00D9FF),
-                          const Color(0xFF0EA5E9),
+                          Color(0xFF00D9FF),
+                          Color(0xFF0EA5E9),
                         ],
                       ),
                       shape: BoxShape.circle,

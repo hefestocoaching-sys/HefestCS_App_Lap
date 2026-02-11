@@ -128,7 +128,6 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Lado izq: Día + GET grande
                     Column(
@@ -320,7 +319,7 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
                 children: [
                   Text(
                     activity.metActivity.activityName,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -386,7 +385,6 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
           decoration: BoxDecoration(
             border: Border.all(
               color: kBorderColor.withAlpha((255 * 0.2).round()),
-              style: BorderStyle.solid,
             ),
             borderRadius: BorderRadius.circular(8),
             color: kAppBarColor.withAlpha((255 * 0.15).round()),
@@ -525,7 +523,6 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
                         ),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             selectedRange.description,
@@ -735,7 +732,6 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            flex: 1,
                             child: CustomTextFormField(
                               controller: durationController,
                               label: 'Dur (min)',

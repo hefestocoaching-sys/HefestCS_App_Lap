@@ -41,11 +41,7 @@ class MLConfigV3 {
 
   /// Configuración balanceada (híbrida)
   factory MLConfigV3.hybrid() {
-    return const MLConfigV3(
-      mlWeight: 0.3,
-      minHistoricalSessions: 10,
-      minMLConfidence: 0.6,
-    );
+    return const MLConfigV3();
   }
 
   /// Configuración agresiva (más ML)

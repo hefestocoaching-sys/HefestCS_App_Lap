@@ -79,16 +79,16 @@ class FoodDatabaseService {
 
         if (await file.exists()) {
           raw = await file.readAsString();
-          logger.info('SMAE loaded from desktop path', {
+          logger.info('SMAE loaded from desktop', {
             'path': assetPath,
           });
         } else {
           // Intento alternativo
-          final altPath = 'assets/data/smae_food_catalog.json';
+          const altPath = 'assets/data/smae_food_catalog.json';
           final altFile = File(altPath);
           if (await altFile.exists()) {
             raw = await altFile.readAsString();
-            logger.info('SMAE loaded from alternate path', {
+            logger.info('SMAE loaded from alternative path', {
               'path': altPath,
             });
           } else {
@@ -104,17 +104,14 @@ class FoodDatabaseService {
       }
 
       _foods = await compute(_parseAndDecode, raw);
-      logger.info('SMAE catalog parsed', {
+      logger.info('SMAE database parsed', {
         'count': _foods.length,
       });
     } on FlutterError catch (e) {
-      logger.error('Flutter error loading SMAE', e, e.stackTrace);
+      logger.error('Flutter error loading SMAE', e);
       _foods = [];
     } catch (e, st) {
-      logger.error('Failed to load SMAE catalog', e, st);
-      if (!kReleaseMode) {
-        logger.debug('SMAE load stack trace', {'stackTrace': st.toString()});
-      }
+      logger.error('Failed to load SMAE database', e, st);
       _foods = [];
     }
   }

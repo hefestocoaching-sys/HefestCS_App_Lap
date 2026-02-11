@@ -19,7 +19,7 @@ class ClientActionPanel extends ConsumerWidget {
       fontSize: 12,
       color: Colors.grey[400],
     );
-    final TextStyle statValueStyle = const TextStyle(
+    const TextStyle statValueStyle = TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.bold,
     );
@@ -33,7 +33,7 @@ class ClientActionPanel extends ConsumerWidget {
     final String fatMass = (weightVal != null && fatPercVal != null)
         ? (weightVal * (fatPercVal / 100.0)).toStringAsFixed(1)
         : 'N/A';
-    final String muscleMass = 'N/A';
+    const String muscleMass = 'N/A';
     final evalRecords = readNutritionRecordList(
       client.nutrition.extra[NutritionExtraKeys.evaluationRecords],
     );

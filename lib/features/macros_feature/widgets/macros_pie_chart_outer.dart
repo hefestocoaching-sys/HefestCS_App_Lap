@@ -102,7 +102,7 @@ class _MacrosPieChartOuterState extends State<MacrosPieChartOuter> {
             final fontSize = isTouched ? 18.0 : 14.0;
             final radius = isTouched ? 90.0 : 70.0;
             final badgeSize = isTouched ? 40.0 : 32.0;
-            const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
+            const shadows = [Shadow(blurRadius: 2)];
 
             return PieChartSectionData(
               color: slice.color,

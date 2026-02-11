@@ -250,10 +250,10 @@ class _TrainingPlanTabState extends ConsumerState<TrainingPlanTab> {
         color: Colors.blue.withValues(alpha: 0.08),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.calendar_today, color: Colors.blue, size: 20),
               SizedBox(width: 8),
@@ -267,7 +267,7 @@ class _TrainingPlanTabState extends ConsumerState<TrainingPlanTab> {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'Genera un plan profesional basado en tu split, VOP y bitácora',
             style: TextStyle(color: kTextColorSecondary, fontSize: 11),

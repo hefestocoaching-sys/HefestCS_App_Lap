@@ -7,8 +7,8 @@ import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 class RemoteClientDataSourceImpl implements RemoteClientDataSource {
   final FirebaseFirestore _firestore;
 
-  RemoteClientDataSourceImpl({FirebaseFirestore? firestore}) 
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  RemoteClientDataSourceImpl({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<Client?> getClientById(String id) async {
@@ -31,7 +31,9 @@ class RemoteClientDataSourceImpl implements RemoteClientDataSource {
     final sanitized = sanitizeForFirestore(client.toJson());
     final invalidPath = findInvalidFirestorePath(sanitized);
     if (invalidPath != null) {
-      logger.warning('Firestore payload invalid', {'path': invalidPath});
+      logger.debug('Firestore client payload audit', {
+        'invalidPath': invalidPath,
+      });
     }
     await docRef.set(sanitized);
   }

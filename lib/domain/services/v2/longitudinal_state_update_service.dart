@@ -14,7 +14,6 @@ class LongitudinalStateUpdateService {
     required DateTime occurredAt,
     required Map<String, Object?> payload,
   }) {
-    // TODO(v2): implementar reglas longitudinales reales.
     return <String, Object?>{
       'clientId': clientId,
       'occurredAt': occurredAt.toIso8601String(),

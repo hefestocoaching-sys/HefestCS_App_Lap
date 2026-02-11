@@ -29,8 +29,8 @@ class TransactionRepository {
     DateTime? month,
   }) {
     final targetMonth = month ?? DateTime.now();
-    final startOfMonth = DateTime(targetMonth.year, targetMonth.month, 1);
-    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1, 1);
+    final startOfMonth = DateTime(targetMonth.year, targetMonth.month);
+    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1);
 
     return _firestore
         .collection(_collection)
@@ -55,8 +55,8 @@ class TransactionRepository {
     DateTime? month,
   }) {
     final targetMonth = month ?? DateTime.now();
-    final startOfMonth = DateTime(targetMonth.year, targetMonth.month, 1);
-    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1, 1);
+    final startOfMonth = DateTime(targetMonth.year, targetMonth.month);
+    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1);
 
     return _firestore
         .collection(_collection)
@@ -82,8 +82,8 @@ class TransactionRepository {
     DateTime? month,
   }) {
     final targetMonth = month ?? DateTime.now();
-    final startOfMonth = DateTime(targetMonth.year, targetMonth.month, 1);
-    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1, 1);
+    final startOfMonth = DateTime(targetMonth.year, targetMonth.month);
+    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1);
 
     return _firestore
         .collection(_collection)
@@ -136,8 +136,8 @@ class TransactionRepository {
     DateTime? month,
   }) async {
     final targetMonth = month ?? DateTime.now();
-    final startOfMonth = DateTime(targetMonth.year, targetMonth.month, 1);
-    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1, 1);
+    final startOfMonth = DateTime(targetMonth.year, targetMonth.month);
+    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1);
 
     final snapshot = await _firestore
         .collection(_collection)
@@ -159,8 +159,8 @@ class TransactionRepository {
     DateTime? month,
   }) async {
     final targetMonth = month ?? DateTime.now();
-    final startOfMonth = DateTime(targetMonth.year, targetMonth.month, 1);
-    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1, 1);
+    final startOfMonth = DateTime(targetMonth.year, targetMonth.month);
+    final endOfMonth = DateTime(targetMonth.year, targetMonth.month + 1);
 
     final snapshot = await _firestore
         .collection(_collection)

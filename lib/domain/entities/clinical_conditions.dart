@@ -23,14 +23,7 @@ class ClinicalConditions {
 
   /// Defaults seguros (sin condiciones diagnosticadas)
   factory ClinicalConditions.defaults() {
-    return const ClinicalConditions(
-      diabetes: false,
-      renalDisease: false,
-      giDisorders: false,
-      thyroidDisorders: false,
-      hypertension: false,
-      dyslipidemia: false,
-    );
+    return const ClinicalConditions();
   }
 
   /// Deserialización segura desde Map

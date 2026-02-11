@@ -28,7 +28,7 @@ class FieldGroup extends StatelessWidget {
         color: kCardColor,
         borderRadius: BorderRadius.circular(12),
         border: showBorder
-            ? Border.all(color: color.withAlpha(50), width: 1)
+            ? Border.all(color: color.withAlpha(50))
             : null,
       ),
       child: Column(

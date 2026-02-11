@@ -230,7 +230,6 @@ class _MetricCard extends StatelessWidget {
         border: Border.all(color: Colors.white.withAlpha(20)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
