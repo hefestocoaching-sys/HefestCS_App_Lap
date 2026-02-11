@@ -64,8 +64,8 @@ class UnifiedDayPlanningScreenState
                 Expanded(
                   child: Card(
                     color: kCardColor.withValues(alpha: 0.4),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
+                    child: const Padding(
+                      padding: EdgeInsets.all(16),
                       child: Text(
                         'Plan unificado disponible. Esta vista es un placeholder '
                         'para la interfaz completa de macros, equivalentes y menu.',
@@ -154,7 +154,7 @@ class _PlanSummaryCard extends StatelessWidget {
             Text(
               'Coherencia ${(coherenceScore * 100).toStringAsFixed(0)}% '
               '- Alertas: $warningsCount',
-              style: TextStyle(color: kTextColorSecondary),
+              style: const TextStyle(color: kTextColorSecondary),
             ),
             const SizedBox(height: 12),
             Wrap(

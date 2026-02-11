@@ -41,8 +41,6 @@ final dailyNutritionPlanProvider =
         equivalentsByMeal: equivalentsByMeal,
         meals: const [],
         createdAt: DateTime.now(),
-        validationStatus: const ValidationStatus(),
-        warnings: const [],
         clinicalRestrictionProfile: client.nutrition.clinicalRestrictionProfile,
       );
 

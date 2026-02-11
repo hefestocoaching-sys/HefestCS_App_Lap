@@ -179,8 +179,6 @@ class NutritionPlanMigrationV3 {
       equivalentsByMeal: equivalentsByMeal,
       meals: meals,
       createdAt: DateTime.now(),
-      validationStatus: const ValidationStatus(),
-      warnings: const [],
       clinicalRestrictionProfile: nutrition.clinicalRestrictionProfile,
     );
 

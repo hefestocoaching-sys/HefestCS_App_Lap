@@ -174,8 +174,6 @@ class NutritionPlanEngine {
       equivalentsByMeal: equivalentsByMeal,
       meals: const [],
       createdAt: DateTime.now(),
-      validationStatus: const ValidationStatus(),
-      warnings: const [],
       clinicalRestrictionProfile: clinicalProfile,
     );
   }

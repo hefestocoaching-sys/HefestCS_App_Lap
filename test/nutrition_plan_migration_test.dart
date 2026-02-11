@@ -6,11 +6,8 @@ import 'package:hcs_app_lap/domain/entities/nutrition_settings.dart';
 
 void main() {
   test('Migration builds snapshots from legacy macro records', () {
-    final mondaySettings = DailyMacroSettings(
+    const mondaySettings = DailyMacroSettings(
       proteinSelected: 2.0,
-      fatSelected: 0.8,
-      carbSelected: 3.0,
-      totalCalories: 0.0,
       dayOfWeek: 'Lunes',
     );
 
