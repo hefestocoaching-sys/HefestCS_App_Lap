@@ -39,6 +39,7 @@ class ExerciseSelectionEngine {
     required List<resolver.MuscleGroup> groups,
     required int targetSets,
     required ClientProfile profile,
+    bool limitToTargetSets = true,
   }) {
     final keys = <String>{};
     for (final group in groups) {
@@ -82,6 +83,10 @@ class ExerciseSelectionEngine {
     }
 
     final ordered = deduped..sort((a, b) => a.name.compareTo(b.name));
+
+    if (!limitToTargetSets) {
+      return ordered.toList();
+    }
 
     final exerciseCount = max(1, min(ordered.length, (targetSets / 3).ceil()));
     return ordered.take(exerciseCount).toList();

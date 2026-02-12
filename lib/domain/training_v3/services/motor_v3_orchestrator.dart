@@ -416,6 +416,9 @@ class MotorV3Orchestrator {
       );
     }
 
+    final usedExercisesThisWeek = <String>{};
+    final anglesCoveredByMuscle = <String, Set<String>>{};
+
     for (int i = 0; i < dayGroups.length; i++) {
       final groups = dayGroups[i];
       final dayNumber = i + 1;
@@ -424,6 +427,7 @@ class MotorV3Orchestrator {
       final setsById = <String, int>{};
 
       for (final group in groups) {
+        final musclesForGroup = _canonicalMusclesForGroup(group);
         final weeklySets = _calculateGroupWeeklySets(
           group: group,
           volumePerMuscle: volumePerMuscle,
@@ -435,41 +439,116 @@ class MotorV3Orchestrator {
           groups: [group],
           targetSets: targetSets,
           profile: clientProfile,
+          limitToTargetSets: false,
+        );
+
+        if (selected.isEmpty) {
+          debugPrint(
+            '[Motor V3] ⚠️ No exercises for group $group on day $dayNumber',
+          );
+          continue;
+        }
+
+        var availableExercises = selected.where((ex) {
+          return !usedExercisesThisWeek.contains(ex.id);
+        }).toList();
+
+        if (availableExercises.isEmpty) {
+          debugPrint(
+            '[Motor V3] All exercises used for $group, allowing reuse with variation',
+          );
+          availableExercises = selected;
+        }
+
+        final daySeeded = List<Exercise>.from(availableExercises);
+        final daySeed = weekNumber * 1000 + dayNumber + group.index;
+        final dayRandom = Random(daySeed);
+        daySeeded.shuffle(dayRandom);
+
+        bool hasNewAngle(Exercise ex) {
+          final tags = _angleTagsFromName(ex.name);
+          if (tags.isEmpty) return false;
+          for (final muscle in musclesForGroup) {
+            final covered = anglesCoveredByMuscle[muscle] ?? const <String>{};
+            if (tags.any((t) => !covered.contains(t))) return true;
+          }
+          return false;
+        }
+
+        final preferred = <Exercise>[];
+        final others = <Exercise>[];
+        for (final ex in daySeeded) {
+          if (hasNewAngle(ex)) {
+            preferred.add(ex);
+          } else {
+            others.add(ex);
+          }
+        }
+
+        final rankedExercises = <Exercise>[...preferred, ...others];
+
+        debugPrint(
+          '[Motor V3] Day $dayNumber, Group $group: ${daySeeded.length} exercises available (seed=$daySeed)',
         );
 
         final selectedCount = max(
           1,
-          min(selected.length, (targetSets / 3).ceil()),
+          min(daySeeded.length, (targetSets / 3).ceil()),
         );
-        final selectedExercises = selected.take(selectedCount).toList();
+        final selectedExercises = rankedExercises.take(selectedCount).toList();
+
         final setsPerExercise = max(
           1,
           (targetSets / selectedExercises.length).round(),
         );
 
+        debugPrint(
+          '[Motor V3]   Selected $selectedCount exercises, $setsPerExercise sets each',
+        );
+
         for (final ex in selectedExercises) {
           exerciseById[ex.id] = ex;
           setsById[ex.id] = (setsById[ex.id] ?? 0) + setsPerExercise;
+
+          usedExercisesThisWeek.add(ex.id);
+
+          final angleTags = _angleTagsFromName(ex.name);
+          if (angleTags.isNotEmpty) {
+            for (final muscle in musclesForGroup) {
+              anglesCoveredByMuscle.putIfAbsent(muscle, () => <String>{});
+              anglesCoveredByMuscle[muscle]!.addAll(angleTags);
+            }
+          }
+
+          debugPrint('[Motor V3]     ✓ ${ex.name} ($setsPerExercise sets)');
         }
       }
 
       if (exerciseById.isEmpty) {
+        debugPrint('[Motor V3] ⚠️ Day $dayNumber empty, using fallback');
         final fallback = ExerciseCatalogV3.getAllExercises();
         if (fallback.isNotEmpty) {
           final exercise = fallback.first;
           exerciseById[exercise.id] = exercise;
           setsById[exercise.id] = 1;
-          debugPrint(
-            '[Motor V3] Fallback ejercicio en dia $dayNumber: ${exercise.name}',
-          );
+          debugPrint('[Motor V3] Fallback: ${exercise.name}');
         } else {
           throw StateError('[Motor V3] Día $dayNumber sin ejercicios');
         }
       }
 
-      final exerciseIds = exerciseById.values.toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
-      final orderedIds = exerciseIds.map((e) => e.id).toList();
+      final exercisesList = exerciseById.values.toList();
+      exercisesList.sort((a, b) {
+        final aType = ExerciseCatalogV3.getTypeById(a.id);
+        final bType = ExerciseCatalogV3.getTypeById(b.id);
+
+        if (aType == 'compound' && bType != 'compound') return -1;
+        if (aType != 'compound' && bType == 'compound') return 1;
+
+        return a.name.compareTo(b.name);
+      });
+
+      final orderedIds = exercisesList.map((e) => e.id).toList();
       final exerciseTypes = <String, String>{};
       for (final id in orderedIds) {
         exerciseTypes[id] = ExerciseCatalogV3.getTypeById(id);
@@ -508,7 +587,8 @@ class MotorV3Orchestrator {
             targetRir: targetRir,
             intensityZone: intensity,
             restSeconds: restSeconds,
-            notes: 'Motor V3 $phase',
+            notes:
+                'Motor V3 | Semana $weekNumber | ${_getDayLabel(split, dayNumber)}',
           ),
         );
       }
@@ -517,59 +597,116 @@ class MotorV3Orchestrator {
         TrainingSession(
           id: 'w${weekNumber}d$dayNumber',
           dayNumber: dayNumber,
-          name: 'Day $dayNumber',
+          name: 'Día $dayNumber - ${_getDayLabel(split, dayNumber)}',
           primaryMuscles: groups.map((g) => g.name).toList(),
           estimatedDurationMinutes: (prescriptions.length * 10) + 30,
           exercises: prescriptions,
         ),
       );
+
+      debugPrint(
+        '[Motor V3] ✅ Day $dayNumber complete: ${prescriptions.length} exercises, ${prescriptions.fold<int>(0, (sum, p) => sum + p.sets)} total sets',
+      );
     }
+
+    debugPrint(
+      '[Motor V3] Week $weekNumber complete: ${sessions.length} sessions, used ${usedExercisesThisWeek.length} unique exercises',
+    );
 
     return sessions;
   }
 
+  /// Resuelve grupos musculares por día con variación científica.
   static List<List<resolver.MuscleGroup>> _resolveDayGroups(
     TrainingSplit split,
     int daysPerWeek,
   ) {
     switch (split) {
       case TrainingSplit.upperLower:
-        final pattern = [
-          [
-            resolver.MuscleGroup.chest,
-            resolver.MuscleGroup.back,
-            resolver.MuscleGroup.deltoids,
-            resolver.MuscleGroup.arms,
-          ],
-          [
-            resolver.MuscleGroup.legs,
-            resolver.MuscleGroup.glutes,
-            resolver.MuscleGroup.calves,
-            resolver.MuscleGroup.core,
-          ],
-        ];
-        final out = <List<resolver.MuscleGroup>>[];
-        for (int i = 0; i < daysPerWeek; i++) {
-          out.add(pattern[i % pattern.length]);
-        }
-        return out;
-      case TrainingSplit.fullBody:
-        final full = [
+        final upperA = [
           resolver.MuscleGroup.chest,
           resolver.MuscleGroup.back,
           resolver.MuscleGroup.deltoids,
           resolver.MuscleGroup.arms,
+        ];
+
+        final lowerA = [
           resolver.MuscleGroup.legs,
           resolver.MuscleGroup.glutes,
           resolver.MuscleGroup.calves,
           resolver.MuscleGroup.core,
         ];
-        return List<List<resolver.MuscleGroup>>.generate(
-          daysPerWeek,
-          (_) => full,
-        );
+
+        final upperB = [
+          resolver.MuscleGroup.back,
+          resolver.MuscleGroup.chest,
+          resolver.MuscleGroup.deltoids,
+          resolver.MuscleGroup.arms,
+        ];
+
+        final lowerB = [
+          resolver.MuscleGroup.glutes,
+          resolver.MuscleGroup.legs,
+          resolver.MuscleGroup.calves,
+          resolver.MuscleGroup.core,
+        ];
+
+        return [upperA, lowerA, upperB, lowerB].take(daysPerWeek).toList();
+      case TrainingSplit.fullBody:
+        final fullBodyA = [
+          resolver.MuscleGroup.chest,
+          resolver.MuscleGroup.legs,
+          resolver.MuscleGroup.back,
+          resolver.MuscleGroup.deltoids,
+          resolver.MuscleGroup.arms,
+          resolver.MuscleGroup.core,
+        ];
+
+        final fullBodyB = [
+          resolver.MuscleGroup.back,
+          resolver.MuscleGroup.glutes,
+          resolver.MuscleGroup.chest,
+          resolver.MuscleGroup.deltoids,
+          resolver.MuscleGroup.calves,
+          resolver.MuscleGroup.arms,
+        ];
+
+        final fullBodyC = [
+          resolver.MuscleGroup.legs,
+          resolver.MuscleGroup.chest,
+          resolver.MuscleGroup.back,
+          resolver.MuscleGroup.glutes,
+          resolver.MuscleGroup.deltoids,
+          resolver.MuscleGroup.arms,
+          resolver.MuscleGroup.core,
+        ];
+
+        return [fullBodyA, fullBodyB, fullBodyC].take(daysPerWeek).toList();
       case TrainingSplit.pushPullLegs:
-        throw StateError('[Motor V3] Split pushPullLegs no implementado');
+        final push = [
+          resolver.MuscleGroup.chest,
+          resolver.MuscleGroup.deltoids,
+          resolver.MuscleGroup.arms,
+        ];
+
+        final pull = [
+          resolver.MuscleGroup.back,
+          resolver.MuscleGroup.deltoids,
+          resolver.MuscleGroup.arms,
+        ];
+
+        final legs = [
+          resolver.MuscleGroup.legs,
+          resolver.MuscleGroup.glutes,
+          resolver.MuscleGroup.calves,
+          resolver.MuscleGroup.core,
+        ];
+
+        if (daysPerWeek >= 6) {
+          return [push, pull, legs, push, pull, legs];
+        }
+
+        return [push, pull, legs];
     }
   }
 
@@ -614,6 +751,55 @@ class MotorV3Orchestrator {
       case resolver.MuscleGroup.core:
         return ['abs'];
     }
+  }
+
+  /// Retorna etiqueta descriptiva del día según split.
+  static String _getDayLabel(TrainingSplit split, int dayNumber) {
+    switch (split) {
+      case TrainingSplit.upperLower:
+        final labels = ['Upper A', 'Lower A', 'Upper B', 'Lower B'];
+        return labels[(dayNumber - 1) % labels.length];
+      case TrainingSplit.fullBody:
+        final labels = ['Full Body A', 'Full Body B', 'Full Body C'];
+        return labels[(dayNumber - 1) % labels.length];
+      case TrainingSplit.pushPullLegs:
+        final labels = ['Push', 'Pull', 'Legs'];
+        return labels[(dayNumber - 1) % labels.length];
+    }
+  }
+
+  static Set<String> _angleTagsFromName(String name) {
+    final n = name.toLowerCase();
+    final tags = <String>{};
+
+    void addIf(String tag, List<String> keys) {
+      for (final key in keys) {
+        if (n.contains(key)) {
+          tags.add(tag);
+          break;
+        }
+      }
+    }
+
+    addIf('incline', ['incline']);
+    addIf('decline', ['decline']);
+    addIf('flat', ['flat']);
+    addIf('overhead', ['overhead']);
+    addIf('vertical', ['vertical']);
+    addIf('horizontal', ['horizontal']);
+    addIf('neutral', ['neutral']);
+    addIf('wide', ['wide']);
+    addIf('close', ['close', 'narrow']);
+    addIf('front', ['front']);
+    addIf('rear', ['rear']);
+    addIf('lateral', ['lateral', 'side']);
+    addIf('sumo', ['sumo']);
+    addIf('conventional', ['conventional']);
+    addIf('seated', ['seated']);
+    addIf('standing', ['standing']);
+    addIf('lying', ['lying', 'supine', 'prone']);
+
+    return tags;
   }
 
   static TrainingSplit _resolveSplit({
