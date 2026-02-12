@@ -240,10 +240,7 @@ class MotorV3Orchestrator {
     final volumeByMuscle = <String, int>{};
 
     // Mapeo para normalizar IDs antiguos a nuevos
-    final muscleNormalization = {
-      'chest': 'pectorals',
-      'quads': 'quadriceps',
-    };
+    final muscleNormalization = {'chest': 'pectorals', 'quads': 'quadriceps'};
 
     // Calcular volumen para cada músculo con prioridad
     profile.musclePriorities.forEach((muscle, priority) {
