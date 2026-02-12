@@ -22,10 +22,7 @@ class ExerciseCatalogV3 {
       for (final rawKey in keys) {
         final key = rawKey.trim().toLowerCase();
         if (key.isEmpty) continue;
-        final bucket = _exercisesByMuscle.putIfAbsent(
-          key,
-          () => <Exercise>[],
-        );
+        final bucket = _exercisesByMuscle.putIfAbsent(key, () => <Exercise>[]);
         bucket.add(exercise);
       }
     }
@@ -79,6 +76,7 @@ class ExerciseCatalogV3 {
       debugPrint(
         '[ExerciseCatalogV3] Loaded keys: ${_exercisesByMuscle.length}',
       );
+      debugPrintCatalogStatus();
     } catch (e) {
       debugPrint('ERROR cargando ExerciseCatalogV3: $e');
       _loaded = true;
@@ -116,5 +114,34 @@ class ExerciseCatalogV3 {
 
   static String getTypeById(String exerciseId) {
     return _exerciseTypeById[exerciseId] ?? 'compound';
+  }
+
+  /// Retorna lista de muscle keys disponibles en el catálogo
+  static List<String> getAvailableKeys() {
+    return _exercisesByMuscle.keys.toList()..sort();
+  }
+
+  /// Retorna resumen de disponibilidad de ejercicios por muscle key
+  static Map<String, int> getKeySummary() {
+    final summary = <String, int>{};
+    _exercisesByMuscle.forEach((key, exercises) {
+      summary[key] = exercises.length;
+    });
+    return summary;
+  }
+
+  /// Debug: imprime disponibilidad completa del catálogo
+  static void debugPrintCatalogStatus() {
+    debugPrint('[ExerciseCatalogV3] ═══════════════════════════════════');
+    debugPrint('[ExerciseCatalogV3] CATALOG STATUS');
+    debugPrint('[ExerciseCatalogV3] Loaded: $_loaded');
+    debugPrint(
+      '[ExerciseCatalogV3] Total unique keys: ${_exercisesByMuscle.length}',
+    );
+    final summary = getKeySummary();
+    summary.forEach((key, count) {
+      debugPrint('[ExerciseCatalogV3]   - $key: $count exercises');
+    });
+    debugPrint('[ExerciseCatalogV3] ═══════════════════════════════════');
   }
 }

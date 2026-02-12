@@ -2,7 +2,7 @@ enum MuscleGroup { chest, back, deltoids, arms, legs, glutes, calves, core }
 
 class MuscleToCatalogResolver {
   static const Map<MuscleGroup, List<String>> map = {
-    MuscleGroup.chest: ['chest'],
+    MuscleGroup.chest: ['pectorals'],
 
     MuscleGroup.back: ['lats', 'upper_back', 'traps'],
 
@@ -14,7 +14,7 @@ class MuscleToCatalogResolver {
 
     MuscleGroup.arms: ['biceps', 'triceps'],
 
-    MuscleGroup.legs: ['quads', 'hamstrings'],
+    MuscleGroup.legs: ['quadriceps', 'hamstrings'],
 
     MuscleGroup.glutes: ['glutes'],
 

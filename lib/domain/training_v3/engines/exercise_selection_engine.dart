@@ -47,32 +47,53 @@ class ExerciseSelectionEngine {
     }
 
     if (keys.isEmpty) {
-      debugPrint('[ExerciseSelection] No hay keys para grupos: $groups');
+      debugPrint('[ExerciseSelection] ⚠️ No hay keys para grupos: $groups');
+      return const <Exercise>[];
     }
+
+    debugPrint(
+      '[ExerciseSelection] 🔍 Buscando ejercicios para groups=$groups → motorKeys=$keys',
+    );
 
     final catalogKeys = <String>{};
     for (final key in keys) {
       catalogKeys.addAll(MuscleKeyAdapterV3.toCatalogKeys(key));
     }
 
+    debugPrint(
+      '[ExerciseSelection] 🔍 Después adapter: catalogKeys=$catalogKeys',
+    );
+
     final all = <Exercise>[];
     for (final ck in catalogKeys) {
       final list = ExerciseCatalogV3.getByMuscle(ck);
+      debugPrint('[ExerciseSelection]   ck="$ck": ${list.length} exercises');
       if (list.isNotEmpty) all.addAll(list);
     }
 
     if (all.isEmpty) {
       debugPrint(
-        '[ExerciseSelection] No exercises for motorKeys=$keys catalogKeys=$catalogKeys',
+        '[ExerciseSelection] ⚠️ No exercises for motorKeys=$keys catalogKeys=$catalogKeys',
       );
-      final fallback = ExerciseCatalogV3.getAllExercises();
+
+      // Fallback inteligente: filtrar por primaryMuscles que coincidan con los muscle keys objetivo
+      final fallback = ExerciseCatalogV3.getAllExercises().where((ex) {
+        return ex.primaryMuscles.any((m) => keys.contains(m));
+      }).toList();
+
+      debugPrint(
+        '[ExerciseSelection] Fallback: Filtered ${fallback.length}/${ExerciseCatalogV3.getAllExercises().length} exercises that match keys: $keys',
+      );
+
       if (fallback.isNotEmpty) {
         all.addAll(fallback);
       }
     }
 
     if (all.isEmpty) {
-      debugPrint('[ExerciseSelection] Catalogo vacio, sin ejercicios');
+      debugPrint(
+        '[ExerciseSelection] ⚠️ Catalogo vacio o sin ejercicios para: $keys',
+      );
       return const <Exercise>[];
     }
 
