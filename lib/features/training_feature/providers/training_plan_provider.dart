@@ -23,6 +23,7 @@ import 'package:hcs_app_lap/utils/date_helpers.dart';
 import 'package:hcs_app_lap/domain/training_v3/orchestrator/training_orchestrator_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
 // VopSnapshot SSOT
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
@@ -484,7 +485,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // Fecha activa para el plan
       final activeDateIso =
           forDateIso ?? dateIsoFrom(ref.read(globalDateProvider));
-        final startDate = tryParseDateTime(activeDateIso) ?? DateTime.now();
+      final startDate = tryParseDateTime(activeDateIso) ?? DateTime.now();
 
       // ═══════════════════════════════════════════════════════════════════════
       // GUARDRAIL: Evitar regeneración silenciosa si ya existe plan para esa fecha
@@ -1168,8 +1169,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
       // PARTE 4 A6: Validación VOP se hace POST-plan (requiere ejercicios reales)
       debugPrint('🧭 [Motor V3][Step] 4/6 VOP validate (post-plan)');
-      final vopContext = VopContext.ensure(workingClient.training.extra);
-      final vopMap = vopContext?.snapshot.setsByMuscle ?? {};
 
       // 4. Ejecutar Motor V3 (MotorV3Orchestrator)
       debugPrint(
@@ -1361,11 +1360,90 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // CONTINUAR CON VALIDACIONES VOP
       // ═══════════════════════════════════════════════════════════════════════
 
-      // 4.1 Validar VOP con cobertura indirecta (post-plan)
+      // ═══════════════════════════════════════════════════════════════════
+      // PASO 1: LEER VOP DESDE SSOT (vopSnapshot) - MOTOR V3 EXCLUSIVO
+      // ═══════════════════════════════════════════════════════════════════
+      // ARQUITECTURA:
+      // - vopSnapshot: SSOT único (14 músculos canónicos)
+      // - NO usa volumeLimitsByMuscle (legacy Motor V2 - DEPRECADO)
+      // - Genera automático si vopSnapshot falta
+      // ═══════════════════════════════════════════════════════════════════
+
+      final vopContext = VopContext.ensure(workingClient.training.extra);
       final directVopByMuscle = <String, double>{};
-      vopMap.forEach((k, v) {
-        directVopByMuscle[normalizeMuscleKey(k)] = v.toDouble();
-      });
+
+      if (vopContext != null && vopContext.hasData) {
+        // ✅ FLUJO PRINCIPAL: VopSnapshot existe
+        debugPrint('[Motor V3] ✅ Leyendo VOP desde vopSnapshot (SSOT)');
+
+        vopContext.snapshot.setsByMuscle.forEach((muscle, sets) {
+          final normalizedMuscle = normalizeMuscleKey(muscle);
+          directVopByMuscle[normalizedMuscle] = sets.toDouble();
+        });
+
+        debugPrint(
+          '[Motor V3] VOP desde SSOT: ${directVopByMuscle.keys.toList()}',
+        );
+        debugPrint('[Motor V3] Total músculos: ${directVopByMuscle.length}');
+      } else {
+        // ⚠️ FLUJO FALLBACK: VopSnapshot NO existe → Generar automático
+        debugPrint('[Motor V3] ⚠️ vopSnapshot NO encontrado');
+        debugPrint(
+          '[Motor V3] 🔧 Generando VOP automático desde baseExercisesByMuscle...',
+        );
+
+        final allMuscles = <String>{};
+        allMuscles.addAll(
+          activeCycle.baseExercisesByMuscle.keys.map(
+            (m) => normalizeMuscleKey(m),
+          ),
+        );
+
+        final resolvedTrainingLevel =
+            workingClient.training.trainingLevel?.name == 'beginner'
+            ? 'novice'
+            : (workingClient.training.trainingLevel?.name ?? 'intermediate');
+        final priorityMuscles = activeCycle.priorityMuscles
+            .map(normalizeMuscleKey)
+            .toSet();
+
+        debugPrint('[Motor V3] Músculos detectados: ${allMuscles.toList()}');
+
+        for (final muscle in allMuscles) {
+          try {
+            final priority = priorityMuscles.contains(muscle) ? 4 : 3;
+            final optimalVolume = VolumeEngine.calculateOptimalVolume(
+              muscle: muscle,
+              trainingLevel: resolvedTrainingLevel,
+              priority: priority,
+            );
+
+            directVopByMuscle[muscle] = optimalVolume.toDouble();
+
+            debugPrint('[Motor V3]   ✓ $muscle → $optimalVolume sets/semana');
+          } catch (e) {
+            debugPrint(
+              '[Motor V3]   ⚠️ $muscle no en VolumeEngine, usando fallback',
+            );
+            directVopByMuscle[muscle] = 12.0;
+          }
+        }
+
+        debugPrint('[Motor V3] VOP AUTO-GENERADO: $directVopByMuscle');
+      }
+
+      if (directVopByMuscle.isEmpty) {
+        debugPrint(
+          '[Motor V3] ❌ ERROR: directVopByMuscle vacío después de todos los intentos',
+        );
+        throw StateError(
+          'No se pudo obtener VOP: vopSnapshot no existe y no hay músculos en baseExercisesByMuscle',
+        );
+      }
+
+      debugPrint(
+        '[Motor V3] 📊 VOP FINAL: ${directVopByMuscle.length} músculos con volumen asignado',
+      );
 
       final mevByMuscle = <String, double>{};
       final mevRaw =

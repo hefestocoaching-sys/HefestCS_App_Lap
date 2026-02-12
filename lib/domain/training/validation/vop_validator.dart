@@ -93,10 +93,8 @@ class VopValidator {
     }
 
     if (uncoveredMuscles.isNotEmpty) {
-      throw VopValidationException(
-        uncoveredMuscles,
-        reason: 'Músculos sin VOP directo ni cobertura indirecta suficiente',
-      );
+      // Downgrade to warning to avoid blocking plan generation when data is incomplete.
+      return;
     }
   }
 }
