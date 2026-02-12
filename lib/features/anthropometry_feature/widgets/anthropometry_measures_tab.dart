@@ -922,6 +922,7 @@ class AnthropometryMeasuresTabState
           ),
         ),
       ),
+      floatingActionButton: _buildActionButtons(),
     );
   }
 

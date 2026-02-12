@@ -20,9 +20,12 @@ class NutritionExtraKeys {
   static const evaluationRecords = 'evaluationRecords';
   static const macrosRecords = 'macrosRecords';
   static const mealPlanRecords = 'mealPlanRecords';
+  static const equivalentsRecords = 'equivalentsRecords';
   static const adherenceLogRecords = 'adherenceLogRecords';
   static const selectedMacrosRecordDateIso = 'selectedMacrosRecordDateIso';
   static const selectedMealPlanRecordDateIso = 'selectedMealPlanRecordDateIso';
+  static const selectedEquivalentsRecordDateIso =
+      'selectedEquivalentsRecordDateIso';
 
   // NEW v2: Déficit porcentual
   static const deficitPct = 'deficitPct'; // 0.10..0.25

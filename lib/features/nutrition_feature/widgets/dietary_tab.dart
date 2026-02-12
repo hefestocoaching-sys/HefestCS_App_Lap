@@ -566,12 +566,8 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         targetDate,
         (record) {
           final dateIsoStr = record['dateIso'].toString();
-          try {
-            return DateTime.parse(dateIsoStr);
-          } catch (e) {
-            // Fallback a epoch si el formato es inválido
-            return DateTime.fromMillisecondsSinceEpoch(0);
-          }
+          return _safeParseDateIso(dateIsoStr) ??
+              DateTime.fromMillisecondsSinceEpoch(0);
         },
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -776,7 +772,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Registro cargado: ${DateFormat('d MMM yyyy', 'es').format(DateTime.parse(recordDateIso))}',
+            'Registro cargado: ${DateFormat('d MMM yyyy', 'es').format(_safeParseDateIso(recordDateIso) ?? DateTime.now())}',
           ),
           duration: const Duration(seconds: 1),
           backgroundColor: kPrimaryColor,
@@ -885,7 +881,8 @@ class DietaryTabState extends ConsumerState<DietaryTab>
   }
 
   Future<void> _deleteSelectedRecord() async {
-    final dateTime = DateTime.tryParse(widget.activeDateIso);
+    final dateIsoToDelete = _selectedRecordDateIso ?? widget.activeDateIso;
+    final dateTime = _safeParseDateIso(dateIsoToDelete);
     if (dateTime == null) return;
 
     final targetIso = dateIsoFrom(dateTime);
@@ -923,7 +920,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       final filtered = records.where((record) {
         final iso = record['dateIso']?.toString();
         if (iso == null) return true;
-        final parsed = DateTime.tryParse(iso);
+        final parsed = _safeParseDateIso(iso);
         if (parsed == null) return true;
         final normalized = dateIsoFrom(parsed);
         return normalized != targetIso;
@@ -947,8 +944,11 @@ class DietaryTabState extends ConsumerState<DietaryTab>
 
       // Recargar datos después de borrar
       setState(() {
+        _selectedRecordDateIso = null;
         _loadClientData(client);
       });
+
+      _resetToIdle();
 
       // Mostrar confirmación
       if (mounted) {
@@ -958,6 +958,15 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       if (mounted) {
         showDeleteErrorSnackbar(context, Exception('Error: $e'));
       }
+    }
+  }
+
+  DateTime? _safeParseDateIso(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    try {
+      return DateTime.parse(value.trim());
+    } catch (_) {
+      return null;
     }
   }
 

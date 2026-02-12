@@ -57,6 +57,15 @@ class EquivalentsByDayNotifier extends Notifier<EquivalentsByDayState> {
     _loadedClientId = client.id;
   }
 
+  void loadFromPayload(dynamic raw, {bool markDirty = false}) {
+    final parsed = _parseEquivalents(raw);
+    state = state.copyWith(
+      dayEquivalents: parsed.dayEquivalents,
+      dayMealEquivalents: parsed.dayMealEquivalents,
+      isDirty: markDirty,
+    );
+  }
+
   void ensureDay(String dayKey, int mealsPerDay, Iterable<String> groupIds) {
     final dayEquivalents = Map<String, Map<String, double>>.from(
       state.dayEquivalents,
