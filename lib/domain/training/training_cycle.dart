@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 
 /// Representa un ciclo de entrenamiento completo.
 ///
@@ -62,9 +63,9 @@ class TrainingCycle extends Equatable {
   factory TrainingCycle.fromMap(Map<String, dynamic> map) {
     return TrainingCycle(
       cycleId: map['cycleId'] as String? ?? '',
-      startDate: DateTime.parse(map['startDate'] as String? ?? '2000-01-01'),
+        startDate: parseDateTimeOrEpoch(map['startDate']?.toString()),
       endDate: map['endDate'] != null
-          ? DateTime.parse(map['endDate'] as String)
+          ? tryParseDateTime(map['endDate']?.toString())
           : null,
       goal: map['goal'] as String? ?? 'hipertrofia_general',
       priorityMuscles: List<String>.from(map['priorityMuscles'] as List? ?? []),
@@ -79,7 +80,7 @@ class TrainingCycle extends Equatable {
       phaseState: map['phaseState'] as String? ?? 'VME',
       currentWeek: map['currentWeek'] as int? ?? 1,
       frequency: map['frequency'] as int? ?? 2,
-      createdAt: DateTime.parse(map['createdAt'] as String? ?? '2000-01-01'),
+      createdAt: parseDateTimeOrEpoch(map['createdAt']?.toString()),
     );
   }
 

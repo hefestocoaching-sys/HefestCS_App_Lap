@@ -1,3 +1,5 @@
+import 'package:hcs_app_lap/utils/date_helpers.dart';
+
 // Port directo fiel a tu clase en client_model.dart
 class DailyTrackingRecord {
   final DateTime date;
@@ -40,7 +42,7 @@ class DailyTrackingRecord {
 
   factory DailyTrackingRecord.fromJson(Map<String, dynamic> json) {
     return DailyTrackingRecord(
-      date: DateTime.parse(json['date']),
+      date: parseDateTimeOrEpoch(json['date']?.toString()),
       weightKg: (json['weightKg'] as num?)?.toDouble(),
       abdominalFold: (json['abdominalFold'] as num?)?.toDouble(),
       waistCircNarrowest: (json['waistCircNarrowest'] as num?)?.toDouble(),

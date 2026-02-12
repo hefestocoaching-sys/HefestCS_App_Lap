@@ -2,6 +2,7 @@ import 'package:hcs_app_lap/domain/entities/clinical_restriction_profile.dart';
 import 'package:hcs_app_lap/domain/entities/digestive_intolerances.dart';
 import 'package:hcs_app_lap/domain/entities/clinical_conditions.dart';
 import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 
 import 'daily_macro_settings.dart';
 import 'daily_meal_plan.dart';
@@ -125,10 +126,10 @@ class NutritionSettings {
     return NutritionSettings(
       planType: json['planType'] as String?,
       planStartDate: json['planStartDate'] != null
-          ? DateTime.parse(json['planStartDate'] as String)
+          ? tryParseDateTime(json['planStartDate']?.toString())
           : null,
       planEndDate: json['planEndDate'] != null
-          ? DateTime.parse(json['planEndDate'] as String)
+          ? tryParseDateTime(json['planEndDate']?.toString())
           : null,
       kcal: json['kcal'] as int?,
       dailyKcal: json['dailyKcal'] != null

@@ -1,3 +1,5 @@
+import 'package:hcs_app_lap/utils/date_helpers.dart';
+
 /// Entidad simple para transacciones financieras (sin Freezed temporalmente)
 class Transaction {
   final String id;
@@ -68,7 +70,7 @@ class Transaction {
       clientId: json['clientId'] as String?,
       date: json['date'] is DateTime
           ? json['date'] as DateTime
-          : DateTime.parse(json['date'].toString()),
+          : parseDateTimeOrEpoch(json['date'].toString()),
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       type: TransactionType.values.byName(
         (json['type'] as String?) ?? 'income',
@@ -80,7 +82,7 @@ class Transaction {
       notes: json['notes'] as String?,
       createdAt: json['createdAt'] is DateTime
           ? json['createdAt'] as DateTime
-          : DateTime.parse(json['createdAt'].toString()),
+          : parseDateTimeOrEpoch(json['createdAt'].toString()),
     );
   }
 }

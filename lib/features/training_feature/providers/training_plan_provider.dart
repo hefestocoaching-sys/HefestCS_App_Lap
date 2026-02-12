@@ -484,7 +484,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // Fecha activa para el plan
       final activeDateIso =
           forDateIso ?? dateIsoFrom(ref.read(globalDateProvider));
-      final startDate = DateTime.parse(activeDateIso);
+        final startDate = tryParseDateTime(activeDateIso) ?? DateTime.now();
 
       // ═══════════════════════════════════════════════════════════════════════
       // GUARDRAIL: Evitar regeneración silenciosa si ya existe plan para esa fecha

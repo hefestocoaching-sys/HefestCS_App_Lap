@@ -921,7 +921,14 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         final iso = record['dateIso']?.toString();
         if (iso == null) return true;
         final parsed = _safeParseDateIso(iso);
-        if (parsed == null) return true;
+        if (parsed == null) {
+          final normalizedRaw = iso.trim();
+          if (normalizedRaw == dateIsoToDelete ||
+              normalizedRaw.startsWith(targetIso)) {
+            return false;
+          }
+          return true;
+        }
         final normalized = dateIsoFrom(parsed);
         return normalized != targetIso;
       }).toList();

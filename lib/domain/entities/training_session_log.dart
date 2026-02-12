@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 import 'package:equatable/equatable.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 
 // ============================================================================
 // CONTRATO PROVISIONAL (DEPRECADO)
@@ -498,8 +499,8 @@ class TrainingSessionLogV2 extends Equatable {
       id: json['id'] as String,
       clientId: json['clientId'] as String,
       exerciseId: json['exerciseId'] as String,
-      sessionDate: DateTime.parse(json['sessionDate'] as String),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      sessionDate: parseDateTimeOrEpoch(json['sessionDate']?.toString()),
+      createdAt: parseDateTimeOrEpoch(json['createdAt']?.toString()),
       source: json['source'] as String,
       plannedSets: json['plannedSets'] as int,
       completedSets: json['completedSets'] as int,

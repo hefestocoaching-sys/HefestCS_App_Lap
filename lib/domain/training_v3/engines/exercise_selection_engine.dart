@@ -47,7 +47,6 @@ class ExerciseSelectionEngine {
 
     if (keys.isEmpty) {
       debugPrint('[ExerciseSelection] No hay keys para grupos: $groups');
-      throw StateError('No hay keys de catálogo para grupos: $groups');
     }
 
     final catalogKeys = <String>{};
@@ -65,7 +64,15 @@ class ExerciseSelectionEngine {
       debugPrint(
         '[ExerciseSelection] No exercises for motorKeys=$keys catalogKeys=$catalogKeys',
       );
-      throw StateError('No se encontraron ejercicios para keys: $catalogKeys');
+      final fallback = ExerciseCatalogV3.getAllExercises();
+      if (fallback.isNotEmpty) {
+        all.addAll(fallback);
+      }
+    }
+
+    if (all.isEmpty) {
+      debugPrint('[ExerciseSelection] Catalogo vacio, sin ejercicios');
+      return const <Exercise>[];
     }
 
     final seen = <String>{};

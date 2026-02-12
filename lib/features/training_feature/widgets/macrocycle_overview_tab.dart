@@ -6,6 +6,7 @@ import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/weekly_volume_record.dart';
 import 'package:hcs_app_lap/domain/models/weekly_volume_view.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/utils/widgets/hcs_input_decoration.dart';
 
@@ -973,16 +974,14 @@ Total: ${week.totalSeries} series
 
   /// Extraer número de semana del año desde fecha ISO (weekStartIso)
   int _extractWeekNumber(String weekStartIso) {
-    try {
-      final date = DateTime.parse(weekStartIso);
-      final startOfYear = DateTime(date.year);
-      final daysSinceStart = date.difference(startOfYear).inDays;
-      final weekIndex = (daysSinceStart ~/ 7) + 1;
-      return weekIndex.clamp(1, 52);
-    } catch (_) {
-      // Fallback si no se puede parsear la fecha
+    final date = tryParseDateTime(weekStartIso);
+    if (date == null) {
       return 1;
     }
+    final startOfYear = DateTime(date.year);
+    final daysSinceStart = date.difference(startOfYear).inDays;
+    final weekIndex = (daysSinceStart ~/ 7) + 1;
+    return weekIndex.clamp(1, 52);
   }
 
   /// Generar bloques fisiológicos (AA, HF1, HF2, etc)

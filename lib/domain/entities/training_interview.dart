@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 
 class TrainingInterview {
   final String id;
@@ -31,11 +32,11 @@ class TrainingInterview {
       version: map['version'] as int? ?? 1,
       status: map['status'] as String? ?? 'empty',
       data: Map<String, dynamic>.from(decoded as Map? ?? const {}),
-      createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: DateTime.parse(map['updated_at'] as String),
+        createdAt: parseDateTimeOrEpoch(map['created_at']?.toString()),
+        updatedAt: parseDateTimeOrEpoch(map['updated_at']?.toString()),
       completedAt: map['completed_at'] == null
           ? null
-          : DateTime.parse(map['completed_at'] as String),
+          : tryParseDateTime(map['completed_at']?.toString()),
     );
   }
 
@@ -62,11 +63,11 @@ class TrainingInterview {
       version: json['version'] as int? ?? 1,
       status: json['status'] as String? ?? 'empty',
       data: Map<String, dynamic>.from(decoded as Map? ?? const {}),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+        createdAt: parseDateTimeOrEpoch(json['createdAt']?.toString()),
+        updatedAt: parseDateTimeOrEpoch(json['updatedAt']?.toString()),
       completedAt: json['completedAt'] == null
           ? null
-          : DateTime.parse(json['completedAt'] as String),
+          : tryParseDateTime(json['completedAt']?.toString()),
     );
   }
 

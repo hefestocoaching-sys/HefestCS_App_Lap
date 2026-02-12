@@ -1,3 +1,5 @@
+import 'package:hcs_app_lap/utils/date_helpers.dart';
+
 // Port directo fiel a tu clase en client_model.dart (campos conservados)
 class AnthropometryRecord {
   DateTime date;
@@ -131,7 +133,7 @@ class AnthropometryRecord {
 
   factory AnthropometryRecord.fromJson(Map<String, dynamic> json) {
     return AnthropometryRecord(
-      date: DateTime.parse(json['date']),
+      date: parseDateTimeOrEpoch(json['date']?.toString()),
       weightKg: (json['weightKg'] as num?)?.toDouble(),
       heightCm: (json['heightCm'] as num?)?.toDouble(),
       tricipitalFold: (json['tricipitalFold'] as num?)?.toDouble(),

@@ -454,7 +454,17 @@ class MotorV3Orchestrator {
       }
 
       if (exerciseById.isEmpty) {
-        throw StateError('[Motor V3] Día $dayNumber sin ejercicios');
+        final fallback = ExerciseCatalogV3.getAllExercises();
+        if (fallback.isNotEmpty) {
+          final exercise = fallback.first;
+          exerciseById[exercise.id] = exercise;
+          setsById[exercise.id] = 1;
+          debugPrint(
+            '[Motor V3] Fallback ejercicio en dia $dayNumber: ${exercise.name}',
+          );
+        } else {
+          throw StateError('[Motor V3] Día $dayNumber sin ejercicios');
+        }
       }
 
       final exerciseIds = exerciseById.values.toList()

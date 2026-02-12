@@ -1626,10 +1626,15 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     String? errorText,
     required void Function(int?) onChanged,
   }) {
+    final normalizedOptions =
+        value == null || options.contains(value)
+            ? options
+            : ([...options, value]..sort());
+    final safeValue = normalizedOptions.contains(value) ? value : null;
     return DropdownButtonFormField<int>(
-      initialValue: value,
+      initialValue: safeValue,
       isExpanded: true,
-      items: options
+      items: normalizedOptions
           .map(
             (v) => DropdownMenuItem<int>(value: v, child: Text(v.toString())),
           )

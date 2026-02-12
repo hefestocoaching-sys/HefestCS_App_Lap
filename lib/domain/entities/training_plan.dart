@@ -1,4 +1,5 @@
 import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 
 class TrainingPlan {
   final String id;
@@ -86,7 +87,7 @@ class TrainingPlan {
       id: map['id'],
       clientId: map['clientId'],
       name: map['name'],
-      startDate: DateTime.parse(map['startDate']),
+      startDate: parseDateTimeOrEpoch(map['startDate']?.toString()),
       weeks: (map['weeks'] as List)
           .map(
             (w) => TrainingWeek(
@@ -96,8 +97,8 @@ class TrainingPlan {
             ),
           )
           .toList(),
-      createdAt: DateTime.parse(map['createdAt']),
-      updatedAt: DateTime.parse(map['updatedAt']),
+      createdAt: parseDateTimeOrEpoch(map['createdAt']?.toString()),
+      updatedAt: parseDateTimeOrEpoch(map['updatedAt']?.toString()),
       phase: map['phase'],
       split: map['split'],
       volumePerMuscle: map['volumePerMuscle'] != null

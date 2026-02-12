@@ -1,3 +1,5 @@
+import 'package:hcs_app_lap/utils/date_helpers.dart';
+
 /// Entidad simple para citas/consultas con clientes (sin Freezed temporalmente)
 class Appointment {
   final String id;
@@ -68,7 +70,7 @@ class Appointment {
       clientId: json['clientId'] as String,
       dateTime: json['dateTime'] is DateTime
           ? json['dateTime'] as DateTime
-          : DateTime.parse(json['dateTime'].toString()),
+          : parseDateTimeOrEpoch(json['dateTime'].toString()),
       durationMinutes: json['durationMinutes'] as int? ?? 60,
       type: AppointmentType.values.byName(
         (json['type'] as String?) ?? 'weeklyCheck',
@@ -80,7 +82,7 @@ class Appointment {
       completedAt: json['completedAt'] != null
           ? (json['completedAt'] is DateTime
                 ? json['completedAt'] as DateTime
-                : DateTime.parse(json['completedAt'].toString()))
+                : tryParseDateTime(json['completedAt'].toString()))
           : null,
       sendReminder: json['sendReminder'] as bool? ?? false,
     );

@@ -43,6 +43,20 @@ class VopValidator {
   }) {
     final uncoveredMuscles = <String>[];
 
+    if (directVopByMuscle.isEmpty && plannedExercises.isEmpty) {
+      return;
+    }
+
+    final plannedStimulusByMuscle = <String, double>{};
+    for (final planned in plannedExercises) {
+      planned.stimulusContribution.forEach((key, value) {
+        final muscle = normalizeMuscleKey(key);
+        final next = (value * planned.plannedSets).toDouble();
+        plannedStimulusByMuscle[muscle] =
+            (plannedStimulusByMuscle[muscle] ?? 0) + next;
+      });
+    }
+
     for (final rawMuscle in cycle.baseExercisesByMuscle.keys) {
       final muscle = normalizeMuscleKey(rawMuscle);
 
@@ -51,11 +65,20 @@ class VopValidator {
       bool covered = directVop != null && directVop > 0;
 
       if (!covered) {
+        final plannedStimulus = plannedStimulusByMuscle[muscle] ?? 0;
+        if (plannedStimulus >= 4) {
+          covered = true;
+        }
+      }
+
+      if (!covered) {
         final indirectSources = indirectCoverageMap[muscle] ?? [];
 
         double indirectStimulus = 0;
         for (final src in indirectSources) {
-          indirectStimulus += directVopByMuscle[src] ?? 0;
+          indirectStimulus +=
+              (directVopByMuscle[src] ?? 0) +
+              (plannedStimulusByMuscle[src] ?? 0);
         }
 
         // Regla: estímulo indirecto >= MEV mínimo (≈ 4–6 sets)

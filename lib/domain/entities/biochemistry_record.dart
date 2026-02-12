@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 
 class BioChemistryRecord extends Equatable {
   final DateTime date;
@@ -137,7 +138,7 @@ class BioChemistryRecord extends Equatable {
 
   factory BioChemistryRecord.fromJson(Map<String, dynamic> json) {
     return BioChemistryRecord(
-      date: DateTime.parse(json['date']),
+      date: parseDateTimeOrEpoch(json['date']?.toString()),
       glucose: (json['glucose'] as num?)?.toDouble(),
       hba1c: (json['hba1c'] as num?)?.toDouble(),
       fastingInsulin: (json['fastingInsulin'] as num?)?.toDouble(),

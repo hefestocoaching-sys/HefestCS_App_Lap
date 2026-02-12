@@ -101,6 +101,19 @@ class ExerciseCatalogV3 {
     return _exercisesByMuscle[k] ?? const <Exercise>[];
   }
 
+  static List<Exercise> getAllExercises() {
+    final seen = <String>{};
+    final out = <Exercise>[];
+    for (final bucket in _exercisesByMuscle.values) {
+      for (final exercise in bucket) {
+        if (seen.add(exercise.id)) {
+          out.add(exercise);
+        }
+      }
+    }
+    return out;
+  }
+
   static String getTypeById(String exerciseId) {
     return _exerciseTypeById[exerciseId] ?? 'compound';
   }

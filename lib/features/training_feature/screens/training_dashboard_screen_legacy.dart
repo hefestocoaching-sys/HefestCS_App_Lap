@@ -12,6 +12,7 @@ import 'package:hcs_app_lap/domain/entities/engine_audit.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/training_session_log.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 import 'package:hcs_app_lap/utils/widgets/record_history_panel.dart';
 import 'package:intl/intl.dart';
 
@@ -1105,7 +1106,9 @@ class _TrainingDashboardScreenState
         final exercises = log.entries.length;
         return '$exercises ejercicios registrados';
       },
-      dateOf: (log) => DateTime.parse(log.dateIso),
+      dateOf: (log) =>
+          tryParseDateTime(log.dateIso) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       title: 'Historial de Sesiones',
     );
   }
