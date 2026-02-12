@@ -3,7 +3,7 @@
 // Todas las normalizaciones y expansiones deben usar este registro.
 
 const Set<String> canonicalMuscles = {
-  'chest',
+  'pectorals',
   'lats',
   'upper_back',
   'traps',
@@ -12,7 +12,7 @@ const Set<String> canonicalMuscles = {
   'deltoide_posterior',
   'biceps',
   'triceps',
-  'quads',
+  'quadriceps',
   'hamstrings',
   'glutes',
   'calves',
@@ -61,10 +61,11 @@ String? normalize(String rawKey) {
   // Map: variantes → canónico
   const aliases = {
     // Canónico directo
-    'chest': 'chest',
-    'pecho': 'chest',
-    'pectoral': 'chest',
-    'pectorales': 'chest',
+    'pectorals': 'pectorals',
+    'chest': 'pectorals',
+    'pecho': 'pectorals',
+    'pectoral': 'pectorals',
+    'pectorales': 'pectorals',
 
     'lats': 'lats',
     'dorsal ancho': 'lats',
@@ -121,14 +122,14 @@ String? normalize(String rawKey) {
     'tricepses': 'triceps',
     'triceps braquial': 'triceps',
 
-    'quads': 'quads',
-    'quad': 'quads',
-    'cuadriceps': 'quads',
-    'cuádriceps': 'quads',
-    'quadriceps': 'quads',
-    'cuadricep': 'quads',
-    'muslo anterior': 'quads',
-    'femorales anteriores': 'quads',
+    'quads': 'quadriceps',
+    'quad': 'quadriceps',
+    'cuadriceps': 'quadriceps',
+    'cuádriceps': 'quadriceps',
+    'quadriceps': 'quadriceps',
+    'cuadricep': 'quadriceps',
+    'muslo anterior': 'quadriceps',
+    'femorales anteriores': 'quadriceps',
 
     'hamstrings': 'hamstrings',
     'hamstring': 'hamstrings',
@@ -206,9 +207,9 @@ List<String> expandGroup(String groupKey) {
       'deltoide_posterior',
     ],
 
-    'legs': ['quads', 'hamstrings', 'glutes', 'calves'],
-    'piernas': ['quads', 'hamstrings', 'glutes', 'calves'],
-    'legs_group': ['quads', 'hamstrings', 'glutes', 'calves'],
+    'legs': ['quadriceps', 'hamstrings', 'glutes', 'calves'],
+    'piernas': ['quadriceps', 'hamstrings', 'glutes', 'calves'],
+    'legs_group': ['quadriceps', 'hamstrings', 'glutes', 'calves'],
 
     'arms': ['biceps', 'triceps'],
     'brazos': ['biceps', 'triceps'],

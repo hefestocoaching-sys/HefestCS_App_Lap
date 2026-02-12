@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": "3.0",
   "lastUpdated": "2026-01-22",
   "notes": "FULL COMPLETE catalog. Muscle-level VOP. No generic groups.",
@@ -6,7 +6,7 @@
     {
       "id": "lat_pulldown_pron",
       "name": {
-        "es": "Jalón al pecho prono",
+        "es": "JalÃ³n al pecho prono",
         "en": "Lat pulldown pronated"
       },
       "primaryMuscles": [
@@ -63,7 +63,7 @@
     {
       "id": "lat_pulldown_neu",
       "name": {
-        "es": "Jalón al pecho neutro",
+        "es": "JalÃ³n al pecho neutro",
         "en": "Lat pulldown neutral"
       },
       "primaryMuscles": [
@@ -120,7 +120,7 @@
     {
       "id": "lat_pulldown_sup",
       "name": {
-        "es": "Jalón al pecho supino",
+        "es": "JalÃ³n al pecho supino",
         "en": "Lat pulldown supinated"
       },
       "primaryMuscles": [
@@ -462,7 +462,7 @@
     {
       "id": "lat_unilateral",
       "name": {
-        "es": "Jalón unilateral",
+        "es": "JalÃ³n unilateral",
         "en": "Single-arm lat pulldown"
       },
       "primaryMuscles": [
@@ -519,7 +519,7 @@
     {
       "id": "lat_close",
       "name": {
-        "es": "Jalón agarre cerrado",
+        "es": "JalÃ³n agarre cerrado",
         "en": "Close-grip lat pulldown"
       },
       "primaryMuscles": [
@@ -996,7 +996,7 @@
     {
       "id": "row_t_machine",
       "name": {
-        "es": "Remo T máquina",
+        "es": "Remo T mÃ¡quina",
         "en": "T-bar row machine"
       },
       "primaryMuscles": [
@@ -1116,7 +1116,7 @@
     {
       "id": "row_machine",
       "name": {
-        "es": "Remo máquina horizontal",
+        "es": "Remo mÃ¡quina horizontal",
         "en": "Horizontal machine row"
       },
       "primaryMuscles": [
@@ -1288,7 +1288,7 @@
     {
       "id": "shrug_machine",
       "name": {
-        "es": "Encogimiento máquina",
+        "es": "Encogimiento mÃ¡quina",
         "en": "Machine shrug"
       },
       "primaryMuscles": [
@@ -1740,7 +1740,7 @@
         "en": "Barbell bench press"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -1748,7 +1748,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -1800,7 +1800,7 @@
         "en": "Dumbbell bench press"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -1808,7 +1808,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -1860,7 +1860,7 @@
         "en": "Incline barbell press"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -1868,7 +1868,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -1920,7 +1920,7 @@
         "en": "Incline dumbbell press"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -1928,7 +1928,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -1980,7 +1980,7 @@
         "en": "Decline barbell press"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -1988,7 +1988,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -2040,7 +2040,7 @@
         "en": "Decline dumbbell press"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -2048,7 +2048,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -2100,7 +2100,7 @@
         "en": "Flat dumbbell fly"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -2108,7 +2108,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -2160,7 +2160,7 @@
         "en": "Incline dumbbell fly"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -2168,7 +2168,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -2220,7 +2220,7 @@
         "en": "High cable crossover"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -2228,7 +2228,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -2280,7 +2280,7 @@
         "en": "Chest dips"
       },
       "primaryMuscles": [
-        "chest"
+        "pectorals"
       ],
       "secondaryMuscles": [
         "triceps",
@@ -2288,7 +2288,7 @@
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "chest": 1.0,
+        "pectorals": 1.0,
         "triceps": 0.3
       },
       "movementPattern": "horizontal_push",
@@ -2507,7 +2507,7 @@
     {
       "id": "front_raise_bar",
       "name": {
-        "es": "Elevación frontal barra",
+        "es": "ElevaciÃ³n frontal barra",
         "en": "Barbell front raise"
       },
       "primaryMuscles": [
@@ -2564,7 +2564,7 @@
     {
       "id": "front_raise_db",
       "name": {
-        "es": "Elevación frontal mancuernas",
+        "es": "ElevaciÃ³n frontal mancuernas",
         "en": "Dumbbell front raise"
       },
       "primaryMuscles": [
@@ -2621,7 +2621,7 @@
     {
       "id": "front_raise_plate",
       "name": {
-        "es": "Elevación frontal disco",
+        "es": "ElevaciÃ³n frontal disco",
         "en": "Plate front raise"
       },
       "primaryMuscles": [
@@ -2735,7 +2735,7 @@
     {
       "id": "machine_press",
       "name": {
-        "es": "Press hombro máquina",
+        "es": "Press hombro mÃ¡quina",
         "en": "Machine shoulder press"
       },
       "primaryMuscles": [
@@ -2904,7 +2904,7 @@
     {
       "id": "lat_raise_machine",
       "name": {
-        "es": "Elevaciones laterales máquina",
+        "es": "Elevaciones laterales mÃ¡quina",
         "en": "Machine lateral raise"
       },
       "primaryMuscles": [
@@ -2960,7 +2960,7 @@
     {
       "id": "lat_raise_uni",
       "name": {
-        "es": "Elevación lateral unilateral",
+        "es": "ElevaciÃ³n lateral unilateral",
         "en": "Unilateral lateral raise"
       },
       "primaryMuscles": [
@@ -3016,7 +3016,7 @@
     {
       "id": "lat_raise_lean",
       "name": {
-        "es": "Elevación lateral inclinada",
+        "es": "ElevaciÃ³n lateral inclinada",
         "en": "Lean-away lateral raise"
       },
       "primaryMuscles": [
@@ -3352,7 +3352,7 @@
     {
       "id": "rear_fly_db",
       "name": {
-        "es": "Pájaros mancuernas",
+        "es": "PÃ¡jaros mancuernas",
         "en": "Rear delt fly dumbbell"
       },
       "primaryMuscles": [
@@ -3410,7 +3410,7 @@
     {
       "id": "rear_fly_cable",
       "name": {
-        "es": "Pájaros polea",
+        "es": "PÃ¡jaros polea",
         "en": "Cable rear delt fly"
       },
       "primaryMuscles": [
@@ -3468,7 +3468,7 @@
     {
       "id": "rear_fly_machine",
       "name": {
-        "es": "Pájaros máquina",
+        "es": "PÃ¡jaros mÃ¡quina",
         "en": "Machine rear delt fly"
       },
       "primaryMuscles": [
@@ -3642,7 +3642,7 @@
     {
       "id": "rear_raise_prone",
       "name": {
-        "es": "Elevación posterior prono",
+        "es": "ElevaciÃ³n posterior prono",
         "en": "Prone rear raise"
       },
       "primaryMuscles": [
@@ -3700,7 +3700,7 @@
     {
       "id": "rear_raise_seated",
       "name": {
-        "es": "Elevación posterior sentado",
+        "es": "ElevaciÃ³n posterior sentado",
         "en": "Seated rear raise"
       },
       "primaryMuscles": [
@@ -3816,7 +3816,7 @@
     {
       "id": "rear_raise_band",
       "name": {
-        "es": "Elevación posterior banda",
+        "es": "ElevaciÃ³n posterior banda",
         "en": "Band rear raise"
       },
       "primaryMuscles": [
@@ -3874,7 +3874,7 @@
     {
       "id": "rear_raise_uni",
       "name": {
-        "es": "Elevación posterior unilateral",
+        "es": "ElevaciÃ³n posterior unilateral",
         "en": "Unilateral rear raise"
       },
       "primaryMuscles": [
@@ -3940,7 +3940,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -3991,7 +3991,7 @@
     {
       "id": "glute_bridge",
       "name": {
-        "es": "Puente glúteo",
+        "es": "Puente glÃºteo",
         "en": "Glute bridge"
       },
       "primaryMuscles": [
@@ -3999,7 +3999,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4058,7 +4058,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4117,7 +4117,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4176,7 +4176,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4235,7 +4235,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4294,7 +4294,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4345,7 +4345,7 @@
     {
       "id": "kickback_cable",
       "name": {
-        "es": "Patada glúteo polea",
+        "es": "Patada glÃºteo polea",
         "en": "Cable glute kickback"
       },
       "primaryMuscles": [
@@ -4353,7 +4353,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4412,7 +4412,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4463,7 +4463,7 @@
     {
       "id": "hip_abduction",
       "name": {
-        "es": "Abducción cadera máquina",
+        "es": "AbducciÃ³n cadera mÃ¡quina",
         "en": "Hip abduction machine"
       },
       "primaryMuscles": [
@@ -4471,7 +4471,7 @@
       ],
       "secondaryMuscles": [
         "hamstrings",
-        "quads"
+        "quadriceps"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
@@ -4526,14 +4526,14 @@
         "en": "Back squat"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -4583,14 +4583,14 @@
         "en": "Front squat"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -4640,14 +4640,14 @@
         "en": "Hack squat"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -4697,14 +4697,14 @@
         "en": "Leg press"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -4750,18 +4750,18 @@
     {
       "id": "leg_extension",
       "name": {
-        "es": "Extensión cuádriceps",
+        "es": "ExtensiÃ³n cuÃ¡driceps",
         "en": "Leg extension"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -4811,14 +4811,14 @@
         "en": "Split squat"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -4868,14 +4868,14 @@
         "en": "Step down"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -4925,14 +4925,14 @@
         "en": "Sissy squat"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -4982,14 +4982,14 @@
         "en": "Goblet squat"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -5039,14 +5039,14 @@
         "en": "Smith squat"
       },
       "primaryMuscles": [
-        "quads"
+        "quadriceps"
       ],
       "secondaryMuscles": [
         "glutes"
       ],
       "tertiaryMuscles": [],
       "stimulusContribution": {
-        "quads": 1.0
+        "quadriceps": 1.0
       },
       "movementPattern": "knee_dominant",
       "equipment": [
@@ -5672,7 +5672,7 @@
     {
       "id": "calf_standing",
       "name": {
-        "es": "Elevación talones de pie",
+        "es": "ElevaciÃ³n talones de pie",
         "en": "Standing calf raise"
       },
       "primaryMuscles": [
@@ -5728,7 +5728,7 @@
     {
       "id": "calf_machine",
       "name": {
-        "es": "Elevación talones máquina",
+        "es": "ElevaciÃ³n talones mÃ¡quina",
         "en": "Machine calf raise"
       },
       "primaryMuscles": [
@@ -5952,7 +5952,7 @@
     {
       "id": "calf_seated_machine",
       "name": {
-        "es": "Pantorrilla sentado máquina",
+        "es": "Pantorrilla sentado mÃ¡quina",
         "en": "Seated calf machine"
       },
       "primaryMuscles": [
@@ -6120,7 +6120,7 @@
     {
       "id": "calf_iso",
       "name": {
-        "es": "Pantorrilla isométrica",
+        "es": "Pantorrilla isomÃ©trica",
         "en": "Isometric calf"
       },
       "primaryMuscles": [
@@ -6232,7 +6232,7 @@
     {
       "id": "calf_step",
       "name": {
-        "es": "Pantorrilla escalón",
+        "es": "Pantorrilla escalÃ³n",
         "en": "Step calf raise"
       },
       "primaryMuscles": [
@@ -6624,7 +6624,7 @@
     {
       "id": "curl_conc",
       "name": {
-        "es": "Curl concentración",
+        "es": "Curl concentraciÃ³n",
         "en": "Concentration curl"
       },
       "primaryMuscles": [
@@ -6904,7 +6904,7 @@
     {
       "id": "pushdown_bar",
       "name": {
-        "es": "Extensión polea barra",
+        "es": "ExtensiÃ³n polea barra",
         "en": "Cable pushdown bar"
       },
       "primaryMuscles": [
@@ -6961,7 +6961,7 @@
     {
       "id": "pushdown_rope",
       "name": {
-        "es": "Extensión polea cuerda",
+        "es": "ExtensiÃ³n polea cuerda",
         "en": "Cable pushdown rope"
       },
       "primaryMuscles": [
@@ -7018,7 +7018,7 @@
     {
       "id": "skullcrusher",
       "name": {
-        "es": "Press francés",
+        "es": "Press francÃ©s",
         "en": "Skullcrusher"
       },
       "primaryMuscles": [
@@ -7075,7 +7075,7 @@
     {
       "id": "overhead_db",
       "name": {
-        "es": "Extensión overhead mancuerna",
+        "es": "ExtensiÃ³n overhead mancuerna",
         "en": "Overhead dumbbell extension"
       },
       "primaryMuscles": [
@@ -7132,7 +7132,7 @@
     {
       "id": "overhead_cable",
       "name": {
-        "es": "Extensión overhead polea",
+        "es": "ExtensiÃ³n overhead polea",
         "en": "Overhead cable extension"
       },
       "primaryMuscles": [
@@ -7246,7 +7246,7 @@
     {
       "id": "dip_triceps",
       "name": {
-        "es": "Fondos tríceps",
+        "es": "Fondos trÃ­ceps",
         "en": "Triceps dips"
       },
       "primaryMuscles": [
@@ -7417,7 +7417,7 @@
     {
       "id": "triceps_machine",
       "name": {
-        "es": "Tríceps máquina",
+        "es": "TrÃ­ceps mÃ¡quina",
         "en": "Triceps machine"
       },
       "primaryMuscles": [
@@ -7474,7 +7474,7 @@
     {
       "id": "crunch_machine",
       "name": {
-        "es": "Crunch máquina",
+        "es": "Crunch mÃ¡quina",
         "en": "Machine crunch"
       },
       "primaryMuscles": [
@@ -7584,7 +7584,7 @@
     {
       "id": "leg_raise",
       "name": {
-        "es": "Elevación piernas",
+        "es": "ElevaciÃ³n piernas",
         "en": "Leg raise"
       },
       "primaryMuscles": [
@@ -7639,7 +7639,7 @@
     {
       "id": "hanging_raise",
       "name": {
-        "es": "Elevación colgado",
+        "es": "ElevaciÃ³n colgado",
         "en": "Hanging leg raise"
       },
       "primaryMuscles": [

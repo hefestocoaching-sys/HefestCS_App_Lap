@@ -239,15 +239,24 @@ class MotorV3Orchestrator {
   static Map<String, int> _calculateVolumeByMuscle(UserProfile profile) {
     final volumeByMuscle = <String, int>{};
 
+    // Mapeo para normalizar IDs antiguos a nuevos
+    final muscleNormalization = {
+      'chest': 'pectorals',
+      'quads': 'quadriceps',
+    };
+
     // Calcular volumen para cada músculo con prioridad
     profile.musclePriorities.forEach((muscle, priority) {
+      // Normalizar muscle ID si es necesario
+      final normalizedMuscle = muscleNormalization[muscle] ?? muscle;
+
       final volume = VolumeEngine.calculateOptimalVolume(
-        muscle: muscle,
+        muscle: normalizedMuscle,
         trainingLevel: profile.trainingLevel,
         priority: priority,
       );
 
-      volumeByMuscle[muscle] = volume;
+      volumeByMuscle[normalizedMuscle] = volume;
     });
 
     return volumeByMuscle;
@@ -525,15 +534,33 @@ class MotorV3Orchestrator {
       }
 
       if (exerciseById.isEmpty) {
-        debugPrint('[Motor V3] ⚠️ Day $dayNumber empty, using fallback');
-        final fallback = ExerciseCatalogV3.getAllExercises();
+        final targetMuscles = groups
+            .expand((g) => _canonicalMusclesForGroup(g))
+            .toSet();
+        debugPrint(
+          '[Motor V3] ⚠️ Day $dayNumber empty for groups $groups, '
+          'searching fallback for muscles: $targetMuscles',
+        );
+
+        final allExercises = ExerciseCatalogV3.getAllExercises();
+        final fallback = allExercises.where((ex) {
+          return ex.primaryMuscles.any((m) => targetMuscles.contains(m));
+        }).toList();
+
         if (fallback.isNotEmpty) {
           final exercise = fallback.first;
           exerciseById[exercise.id] = exercise;
           setsById[exercise.id] = 1;
-          debugPrint('[Motor V3] Fallback: ${exercise.name}');
+          debugPrint(
+            '[Motor V3] Fallback exercise: ${exercise.name} '
+            '(primaryMuscles: ${exercise.primaryMuscles})',
+          );
         } else {
-          throw StateError('[Motor V3] Día $dayNumber sin ejercicios');
+          throw StateError(
+            '[Motor V3] No fallback exercises found for day $dayNumber '
+            'targeting muscles: $targetMuscles. '
+            'Available exercises: ${allExercises.length}',
+          );
         }
       }
 
@@ -735,7 +762,7 @@ class MotorV3Orchestrator {
   static List<String> _canonicalMusclesForGroup(resolver.MuscleGroup group) {
     switch (group) {
       case resolver.MuscleGroup.chest:
-        return ['chest'];
+        return ['pectorals'];
       case resolver.MuscleGroup.back:
         return ['lats', 'upper_back', 'traps'];
       case resolver.MuscleGroup.deltoids:
@@ -743,7 +770,7 @@ class MotorV3Orchestrator {
       case resolver.MuscleGroup.arms:
         return ['biceps', 'triceps'];
       case resolver.MuscleGroup.legs:
-        return ['quads', 'hamstrings'];
+        return ['quadriceps', 'hamstrings'];
       case resolver.MuscleGroup.glutes:
         return ['glutes'];
       case resolver.MuscleGroup.calves:

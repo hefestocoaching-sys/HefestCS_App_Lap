@@ -113,7 +113,7 @@ class VolumeEngine {
     // Tabla científica completa basada en Israetel et al. (2020)
     // Actualizada a 14 músculos canónicos
     final landmarksByMuscle = {
-      'chest': {
+      'pectorals': {
         'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
         'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
         'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},
@@ -160,7 +160,7 @@ class VolumeEngine {
         'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
         'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
       },
-      'quads': {
+      'quadriceps': {
         'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
         'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
         'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},
@@ -249,7 +249,7 @@ class VolumeEngine {
   /// Valida parámetros de entrada
   static void _validateInputs(String muscle, String level, int priority) {
     final validMuscles = [
-      'chest',
+      'pectorals',
       'deltoide_anterior',
       'deltoide_lateral',
       'deltoide_posterior',
@@ -258,7 +258,7 @@ class VolumeEngine {
       'upper_back',
       'traps',
       'biceps',
-      'quads',
+      'quadriceps',
       'hamstrings',
       'glutes',
       'calves',
@@ -266,7 +266,7 @@ class VolumeEngine {
     ];
 
     if (!validMuscles.contains(muscle)) {
-      throw ArgumentError(
+throw ArgumentError(
         'Músculo inválido: $muscle. '
         'Opciones válidas: ${validMuscles.join(", ")}',
       );
