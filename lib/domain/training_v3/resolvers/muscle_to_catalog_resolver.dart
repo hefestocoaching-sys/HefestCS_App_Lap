@@ -18,9 +18,9 @@ class MuscleToCatalogResolver {
 
     MuscleGroup.glutes: ['glutes'],
 
-    MuscleGroup.calves: ['calves'],
+    MuscleGroup.calves: ['gastrocnemio', 'soleo'],
 
-    MuscleGroup.core: ['abs'],
+    MuscleGroup.core: ['abs', 'obliques'],
   };
 
   static List<String> resolve(MuscleGroup group) {

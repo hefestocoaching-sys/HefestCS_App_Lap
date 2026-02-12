@@ -165,8 +165,11 @@ class VolumeValidator {
     final warnings = <String>[];
 
     // Balance 1: Chest/Back
-    final chest = volumeByMuscle['chest'] ?? 0;
-    final back = volumeByMuscle['back'] ?? 0;
+    final chest = volumeByMuscle['pectorals'] ?? 0;
+    final back =
+        (volumeByMuscle['lats'] ?? 0) +
+        (volumeByMuscle['upper_back'] ?? 0) +
+        (volumeByMuscle['traps'] ?? 0);
 
     if (chest > 0 && back > 0) {
       final ratio = chest / back;
@@ -182,7 +185,7 @@ class VolumeValidator {
     }
 
     // Balance 2: Quads/Hamstrings
-    final quads = volumeByMuscle['quads'] ?? 0;
+    final quads = volumeByMuscle['quadriceps'] ?? 0;
     final hamstrings = volumeByMuscle['hamstrings'] ?? 0;
 
     if (quads > 0 && hamstrings > 0) {
@@ -217,15 +220,10 @@ class VolumeValidator {
   /// Obtiene landmarks de volumen (duplicado del VolumeEngine para independencia)
   static Map<String, int> _getVolumeLandmarks(String muscle, String level) {
     final landmarksByMuscle = {
-      'chest': {
+      'pectorals': {
         'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
         'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
         'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},
-      },
-      'back': {
-        'novice': {'vme': 12, 'mav': 18, 'mrv': 24},
-        'intermediate': {'vme': 14, 'mav': 20, 'mrv': 28},
-        'advanced': {'vme': 16, 'mav': 24, 'mrv': 32},
       },
       // Hombros divididos en 3 cabezas
       'deltoide_anterior': {
@@ -269,7 +267,7 @@ class VolumeValidator {
         'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
         'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
       },
-      'quads': {
+      'quadriceps': {
         'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
         'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
         'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},

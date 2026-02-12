@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": "3.0",
   "lastUpdated": "2026-01-22",
   "notes": "FULL COMPLETE catalog. Muscle-level VOP. No generic groups.",
@@ -6,7 +6,7 @@
     {
       "id": "lat_pulldown_pron",
       "name": {
-        "es": "JalÃ³n al pecho prono",
+        "es": "Jalón al pecho prono",
         "en": "Lat pulldown pronated"
       },
       "primaryMuscles": [
@@ -63,7 +63,7 @@
     {
       "id": "lat_pulldown_neu",
       "name": {
-        "es": "JalÃ³n al pecho neutro",
+        "es": "Jalón al pecho neutro",
         "en": "Lat pulldown neutral"
       },
       "primaryMuscles": [
@@ -120,7 +120,7 @@
     {
       "id": "lat_pulldown_sup",
       "name": {
-        "es": "JalÃ³n al pecho supino",
+        "es": "Jalón al pecho supino",
         "en": "Lat pulldown supinated"
       },
       "primaryMuscles": [
@@ -462,7 +462,7 @@
     {
       "id": "lat_unilateral",
       "name": {
-        "es": "JalÃ³n unilateral",
+        "es": "Jalón unilateral",
         "en": "Single-arm lat pulldown"
       },
       "primaryMuscles": [
@@ -519,7 +519,7 @@
     {
       "id": "lat_close",
       "name": {
-        "es": "JalÃ³n agarre cerrado",
+        "es": "Jalón agarre cerrado",
         "en": "Close-grip lat pulldown"
       },
       "primaryMuscles": [
@@ -996,7 +996,7 @@
     {
       "id": "row_t_machine",
       "name": {
-        "es": "Remo T mÃ¡quina",
+        "es": "Remo T máquina",
         "en": "T-bar row machine"
       },
       "primaryMuscles": [
@@ -1116,7 +1116,7 @@
     {
       "id": "row_machine",
       "name": {
-        "es": "Remo mÃ¡quina horizontal",
+        "es": "Remo máquina horizontal",
         "en": "Horizontal machine row"
       },
       "primaryMuscles": [
@@ -1288,7 +1288,7 @@
     {
       "id": "shrug_machine",
       "name": {
-        "es": "Encogimiento mÃ¡quina",
+        "es": "Encogimiento máquina",
         "en": "Machine shrug"
       },
       "primaryMuscles": [
@@ -2507,7 +2507,7 @@
     {
       "id": "front_raise_bar",
       "name": {
-        "es": "ElevaciÃ³n frontal barra",
+        "es": "Elevación frontal barra",
         "en": "Barbell front raise"
       },
       "primaryMuscles": [
@@ -2564,7 +2564,7 @@
     {
       "id": "front_raise_db",
       "name": {
-        "es": "ElevaciÃ³n frontal mancuernas",
+        "es": "Elevación frontal mancuernas",
         "en": "Dumbbell front raise"
       },
       "primaryMuscles": [
@@ -2621,7 +2621,7 @@
     {
       "id": "front_raise_plate",
       "name": {
-        "es": "ElevaciÃ³n frontal disco",
+        "es": "Elevación frontal disco",
         "en": "Plate front raise"
       },
       "primaryMuscles": [
@@ -2735,7 +2735,7 @@
     {
       "id": "machine_press",
       "name": {
-        "es": "Press hombro mÃ¡quina",
+        "es": "Press hombro máquina",
         "en": "Machine shoulder press"
       },
       "primaryMuscles": [
@@ -2904,7 +2904,7 @@
     {
       "id": "lat_raise_machine",
       "name": {
-        "es": "Elevaciones laterales mÃ¡quina",
+        "es": "Elevaciones laterales máquina",
         "en": "Machine lateral raise"
       },
       "primaryMuscles": [
@@ -2960,7 +2960,7 @@
     {
       "id": "lat_raise_uni",
       "name": {
-        "es": "ElevaciÃ³n lateral unilateral",
+        "es": "Elevación lateral unilateral",
         "en": "Unilateral lateral raise"
       },
       "primaryMuscles": [
@@ -3016,7 +3016,7 @@
     {
       "id": "lat_raise_lean",
       "name": {
-        "es": "ElevaciÃ³n lateral inclinada",
+        "es": "Elevación lateral inclinada",
         "en": "Lean-away lateral raise"
       },
       "primaryMuscles": [
@@ -3352,7 +3352,7 @@
     {
       "id": "rear_fly_db",
       "name": {
-        "es": "PÃ¡jaros mancuernas",
+        "es": "Pájaros mancuernas",
         "en": "Rear delt fly dumbbell"
       },
       "primaryMuscles": [
@@ -3410,7 +3410,7 @@
     {
       "id": "rear_fly_cable",
       "name": {
-        "es": "PÃ¡jaros polea",
+        "es": "Pájaros polea",
         "en": "Cable rear delt fly"
       },
       "primaryMuscles": [
@@ -3468,7 +3468,7 @@
     {
       "id": "rear_fly_machine",
       "name": {
-        "es": "PÃ¡jaros mÃ¡quina",
+        "es": "Pájaros máquina",
         "en": "Machine rear delt fly"
       },
       "primaryMuscles": [
@@ -3642,7 +3642,7 @@
     {
       "id": "rear_raise_prone",
       "name": {
-        "es": "ElevaciÃ³n posterior prono",
+        "es": "Elevación posterior prono",
         "en": "Prone rear raise"
       },
       "primaryMuscles": [
@@ -3700,7 +3700,7 @@
     {
       "id": "rear_raise_seated",
       "name": {
-        "es": "ElevaciÃ³n posterior sentado",
+        "es": "Elevación posterior sentado",
         "en": "Seated rear raise"
       },
       "primaryMuscles": [
@@ -3816,7 +3816,7 @@
     {
       "id": "rear_raise_band",
       "name": {
-        "es": "ElevaciÃ³n posterior banda",
+        "es": "Elevación posterior banda",
         "en": "Band rear raise"
       },
       "primaryMuscles": [
@@ -3874,7 +3874,7 @@
     {
       "id": "rear_raise_uni",
       "name": {
-        "es": "ElevaciÃ³n posterior unilateral",
+        "es": "Elevación posterior unilateral",
         "en": "Unilateral rear raise"
       },
       "primaryMuscles": [
@@ -3991,7 +3991,7 @@
     {
       "id": "glute_bridge",
       "name": {
-        "es": "Puente glÃºteo",
+        "es": "Puente glúteo",
         "en": "Glute bridge"
       },
       "primaryMuscles": [
@@ -4345,7 +4345,7 @@
     {
       "id": "kickback_cable",
       "name": {
-        "es": "Patada glÃºteo polea",
+        "es": "Patada glúteo polea",
         "en": "Cable glute kickback"
       },
       "primaryMuscles": [
@@ -4463,7 +4463,7 @@
     {
       "id": "hip_abduction",
       "name": {
-        "es": "AbducciÃ³n cadera mÃ¡quina",
+        "es": "Abducción cadera máquina",
         "en": "Hip abduction machine"
       },
       "primaryMuscles": [
@@ -4750,7 +4750,7 @@
     {
       "id": "leg_extension",
       "name": {
-        "es": "ExtensiÃ³n cuÃ¡driceps",
+        "es": "Extensión cuádriceps",
         "en": "Leg extension"
       },
       "primaryMuscles": [
@@ -5672,7 +5672,7 @@
     {
       "id": "calf_standing",
       "name": {
-        "es": "ElevaciÃ³n talones de pie",
+        "es": "Elevación talones de pie",
         "en": "Standing calf raise"
       },
       "primaryMuscles": [
@@ -5728,7 +5728,7 @@
     {
       "id": "calf_machine",
       "name": {
-        "es": "ElevaciÃ³n talones mÃ¡quina",
+        "es": "Elevación talones máquina",
         "en": "Machine calf raise"
       },
       "primaryMuscles": [
@@ -5952,7 +5952,7 @@
     {
       "id": "calf_seated_machine",
       "name": {
-        "es": "Pantorrilla sentado mÃ¡quina",
+        "es": "Pantorrilla sentado máquina",
         "en": "Seated calf machine"
       },
       "primaryMuscles": [
@@ -6120,7 +6120,7 @@
     {
       "id": "calf_iso",
       "name": {
-        "es": "Pantorrilla isomÃ©trica",
+        "es": "Pantorrilla isométrica",
         "en": "Isometric calf"
       },
       "primaryMuscles": [
@@ -6232,7 +6232,7 @@
     {
       "id": "calf_step",
       "name": {
-        "es": "Pantorrilla escalÃ³n",
+        "es": "Pantorrilla escalón",
         "en": "Step calf raise"
       },
       "primaryMuscles": [
@@ -6624,7 +6624,7 @@
     {
       "id": "curl_conc",
       "name": {
-        "es": "Curl concentraciÃ³n",
+        "es": "Curl concentración",
         "en": "Concentration curl"
       },
       "primaryMuscles": [
@@ -6904,7 +6904,7 @@
     {
       "id": "pushdown_bar",
       "name": {
-        "es": "ExtensiÃ³n polea barra",
+        "es": "Extensión polea barra",
         "en": "Cable pushdown bar"
       },
       "primaryMuscles": [
@@ -6961,7 +6961,7 @@
     {
       "id": "pushdown_rope",
       "name": {
-        "es": "ExtensiÃ³n polea cuerda",
+        "es": "Extensión polea cuerda",
         "en": "Cable pushdown rope"
       },
       "primaryMuscles": [
@@ -7018,7 +7018,7 @@
     {
       "id": "skullcrusher",
       "name": {
-        "es": "Press francÃ©s",
+        "es": "Press francés",
         "en": "Skullcrusher"
       },
       "primaryMuscles": [
@@ -7075,7 +7075,7 @@
     {
       "id": "overhead_db",
       "name": {
-        "es": "ExtensiÃ³n overhead mancuerna",
+        "es": "Extensión overhead mancuerna",
         "en": "Overhead dumbbell extension"
       },
       "primaryMuscles": [
@@ -7132,7 +7132,7 @@
     {
       "id": "overhead_cable",
       "name": {
-        "es": "ExtensiÃ³n overhead polea",
+        "es": "Extensión overhead polea",
         "en": "Overhead cable extension"
       },
       "primaryMuscles": [
@@ -7246,7 +7246,7 @@
     {
       "id": "dip_triceps",
       "name": {
-        "es": "Fondos trÃ­ceps",
+        "es": "Fondos tríceps",
         "en": "Triceps dips"
       },
       "primaryMuscles": [
@@ -7417,7 +7417,7 @@
     {
       "id": "triceps_machine",
       "name": {
-        "es": "TrÃ­ceps mÃ¡quina",
+        "es": "Tríceps máquina",
         "en": "Triceps machine"
       },
       "primaryMuscles": [
@@ -7474,7 +7474,7 @@
     {
       "id": "crunch_machine",
       "name": {
-        "es": "Crunch mÃ¡quina",
+        "es": "Crunch máquina",
         "en": "Machine crunch"
       },
       "primaryMuscles": [
@@ -7584,7 +7584,7 @@
     {
       "id": "leg_raise",
       "name": {
-        "es": "ElevaciÃ³n piernas",
+        "es": "Elevación piernas",
         "en": "Leg raise"
       },
       "primaryMuscles": [
@@ -7639,7 +7639,7 @@
     {
       "id": "hanging_raise",
       "name": {
-        "es": "ElevaciÃ³n colgado",
+        "es": "Elevación colgado",
         "en": "Hanging leg raise"
       },
       "primaryMuscles": [
@@ -7910,6 +7910,663 @@
         ]
       },
       "equivalenceGroup": "abs"
+    },
+    {
+      "id": "push_up",
+      "name": {
+        "es": "Flexiones",
+        "en": "Push-up"
+      },
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "pectorals": 1.0,
+        "triceps": 0.5,
+        "deltoide_anterior": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          8,
+          15
+        ],
+        "light": [
+          15,
+          30
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "chest_press"
+    },
+    {
+      "id": "bodyweight_squat",
+      "name": {
+        "es": "Sentadilla sin peso",
+        "en": "Bodyweight squat"
+      },
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "glutes"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "quadriceps": 1.0,
+        "glutes": 0.5
+      },
+      "movementPattern": "squat",
+      "equipment": [
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          15,
+          25
+        ],
+        "light": [
+          25,
+          50
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "squat_pattern"
+    },
+    {
+      "id": "crunch_basic",
+      "name": {
+        "es": "Abdominales",
+        "en": "Basic crunch"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "spinal_flexion",
+      "equipment": [
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          15,
+          25
+        ],
+        "light": [
+          25,
+          40
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "russian_twist",
+      "name": {
+        "es": "Giros rusos",
+        "en": "Russian twist"
+      },
+      "primaryMuscles": [
+        "obliques"
+      ],
+      "secondaryMuscles": [
+        "abs"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "obliques": 1.0,
+        "abs": 0.4
+      },
+      "movementPattern": "rotation",
+      "equipment": [
+        "bodyweight",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          20,
+          30
+        ],
+        "light": [
+          30,
+          50
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "core_rotation"
+    },
+    {
+      "id": "bicycle_crunch",
+      "name": {
+        "es": "Bicicleta",
+        "en": "Bicycle crunch"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [
+        "obliques"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0,
+        "obliques": 0.6
+      },
+      "movementPattern": "spinal_flexion",
+      "equipment": [
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          20,
+          30
+        ],
+        "light": [
+          30,
+          50
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "abs"
+    },
+    {
+      "id": "mountain_climber",
+      "name": {
+        "es": "Escaladores",
+        "en": "Mountain climbers"
+      },
+      "primaryMuscles": [
+        "abs"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "abs": 1.0
+      },
+      "movementPattern": "dynamic_stability",
+      "equipment": [
+        "bodyweight"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          20,
+          40
+        ],
+        "light": [
+          40,
+          60
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          0,
+          1
+        ]
+      },
+      "equivalenceGroup": "core_dynamic"
+    },
+    {
+      "id": "tricep_pushdown_bar",
+      "name": {
+        "es": "Extensiones tríceps barra",
+        "en": "Tricep pushdown bar"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          6,
+          10
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "tricep_pushdown_rope",
+      "name": {
+        "es": "Extensiones tríceps cuerda",
+        "en": "Tricep pushdown rope"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          6,
+          10
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "skull_crusher",
+      "name": {
+        "es": "Rompecráneos",
+        "en": "Skull crusher"
+      },
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "triceps": 1.0
+      },
+      "movementPattern": "elbow_extension",
+      "equipment": [
+        "barbell",
+        "dumbbell"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "triceps"
+    },
+    {
+      "id": "pec_deck",
+      "name": {
+        "es": "Pec deck",
+        "en": "Pec deck"
+      },
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "pectorals": 1.0
+      },
+      "movementPattern": "horizontal_adduction",
+      "equipment": [
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          6,
+          10
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "chest_fly"
+    },
+    {
+      "id": "cable_fly_low",
+      "name": {
+        "es": "Aperturas polea baja",
+        "en": "Low cable crossover"
+      },
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "pectorals": 1.0
+      },
+      "movementPattern": "horizontal_adduction",
+      "equipment": [
+        "cable"
+      ],
+      "allowedIntensityZones": {
+        "heavy": false,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          10,
+          15
+        ],
+        "light": [
+          15,
+          25
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          0,
+          0
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "chest_fly"
+    },
+    {
+      "id": "chest_press_machine",
+      "name": {
+        "es": "Press pecho máquina",
+        "en": "Machine chest press"
+      },
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "tertiaryMuscles": [],
+      "stimulusContribution": {
+        "pectorals": 1.0,
+        "triceps": 0.4,
+        "deltoide_anterior": 0.3
+      },
+      "movementPattern": "horizontal_push",
+      "equipment": [
+        "machine"
+      ],
+      "allowedIntensityZones": {
+        "heavy": true,
+        "medium": true,
+        "light": true
+      },
+      "recommendedRepRanges": {
+        "heavy": [
+          5,
+          8
+        ],
+        "medium": [
+          8,
+          12
+        ],
+        "light": [
+          12,
+          20
+        ]
+      },
+      "recommendedRirRanges": {
+        "heavy": [
+          3,
+          4
+        ],
+        "medium": [
+          2,
+          3
+        ],
+        "light": [
+          1,
+          2
+        ]
+      },
+      "equivalenceGroup": "chest_press"
     }
   ]
 }

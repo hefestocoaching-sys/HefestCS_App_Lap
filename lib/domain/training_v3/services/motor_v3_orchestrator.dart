@@ -16,6 +16,8 @@ import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
 
 // Engines
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
@@ -239,22 +241,25 @@ class MotorV3Orchestrator {
   static Map<String, int> _calculateVolumeByMuscle(UserProfile profile) {
     final volumeByMuscle = <String, int>{};
 
-    // Mapeo para normalizar IDs antiguos a nuevos
-    final muscleNormalization = {'chest': 'pectorals', 'quads': 'quadriceps'};
-
-    // Calcular volumen para cada músculo con prioridad
+    final normalizedPriorities = <String, int>{};
     profile.musclePriorities.forEach((muscle, priority) {
-      // Normalizar muscle ID si es necesario
-      final normalizedMuscle = muscleNormalization[muscle] ?? muscle;
+      final normalized = muscle_registry.normalize(muscle);
+      if (normalized == null) {
+        debugPrint('[Motor V3] ⚠️ Unknown muscle key in priorities: $muscle');
+        return;
+      }
+      normalizedPriorities[normalized] = priority;
+    });
 
+    for (final muscle in muscle_registry.canonicalMuscles) {
+      final priority = normalizedPriorities[muscle] ?? 3;
       final volume = VolumeEngine.calculateOptimalVolume(
-        muscle: normalizedMuscle,
+        muscle: muscle,
         trainingLevel: profile.trainingLevel,
         priority: priority,
       );
-
-      volumeByMuscle[normalizedMuscle] = volume;
-    });
+      volumeByMuscle[muscle] = volume;
+    }
 
     return volumeByMuscle;
   }
