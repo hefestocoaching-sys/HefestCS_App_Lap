@@ -24,6 +24,7 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
   late List<String> _hereditarySelected;
   late List<String> _pathologicalSelected;
   bool _isDirty = false;
+  bool _justSaved = false;
 
   List<String> _safeStringList(dynamic value) =>
       value is List ? value.map((e) => e.toString()).toList() : [];
@@ -126,15 +127,21 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
     }
   }
 
-  void _saveDraft() {
+  Future<void> _saveDraft() async {
     final client = _client;
     if (client == null) return;
     final updatedClient = client.copyWith(history: _draftHistory);
-    ref
-        .read(clientsProvider.notifier)
-        .updateActiveClient(
-          (prev) => prev.copyWith(history: updatedClient.history),
-        );
+    _justSaved = true;
+    try {
+      await ref
+          .read(clientsProvider.notifier)
+          .updateActiveClient(
+            (prev) => prev.copyWith(history: updatedClient.history),
+          );
+    } finally {
+      _justSaved = false;
+    }
+    if (!mounted) return;
     _isDirty = false;
     ScaffoldMessenger.of(
       context,
@@ -148,6 +155,7 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
       final nextClient = next.value?.activeClient;
       if (nextClient == null) return;
       final isDifferentClient = _client?.id != nextClient.id;
+      if (_justSaved) return;
       if (isDifferentClient || !_isDirty) {
         _client = nextClient;
         _loadFromClient(nextClient);

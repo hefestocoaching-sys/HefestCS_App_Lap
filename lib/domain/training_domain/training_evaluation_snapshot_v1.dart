@@ -1,3 +1,5 @@
+import 'package:hcs_app_lap/domain/entities/training_evaluation.dart';
+import 'package:hcs_app_lap/domain/training/models/muscle_priorities.dart';
 import 'package:hcs_app_lap/domain/training_domain/pain_rule.dart';
 
 class TrainingEvaluationSnapshotV1 {
@@ -8,6 +10,8 @@ class TrainingEvaluationSnapshotV1 {
   final int daysPerWeek;
   final int sessionDurationMinutes;
   final int planDurationInWeeks;
+
+  final Map<String, int> musclePriorities;
 
   final List<String> primaryMuscles;
   final List<String> secondaryMuscles;
@@ -37,6 +41,7 @@ class TrainingEvaluationSnapshotV1 {
     required this.daysPerWeek,
     required this.sessionDurationMinutes,
     required this.planDurationInWeeks,
+    this.musclePriorities = const {},
     required this.primaryMuscles,
     required this.secondaryMuscles,
     required this.tertiaryMuscles,
@@ -59,6 +64,7 @@ class TrainingEvaluationSnapshotV1 {
       'daysPerWeek': daysPerWeek,
       'sessionDurationMinutes': sessionDurationMinutes,
       'planDurationInWeeks': planDurationInWeeks,
+      'musclePriorities': musclePriorities,
       'primaryMuscles': primaryMuscles,
       'secondaryMuscles': secondaryMuscles,
       'tertiaryMuscles': tertiaryMuscles,
@@ -99,6 +105,7 @@ class TrainingEvaluationSnapshotV1 {
       sessionDurationMinutes:
           (json['sessionDurationMinutes'] as num?)?.toInt() ?? 0,
       planDurationInWeeks: (json['planDurationInWeeks'] as num?)?.toInt() ?? 0,
+      musclePriorities: _readIntMap(json['musclePriorities']),
       primaryMuscles: _readStringList(json['primaryMuscles']),
       secondaryMuscles: _readStringList(json['secondaryMuscles']),
       tertiaryMuscles: _readStringList(json['tertiaryMuscles']),
@@ -136,5 +143,42 @@ class TrainingEvaluationSnapshotV1 {
       );
     }
     return const {};
+  }
+
+  static Map<String, int> _readIntMap(dynamic raw) {
+    if (raw is Map) {
+      return raw.map(
+        (key, value) => MapEntry(key.toString(), (value as num?)?.toInt() ?? 0),
+      );
+    }
+    return const {};
+  }
+
+  /// Converts stored Map to MusclePriorities.
+  MusclePriorities toMusclePriorities() {
+    return MusclePriorities(initialValues: musclePriorities);
+  }
+
+  /// Creates snapshot from TrainingEvaluation.
+  factory TrainingEvaluationSnapshotV1.fromTrainingEvaluation({
+    required String clientId,
+    required TrainingEvaluation evaluation,
+  }) {
+    return TrainingEvaluationSnapshotV1(
+      schemaVersion: 1,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      daysPerWeek: evaluation.daysPerWeek,
+      sessionDurationMinutes: evaluation.sessionDurationMinutes,
+      planDurationInWeeks: evaluation.planDurationInWeeks,
+      musclePriorities: evaluation.musclePriorities.values,
+      primaryMuscles: const [],
+      secondaryMuscles: const [],
+      tertiaryMuscles: const [],
+      priorityVolumeSplit: const {},
+      intensityDistribution: const {},
+      painRules: const [],
+      status: 'minimal',
+    );
   }
 }

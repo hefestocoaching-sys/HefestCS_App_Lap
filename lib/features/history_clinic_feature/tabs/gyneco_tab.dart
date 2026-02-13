@@ -25,6 +25,7 @@ class GynecoTabState extends ConsumerState<GynecoTab>
   Client? _client;
   late ClinicalHistory _draftHistory;
   bool _isDirty = false;
+  bool _justSaved = false;
   bool _controllersReady = false;
 
   String _safeString(dynamic value) => value?.toString() ?? '';
@@ -124,15 +125,21 @@ class GynecoTabState extends ConsumerState<GynecoTab>
     }
   }
 
-  void _saveDraft() {
+  Future<void> _saveDraft() async {
     final client = _client;
     if (client == null) return;
     final updatedClient = client.copyWith(history: _draftHistory);
-    ref
-        .read(clientsProvider.notifier)
-        .updateActiveClient(
-          (prev) => prev.copyWith(history: updatedClient.history),
-        );
+    _justSaved = true;
+    try {
+      await ref
+          .read(clientsProvider.notifier)
+          .updateActiveClient(
+            (prev) => prev.copyWith(history: updatedClient.history),
+          );
+    } finally {
+      _justSaved = false;
+    }
+    if (!mounted) return;
     _isDirty = false;
     ScaffoldMessenger.of(
       context,
@@ -156,6 +163,7 @@ class GynecoTabState extends ConsumerState<GynecoTab>
       final nextClient = next.value?.activeClient;
       if (nextClient == null) return;
       final isDifferentClient = _client?.id != nextClient.id;
+      if (_justSaved) return;
       if (isDifferentClient || !_isDirty) {
         _client = nextClient;
         _initializeFromClient(nextClient);

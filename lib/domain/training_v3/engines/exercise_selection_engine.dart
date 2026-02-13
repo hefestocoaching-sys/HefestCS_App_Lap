@@ -76,17 +76,33 @@ class ExerciseSelectionEngine {
         '[ExerciseSelection] ⚠️ No exercises for motorKeys=$keys catalogKeys=$catalogKeys',
       );
 
-      // Fallback inteligente: filtrar por primaryMuscles que coincidan con los muscle keys objetivo
-      final fallback = ExerciseCatalogV3.getAllExercises().where((ex) {
+      // Fallback inteligente: filtrar por primaryMuscles
+      final fallbackPrimary = ExerciseCatalogV3.getAllExercises().where((ex) {
         return ex.primaryMuscles.any((m) => keys.contains(m));
       }).toList();
 
       debugPrint(
-        '[ExerciseSelection] Fallback: Filtered ${fallback.length}/${ExerciseCatalogV3.getAllExercises().length} exercises that match keys: $keys',
+        '[ExerciseSelection] Fallback(primary): Filtered ${fallbackPrimary.length}/${ExerciseCatalogV3.getAllExercises().length} exercises that match keys: $keys',
       );
 
-      if (fallback.isNotEmpty) {
-        all.addAll(fallback);
+      if (fallbackPrimary.isNotEmpty) {
+        all.addAll(fallbackPrimary);
+      }
+
+      if (all.isEmpty) {
+        final fallbackSecondary = ExerciseCatalogV3.getAllExercises().where((
+          ex,
+        ) {
+          return ex.secondaryMuscles.any((m) => keys.contains(m));
+        }).toList();
+
+        debugPrint(
+          '[ExerciseSelection] Fallback(secondary): Filtered ${fallbackSecondary.length}/${ExerciseCatalogV3.getAllExercises().length} exercises that match keys: $keys',
+        );
+
+        if (fallbackSecondary.isNotEmpty) {
+          all.addAll(fallbackSecondary);
+        }
       }
     }
 

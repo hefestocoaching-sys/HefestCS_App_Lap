@@ -782,6 +782,53 @@ class MotorV3Orchestrator {
     }
   }
 
+  /// Maps a canonical muscle to its MuscleGroup.
+  /// Correctly recognizes biceps and triceps as arms.
+  static resolver.MuscleGroup _groupFor(String muscle) {
+    if (['chest', 'pectorals'].contains(muscle)) {
+      return resolver.MuscleGroup.chest;
+    }
+
+    if (['lats', 'upper_back'].contains(muscle)) {
+      return resolver.MuscleGroup.back;
+    }
+
+    if (muscle == 'traps' || muscle.startsWith('traps_')) {
+      return resolver.MuscleGroup.back;
+    }
+
+    if ([
+      'deltoide_anterior',
+      'deltoide_lateral',
+      'deltoide_posterior',
+    ].contains(muscle)) {
+      return resolver.MuscleGroup.deltoids;
+    }
+
+    if (['biceps', 'triceps'].contains(muscle)) {
+      return resolver.MuscleGroup.arms;
+    }
+
+    if (['quads', 'quadriceps', 'hamstrings'].contains(muscle)) {
+      return resolver.MuscleGroup.legs;
+    }
+
+    if (['glutes'].contains(muscle)) {
+      return resolver.MuscleGroup.glutes;
+    }
+
+    if (['calves', 'gastrocnemio', 'soleo'].contains(muscle)) {
+      return resolver.MuscleGroup.calves;
+    }
+
+    if (['abs', 'obliques'].contains(muscle)) {
+      return resolver.MuscleGroup.core;
+    }
+
+    debugPrint('[Orchestrator] Unknown muscle: $muscle, defaulting to chest');
+    return resolver.MuscleGroup.chest;
+  }
+
   /// Retorna etiqueta descriptiva del día según split.
   static String _getDayLabel(TrainingSplit split, int dayNumber) {
     switch (split) {

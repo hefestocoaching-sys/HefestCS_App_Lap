@@ -4,11 +4,14 @@ import 'package:hcs_app_lap/core/constants/muscle_keys.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/generated_plan.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
+import 'package:hcs_app_lap/domain/entities/training_evaluation.dart';
+import 'package:hcs_app_lap/domain/entities/training_plan.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/exceptions/training_plan_blocked_exception.dart';
 import 'package:hcs_app_lap/domain/training/training_cycle.dart';
 import 'package:hcs_app_lap/domain/training/models/mev_table.dart';
+import 'package:hcs_app_lap/domain/training/models/muscle_priorities.dart';
 import 'package:hcs_app_lap/domain/training/validation/vop_validator.dart';
 import 'package:hcs_app_lap/domain/training/utils/frequency_inference.dart';
 // Legacy UI compatibility imports
@@ -22,8 +25,15 @@ import 'package:hcs_app_lap/utils/date_helpers.dart';
 // ✅ MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO
 import 'package:hcs_app_lap/domain/training_v3/orchestrator/training_orchestrator_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart'
+    as v3;
+import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart' as v3;
+import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
+import 'package:hcs_app_lap/domain/training_domain/training_evaluation_snapshot_v1.dart';
+import 'package:hcs_app_lap/domain/training_domain/training_ssot_v1_service.dart';
 // VopSnapshot SSOT
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
@@ -346,6 +356,111 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     all.addAll(tertiary);
 
     return all.toList();
+  }
+
+  /// Genera un plan basado en MusclePriorities (SSOT) para Motor V3.
+  Future<TrainingPlan> generateTrainingPlan({
+    required String clientId,
+    required TrainingEvaluation evaluation,
+  }) async {
+    try {
+      debugPrint(
+        '[TrainingPlanProvider] Generating plan for client: $clientId',
+      );
+
+      final priorities = evaluation.musclePriorities;
+
+      debugPrint('[TrainingPlanProvider] Muscle Priorities:');
+      for (final muscle in MusclePriorities.canonicalMuscles) {
+        debugPrint('  $muscle: ${priorities.get(muscle)}');
+      }
+
+      final now = DateTime.now();
+      final userProfile = UserProfile(
+        id: clientId,
+        name: 'client_$clientId',
+        email: 'unknown_$clientId@example.com',
+        age: 30,
+        gender: 'other',
+        heightCm: 170.0,
+        weightKg: 75.0,
+        yearsTraining: 1.0,
+        trainingLevel: evaluation.experienceLevel,
+        availableDays: evaluation.daysPerWeek,
+        sessionDuration: evaluation.sessionDurationMinutes,
+        primaryGoal: evaluation.mainGoal,
+        musclePriorities: priorities.values,
+        availableEquipment: evaluation.availableEquipment,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      final result = await MotorV3Orchestrator.generateProgram(
+        userProfile: userProfile,
+        phase: 'accumulation',
+        durationWeeks: evaluation.planDurationInWeeks,
+        trainingDaysPerWeek: evaluation.daysPerWeek,
+        exercises: const [],
+      );
+
+      if (result['success'] != true) {
+        throw StateError(
+          '[TrainingPlanProvider] Motor V3 returned failure: ${result['errors']}',
+        );
+      }
+
+      final planConfig = result['planConfig'];
+      if (planConfig is! v3.TrainingPlanConfig) {
+        throw StateError('[TrainingPlanProvider] Missing planConfig result');
+      }
+
+      final weeks = planConfig.weeks.whereType<v3.TrainingWeek>().toList();
+      final plan = TrainingPlan(
+        id: planConfig.id,
+        clientId: planConfig.clientId,
+        name: 'Motor V3 ${planConfig.split ?? ''}'.trim(),
+        startDate: planConfig.startDate,
+        weeks: weeks,
+        createdAt: planConfig.createdAt,
+        updatedAt: DateTime.now(),
+        phase: planConfig.phase,
+        split: planConfig.split,
+        volumePerMuscle: planConfig.volumePerMuscle,
+      );
+
+      final snapshot = TrainingEvaluationSnapshotV1.fromTrainingEvaluation(
+        clientId: clientId,
+        evaluation: evaluation,
+      );
+
+      await _saveEvaluationSnapshot(clientId: clientId, snapshot: snapshot);
+
+      return plan;
+    } catch (e, stackTrace) {
+      debugPrint('[TrainingPlanProvider] Error generating plan: $e');
+      debugPrint('StackTrace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  Future<void> _saveEvaluationSnapshot({
+    required String clientId,
+    required TrainingEvaluationSnapshotV1 snapshot,
+  }) async {
+    final repo = ref.read(clientRepositoryProvider);
+    final client = await repo.getClientById(clientId);
+    if (client == null) {
+      debugPrint(
+        '[TrainingPlanProvider] Snapshot save skipped: client not found ($clientId)',
+      );
+      return;
+    }
+
+    final updatedClient = TrainingSsotV1Service.writeEvaluation(
+      client,
+      snapshot,
+    );
+    await repo.saveClient(updatedClient);
   }
 
   /// Genera un plan basado en el perfil de entrenamiento (usa TrainingProgramEngine 1→8)

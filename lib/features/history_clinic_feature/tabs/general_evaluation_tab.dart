@@ -141,6 +141,7 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
   late TrainingProfile _draftTraining;
 
   bool _isDirty = false;
+  bool _justSaved = false;
   bool _controllersReady = false;
 
   bool _hasAllergies = false;
@@ -466,7 +467,7 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
     }
   }
 
-  void _saveDraft() {
+  Future<void> _saveDraft() async {
     if (_client == null) return;
     final mergedHistoryExtra = {
       ..._client!.history.extra,
@@ -482,26 +483,32 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
       nutrition: _draftNutrition.copyWith(extra: mergedNutritionExtra),
       training: _draftTraining,
     );
-    ref.read(clientsProvider.notifier).updateActiveClient((prev) {
-      final mergedHistoryExtraFromPrev = {
-        ...prev.history.extra,
-        ...updatedClient.history.extra,
-      };
-      final mergedNutritionExtraFromPrev = {
-        ...prev.nutrition.extra,
-        ...updatedClient.nutrition.extra,
-      };
-      return prev.copyWith(
-        profile: updatedClient.profile,
-        history: updatedClient.history.copyWith(
-          extra: mergedHistoryExtraFromPrev,
-        ),
-        nutrition: updatedClient.nutrition.copyWith(
-          extra: mergedNutritionExtraFromPrev,
-        ),
-        training: updatedClient.training,
-      );
-    });
+    _justSaved = true;
+    try {
+      await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+        final mergedHistoryExtraFromPrev = {
+          ...prev.history.extra,
+          ...updatedClient.history.extra,
+        };
+        final mergedNutritionExtraFromPrev = {
+          ...prev.nutrition.extra,
+          ...updatedClient.nutrition.extra,
+        };
+        return prev.copyWith(
+          profile: updatedClient.profile,
+          history: updatedClient.history.copyWith(
+            extra: mergedHistoryExtraFromPrev,
+          ),
+          nutrition: updatedClient.nutrition.copyWith(
+            extra: mergedNutritionExtraFromPrev,
+          ),
+          training: updatedClient.training,
+        );
+      });
+    } finally {
+      _justSaved = false;
+    }
+    if (!mounted) return;
     _client = updatedClient;
     _isDirty = false;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -545,6 +552,7 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
       final nextClient = next.value?.activeClient;
       if (nextClient == null) return;
       final isDifferentClient = _client?.id != nextClient.id;
+      if (_justSaved) return;
       if (isDifferentClient || !_isDirty) {
         _client = nextClient;
         _initializeFromClient(nextClient);

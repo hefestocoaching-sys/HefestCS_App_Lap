@@ -99,6 +99,7 @@ class TrainingSsotV1Service {
       daysPerWeek: snapshot.daysPerWeek,
       sessionDurationMinutes: snapshot.sessionDurationMinutes,
       planDurationInWeeks: snapshot.planDurationInWeeks,
+      musclePriorities: snapshot.musclePriorities,
       primaryMuscles: normalized['primary']!,
       secondaryMuscles: normalized['secondary']!,
       tertiaryMuscles: normalized['tertiary']!,
