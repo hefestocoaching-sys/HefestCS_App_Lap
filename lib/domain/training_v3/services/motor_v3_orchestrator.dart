@@ -241,22 +241,55 @@ class MotorV3Orchestrator {
 
   /// Calcula volumen INICIAL por músculo (VERSIÓN 2.0)
   ///
-  /// CAMBIOS:
+  /// CAMBIOS V2.0:
   /// - Usa VolumeLandmarksCalculator
   /// - Retorna VOP (no MAV)
-  /// - Calcula landmarks completos
+  /// - Normaliza a 14 músculos canónicos
+  /// - Calcula landmarks completos por prioridad
+  ///
+  /// RETORNA: `Map<String, int>` con volumen VOP por músculo
   static Map<String, int> _calculateVolumeByMuscleV2(UserProfile profile) {
     final volumeByMuscle = <String, int>{};
 
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 1: Normalizar prioridades a 14 músculos canónicos
+    // ═══════════════════════════════════════════════════════════════
+
     final normalizedPriorities = <String, int>{};
+
     profile.musclePriorities.forEach((muscle, priority) {
       final normalized = muscle_registry.normalize(muscle);
+
       if (normalized == null) {
-        debugPrint('[Motor V3] ⚠️ Unknown muscle key: $muscle');
-        return;
+        debugPrint(
+          '[Motor V3] ⚠️ Músculo desconocido: "$muscle" - será ignorado',
+        );
+        return; // Skip unknown muscles
       }
-      normalizedPriorities[normalized] = priority;
+
+      // Si ya existe, tomar la prioridad más alta
+      if (normalizedPriorities.containsKey(normalized)) {
+        normalizedPriorities[normalized] = max(
+          normalizedPriorities[normalized]!,
+          priority,
+        );
+      } else {
+        normalizedPriorities[normalized] = priority;
+      }
     });
+
+    debugPrint('[Motor V3] ═══════════════════════════════════════');
+    debugPrint(
+      '[Motor V3] Prioridades normalizadas (${normalizedPriorities.length} músculos):',
+    );
+    normalizedPriorities.forEach((muscle, priority) {
+      debugPrint('  - $muscle: P$priority');
+    });
+    debugPrint('[Motor V3] ═══════════════════════════════════════');
+
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 2: Calcular landmarks completos para músculos con prioridad
+    // ═══════════════════════════════════════════════════════════════
 
     final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
       musclePriorities: normalizedPriorities,
@@ -264,34 +297,74 @@ class MotorV3Orchestrator {
       age: profile.age,
     );
 
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 3: Extraer VOP de cada landmark + Fallback para músculos sin prioridad
+    // ═══════════════════════════════════════════════════════════════
+
     for (final muscle in muscle_registry.canonicalMuscles) {
       final landmarks = allLandmarks[muscle];
+
       if (landmarks != null) {
+        // Músculo tiene prioridad definida → usar VOP
         volumeByMuscle[muscle] = landmarks.vop;
       } else {
+        // Músculo sin prioridad → asignar prioridad default 3 (secundario)
         final fallbackLandmarks = VolumeLandmarks.calculate(
           muscle: muscle,
-          priority: 3,
+          priority: 3, // Default: secundario
           trainingLevel: profile.trainingLevel,
           age: profile.age,
         );
         volumeByMuscle[muscle] = fallbackLandmarks.vop;
+
+        debugPrint(
+          '[Motor V3] 📌 $muscle sin prioridad → asignado P3 (${fallbackLandmarks.vop} sets)',
+        );
       }
     }
 
-    debugPrint('[Motor V3] =====================================');
-    debugPrint('[Motor V3] VOLUMENES INICIALES (VOP):');
-    volumeByMuscle.forEach((muscle, volume) {
+    // ═══════════════════════════════════════════════════════════════
+    // PASO 4: Reporte final
+    // ═══════════════════════════════════════════════════════════════
+
+    final totalVolume = volumeByMuscle.values.fold(0, (sum, vol) => sum + vol);
+
+    debugPrint('[Motor V3] ═══════════════════════════════════════');
+    debugPrint('[Motor V3] VOLÚMENES INICIALES (VOP) - VERSIÓN 2.0:');
+    debugPrint('[Motor V3] ═══════════════════════════════════════');
+
+    // Ordenar por prioridad para display
+    final sortedMuscles = volumeByMuscle.keys.toList()
+      ..sort((a, b) {
+        final priorityA = normalizedPriorities[a] ?? 3;
+        final priorityB = normalizedPriorities[b] ?? 3;
+        return priorityB.compareTo(priorityA); // Descendente (5 primero)
+      });
+
+    for (final muscle in sortedMuscles) {
+      final volume = volumeByMuscle[muscle]!;
       final priority = normalizedPriorities[muscle] ?? 3;
-      debugPrint('  $muscle (P$priority): $volume sets/semana');
-    });
-    debugPrint('[Motor V3] =====================================');
+      final category = priority == 5
+          ? 'PRIMARIO'
+          : priority >= 3
+          ? 'SECUNDARIO'
+          : 'TERCIARIO';
+
+      debugPrint('  $muscle (P$priority $category): $volume sets/semana');
+    }
+
+    debugPrint('[Motor V3] ───────────────────────────────────────');
+    debugPrint('[Motor V3] TOTAL: $totalVolume sets/semana');
+    debugPrint('[Motor V3] ═══════════════════════════════════════');
 
     return volumeByMuscle;
   }
 
-  /// Método LEGACY para compatibilidad (DEPRECADO)
-  @Deprecated('Usar _calculateVolumeByMuscleV2')
+  /// Calcula volumen por músculo (VERSIÓN LEGACY)
+  ///
+  /// @deprecated Usar _calculateVolumeByMuscleV2() en su lugar.
+  /// Este método usa nomenclatura antigua (MAV/MRV) y será eliminado.
+  @Deprecated('Usar _calculateVolumeByMuscleV2()')
   // ignore: unused_element
   static Map<String, int> _calculateVolumeByMuscle(UserProfile profile) {
     return _calculateVolumeByMuscleV2(profile);
