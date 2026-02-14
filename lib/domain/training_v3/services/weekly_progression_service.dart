@@ -73,7 +73,7 @@ abstract class WeeklyProgressionService {
   /// ```
   ///
   /// RETURNS:
-  /// - Map<muscle, MuscleDecision> with decisions for all muscles
+  /// - Map of muscle to MuscleDecision with decisions for all muscles
   ///
   /// EXAMPLE:
   /// ```dart
