@@ -1,31 +1,26 @@
-import 'package:flutter/foundation.dart';
+// lib/domain/training_v3/engines/weekly_adaptation_engine.dart
+
 import 'dart:math';
+import 'package:flutter/foundation.dart';
+import '../models/muscle_decision.dart';
 import '../models/muscle_progression_tracker.dart';
 import '../models/weekly_muscle_analysis.dart';
-import '../models/muscle_decision.dart';
 
-/// Motor de decisiones semanales adaptativas por músculo
-///
-/// Analiza rendimiento semanal y decide:
-/// - ¿Aumentar volumen (+18-22%)?
-/// - ¿Mantener volumen?
-/// - ¿Microdescarga preventiva?
-/// - ¿Descarga completa?
+/// Weekly per-muscle decision engine.
 class WeeklyAdaptationEngine {
-  /// Analiza un músculo y genera decisión semanal
   static MuscleDecision analyzeAndDecide({
     required MuscleProgressionTracker tracker,
     required WeeklyMuscleAnalysis analysis,
   }) {
-    debugPrint('[WeeklyAdapt] =====================================');
-    debugPrint('[WeeklyAdapt] Musculo: ${tracker.muscle}');
-    debugPrint('[WeeklyAdapt] Prioridad: ${tracker.priority}');
-    debugPrint('[WeeklyAdapt] Fase: ${tracker.currentPhase}');
-    debugPrint('[WeeklyAdapt] Volumen: ${tracker.currentVolume} sets');
-    debugPrint('[WeeklyAdapt] Semana en fase: ${tracker.weekInCurrentPhase}');
-    debugPrint('[WeeklyAdapt] =====================================');
+    debugPrint('[WeeklyAdapt] =======================================');
+    debugPrint('[WeeklyAdapt] Muscle: ${tracker.muscle}');
+    debugPrint('[WeeklyAdapt] Priority: ${tracker.priority}');
+    debugPrint('[WeeklyAdapt] Phase: ${tracker.currentPhase}');
+    debugPrint('[WeeklyAdapt] Volume: ${tracker.currentVolume} sets');
+    debugPrint('[WeeklyAdapt] Week in phase: ${tracker.weekInCurrentPhase}');
+    debugPrint('[WeeklyAdapt] =======================================');
 
-    // REGLA 0: TERCIARIOS nunca progresan
+    // RULE 0: Tertiary muscles never progress
     if (tracker.priority == 1) {
       if (tracker.currentVolume != tracker.landmarks.vop) {
         return MuscleDecision(
@@ -33,14 +28,14 @@ class WeeklyAdaptationEngine {
           action: VolumeAction.adjust,
           newVolume: tracker.landmarks.vop,
           newPhase: ProgressionPhase.maintaining,
-          reason: 'Terciario: mantener en VOP (${tracker.landmarks.vop} sets)',
+          reason: 'Tertiary: keep at VOP (${tracker.landmarks.vop} sets)',
           confidence: 1.0,
         );
       }
 
       return MuscleDecisionHelpers.noChange(
         muscle: tracker.muscle,
-        reason: 'Terciario: VOP estable',
+        reason: 'Tertiary: stable VOP',
       );
     }
 
@@ -58,7 +53,6 @@ class WeeklyAdaptationEngine {
     }
   }
 
-  /// DISCOVERING: Progresion activa hacia VMR
   static MuscleDecision _handleDiscovering(
     MuscleProgressionTracker tracker,
     WeeklyMuscleAnalysis analysis,
@@ -72,17 +66,16 @@ class WeeklyAdaptationEngine {
 
     if (shouldMicrodeload) {
       final microdeloadVolume = (tracker.currentVolume * 0.65).round();
-
-      debugPrint('[WeeklyAdapt] MICRODESCARGA preventiva');
-      debugPrint('  Semanas progresando: $weeksProgressing');
-      debugPrint('  Volumen: ${tracker.currentVolume} -> $microdeloadVolume');
+      debugPrint('[WeeklyAdapt] MICRODELOAD preventive');
+      debugPrint('  Weeks progressing: $weeksProgressing');
+      debugPrint('  Volume: ${tracker.currentVolume} -> $microdeloadVolume');
 
       return MuscleDecision(
         muscle: tracker.muscle,
         action: VolumeAction.microdeload,
         newVolume: microdeloadVolume,
         newPhase: ProgressionPhase.microdeload,
-        reason: 'Microdescarga preventiva tras $weeksProgressing semanas',
+        reason: 'Preventive microdeload (week $weeksProgressing)',
         confidence: 0.8,
         requiresMicrodeload: true,
         weeksToMicrodeload: 1,
@@ -90,7 +83,6 @@ class WeeklyAdaptationEngine {
     }
 
     final performanceScore = _calculatePerformanceScore(analysis);
-
     debugPrint(
       '[WeeklyAdapt] Performance score: ${performanceScore.toStringAsFixed(2)}',
     );
@@ -117,12 +109,12 @@ class WeeklyAdaptationEngine {
           .toStringAsFixed(0);
 
       debugPrint(
-        '[WeeklyAdapt] PROGRESANDO: +$increment sets (+$percentIncrease%)',
+        '[WeeklyAdapt] PROGRESSING: +$increment sets (+$percentIncrease%)',
       );
-      debugPrint('  Nuevo volumen: ${tracker.currentVolume} -> $cappedVolume');
+      debugPrint('  New volume: ${tracker.currentVolume} -> $cappedVolume');
 
       if (cappedVolume < newVolume) {
-        debugPrint('  Limitado a VMR target: ${tracker.landmarks.vmrTarget}');
+        debugPrint('  Limited to VMR target: ${tracker.landmarks.vmrTarget}');
       }
 
       return MuscleDecision(
@@ -131,7 +123,7 @@ class WeeklyAdaptationEngine {
         newVolume: cappedVolume,
         newPhase: ProgressionPhase.discovering,
         reason:
-            'Progresion (+$increment sets, score: ${performanceScore.toStringAsFixed(2)})',
+            'Progression (+$increment sets, score: ${performanceScore.toStringAsFixed(2)})',
         confidence: _calculateConfidence(performanceScore),
       );
     }
@@ -145,7 +137,7 @@ class WeeklyAdaptationEngine {
 
     if (isStagnant) {
       debugPrint(
-        '[WeeklyAdapt] ESTANCADO: VMR descubierto en ${tracker.currentVolume}',
+        '[WeeklyAdapt] STAGNANT: VMR discovered at ${tracker.currentVolume}',
       );
 
       return MuscleDecision(
@@ -153,7 +145,7 @@ class WeeklyAdaptationEngine {
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.maintaining,
-        reason: 'VMR real descubierto: ${tracker.currentVolume} sets',
+        reason: 'Real VMR discovered: ${tracker.currentVolume} sets',
         confidence: 0.8,
         vmrDiscovered: tracker.currentVolume,
       );
@@ -168,7 +160,7 @@ class WeeklyAdaptationEngine {
         (analysis.hadPain && analysis.fatigueLevel > 7.5);
 
     if (hasOverload) {
-      debugPrint('[WeeklyAdapt] SOBRECARGA: -> OVERREACHING');
+      debugPrint('[WeeklyAdapt] OVERLOAD: -> OVERREACHING');
 
       return MuscleDecision(
         muscle: tracker.muscle,
@@ -176,18 +168,17 @@ class WeeklyAdaptationEngine {
         newVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.overreaching,
         reason:
-            'Senales de sobrecarga (score: ${performanceScore.toStringAsFixed(2)})',
+            'Overload signals (score: ${performanceScore.toStringAsFixed(2)})',
         confidence: 0.7,
       );
     }
 
     return MuscleDecisionHelpers.noChange(
       muscle: tracker.muscle,
-      reason: 'Observar 1 semana mas',
+      reason: 'Observe 1 more week',
     );
   }
 
-  /// MAINTAINING: Mantener VMR hasta que decaiga
   static MuscleDecision _handleMaintaining(
     MuscleProgressionTracker tracker,
     WeeklyMuscleAnalysis analysis,
@@ -202,15 +193,15 @@ class WeeklyAdaptationEngine {
         analysis.recoveryQuality >= 6.0;
 
     if (isStable) {
-      debugPrint('[WeeklyAdapt] ESTABLE: Mantener en VMR');
-      debugPrint('  Semanas manteniendo: ${tracker.weekInCurrentPhase + 1}');
+      debugPrint('[WeeklyAdapt] STABLE: Maintain at VMR');
+      debugPrint('  Weeks maintaining: ${tracker.weekInCurrentPhase + 1}');
 
       return MuscleDecision(
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.maintaining,
-        reason: 'Estable en VMR (semana ${tracker.weekInCurrentPhase + 1})',
+        reason: 'Stable at VMR (week ${tracker.weekInCurrentPhase + 1})',
         confidence: 0.9,
       );
     }
@@ -226,15 +217,15 @@ class WeeklyAdaptationEngine {
       final increment = (tracker.currentVolume * 0.15).round();
       final newVolume = tracker.currentVolume + max<int>(1, increment);
 
-      debugPrint('[WeeklyAdapt] EXCEPCIONAL: Puede progresar mas');
-      debugPrint('  Nuevo volumen: ${tracker.currentVolume} -> $newVolume');
+      debugPrint('[WeeklyAdapt] EXCEPTIONAL: Can progress more!');
+      debugPrint('  New volume: ${tracker.currentVolume} -> $newVolume');
 
       return MuscleDecision(
         muscle: tracker.muscle,
         action: VolumeAction.increase,
         newVolume: newVolume,
         newPhase: ProgressionPhase.discovering,
-        reason: 'Rendimiento excepcional, +$increment sets conservador',
+        reason: 'Exceptional performance, +$increment sets',
         confidence: 0.8,
       );
     }
@@ -247,14 +238,14 @@ class WeeklyAdaptationEngine {
         analysis.recoveryQuality < 5.5;
 
     if (hasDecline) {
-      debugPrint('[WeeklyAdapt] DECAIMIENTO: -> OVERREACHING');
+      debugPrint('[WeeklyAdapt] DECLINE: -> OVERREACHING');
 
       return MuscleDecision(
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.overreaching,
-        reason: 'Decaimiento detectado en mantenimiento',
+        reason: 'Decline detected',
         confidence: 0.7,
       );
     }
@@ -264,12 +255,11 @@ class WeeklyAdaptationEngine {
       action: VolumeAction.maintain,
       newVolume: tracker.currentVolume,
       newPhase: ProgressionPhase.maintaining,
-      reason: 'Continuar manteniendo',
+      reason: 'Continue maintaining',
       confidence: 0.7,
     );
   }
 
-  /// OVERREACHING: Dar 1 semana de gracia
   static MuscleDecision _handleOverreaching(
     MuscleProgressionTracker tracker,
     WeeklyMuscleAnalysis analysis,
@@ -284,32 +274,32 @@ class WeeklyAdaptationEngine {
         analysis.recoveryQuality >= 6.5;
 
     if (hasRecovered) {
-      debugPrint('[WeeklyAdapt] RECUPERADO: -> MAINTAINING');
+      debugPrint('[WeeklyAdapt] RECOVERED: -> MAINTAINING');
 
       return MuscleDecision(
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.maintaining,
-        reason: 'Recuperado de overreaching',
+        reason: 'Recovered from overreaching',
         confidence: 0.8,
       );
     }
 
     if (tracker.weekInCurrentPhase == 0) {
-      debugPrint('[WeeklyAdapt] Semana 1 OVERREACHING: dar 1 semana gracia');
+      debugPrint('[WeeklyAdapt] Week 1 OVERREACHING: give 1 week grace');
 
       return MuscleDecision(
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.overreaching,
-        reason: 'Semana 1 overreaching: observar',
+        reason: 'Week 1 overreaching: observe',
         confidence: 0.6,
       );
     }
 
-    debugPrint('[WeeklyAdapt] Sin recuperacion: -> DELOAD');
+    debugPrint('[WeeklyAdapt] No recovery: -> DELOAD');
 
     final deloadVolume = max<int>(
       tracker.landmarks.vme,
@@ -321,35 +311,33 @@ class WeeklyAdaptationEngine {
       action: VolumeAction.deload,
       newVolume: deloadVolume,
       newPhase: ProgressionPhase.deloading,
-      reason: 'Descarga necesaria ($deloadVolume sets)',
+      reason: 'Deload needed ($deloadVolume sets)',
       confidence: 0.9,
     );
   }
 
-  /// DELOADING: 1 semana, luego nuevo ciclo
   static MuscleDecision _handleDeloading(
     MuscleProgressionTracker tracker,
     WeeklyMuscleAnalysis analysis,
   ) {
-    debugPrint('[WeeklyAdapt] Completando DELOAD -> nuevo ciclo desde VOP');
+    debugPrint('[WeeklyAdapt] Completing DELOAD -> new cycle from VOP');
 
     return MuscleDecision(
       muscle: tracker.muscle,
       action: VolumeAction.increase,
       newVolume: tracker.landmarks.vop,
       newPhase: ProgressionPhase.discovering,
-      reason: 'Deload completado, nuevo ciclo (${tracker.landmarks.vop} sets)',
+      reason: 'Deload complete, new cycle (${tracker.landmarks.vop} sets)',
       confidence: 1.0,
       isNewCycle: true,
     );
   }
 
-  /// MICRODELOAD: 1 semana, luego reanudar +5%
   static MuscleDecision _handleMicrodeload(
     MuscleProgressionTracker tracker,
     WeeklyMuscleAnalysis analysis,
   ) {
-    debugPrint('[WeeklyAdapt] Completando MICRODELOAD -> reanudar progresion');
+    debugPrint('[WeeklyAdapt] Completing MICRODELOAD -> resume progression');
 
     final previousVolume = _getPreviousVolumeBeforeMicrodeload(tracker);
     final resumeVolume = (previousVolume * 1.05).round();
@@ -359,14 +347,11 @@ class WeeklyAdaptationEngine {
       action: VolumeAction.increase,
       newVolume: resumeVolume,
       newPhase: ProgressionPhase.discovering,
-      reason: 'Microdescarga completada, reanudar +5%',
+      reason: 'Microdeload complete, resume +5%',
       confidence: 0.9,
     );
   }
 
-  // METODOS AUXILIARES
-
-  /// Calcula incremento adaptativo segun rendimiento
   static int _calculateAdaptiveIncrement({
     required int currentVolume,
     required double performanceScore,
@@ -387,11 +372,9 @@ class WeeklyAdaptationEngine {
     }
 
     final increment = (currentVolume * basePercentage).round();
-
-    return max(1, increment);
+    return max<int>(1, increment);
   }
 
-  /// Calcula score general de rendimiento (0.0-1.0)
   static double _calculatePerformanceScore(WeeklyMuscleAnalysis analysis) {
     double score = 0.0;
 
@@ -443,7 +426,7 @@ class WeeklyAdaptationEngine {
       score += 0.03;
     }
 
-    return score.clamp(0.0, 1.0);
+    return min(1.0, max(0.0, score));
   }
 
   static double _calculateConfidence(double performanceScore) {
