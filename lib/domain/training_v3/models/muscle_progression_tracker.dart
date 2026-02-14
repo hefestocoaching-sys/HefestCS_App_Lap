@@ -6,9 +6,8 @@ import 'weekly_muscle_metrics.dart';
 part 'muscle_progression_tracker.freezed.dart';
 part 'muscle_progression_tracker.g.dart';
 
-/// Per-muscle progression tracker.
 @freezed
-class MuscleProgressionTracker with _$MuscleProgressionTracker {
+abstract class MuscleProgressionTracker with _$MuscleProgressionTracker {
   const factory MuscleProgressionTracker({
     required String muscle,
     required int priority,
@@ -55,7 +54,7 @@ enum ProgressionPhase {
 }
 
 @freezed
-class PhaseTransition with _$PhaseTransition {
+abstract class PhaseTransition with _$PhaseTransition {
   const factory PhaseTransition({
     required int weekNumber,
     required ProgressionPhase fromPhase,

@@ -400,7 +400,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         phase: 'accumulation',
         durationWeeks: evaluation.planDurationInWeeks,
         trainingDaysPerWeek: evaluation.daysPerWeek,
-        exercises: const [],
       );
 
       if (result['success'] != true) {

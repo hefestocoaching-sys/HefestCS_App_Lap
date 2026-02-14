@@ -5,9 +5,8 @@ import 'exercise_feedback.dart';
 part 'weekly_muscle_analysis.freezed.dart';
 part 'weekly_muscle_analysis.g.dart';
 
-/// Weekly analysis combining objective and subjective data for a muscle.
 @freezed
-class WeeklyMuscleAnalysis with _$WeeklyMuscleAnalysis {
+abstract class WeeklyMuscleAnalysis with _$WeeklyMuscleAnalysis {
   const factory WeeklyMuscleAnalysis({
     required String muscle,
     required int weekNumber,

@@ -6,76 +6,60 @@ import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
 void main() {
   group('VolumeEngine', () {
     group('calculateOptimalVolume', () {
-      test('debe retornar VME para prioridad mínima (1)', () {
+      test('debe retornar VOP para inicio (novice, pectorals)', () {
         final volume = VolumeEngine.calculateOptimalVolume(
-          muscle: 'chest',
+          muscle: 'pectorals',
           trainingLevel: 'novice',
           priority: 1,
         );
 
-        expect(volume, equals(10)); // VME de chest novice
+        expect(volume, equals(10));
       });
 
-      test('debe retornar MAV para prioridad máxima (5)', () {
-        final volume = VolumeEngine.calculateOptimalVolume(
-          muscle: 'chest',
+      test('VOP no cambia con la prioridad', () {
+        final volumeLow = VolumeEngine.calculateOptimalVolume(
+          muscle: 'pectorals',
+          trainingLevel: 'novice',
+          priority: 1,
+        );
+        final volumeHigh = VolumeEngine.calculateOptimalVolume(
+          muscle: 'pectorals',
           trainingLevel: 'novice',
           priority: 5,
         );
 
-        expect(volume, equals(15)); // MAV de chest novice
-      });
-
-      test('debe aplicar progresión conservadora (+2 sets si < MAV)', () {
-        final volume = VolumeEngine.calculateOptimalVolume(
-          muscle: 'chest',
-          trainingLevel: 'novice',
-          priority: 3,
-          currentVolume: 10,
-        );
-
-        expect(volume, equals(12)); // 10 + 2
-      });
-
-      test('debe respetar MRV como límite superior', () {
-        final volume = VolumeEngine.calculateOptimalVolume(
-          muscle: 'chest',
-          trainingLevel: 'novice',
-          priority: 5,
-          currentVolume: 19,
-        );
-
-        expect(volume, equals(20)); // MRV de chest novice
-      });
-
-      test('debe lanzar error con músculo inválido', () {
-        expect(
-          () => VolumeEngine.calculateOptimalVolume(
-            muscle: 'invalid_muscle',
-            trainingLevel: 'novice',
-            priority: 3,
-          ),
-          throwsA(isA<ArgumentError>()),
-        );
+        expect(volumeLow, equals(volumeHigh));
       });
     });
 
     group('isVolumeOptimal', () {
-      test('debe retornar true si volumen está entre MAV-MRV', () {
-        final isOptimal = VolumeEngine.isVolumeOptimal(
-          volume: 17,
-          muscle: 'chest',
+      test('debe retornar true si volumen está entre VOP y VMR target', () {
+        final landmarks = VolumeEngine.calculateLandmarks(
+          muscle: 'pectorals',
           trainingLevel: 'novice',
+          priority: 5,
+          age: 30,
+        );
+
+        final isOptimal = VolumeEngine.isVolumeOptimal(
+          volume: 12,
+          landmarks: landmarks,
         );
 
         expect(isOptimal, isTrue);
       });
 
-      test('debe retornar false si volumen está por debajo de MAV', () {
-        final isOptimal = VolumeEngine.isVolumeOptimal(
-          volume: 12,
-          muscle: 'chest',
+      test('debe retornar false si volumen está por debajo de VOP', () {
+        final landmarks = VolumeEngine.calculateLandmarks(
+          muscle: 'pectorals',
           trainingLevel: 'novice',
+          priority: 5,
+          age: 30,
+        );
+
+        final isOptimal = VolumeEngine.isVolumeOptimal(
+          volume: 8,
+          landmarks: landmarks,
         );
 
         expect(isOptimal, isFalse);

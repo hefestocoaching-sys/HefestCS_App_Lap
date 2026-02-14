@@ -1,13 +1,17 @@
-import 'dart:math';
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'volume_landmarks.freezed.dart';
 part 'volume_landmarks.g.dart';
 
-/// Universal volume landmarks per muscle.
+/// Landmarks de volumen individuales por músculo
+///
+/// Cada músculo tiene:
+/// - VME: Volumen Mínimo Efectivo
+/// - VOP: Volumen Óptimo Personalizado (punto partida)
+/// - VMR: Volumen Máximo Recuperable (teórico)
+/// - VMRTarget: VMR objetivo según prioridad
 @freezed
-class VolumeLandmarks with _$VolumeLandmarks {
+abstract class VolumeLandmarks with _$VolumeLandmarks {
   const factory VolumeLandmarks({
     required int vme,
     required int vop,
@@ -18,22 +22,20 @@ class VolumeLandmarks with _$VolumeLandmarks {
   factory VolumeLandmarks.fromJson(Map<String, dynamic> json) =>
       _$VolumeLandmarksFromJson(json);
 
-  /// Calculates landmarks for a specific muscle.
+  /// Calcula landmarks para un músculo específico
   static VolumeLandmarks calculate({
     required String muscle,
     required int priority,
     required String trainingLevel,
     required int age,
   }) {
-    final vmeBase = _getVmeBase(muscle);
+    final vmeBase = _getVMEBase(muscle);
+    final vmrBase = _getVMRBase(muscle);
     final levelMultiplier = _getLevelMultiplier(trainingLevel);
     final ageMultiplier = _getAgeMultiplier(age);
 
     final vme = (vmeBase * levelMultiplier * ageMultiplier).round();
-
-    final vmrBase = _getVmrBase(muscle);
     final vmr = (vmrBase * levelMultiplier * ageMultiplier).round();
-
     final vop = (vme + ((vmr - vme) * 0.35)).round();
 
     int vmrTarget;
@@ -48,7 +50,7 @@ class VolumeLandmarks with _$VolumeLandmarks {
     return VolumeLandmarks(vme: vme, vop: vop, vmr: vmr, vmrTarget: vmrTarget);
   }
 
-  static int _getVmeBase(String muscle) {
+  static int _getVMEBase(String muscle) {
     switch (muscle) {
       case 'pectorals':
         return 8;
@@ -81,7 +83,7 @@ class VolumeLandmarks with _$VolumeLandmarks {
     }
   }
 
-  static int _getVmrBase(String muscle) {
+  static int _getVMRBase(String muscle) {
     switch (muscle) {
       case 'pectorals':
         return 22;

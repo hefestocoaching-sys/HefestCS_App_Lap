@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part '../../muscle_volume_buckets.freezed.dart';
+part 'muscle_volume_buckets.freezed.dart';
 
 @freezed
 abstract class MuscleVolumeBuckets with _$MuscleVolumeBuckets {

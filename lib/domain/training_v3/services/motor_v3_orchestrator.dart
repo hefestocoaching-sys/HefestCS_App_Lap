@@ -21,10 +21,12 @@ import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
 
 // Engines
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/volume_landmarks_calculator.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
 import 'package:hcs_app_lap/domain/training_v3/resolvers/muscle_to_catalog_resolver.dart'
     as resolver;
 
@@ -110,10 +112,10 @@ class MotorV3Orchestrator {
       debugPrint('   - Experience: ${clientProfile.experience}');
       debugPrint('   - Recovery: ${clientProfile.recoveryCapacity}');
 
-      // ✅ PASO 4: Calcular volumen por músculo
-      final volumeTargets = _calculateVolumeByMuscle(userProfile);
+      // ✅ PASO 4: Calcular volumen INICIAL con nuevo sistema
+      final volumeTargets = _calculateVolumeByMuscleV2(userProfile);
       debugPrint(
-        '📊 Volumen por músculo calculado: ${volumeTargets.length} grupos',
+        '📊 Volumen INICIAL por músculo (VOP): ${volumeTargets.length} grupos',
       );
 
       if (exercises.isNotEmpty) {
@@ -237,31 +239,62 @@ class MotorV3Orchestrator {
     }
   }
 
-  /// Calcula volumen óptimo para cada músculo según prioridades
-  static Map<String, int> _calculateVolumeByMuscle(UserProfile profile) {
+  /// Calcula volumen INICIAL por músculo (VERSIÓN 2.0)
+  ///
+  /// CAMBIOS:
+  /// - Usa VolumeLandmarksCalculator
+  /// - Retorna VOP (no MAV)
+  /// - Calcula landmarks completos
+  static Map<String, int> _calculateVolumeByMuscleV2(UserProfile profile) {
     final volumeByMuscle = <String, int>{};
 
     final normalizedPriorities = <String, int>{};
     profile.musclePriorities.forEach((muscle, priority) {
       final normalized = muscle_registry.normalize(muscle);
       if (normalized == null) {
-        debugPrint('[Motor V3] ⚠️ Unknown muscle key in priorities: $muscle');
+        debugPrint('[Motor V3] ⚠️ Unknown muscle key: $muscle');
         return;
       }
       normalizedPriorities[normalized] = priority;
     });
 
+    final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
+      musclePriorities: normalizedPriorities,
+      trainingLevel: profile.trainingLevel,
+      age: profile.age,
+    );
+
     for (final muscle in muscle_registry.canonicalMuscles) {
-      final priority = normalizedPriorities[muscle] ?? 3;
-      final volume = VolumeEngine.calculateOptimalVolume(
-        muscle: muscle,
-        trainingLevel: profile.trainingLevel,
-        priority: priority,
-      );
-      volumeByMuscle[muscle] = volume;
+      final landmarks = allLandmarks[muscle];
+      if (landmarks != null) {
+        volumeByMuscle[muscle] = landmarks.vop;
+      } else {
+        final fallbackLandmarks = VolumeLandmarks.calculate(
+          muscle: muscle,
+          priority: 3,
+          trainingLevel: profile.trainingLevel,
+          age: profile.age,
+        );
+        volumeByMuscle[muscle] = fallbackLandmarks.vop;
+      }
     }
 
+    debugPrint('[Motor V3] =====================================');
+    debugPrint('[Motor V3] VOLUMENES INICIALES (VOP):');
+    volumeByMuscle.forEach((muscle, volume) {
+      final priority = normalizedPriorities[muscle] ?? 3;
+      debugPrint('  $muscle (P$priority): $volume sets/semana');
+    });
+    debugPrint('[Motor V3] =====================================');
+
     return volumeByMuscle;
+  }
+
+  /// Método LEGACY para compatibilidad (DEPRECADO)
+  @Deprecated('Usar _calculateVolumeByMuscleV2')
+  // ignore: unused_element
+  static Map<String, int> _calculateVolumeByMuscle(UserProfile profile) {
+    return _calculateVolumeByMuscleV2(profile);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -784,6 +817,7 @@ class MotorV3Orchestrator {
 
   /// Maps a canonical muscle to its MuscleGroup.
   /// Correctly recognizes biceps and triceps as arms.
+  // ignore: unused_element
   static resolver.MuscleGroup _groupFor(String muscle) {
     if (['chest', 'pectorals'].contains(muscle)) {
       return resolver.MuscleGroup.chest;

@@ -169,7 +169,7 @@ class _MusclePriorityMatrixState extends State<MusclePriorityMatrix> {
             height: 40,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: _getPriorityColor(currentValue).withOpacity(0.2),
+              color: _getPriorityColor(currentValue).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

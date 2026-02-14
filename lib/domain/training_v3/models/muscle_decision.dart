@@ -5,9 +5,8 @@ import 'muscle_progression_tracker.dart';
 part 'muscle_decision.freezed.dart';
 part 'muscle_decision.g.dart';
 
-/// Weekly decision for a single muscle.
 @freezed
-class MuscleDecision with _$MuscleDecision {
+abstract class MuscleDecision with _$MuscleDecision {
   const factory MuscleDecision({
     required String muscle,
     required VolumeAction action,
@@ -22,19 +21,32 @@ class MuscleDecision with _$MuscleDecision {
     @Default([]) List<ExerciseReplacement> exercisesToReplace,
   }) = _MuscleDecision;
 
-  const factory MuscleDecision.noChange({
-    required String muscle,
-    required String reason,
-  }) = _NoChangeMuscleDecision;
-
   factory MuscleDecision.fromJson(Map<String, dynamic> json) =>
       _$MuscleDecisionFromJson(json);
+}
+
+/// Helpers para MuscleDecision
+extension MuscleDecisionHelpers on MuscleDecision {
+  /// Crea una decision de "no cambio"
+  static MuscleDecision noChange({
+    required String muscle,
+    required String reason,
+  }) {
+    return MuscleDecision(
+      muscle: muscle,
+      action: VolumeAction.maintain,
+      newVolume: 0,
+      newPhase: ProgressionPhase.maintaining,
+      reason: reason,
+      confidence: 1.0,
+    );
+  }
 }
 
 enum VolumeAction { increase, maintain, decrease, deload, microdeload, adjust }
 
 @freezed
-class ExerciseReplacement with _$ExerciseReplacement {
+abstract class ExerciseReplacement with _$ExerciseReplacement {
   const factory ExerciseReplacement({
     required String exerciseId,
     required String exerciseName,

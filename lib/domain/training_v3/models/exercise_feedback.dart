@@ -3,9 +3,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'exercise_feedback.freezed.dart';
 part 'exercise_feedback.g.dart';
 
-/// Feedback for a single exercise.
 @freezed
-class ExerciseFeedback with _$ExerciseFeedback {
+abstract class ExerciseFeedback with _$ExerciseFeedback {
   const factory ExerciseFeedback({
     required String exerciseId,
     required String exerciseName,
