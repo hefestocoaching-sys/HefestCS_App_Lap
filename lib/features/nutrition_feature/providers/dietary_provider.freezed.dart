@@ -12,7 +12,7 @@ part of 'dietary_provider.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$DietaryState {
+mixin _$DietaryState implements DiagnosticableTreeMixin {
 
  String get selectedTMBFormulaKey; Map<String, TMBFormulaInfo> get tmbCalculations; double get calculatedAverageTMB; Map<String, List<UserActivity>> get dailyActivities; Map<String, double> get dailyNafFactors; double get finalKcal; double get leanBodyMass; double get bodyFatPercentage; bool get isObese; bool get hasLBM;
 /// Create a copy of DietaryState
@@ -22,6 +22,12 @@ mixin _$DietaryState {
 $DietaryStateCopyWith<DietaryState> get copyWith => _$DietaryStateCopyWithImpl<DietaryState>(this as DietaryState, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'DietaryState'))
+    ..add(DiagnosticsProperty('selectedTMBFormulaKey', selectedTMBFormulaKey))..add(DiagnosticsProperty('tmbCalculations', tmbCalculations))..add(DiagnosticsProperty('calculatedAverageTMB', calculatedAverageTMB))..add(DiagnosticsProperty('dailyActivities', dailyActivities))..add(DiagnosticsProperty('dailyNafFactors', dailyNafFactors))..add(DiagnosticsProperty('finalKcal', finalKcal))..add(DiagnosticsProperty('leanBodyMass', leanBodyMass))..add(DiagnosticsProperty('bodyFatPercentage', bodyFatPercentage))..add(DiagnosticsProperty('isObese', isObese))..add(DiagnosticsProperty('hasLBM', hasLBM));
+}
 
 @override
 bool operator ==(Object other) {
@@ -33,7 +39,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,selectedTMBFormulaKey,const DeepCollectionEquality().hash(tmbCalculations),calculatedAverageTMB,const DeepCollectionEquality().hash(dailyActivities),const DeepCollectionEquality().hash(dailyNafFactors),finalKcal,leanBodyMass,bodyFatPercentage,isObese,hasLBM);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'DietaryState(selectedTMBFormulaKey: $selectedTMBFormulaKey, tmbCalculations: $tmbCalculations, calculatedAverageTMB: $calculatedAverageTMB, dailyActivities: $dailyActivities, dailyNafFactors: $dailyNafFactors, finalKcal: $finalKcal, leanBodyMass: $leanBodyMass, bodyFatPercentage: $bodyFatPercentage, isObese: $isObese, hasLBM: $hasLBM)';
 }
 
@@ -214,7 +220,7 @@ return $default(_that.selectedTMBFormulaKey,_that.tmbCalculations,_that.calculat
 /// @nodoc
 
 
-class _DietaryState implements DietaryState {
+class _DietaryState with DiagnosticableTreeMixin implements DietaryState {
   const _DietaryState({this.selectedTMBFormulaKey = 'Mifflin-St. Jeor', final  Map<String, TMBFormulaInfo> tmbCalculations = const {}, this.calculatedAverageTMB = 0.0, final  Map<String, List<UserActivity>> dailyActivities = const {}, final  Map<String, double> dailyNafFactors = const {}, this.finalKcal = 0.0, this.leanBodyMass = 0.0, this.bodyFatPercentage = 0.0, this.isObese = false, this.hasLBM = false}): _tmbCalculations = tmbCalculations,_dailyActivities = dailyActivities,_dailyNafFactors = dailyNafFactors;
   
 
@@ -254,6 +260,12 @@ class _DietaryState implements DietaryState {
 _$DietaryStateCopyWith<_DietaryState> get copyWith => __$DietaryStateCopyWithImpl<_DietaryState>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'DietaryState'))
+    ..add(DiagnosticsProperty('selectedTMBFormulaKey', selectedTMBFormulaKey))..add(DiagnosticsProperty('tmbCalculations', tmbCalculations))..add(DiagnosticsProperty('calculatedAverageTMB', calculatedAverageTMB))..add(DiagnosticsProperty('dailyActivities', dailyActivities))..add(DiagnosticsProperty('dailyNafFactors', dailyNafFactors))..add(DiagnosticsProperty('finalKcal', finalKcal))..add(DiagnosticsProperty('leanBodyMass', leanBodyMass))..add(DiagnosticsProperty('bodyFatPercentage', bodyFatPercentage))..add(DiagnosticsProperty('isObese', isObese))..add(DiagnosticsProperty('hasLBM', hasLBM));
+}
 
 @override
 bool operator ==(Object other) {
@@ -265,7 +277,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,selectedTMBFormulaKey,const DeepCollectionEquality().hash(_tmbCalculations),calculatedAverageTMB,const DeepCollectionEquality().hash(_dailyActivities),const DeepCollectionEquality().hash(_dailyNafFactors),finalKcal,leanBodyMass,bodyFatPercentage,isObese,hasLBM);
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'DietaryState(selectedTMBFormulaKey: $selectedTMBFormulaKey, tmbCalculations: $tmbCalculations, calculatedAverageTMB: $calculatedAverageTMB, dailyActivities: $dailyActivities, dailyNafFactors: $dailyNafFactors, finalKcal: $finalKcal, leanBodyMass: $leanBodyMass, bodyFatPercentage: $bodyFatPercentage, isObese: $isObese, hasLBM: $hasLBM)';
 }
 

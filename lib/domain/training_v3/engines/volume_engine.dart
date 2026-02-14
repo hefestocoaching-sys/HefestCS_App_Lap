@@ -54,14 +54,20 @@ class VolumeEngine {
     // Semana 1, Imagen 1-20
     final landmarks = _getVolumeLandmarks(muscle, trainingLevel);
     final vme = landmarks['vme']!;
-    final mav = landmarks['mav']!;
-    final mrv = landmarks['mrv']!;
+    final vop = landmarks['vop']!;
+    final vmr = landmarks['vmr']!;
+
+    final vmrTarget = _calculateVmrTarget(
+      vop: vop,
+      vmr: vmr,
+      priority: priority,
+    );
 
     // PASO 2: Calcular volumen base según prioridad
     // Semana 2, Imagen 26-30
     final baseVolume = _calculateBaseVolume(
       vme: vme,
-      mav: mav,
+      vop: vop,
       priority: priority,
     );
 
@@ -72,8 +78,7 @@ class VolumeEngine {
       targetVolume = _applyProgression(
         currentVolume: currentVolume,
         baseVolume: baseVolume,
-        mav: mav,
-        mrv: mrv,
+        vmrTarget: vmrTarget,
       );
     } else {
       targetVolume = baseVolume;
@@ -81,13 +86,13 @@ class VolumeEngine {
 
     // PASO 4: Validar contra MRV (safety)
     // Semana 1, Imagen 16-20
-    if (targetVolume > mrv) {
-      logger.warning('Target volume exceeds MRV, reducing to safe limit', {
+    if (targetVolume > vmr) {
+      logger.warning('Target volume exceeds VMR, reducing to safe limit', {
         'muscle': muscle,
         'targetVolume': targetVolume,
-        'mrv': mrv,
+        'vmr': vmr,
       });
-      targetVolume = mrv;
+      targetVolume = vmr;
     }
 
     // PASO 5: Validar que no sea menor a VME
@@ -114,76 +119,76 @@ class VolumeEngine {
     // Actualizada a 14 músculos canónicos
     final landmarksByMuscle = {
       'pectorals': {
-        'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
-        'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
-        'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},
+        'novice': {'vme': 10, 'vop': 15, 'vmr': 20},
+        'intermediate': {'vme': 12, 'vop': 18, 'vmr': 24},
+        'advanced': {'vme': 15, 'vop': 22, 'vmr': 28},
       },
       // Hombros divididos en 3 cabezas
       'deltoide_anterior': {
-        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
-        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
-        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+        'novice': {'vme': 4, 'vop': 6, 'vmr': 8},
+        'intermediate': {'vme': 5, 'vop': 8, 'vmr': 10},
+        'advanced': {'vme': 6, 'vop': 10, 'vmr': 12},
       },
       'deltoide_lateral': {
-        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
-        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
-        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+        'novice': {'vme': 4, 'vop': 6, 'vmr': 8},
+        'intermediate': {'vme': 5, 'vop': 8, 'vmr': 10},
+        'advanced': {'vme': 6, 'vop': 10, 'vmr': 12},
       },
       'deltoide_posterior': {
-        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
-        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
-        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+        'novice': {'vme': 4, 'vop': 6, 'vmr': 8},
+        'intermediate': {'vme': 5, 'vop': 8, 'vmr': 10},
+        'advanced': {'vme': 6, 'vop': 10, 'vmr': 12},
       },
       'triceps': {
-        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
-        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
+        'novice': {'vme': 6, 'vop': 10, 'vmr': 14},
+        'intermediate': {'vme': 8, 'vop': 12, 'vmr': 16},
+        'advanced': {'vme': 10, 'vop': 15, 'vmr': 20},
       },
       // Espalda dividida en 3 regiones
       'lats': {
-        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
-        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
+        'novice': {'vme': 6, 'vop': 10, 'vmr': 14},
+        'intermediate': {'vme': 8, 'vop': 12, 'vmr': 16},
+        'advanced': {'vme': 10, 'vop': 15, 'vmr': 20},
       },
       'upper_back': {
-        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
-        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
-        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+        'novice': {'vme': 4, 'vop': 6, 'vmr': 8},
+        'intermediate': {'vme': 5, 'vop': 8, 'vmr': 10},
+        'advanced': {'vme': 6, 'vop': 10, 'vmr': 12},
       },
       'traps': {
-        'novice': {'vme': 4, 'mav': 6, 'mrv': 8},
-        'intermediate': {'vme': 5, 'mav': 8, 'mrv': 10},
-        'advanced': {'vme': 6, 'mav': 10, 'mrv': 12},
+        'novice': {'vme': 4, 'vop': 6, 'vmr': 8},
+        'intermediate': {'vme': 5, 'vop': 8, 'vmr': 10},
+        'advanced': {'vme': 6, 'vop': 10, 'vmr': 12},
       },
       'biceps': {
-        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
-        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
+        'novice': {'vme': 6, 'vop': 10, 'vmr': 14},
+        'intermediate': {'vme': 8, 'vop': 12, 'vmr': 16},
+        'advanced': {'vme': 10, 'vop': 15, 'vmr': 20},
       },
       'quadriceps': {
-        'novice': {'vme': 10, 'mav': 15, 'mrv': 20},
-        'intermediate': {'vme': 12, 'mav': 18, 'mrv': 24},
-        'advanced': {'vme': 15, 'mav': 22, 'mrv': 28},
+        'novice': {'vme': 10, 'vop': 15, 'vmr': 20},
+        'intermediate': {'vme': 12, 'vop': 18, 'vmr': 24},
+        'advanced': {'vme': 15, 'vop': 22, 'vmr': 28},
       },
       'hamstrings': {
-        'novice': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'intermediate': {'vme': 10, 'mav': 15, 'mrv': 20},
-        'advanced': {'vme': 12, 'mav': 18, 'mrv': 24},
+        'novice': {'vme': 8, 'vop': 12, 'vmr': 16},
+        'intermediate': {'vme': 10, 'vop': 15, 'vmr': 20},
+        'advanced': {'vme': 12, 'vop': 18, 'vmr': 24},
       },
       'glutes': {
-        'novice': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'intermediate': {'vme': 10, 'mav': 15, 'mrv': 20},
-        'advanced': {'vme': 12, 'mav': 18, 'mrv': 24},
+        'novice': {'vme': 8, 'vop': 12, 'vmr': 16},
+        'intermediate': {'vme': 10, 'vop': 15, 'vmr': 20},
+        'advanced': {'vme': 12, 'vop': 18, 'vmr': 24},
       },
       'calves': {
-        'novice': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'intermediate': {'vme': 10, 'mav': 15, 'mrv': 20},
-        'advanced': {'vme': 12, 'mav': 18, 'mrv': 24},
+        'novice': {'vme': 8, 'vop': 12, 'vmr': 16},
+        'intermediate': {'vme': 10, 'vop': 15, 'vmr': 20},
+        'advanced': {'vme': 12, 'vop': 18, 'vmr': 24},
       },
       'abs': {
-        'novice': {'vme': 6, 'mav': 10, 'mrv': 14},
-        'intermediate': {'vme': 8, 'mav': 12, 'mrv': 16},
-        'advanced': {'vme': 10, 'mav': 15, 'mrv': 20},
+        'novice': {'vme': 6, 'vop': 10, 'vmr': 14},
+        'intermediate': {'vme': 8, 'vop': 12, 'vmr': 16},
+        'advanced': {'vme': 10, 'vop': 15, 'vmr': 20},
       },
     };
 
@@ -195,25 +200,25 @@ class VolumeEngine {
   /// FUENTE: Semana 2, Imagen 26-30
   ///
   /// ESCALA DE PRIORIDAD:
-  /// 5 (máxima) → MAV (límite superior)
-  /// 4          → MAV - 20%
-  /// 3 (media)  → Punto medio VME-MAV
+  /// 5 (máxima) → VOP (punto optimo)
+  /// 4          → VOP - 20%
+  /// 3 (media)  → Punto medio VME-VOP
   /// 2          → VME + 20%
-  /// 1 (mínima) → VME (límite inferior)
+  /// 1 (mínima) → VME (limite inferior)
   static int _calculateBaseVolume({
     required int vme,
-    required int mav,
+    required int vop,
     required int priority,
   }) {
     switch (priority) {
       case 5:
-        return mav; // Máximo adaptativo
+        return vop; // Punto optimo inicial
       case 4:
-        return mav - ((mav - vme) * 0.2).round();
+        return vop - ((vop - vme) * 0.2).round();
       case 3:
-        return ((vme + mav) / 2).round(); // Punto medio
+        return ((vme + vop) / 2).round();
       case 2:
-        return vme + ((mav - vme) * 0.2).round();
+        return vme + ((vop - vme) * 0.2).round();
       case 1:
         return vme; // Mínimo efectivo
       default:
@@ -226,24 +231,36 @@ class VolumeEngine {
   /// FUENTE: Semana 2, Imagen 21-25
   ///
   /// REGLAS:
-  /// - Si volumen actual < MAV: Aumentar +2 sets (conservador)
-  /// - Si volumen actual >= MAV: Aumentar +1 set (muy conservador)
-  /// - Nunca exceder MRV
+  /// - Si volumen actual < VMR target: aumentar ~20%
+  /// - Nunca exceder VMR target
   static int _applyProgression({
     required int currentVolume,
     required int baseVolume,
-    required int mav,
-    required int mrv,
+    required int vmrTarget,
   }) {
-    // Si está por debajo del MAV, progresión moderada
-    if (currentVolume < mav) {
-      final newVolume = currentVolume + 2;
-      return newVolume > mrv ? mrv : newVolume;
+    if (currentVolume < vmrTarget) {
+      final increment = (currentVolume * 0.20).round();
+      final newVolume = currentVolume + (increment < 1 ? 1 : increment);
+      return newVolume > vmrTarget ? vmrTarget : newVolume;
     }
 
-    // Si está en o sobre MAV, progresión conservadora
-    final newVolume = currentVolume + 1;
-    return newVolume > mrv ? mrv : newVolume;
+    return baseVolume;
+  }
+
+  static int _calculateVmrTarget({
+    required int vop,
+    required int vmr,
+    required int priority,
+  }) {
+    if (priority >= 5) {
+      return vmr;
+    }
+
+    if (priority >= 3) {
+      return (vmr * 0.75).round();
+    }
+
+    return vop;
   }
 
   /// Valida parámetros de entrada
@@ -266,7 +283,7 @@ class VolumeEngine {
     ];
 
     if (!validMuscles.contains(muscle)) {
-throw ArgumentError(
+      throw ArgumentError(
         'Músculo inválido: $muscle. '
         'Opciones válidas: ${validMuscles.join(", ")}',
       );
@@ -299,10 +316,10 @@ throw ArgumentError(
     required String trainingLevel,
   }) {
     final landmarks = _getVolumeLandmarks(muscle, trainingLevel);
-    final mav = landmarks['mav']!;
-    final mrv = landmarks['mrv']!;
+    final vop = landmarks['vop']!;
+    final vmr = landmarks['vmr']!;
 
     // Óptimo = entre MAV y MRV (zona de alto crecimiento)
-    return volume >= mav && volume <= mrv;
+    return volume >= vop && volume <= vmr;
   }
 }
