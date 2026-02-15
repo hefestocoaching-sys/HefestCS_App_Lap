@@ -32,6 +32,8 @@ import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/unified_training_service.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_impl.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_snapshot_v1.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_ssot_v1_service.dart';
 // VopSnapshot SSOT
@@ -39,6 +41,7 @@ import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 import 'package:hcs_app_lap/domain/training/services/active_cycle_bootstrapper.dart';
+import 'package:hcs_app_lap/features/training_feature/providers/muscle_progression_tracker_provider.dart';
 
 /// Estado inmutable para el plan de entrenamiento
 /// PARTE 3 A6: Incluye vopByMuscle como SSOT para que UI y motor usen la misma fuente
@@ -647,38 +650,48 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
-      // ═══════════════════════════════════════════════════════════════════════
-      // MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO (7 MDs)
-      // ═══════════════════════════════════════════════════════════════════════
-      debugPrint('🚀 [Motor V3] Generando plan con pipeline científico...');
-
-      // Crear Motor V3 con estrategia científica pura (RuleBasedStrategy)
-      final motorV3 = TrainingOrchestratorV3(
-        strategy: RuleBasedStrategy(), // 100% científico basado en 7 MDs
+      // =====================================================================
+      // MOTOR V3 UNIFICADO - PIPELINE COMPLETO + WEEKLY PROGRESSION
+      // =====================================================================
+      debugPrint(
+        '[Motor V3 Unified] Generating plan with weekly progression...',
       );
 
-      // Generar plan con Motor V3 REAL
-      TrainingProgramV3Result resultV3;
+      final progressionRepo = ref.read(muscleProgressionRepositoryProvider);
+      final analysisRepo = ref.read(weeklyMuscleAnalysisRepositoryProvider);
+
+      final weeklyProgression = WeeklyProgressionServiceImpl(
+        progressionRepo: progressionRepo,
+        analysisRepo: analysisRepo,
+      );
+
+      final unifiedService = UnifiedTrainingService(
+        progressionRepo: progressionRepo,
+        weeklyProgression: weeklyProgression,
+      );
+
+      UnifiedTrainingResult resultV3;
       try {
-        resultV3 = await motorV3.generatePlan(
+        resultV3 = await unifiedService.generateFullProgram(
           client: freshClient,
           exercises: exercises,
-          asOfDate: startDate,
+          startDate: startDate,
         );
       } catch (e, stackTrace) {
-        debugPrint('❌ [Motor V3] Error durante generación: $e');
+        debugPrint('[Motor V3 Unified] Error during generation: $e');
         debugPrint('Stack trace: $stackTrace');
 
         state = state.copyWith(
           isLoading: false,
-          error: 'Error en Motor V3: $e',
+          error: 'Error en Motor V3 Unificado: $e',
         );
         return;
       }
 
-      // Validar resultado Motor V3
       if (resultV3.isBlocked) {
-        debugPrint('❌ [Motor V3] Plan bloqueado: ${resultV3.blockReason}');
+        debugPrint(
+          '[Motor V3 Unified] Plan blocked: ${resultV3.blockReason}',
+        );
 
         state = state.copyWith(
           isLoading: false,
@@ -689,12 +702,11 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return;
       }
 
-      // Extraer plan generado
-      final planConfig = resultV3.plan!;
+      final planConfig = resultV3.initialWeekPlan!;
 
       debugPrint(
-        '✅ [Motor V3] Plan generado: ${planConfig.weeks.length} semanas, '
-        '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
+        '[Motor V3 Unified] Plan generated: ${planConfig.weeks.length} weeks, '
+        '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sessions',
       );
 
       // ═══════════════════════════════════════════════════════════════════════
