@@ -80,7 +80,10 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
 
       await _firestore
           .doc(docPath)
-          .set(tracker.toJson(), SetOptions(merge: true));
+          .set(
+            _serializeTrackerForFirestore(tracker),
+            SetOptions(merge: true),
+          );
 
       debugPrint(
         '[MuscleProgressionRepo] Saved tracker for ${tracker.muscle}: '
@@ -237,7 +240,7 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
           );
 
           final docRef = _firestore.doc(_getDocumentPath(userId, muscle));
-          batch.set(docRef, updatedTracker.toJson());
+          batch.set(docRef, _serializeTrackerForFirestore(updatedTracker));
         }
       }
 
