@@ -19,6 +19,6 @@ void main() {
     final exerciseIds = exercises.map((e) => e.id).toList();
     expect(exerciseIds, contains('push_up'));
     expect(exerciseIds, contains('plank'));
-    expect(exerciseIds, contains('tricep_pushdown_bar'));
+    expect(exerciseIds, contains('pushdown_bar'));
   });
 }

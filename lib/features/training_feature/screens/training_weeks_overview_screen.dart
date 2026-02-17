@@ -31,6 +31,8 @@ class TrainingWeeksOverviewScreen extends ConsumerWidget {
       );
     }
 
+    final warnings = planState.suggestions ?? const [];
+
     final macroPlan = MacrocyclePlan(
       weeklyPlans: List.generate(
         plan.weeks,
@@ -51,6 +53,35 @@ class TrainingWeeksOverviewScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            if (warnings.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Advertencias de cobertura',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: kTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    for (final warning in warnings)
+                      Text(
+                        '• $warning',
+                        style: const TextStyle(color: kTextColorSecondary),
+                      ),
+                  ],
+                ),
+              ),
             // GRÁFICA DE ONDULACIÓN DE VOLUMEN
             SizedBox(
               height: 200,

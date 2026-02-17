@@ -997,10 +997,13 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         );
       });
 
+        final warningMessages = resultV3.suggestions ?? const <String>[];
+
       state = state.copyWith(
         isLoading: false,
         plan: plan,
         missingFields: const [],
+        suggestions: warningMessages,
       );
     } on TrainingPlanBlockedException catch (blocked) {
       // Bloqueo controlado del motor
@@ -1632,7 +1635,16 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final plan = TrainingPlanMapper.toGeneratedPlan(planConfig);
 
       // 5. Actualizar state (reemplazo completo)
-      state = TrainingPlanState(plan: plan, vopByMuscle: state.vopByMuscle);
+      final warningsRaw = resultV3.metadata?['warnings'];
+      final warningMessages = warningsRaw is List
+          ? warningsRaw.map((e) => e.toString()).toList()
+          : const <String>[];
+
+      state = TrainingPlanState(
+        plan: plan,
+        vopByMuscle: state.vopByMuscle,
+        suggestions: warningMessages,
+      );
 
       debugPrint(
         '🎉 [Motor V3] Plan persistido con activePlanId=${planConfig.id}',

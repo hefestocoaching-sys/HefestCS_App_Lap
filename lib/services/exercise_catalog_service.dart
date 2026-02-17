@@ -46,7 +46,7 @@ class ExerciseCatalogService {
 
   Future<void> _loadFromAssets() async {
     final jsonStr = await rootBundle.loadString(
-      'assets/data/exercise_catalog_gym.json',
+      'assets/data/exercises/exercise_catalog_gym.json',
     );
 
     final decoded = jsonDecode(jsonStr);

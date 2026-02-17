@@ -133,7 +133,7 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
         );
 
         final docRef = _firestore.doc(_getDocumentPath(userId, muscle));
-        batch.set(docRef, tracker.toJson());
+        batch.set(docRef, _serializeTrackerForFirestore(tracker));
       }
 
       await batch.commit();
@@ -250,5 +250,16 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
       debugPrint('[MuscleProgressionRepo] Error pruning history: $e');
       rethrow;
     }
+  }
+
+  Map<String, dynamic> _serializeTrackerForFirestore(
+    MuscleProgressionTracker tracker,
+  ) {
+    final json = tracker.toJson();
+    json['landmarks'] = tracker.landmarks.toJson();
+    json['history'] = tracker.history.map((entry) => entry.toJson()).toList();
+    json['phaseTimeline'] =
+        tracker.phaseTimeline.map((entry) => entry.toJson()).toList();
+    return json;
   }
 }

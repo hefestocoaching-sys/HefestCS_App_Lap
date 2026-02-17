@@ -524,6 +524,12 @@ class TrainingOrchestratorV3 {
     // Crear trace para debugging
     final trace = _createDecisionTrace(result);
 
+    final warnings = result['warnings'];
+    final warningMessages = warnings is List
+        ? warnings.map((e) => e.toString()).toList()
+        : <String>[];
+    final coverage = result['coverage'];
+
     return TrainingProgramV3Result.success(
       plan: planConfig,
       trace: trace,
@@ -532,6 +538,8 @@ class TrainingOrchestratorV3 {
         'version': 'motor_v3_1.0.0',
         'strategy': strategy.name,
         'ml_applied': false,
+        'warnings': warningMessages,
+        'coverage': coverage,
       },
     );
   }

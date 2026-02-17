@@ -7,14 +7,17 @@ import 'package:hcs_app_lap/domain/entities/exercise.dart';
 class ExerciseCatalogV3 {
   static final Map<String, List<Exercise>> _exercisesByMuscle = {};
   static final Map<String, String> _exerciseTypeById = {};
+  static final Map<String, Exercise> _exercisesById = {};
   static bool _loaded = false;
 
   static void loadFromExercises(List<Exercise> exercises) {
     _exercisesByMuscle.clear();
     _exerciseTypeById.clear();
+    _exercisesById.clear();
 
     for (final exercise in exercises) {
       _exerciseTypeById[exercise.id] = 'compound';
+      _exercisesById[exercise.id] = exercise;
 
       final keys = exercise.primaryMuscles.isNotEmpty
           ? exercise.primaryMuscles
@@ -60,6 +63,7 @@ class ExerciseCatalogV3 {
         final exerciseId = exercise.id;
         final type = item['type']?.toString() ?? 'compound';
         _exerciseTypeById[exerciseId] = type;
+        _exercisesById[exerciseId] = exercise;
 
         for (final rawKey in primary) {
           final key = rawKey?.toString() ?? '';
@@ -110,6 +114,10 @@ class ExerciseCatalogV3 {
       }
     }
     return out;
+  }
+
+  static Exercise? getById(String exerciseId) {
+    return _exercisesById[exerciseId];
   }
 
   static String getTypeById(String exerciseId) {

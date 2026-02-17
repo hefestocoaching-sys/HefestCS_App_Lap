@@ -6,7 +6,7 @@ const Set<String> canonicalMuscles = {
   'pectorals',
   'lats',
   'upper_back',
-  'traps',
+  'traps', // Solo traps_upper (trapecio superior)
   'deltoide_anterior',
   'deltoide_lateral',
   'deltoide_posterior',
@@ -188,11 +188,11 @@ List<String> expandGroup(String groupKey) {
     return [norm];
   }
 
-  // Grupos explícitos legacy
+  // Grupos explícitos legacy (actualizado: espalda solo lats y upper_back, traps individual)
   const groups = {
-    'back': ['lats', 'upper_back', 'traps'],
-    'espalda': ['lats', 'upper_back', 'traps'],
-    'back_group': ['lats', 'upper_back', 'traps'],
+    'back': ['lats', 'upper_back'],
+    'espalda': ['lats', 'upper_back'],
+    'back_group': ['lats', 'upper_back'],
 
     'shoulders': [
       'deltoide_anterior',

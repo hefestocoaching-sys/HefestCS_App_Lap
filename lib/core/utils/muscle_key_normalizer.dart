@@ -167,17 +167,17 @@ Map<String, int> normalizeLegacyVopToCanonical(Map<dynamic, dynamic> raw) {
   return out;
 }
 
-/// Expande grupos UI a músculos internos individuales
+/// Expande grupos UI a músculos internos individuales (actualizado: espalda solo lats y upper_back, traps individual)
 ///
 /// ENTRADA: Map con keys que pueden incluir grupos (_group suffix)
 /// SALIDA: Map con keys solo de músculos individuales
 ///
-/// Ejemplo: {'espalda_group': 20} → {'dorsal_ancho': 10, 'romboides': 5, 'trapecio_medio': 5}
+/// Ejemplo: {'espalda_group': 20} → {'lats': 10, 'upper_back': 10}
 Map<String, int> expandGroupsToIndividualMuscles(Map<String, int> vop) {
   final result = <String, int>{};
 
   const groupExpansion = {
-    'back_group': ['lats', 'upper_back', 'traps'],
+    'back_group': ['lats', 'upper_back'],
     'shoulders_group': [
       'deltoide_anterior',
       'deltoide_lateral',

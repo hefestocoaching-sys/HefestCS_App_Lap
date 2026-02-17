@@ -1,7 +1,7 @@
 /// Motor V3 ↔ Catálogo V3 (exercise_catalog_gym.json)
 /// Source of truth: las keys que EXISTEN en el JSON.
-/// Este adaptador permite que el motor use macros (calves, traps)
-/// y el catálogo use keys granulares (gastrocnemio/soleo, traps_upper/middle/lower).
+/// El catálogo V3 actual se normaliza a 14 claves canónicas.
+/// Este adaptador mantiene compatibilidad con aliases legacy.
 class MuscleKeyAdapterV3 {
   /// Normaliza input: trim + lower
   static String norm(String k) => k.trim().toLowerCase();
@@ -11,23 +11,25 @@ class MuscleKeyAdapterV3 {
   static List<String> toCatalogKeys(String motorKey) {
     final k = norm(motorKey);
 
-    // Catálogo real (confirmado por JSON):
-    // calves NO existe -> gastrocnemio + soleo
-    // traps NO existe -> traps_upper + traps_middle + traps_lower
+    // Catálogo V3 actual (normalizado a canónicas):
+    // calves, upper_back y traps existen como claves directas.
     switch (k) {
       case 'calves':
       case 'pantorrillas':
       case 'gemelos':
-        return const ['gastrocnemio', 'soleo'];
+        return const ['calves'];
+
+      case 'upper_back':
+        return const ['upper_back'];
 
       case 'traps':
       case 'trapecios':
       case 'trapecio':
       case 'trapezius':
-        return const ['traps_upper', 'traps_middle', 'traps_lower'];
+        return const ['traps'];
 
       // Mantener directo cuando ya coincide con el catálogo
-      // (según logs: chest, lats, upper_back, deltoide_*, biceps, triceps, quads, hamstrings, glutes, abs)
+      // (según logs: chest, lats, deltoide_*, biceps, triceps, quads, hamstrings, glutes, abs)
       default:
         return [k];
     }

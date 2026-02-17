@@ -199,7 +199,7 @@ class TrainingPlanBuilder {
       case 'Hombro':
         return 'deltoide_lateral';
       case 'Pantorrilla':
-        return 'calves';
+        return 'gastrocnemio';
       default:
         return null;
     }

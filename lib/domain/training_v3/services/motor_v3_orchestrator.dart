@@ -194,6 +194,32 @@ class MotorV3Orchestrator {
         );
       }
 
+      final coverageCheck = _validateExerciseCoverage(
+        planConfig: planConfig,
+        volumeTargets: volumeTargets,
+      );
+      final coverageErrors =
+          (coverageCheck['errors'] as List<dynamic>? ?? const [])
+              .map((e) => e.toString())
+              .toList();
+      final coverageWarnings =
+          (coverageCheck['warnings'] as List<dynamic>? ?? const [])
+              .map((e) => e.toString())
+              .toList();
+
+      errors.addAll(coverageErrors);
+      warnings.addAll(coverageWarnings);
+
+      if (errors.isNotEmpty) {
+        return {
+          'success': false,
+          'errors': errors,
+          'warnings': warnings,
+          'planConfig': null,
+          'coverage': coverageCheck['coverage'],
+        };
+      }
+
       final totalSessions = planConfig.weeks.fold<int>(0, (sum, week) {
         final w = week as TrainingWeek;
         return sum + w.sessions.length;
@@ -226,6 +252,7 @@ class MotorV3Orchestrator {
         'program': program,
         'planConfig': planConfig,
         'clientProfile': clientProfile,
+        'coverage': coverageCheck['coverage'],
         'optimizations_applied': 0,
       };
     } catch (e) {
@@ -535,6 +562,7 @@ class MotorV3Orchestrator {
 
     final usedExercisesThisWeek = <String>{};
     final anglesCoveredByMuscle = <String, Set<String>>{};
+    final patternsCoveredByMuscle = <String, Set<String>>{};
 
     for (int i = 0; i < dayGroups.length; i++) {
       final groups = dayGroups[i];
@@ -583,7 +611,7 @@ class MotorV3Orchestrator {
         daySeeded.shuffle(dayRandom);
 
         bool hasNewAngle(Exercise ex) {
-          final tags = _angleTagsFromName(ex.name);
+          final tags = _angleTagsForExercise(ex);
           if (tags.isEmpty) return false;
           for (final muscle in musclesForGroup) {
             final covered = anglesCoveredByMuscle[muscle] ?? const <String>{};
@@ -592,10 +620,21 @@ class MotorV3Orchestrator {
           return false;
         }
 
+        bool hasNewPattern(Exercise ex) {
+          final pattern = _patternTagFromMovement(ex.difficulty);
+          if (pattern.isEmpty) return false;
+          for (final muscle in musclesForGroup) {
+            final covered =
+                patternsCoveredByMuscle[muscle] ?? const <String>{};
+            if (!covered.contains(pattern)) return true;
+          }
+          return false;
+        }
+
         final preferred = <Exercise>[];
         final others = <Exercise>[];
         for (final ex in daySeeded) {
-          if (hasNewAngle(ex)) {
+          if (hasNewAngle(ex) || hasNewPattern(ex)) {
             preferred.add(ex);
           } else {
             others.add(ex);
@@ -629,11 +668,19 @@ class MotorV3Orchestrator {
 
           usedExercisesThisWeek.add(ex.id);
 
-          final angleTags = _angleTagsFromName(ex.name);
+          final angleTags = _angleTagsForExercise(ex);
           if (angleTags.isNotEmpty) {
             for (final muscle in musclesForGroup) {
               anglesCoveredByMuscle.putIfAbsent(muscle, () => <String>{});
               anglesCoveredByMuscle[muscle]!.addAll(angleTags);
+            }
+          }
+
+          final patternTag = _patternTagFromMovement(ex.difficulty);
+          if (patternTag.isNotEmpty) {
+            for (final muscle in musclesForGroup) {
+              patternsCoveredByMuscle.putIfAbsent(muscle, () => <String>{});
+              patternsCoveredByMuscle[muscle]!.add(patternTag);
             }
           }
 
@@ -951,6 +998,32 @@ class MotorV3Orchestrator {
     }
   }
 
+  static Set<String> _angleTagsForExercise(Exercise exercise) {
+    final tags = _angleTagsFromName(exercise.name);
+    if (tags.isNotEmpty) return tags;
+
+    final patternTag = _patternTagFromMovement(exercise.difficulty);
+    if (patternTag.isNotEmpty) {
+      tags.add(patternTag);
+    }
+    return tags;
+  }
+
+  static String _patternTagFromMovement(String movementPattern) {
+    final pattern = movementPattern.trim().toLowerCase();
+    if (pattern.isEmpty) return '';
+
+    if (pattern.contains('horizontal')) return 'horizontal';
+    if (pattern.contains('vertical')) return 'vertical';
+    if (pattern.contains('hinge') || pattern.contains('hip')) return 'hinge';
+    if (pattern.contains('squat')) return 'squat';
+    if (pattern.contains('lunge')) return 'lunge';
+    if (pattern.contains('press')) return 'press';
+    if (pattern.contains('row')) return 'row';
+
+    return pattern;
+  }
+
   static Set<String> _angleTagsFromName(String name) {
     final n = name.toLowerCase();
     final tags = <String>{};
@@ -964,25 +1037,99 @@ class MotorV3Orchestrator {
       }
     }
 
-    addIf('incline', ['incline']);
-    addIf('decline', ['decline']);
-    addIf('flat', ['flat']);
-    addIf('overhead', ['overhead']);
+    addIf('incline', ['incline', 'inclinad']);
+    addIf('decline', ['decline', 'declinad']);
+    addIf('flat', ['flat', 'plano']);
+    addIf('overhead', ['overhead', 'por encima', 'sobre la cabeza']);
     addIf('vertical', ['vertical']);
     addIf('horizontal', ['horizontal']);
-    addIf('neutral', ['neutral']);
-    addIf('wide', ['wide']);
-    addIf('close', ['close', 'narrow']);
-    addIf('front', ['front']);
-    addIf('rear', ['rear']);
+    addIf('neutral', ['neutral', 'neutro']);
+    addIf('wide', ['wide', 'ancho']);
+    addIf('close', ['close', 'narrow', 'cerrado', 'estrecho']);
+    addIf('front', ['front', 'frontal']);
+    addIf('rear', ['rear', 'posterior']);
     addIf('lateral', ['lateral', 'side']);
     addIf('sumo', ['sumo']);
-    addIf('conventional', ['conventional']);
-    addIf('seated', ['seated']);
-    addIf('standing', ['standing']);
-    addIf('lying', ['lying', 'supine', 'prone']);
+    addIf('conventional', ['conventional', 'convencional']);
+    addIf('seated', ['seated', 'sentado']);
+    addIf('standing', ['standing', 'de pie']);
+    addIf('lying', ['lying', 'supine', 'prone', 'acostado', 'supino', 'prono']);
 
     return tags;
+  }
+
+  static Map<String, dynamic> _validateExerciseCoverage({
+    required TrainingPlanConfig planConfig,
+    required Map<String, int> volumeTargets,
+  }) {
+    final requiredMuscles = volumeTargets.keys.toSet();
+    final coveredMuscles = <String>{};
+    final angleTagsByMuscle = <String, Set<String>>{};
+
+    final weeks = planConfig.weeks.whereType<TrainingWeek>().toList();
+    for (final week in weeks) {
+      final sessions = week.sessions.whereType<TrainingSession>();
+      for (final session in sessions) {
+        for (final prescription in session.exercises) {
+          final ex = ExerciseCatalogV3.getById(prescription.exerciseId);
+          if (ex == null) continue;
+
+          for (final muscle in requiredMuscles) {
+            if (!ex.matchesMuscle(muscle)) continue;
+            coveredMuscles.add(muscle);
+            final tags = _angleTagsForExercise(ex);
+            if (tags.isNotEmpty) {
+              angleTagsByMuscle.putIfAbsent(muscle, () => <String>{});
+              angleTagsByMuscle[muscle]!.addAll(tags);
+            }
+          }
+        }
+      }
+    }
+
+    final missingMuscles = requiredMuscles
+        .where((m) => !coveredMuscles.contains(m))
+        .toList()
+      ..sort();
+    final missingAngles = requiredMuscles
+        .where((m) => !(angleTagsByMuscle[m]?.isNotEmpty ?? false))
+        .toList()
+      ..sort();
+
+    final errors = <String>[];
+    final warnings = <String>[];
+
+    if (missingMuscles.isNotEmpty) {
+      errors.add(
+        "Falta cobertura para musculos: ${missingMuscles.join(', ')}",
+      );
+    }
+
+    if (missingAngles.isNotEmpty) {
+      errors.add(
+        "Falta variedad angular para musculos: ${missingAngles.join(', ')}",
+      );
+    }
+
+    angleTagsByMuscle.forEach((muscle, tags) {
+      if (tags.length < 2) {
+        warnings.add('Variedad angular limitada en $muscle');
+      }
+    });
+
+    final coverage = <String, dynamic>{
+      'missingMuscles': missingMuscles,
+      'missingAngles': missingAngles,
+      'angleTagsByMuscle': angleTagsByMuscle.map(
+        (k, v) => MapEntry(k, v.toList()..sort()),
+      ),
+    };
+
+    return {
+      'errors': errors,
+      'warnings': warnings,
+      'coverage': coverage,
+    };
   }
 
   static TrainingSplit _resolveSplit({
