@@ -7,7 +7,10 @@ import 'package:hcs_app_lap/domain/training_v3/repositories/muscle_progression_r
 import 'package:hcs_app_lap/domain/training_v3/repositories/weekly_muscle_analysis_repository.dart';
 import 'package:hcs_app_lap/domain/training_v3/repositories/weekly_muscle_analysis_repository_impl.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service.dart';
-import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_impl.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service.dart';
+// import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_impl.dart'; // Legacy REMOVED
+import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_enhanced_impl.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_enhanced_adapter.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/client_derived_providers.dart';
 import 'package:hcs_app_lap/features/training_feature/viewmodels/muscle_progression_dashboard_viewmodel.dart';
 
@@ -25,10 +28,17 @@ final weeklyProgressionServiceProvider =
     riverpod.Provider<WeeklyProgressionService>((
   ref,
 ) {
-  return WeeklyProgressionServiceImpl(
-    progressionRepo: ref.watch(muscleProgressionRepositoryProvider),
-    analysisRepo: ref.watch(weeklyMuscleAnalysisRepositoryProvider),
+  final progressionRepo = ref.watch(muscleProgressionRepositoryProvider);
+  final analysisRepo = ref.watch(weeklyMuscleAnalysisRepositoryProvider);
+
+  // Instanciamos el servicio Enhanced (Motor V3 logic)
+  final enhancedService = WeeklyProgressionServiceEnhancedImpl(
+    progressionRepo: progressionRepo,
+    analysisRepo: analysisRepo,
   );
+
+  // Retornamos el adaptador para mantener compatibilidad con UI/UnifiedService
+  return WeeklyProgressionServiceEnhancedAdapter(enhancedService);
 });
 
 final muscleProgressionDashboardViewModelProvider = legacy

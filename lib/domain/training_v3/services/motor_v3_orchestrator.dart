@@ -26,6 +26,7 @@ import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine
 import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/weekly_volume_planner.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
 import 'package:hcs_app_lap/domain/training_v3/resolvers/muscle_to_catalog_resolver.dart'
     as resolver;
@@ -514,6 +515,41 @@ class MotorV3Orchestrator {
     final weeks = <TrainingWeek>[];
 
     for (int weekNum = 1; weekNum <= durationWeeks; weekNum++) {
+      // ✅ PASO 10.1: Calcular volumen semanal determinístico (Rule 1)
+      // Necesitamos priorities y landmarks.
+      // Optimization: Calculate landmarks ONCE outside loop if possible, but _buildWeeks receives ready data?
+      // _buildWeeks receives 'volumePerMuscle' which currently is VOP.
+      // We need MEV/MRV.
+      // FIX: _calculateVolumeByMuscleV2 should return full landmarks map or we recalc here.
+      // For now, let's recalculate landmarks cheaply or assume standard ranges if data missing.
+      // Better: Extract normalized priorities first.
+
+      final normalizedPriorities = _normalizePriorities(userProfile);
+      final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
+        musclePriorities: normalizedPriorities,
+        trainingLevel: userProfile.trainingLevel,
+        age: userProfile.age,
+      );
+
+      final mevByMuscle = <String, int>{};
+      final mrvByMuscle = <String, int>{};
+
+      allLandmarks.forEach((m, l) {
+        mevByMuscle[m] = l.vme;
+        mrvByMuscle[m] = l.vmr;
+      });
+
+      final weeklyVolume = WeeklyVolumePlanner.buildWeekVolume(
+        baseVop: volumePerMuscle, // Assuming input is VOP
+        mevByMuscle: mevByMuscle,
+        mrvByMuscle: mrvByMuscle,
+        priorities: normalizedPriorities,
+        trainingLevel: userProfile.trainingLevel,
+        weekNumber: weekNum,
+        phase: phase.name,
+        feedback: {}, // No feedback for initial gen
+      );
+
       final sessions = _buildDays(
         userProfile: userProfile,
         clientProfile: clientProfile,
@@ -521,7 +557,7 @@ class MotorV3Orchestrator {
         phase: phase.name,
         split: split,
         daysPerWeek: daysPerWeek,
-        volumePerMuscle: volumePerMuscle,
+        volumePerMuscle: weeklyVolume, // Use calculated weekly volume
       );
 
       final totalSets = sessions.fold<int>(
@@ -606,9 +642,36 @@ class MotorV3Orchestrator {
         }
 
         final daySeeded = List<Exercise>.from(availableExercises);
-        final daySeed = weekNumber * 1000 + dayNumber + group.index;
-        final dayRandom = Random(daySeed);
-        daySeeded.shuffle(dayRandom);
+
+        // ❌ REMOVED: Random Shuffle
+        // final daySeeded = List<Exercise>.from(availableExercises);
+        // final daySeed = weekNumber * 1000 + dayNumber + group.index;
+        // final dayRandom = Random(daySeed);
+        // daySeeded.shuffle(dayRandom);
+
+        // ✅ ADDED: Deterministic Ranking (Rule 4)
+        // This is now handled by selectDeterministicRanked if needed, or we implement sorting here.
+        // Since we already have 'selected' list from Engine, we should sort 'daySeeded' here for this specific day slot.
+        // However, the optimal place is ExerciseSelectionEngine. But for now, let's implement the sort here as requested to replace shuffle.
+
+        daySeeded.sort((a, b) {
+          // 1. Score base: Compound > Isolation
+          int scoreA = ExerciseCatalogV3.getTypeById(a.id) == 'compound'
+              ? 30
+              : 10;
+          int scoreB = ExerciseCatalogV3.getTypeById(b.id) == 'compound'
+              ? 30
+              : 10;
+
+          // 2. Bonus muscles
+          // (Need priorities here, passing map locally would be best but for now using simple heuristic or if muscle matches group)
+
+          // 3. Penalty if used (handled by 'usedExercisesThisWeek' check above filtering them out initially)
+
+          // Tie-breakers
+          if (scoreA != scoreB) return scoreB.compareTo(scoreA); // Desc
+          return a.name.compareTo(b.name); // Asc name
+        });
 
         bool hasNewAngle(Exercise ex) {
           final tags = _angleTagsForExercise(ex);
@@ -624,8 +687,7 @@ class MotorV3Orchestrator {
           final pattern = _patternTagFromMovement(ex.difficulty);
           if (pattern.isEmpty) return false;
           for (final muscle in musclesForGroup) {
-            final covered =
-                patternsCoveredByMuscle[muscle] ?? const <String>{};
+            final covered = patternsCoveredByMuscle[muscle] ?? const <String>{};
             if (!covered.contains(pattern)) return true;
           }
           return false;
@@ -643,9 +705,11 @@ class MotorV3Orchestrator {
 
         final rankedExercises = <Exercise>[...preferred, ...others];
 
-        debugPrint(
-          '[Motor V3] Day $dayNumber, Group $group: ${daySeeded.length} exercises available (seed=$daySeed)',
-        );
+        // ❌ REMOVED: Random Shuffle
+        // final daySeeded = List<Exercise>.from(availableExercises);
+        // final daySeed = weekNumber * 1000 + dayNumber + group.index;
+        // final dayRandom = Random(daySeed);
+        // daySeeded.shuffle(dayRandom);
 
         final selectedCount = max(
           1,
@@ -1087,22 +1151,20 @@ class MotorV3Orchestrator {
       }
     }
 
-    final missingMuscles = requiredMuscles
-        .where((m) => !coveredMuscles.contains(m))
-        .toList()
-      ..sort();
-    final missingAngles = requiredMuscles
-        .where((m) => !(angleTagsByMuscle[m]?.isNotEmpty ?? false))
-        .toList()
-      ..sort();
+    final missingMuscles =
+        requiredMuscles.where((m) => !coveredMuscles.contains(m)).toList()
+          ..sort();
+    final missingAngles =
+        requiredMuscles
+            .where((m) => !(angleTagsByMuscle[m]?.isNotEmpty ?? false))
+            .toList()
+          ..sort();
 
     final errors = <String>[];
     final warnings = <String>[];
 
     if (missingMuscles.isNotEmpty) {
-      errors.add(
-        "Falta cobertura para musculos: ${missingMuscles.join(', ')}",
-      );
+      errors.add("Falta cobertura para musculos: ${missingMuscles.join(', ')}");
     }
 
     if (missingAngles.isNotEmpty) {
@@ -1125,11 +1187,7 @@ class MotorV3Orchestrator {
       ),
     };
 
-    return {
-      'errors': errors,
-      'warnings': warnings,
-      'coverage': coverage,
-    };
+    return {'errors': errors, 'warnings': warnings, 'coverage': coverage};
   }
 
   static TrainingSplit _resolveSplit({
@@ -1247,6 +1305,18 @@ class MotorV3Orchestrator {
     if (score >= 0.6) return 'Aceptable';
     if (score >= 0.4) return 'Subóptimo';
     return 'Deficiente';
+  }
+
+  /// Normaliza prioridades del perfil de usuario (Helper)
+  static Map<String, int> _normalizePriorities(UserProfile profile) {
+    final normalized = <String, int>{};
+    profile.musclePriorities.forEach((muscle, priority) {
+      final key = muscle_registry.normalize(muscle);
+      if (key != null) {
+        normalized[key] = max(normalized[key] ?? 0, priority);
+      }
+    });
+    return normalized;
   }
 }
 

@@ -11,6 +11,7 @@ abstract class MuscleDecision with _$MuscleDecision {
     required String muscle,
     required VolumeAction action,
     required int newVolume,
+    required int previousVolume,
     required ProgressionPhase newPhase,
     required String reason,
     required double confidence,
@@ -31,11 +32,13 @@ extension MuscleDecisionHelpers on MuscleDecision {
   static MuscleDecision noChange({
     required String muscle,
     required String reason,
+    required int currentVolume,
   }) {
     return MuscleDecision(
       muscle: muscle,
       action: VolumeAction.maintain,
-      newVolume: 0,
+      newVolume: currentVolume,
+      previousVolume: currentVolume,
       newPhase: ProgressionPhase.maintaining,
       reason: reason,
       confidence: 1.0,

@@ -27,6 +27,7 @@ class WeeklyAdaptationEngine {
           muscle: tracker.muscle,
           action: VolumeAction.adjust,
           newVolume: tracker.landmarks.vop,
+          previousVolume: tracker.currentVolume,
           newPhase: ProgressionPhase.maintaining,
           reason: 'Tertiary: keep at VOP (${tracker.landmarks.vop} sets)',
           confidence: 1.0,
@@ -36,6 +37,7 @@ class WeeklyAdaptationEngine {
       return MuscleDecisionHelpers.noChange(
         muscle: tracker.muscle,
         reason: 'Tertiary: stable VOP',
+        currentVolume: tracker.currentVolume,
       );
     }
 
@@ -74,6 +76,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.microdeload,
         newVolume: microdeloadVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.microdeload,
         reason: 'Preventive microdeload (week $weeksProgressing)',
         confidence: 0.8,
@@ -121,6 +124,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.increase,
         newVolume: cappedVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.discovering,
         reason:
             'Progression (+$increment sets, score: ${performanceScore.toStringAsFixed(2)})',
@@ -144,6 +148,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.maintaining,
         reason: 'Real VMR discovered: ${tracker.currentVolume} sets',
         confidence: 0.8,
@@ -166,6 +171,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.overreaching,
         reason:
             'Overload signals (score: ${performanceScore.toStringAsFixed(2)})',
@@ -176,6 +182,7 @@ class WeeklyAdaptationEngine {
     return MuscleDecisionHelpers.noChange(
       muscle: tracker.muscle,
       reason: 'Observe 1 more week',
+      currentVolume: tracker.currentVolume,
     );
   }
 
@@ -200,6 +207,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.maintaining,
         reason: 'Stable at VMR (week ${tracker.weekInCurrentPhase + 1})',
         confidence: 0.9,
@@ -224,6 +232,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.increase,
         newVolume: newVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.discovering,
         reason: 'Exceptional performance, +$increment sets',
         confidence: 0.8,
@@ -244,6 +253,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.overreaching,
         reason: 'Decline detected',
         confidence: 0.7,
@@ -254,6 +264,7 @@ class WeeklyAdaptationEngine {
       muscle: tracker.muscle,
       action: VolumeAction.maintain,
       newVolume: tracker.currentVolume,
+      previousVolume: tracker.currentVolume,
       newPhase: ProgressionPhase.maintaining,
       reason: 'Continue maintaining',
       confidence: 0.7,
@@ -280,6 +291,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.maintaining,
         reason: 'Recovered from overreaching',
         confidence: 0.8,
@@ -293,6 +305,7 @@ class WeeklyAdaptationEngine {
         muscle: tracker.muscle,
         action: VolumeAction.maintain,
         newVolume: tracker.currentVolume,
+        previousVolume: tracker.currentVolume,
         newPhase: ProgressionPhase.overreaching,
         reason: 'Week 1 overreaching: observe',
         confidence: 0.6,
@@ -310,6 +323,7 @@ class WeeklyAdaptationEngine {
       muscle: tracker.muscle,
       action: VolumeAction.deload,
       newVolume: deloadVolume,
+      previousVolume: tracker.currentVolume,
       newPhase: ProgressionPhase.deloading,
       reason: 'Deload needed ($deloadVolume sets)',
       confidence: 0.9,
@@ -326,6 +340,7 @@ class WeeklyAdaptationEngine {
       muscle: tracker.muscle,
       action: VolumeAction.increase,
       newVolume: tracker.landmarks.vop,
+      previousVolume: tracker.currentVolume,
       newPhase: ProgressionPhase.discovering,
       reason: 'Deload complete, new cycle (${tracker.landmarks.vop} sets)',
       confidence: 1.0,
@@ -346,6 +361,7 @@ class WeeklyAdaptationEngine {
       muscle: tracker.muscle,
       action: VolumeAction.increase,
       newVolume: resumeVolume,
+      previousVolume: previousVolume,
       newPhase: ProgressionPhase.discovering,
       reason: 'Microdeload complete, resume +5%',
       confidence: 0.9,

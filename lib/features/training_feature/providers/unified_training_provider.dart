@@ -6,17 +6,14 @@ import 'package:hcs_app_lap/domain/training_v3/models/exercise_log.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/muscle_decision.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/muscle_progression_tracker.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/unified_training_service.dart';
-import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_impl.dart';
+// import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_impl.dart'; // Legacy REMOVED
 import 'package:hcs_app_lap/features/training_feature/providers/muscle_progression_tracker_provider.dart';
 
 final unifiedTrainingServiceProvider = Provider<UnifiedTrainingService>((ref) {
   final progressionRepo = ref.watch(muscleProgressionRepositoryProvider);
-  final analysisRepo = ref.watch(weeklyMuscleAnalysisRepositoryProvider);
-
-  final weeklyProgression = WeeklyProgressionServiceImpl(
-    progressionRepo: progressionRepo,
-    analysisRepo: analysisRepo,
-  );
+  
+  // Usamos el provider que ya tiene el Adapter + Enhanced Service
+  final weeklyProgression = ref.watch(weeklyProgressionServiceProvider);
 
   return UnifiedTrainingService(
     progressionRepo: progressionRepo,

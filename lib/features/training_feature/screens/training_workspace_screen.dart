@@ -252,8 +252,8 @@ class _TrainingWorkspaceScreenState
     bool canGeneratePlan,
     bool isPlanOutdated,
   ) {
-    final activePlanId =
-      client.training.extra[TrainingExtraKeys.activePlanId]?.toString();
+    final activePlanId = client.training.extra[TrainingExtraKeys.activePlanId]
+        ?.toString();
     final totalPlans = client.trainingPlans.length;
     final hasAnyPlan = client.trainingPlans.isNotEmpty;
     final hasActiveId = activePlanId != null && activePlanId.isNotEmpty;
@@ -314,18 +314,16 @@ class _TrainingWorkspaceScreenState
           children: [
             if (!hasAnyPlan)
               Tooltip(
-                message:
-                    interviewStatus == TrainingInterviewStatus.valid
-                        ? actionTooltip
-                        : interviewBlockedTooltip,
+                message: interviewStatus == TrainingInterviewStatus.valid
+                    ? actionTooltip
+                    : interviewBlockedTooltip,
                 child: ElevatedButton.icon(
                   onPressed:
                       canGeneratePlan &&
-                              (allowedAction == TrainingPlanAction.generate ||
-                                  allowedAction ==
-                                      TrainingPlanAction.regenerate)
-                          ? () => _generarPlan()
-                          : null,
+                          (allowedAction == TrainingPlanAction.generate ||
+                              allowedAction == TrainingPlanAction.regenerate)
+                      ? () => _generarPlan()
+                      : null,
                   icon: const Icon(Icons.auto_awesome, size: 18),
                   label: const Text('Generar'),
                   style: ElevatedButton.styleFrom(
@@ -337,19 +335,17 @@ class _TrainingWorkspaceScreenState
             else ...[
               // Bot├│n Regenerar (solo si permitido)
               Tooltip(
-              message:
-                interviewStatus != TrainingInterviewStatus.valid
-                  ? interviewBlockedTooltip
-                  : allowedAction == TrainingPlanAction.regenerate
+                message: interviewStatus != TrainingInterviewStatus.valid
+                    ? interviewBlockedTooltip
+                    : allowedAction == TrainingPlanAction.regenerate
                     ? actionTooltip
                     : 'ÔØî Regeneraci├│n bloqueada: $actionTooltip',
                 child: ElevatedButton.icon(
-                onPressed:
-                  interviewStatus == TrainingInterviewStatus.valid &&
-                      allowedAction ==
-                        TrainingPlanAction.regenerate
-                    ? () => _regenerarPlan()
-                    : null,
+                  onPressed:
+                      interviewStatus == TrainingInterviewStatus.valid &&
+                          allowedAction == TrainingPlanAction.regenerate
+                      ? () => _regenerarPlan()
+                      : null,
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('Regenerar'),
                   style: ElevatedButton.styleFrom(
@@ -363,18 +359,17 @@ class _TrainingWorkspaceScreenState
               const SizedBox(width: 12),
               // Bot├│n Adaptar (permitido si not locked)
               Tooltip(
-                message:
-                  interviewStatus != TrainingInterviewStatus.valid
+                message: interviewStatus != TrainingInterviewStatus.valid
                     ? interviewBlockedTooltip
                     : allowedAction == TrainingPlanAction.adapt
-                      ? actionTooltip
-                      : allowedAction == TrainingPlanAction.locked
-                        ? 'ÔØî Adaptaci├│n bloqueada: $actionTooltip'
-                        : 'Usar regeneraci├│n en su lugar',
+                    ? actionTooltip
+                    : allowedAction == TrainingPlanAction.locked
+                    ? 'ÔØî Adaptaci├│n bloqueada: $actionTooltip'
+                    : 'Usar regeneraci├│n en su lugar',
                 child: ElevatedButton.icon(
                   onPressed:
-                    interviewStatus == TrainingInterviewStatus.valid &&
-                        allowedAction == TrainingPlanAction.adapt
+                      interviewStatus == TrainingInterviewStatus.valid &&
+                          allowedAction == TrainingPlanAction.adapt
                       ? () => _adaptarPlan()
                       : null,
                   icon: const Icon(Icons.tune, size: 18),
@@ -394,7 +389,10 @@ class _TrainingWorkspaceScreenState
                 plan == null
                     ? 'Sin plan | $totalPlans total'
                     : 'Plan: ${plan.id.substring(0, 8)}... | $totalPlans total',
-                style: const TextStyle(color: kTextColorSecondary, fontSize: 12),
+                style: const TextStyle(
+                  color: kTextColorSecondary,
+                  fontSize: 12,
+                ),
               ),
             ),
           ],
@@ -490,11 +488,12 @@ class _TrainingWorkspaceScreenState
                     // Tab 6: Intensidad
                     plan != null
                         ? SeriesDistributionEditor(
-                          trainingExtra: client.training.extra,
-                          onDistributionChanged: (distribution) {
-                            // Handle distribution change
-                          },
-                        )
+                            trainingExtra: client.training.extra,
+                            plan: plan,
+                            onDistributionChanged: (distribution) {
+                              // Handle distribution change
+                            },
+                          )
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
@@ -1477,8 +1476,7 @@ class _TrainingWorkspaceScreenState
   // E2 GOBERNANZA: M├ëTODOS PARA PLAN V3 (CON VERIFICACI├ôN)
   // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
   Future<void> _generarPlan() async {
-    final interviewStatus =
-        ref.read(trainingWorkspaceProvider).interviewStatus;
+    final interviewStatus = ref.read(trainingWorkspaceProvider).interviewStatus;
     if (interviewStatus != TrainingInterviewStatus.valid) {
       return;
     }

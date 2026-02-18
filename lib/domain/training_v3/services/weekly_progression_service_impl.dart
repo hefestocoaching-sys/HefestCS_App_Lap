@@ -134,6 +134,7 @@ class WeeklyProgressionServiceImpl implements WeeklyProgressionService {
         decisions[muscle] = MuscleDecisionHelpers.noChange(
           muscle: muscle,
           reason: 'Error processing: ${e.toString()}',
+          currentVolume: allTrackers[muscle]?.currentVolume ?? 0,
         );
       }
     }

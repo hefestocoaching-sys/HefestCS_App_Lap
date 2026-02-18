@@ -4,16 +4,34 @@ Sistema de entrenamiento científico con motor de adaptación bidireccional (8 f
 
 ## 🎯 Estado del Proyecto
 
-- ✅ **Motor de Entrenamiento**: 100% funcional (Phases 1-8)
+- ✅ **Motor de Entrenamiento V1**: 100% funcional (Phases 1-8)
+- 🔥 **Motor V3 Enhanced - FASE 1**: ✅ Completo (Modelos + Validadores + Servicios)
 - ✅ **Contrato de Bitácora**: v1.0.0 congelado
 - ✅ **Tests**: 222/222 pasando
-- ✅ **Documentación**: Completa
+- ✅ **Documentación**: Completa (incluyendo Motor V3 Enhanced)
+- ⏳ **Motor V3 Enhanced - FASE 2**: En progreso (Repositories + Providers + UI)
 - ⏸️ **App Móvil**: Pendiente de implementación
+
+## � MOTOR V3 ENHANCED - NUEVO!
+
+**✅ FASE 1 Completada** - Modelos + Validadores + Servicios  
+Implementación de progresión individualizada por músculo y prioridad (P/S/T), ciclos científicos, historial auditable, validadores formales.
+
+### 📖 Documentación Motor V3 Enhanced
+
+**Si acabas de recibir el handoff:**  
+→ **[MOTOR_V3_HANDOFF_SUMMARY.md](docs/MOTOR_V3_HANDOFF_SUMMARY.md)** ← Empieza aquí
+
+**Para desarrollo:**  
+→ **[Índice Completo](docs/MOTOR_V3_DOCUMENTATION_INDEX.md)** ⭐  
+→ **[Quick Reference](docs/MOTOR_V3_QUICK_REFERENCE.md)** ⚡  
+→ **[Continuation Guide (Phase 2)](docs/MOTOR_V3_CONTINUATION_GUIDE_PHASE2.md)**  
+→ **[Phase 2 Checklist](docs/MOTOR_V3_PHASE2_QUICK_CHECKLIST.md)**
 
 ## 📚 Documentación Principal
 
 ### Para Desarrolladores
-- **[Índice de Documentación](docs/TRAINING_LOG_INDEX.md)** ← Empieza aquí
+- **[Índice de Documentación](docs/TRAINING_LOG_INDEX.md)** ← Training Log (Legacy)
 - **[Contrato de Bitácora (Resumen)](docs/TRAINING_LOG_CONTRACT_FROZEN.md)**
 - **[Ejemplos de Uso](docs/training_log_usage_examples.dart)**
 

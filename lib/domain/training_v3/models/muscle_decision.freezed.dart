@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MuscleDecision {
 
- String get muscle; VolumeAction get action; int get newVolume; ProgressionPhase get newPhase; String get reason; double get confidence; bool get requiresMicrodeload; int? get weeksToMicrodeload; int? get vmrDiscovered; bool get isNewCycle; List<ExerciseReplacement> get exercisesToReplace;
+ String get muscle; VolumeAction get action; int get newVolume; int get previousVolume; ProgressionPhase get newPhase; String get reason; double get confidence; bool get requiresMicrodeload; int? get weeksToMicrodeload; int? get vmrDiscovered; bool get isNewCycle; List<ExerciseReplacement> get exercisesToReplace;
 /// Create a copy of MuscleDecision
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $MuscleDecisionCopyWith<MuscleDecision> get copyWith => _$MuscleDecisionCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MuscleDecision&&(identical(other.muscle, muscle) || other.muscle == muscle)&&(identical(other.action, action) || other.action == action)&&(identical(other.newVolume, newVolume) || other.newVolume == newVolume)&&(identical(other.newPhase, newPhase) || other.newPhase == newPhase)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.requiresMicrodeload, requiresMicrodeload) || other.requiresMicrodeload == requiresMicrodeload)&&(identical(other.weeksToMicrodeload, weeksToMicrodeload) || other.weeksToMicrodeload == weeksToMicrodeload)&&(identical(other.vmrDiscovered, vmrDiscovered) || other.vmrDiscovered == vmrDiscovered)&&(identical(other.isNewCycle, isNewCycle) || other.isNewCycle == isNewCycle)&&const DeepCollectionEquality().equals(other.exercisesToReplace, exercisesToReplace));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MuscleDecision&&(identical(other.muscle, muscle) || other.muscle == muscle)&&(identical(other.action, action) || other.action == action)&&(identical(other.newVolume, newVolume) || other.newVolume == newVolume)&&(identical(other.previousVolume, previousVolume) || other.previousVolume == previousVolume)&&(identical(other.newPhase, newPhase) || other.newPhase == newPhase)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.requiresMicrodeload, requiresMicrodeload) || other.requiresMicrodeload == requiresMicrodeload)&&(identical(other.weeksToMicrodeload, weeksToMicrodeload) || other.weeksToMicrodeload == weeksToMicrodeload)&&(identical(other.vmrDiscovered, vmrDiscovered) || other.vmrDiscovered == vmrDiscovered)&&(identical(other.isNewCycle, isNewCycle) || other.isNewCycle == isNewCycle)&&const DeepCollectionEquality().equals(other.exercisesToReplace, exercisesToReplace));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,muscle,action,newVolume,newPhase,reason,confidence,requiresMicrodeload,weeksToMicrodeload,vmrDiscovered,isNewCycle,const DeepCollectionEquality().hash(exercisesToReplace));
+int get hashCode => Object.hash(runtimeType,muscle,action,newVolume,previousVolume,newPhase,reason,confidence,requiresMicrodeload,weeksToMicrodeload,vmrDiscovered,isNewCycle,const DeepCollectionEquality().hash(exercisesToReplace));
 
 @override
 String toString() {
-  return 'MuscleDecision(muscle: $muscle, action: $action, newVolume: $newVolume, newPhase: $newPhase, reason: $reason, confidence: $confidence, requiresMicrodeload: $requiresMicrodeload, weeksToMicrodeload: $weeksToMicrodeload, vmrDiscovered: $vmrDiscovered, isNewCycle: $isNewCycle, exercisesToReplace: $exercisesToReplace)';
+  return 'MuscleDecision(muscle: $muscle, action: $action, newVolume: $newVolume, previousVolume: $previousVolume, newPhase: $newPhase, reason: $reason, confidence: $confidence, requiresMicrodeload: $requiresMicrodeload, weeksToMicrodeload: $weeksToMicrodeload, vmrDiscovered: $vmrDiscovered, isNewCycle: $isNewCycle, exercisesToReplace: $exercisesToReplace)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $MuscleDecisionCopyWith<$Res>  {
   factory $MuscleDecisionCopyWith(MuscleDecision value, $Res Function(MuscleDecision) _then) = _$MuscleDecisionCopyWithImpl;
 @useResult
 $Res call({
- String muscle, VolumeAction action, int newVolume, ProgressionPhase newPhase, String reason, double confidence, bool requiresMicrodeload, int? weeksToMicrodeload, int? vmrDiscovered, bool isNewCycle, List<ExerciseReplacement> exercisesToReplace
+ String muscle, VolumeAction action, int newVolume, int previousVolume, ProgressionPhase newPhase, String reason, double confidence, bool requiresMicrodeload, int? weeksToMicrodeload, int? vmrDiscovered, bool isNewCycle, List<ExerciseReplacement> exercisesToReplace
 });
 
 
@@ -65,11 +65,12 @@ class _$MuscleDecisionCopyWithImpl<$Res>
 
 /// Create a copy of MuscleDecision
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? muscle = null,Object? action = null,Object? newVolume = null,Object? newPhase = null,Object? reason = null,Object? confidence = null,Object? requiresMicrodeload = null,Object? weeksToMicrodeload = freezed,Object? vmrDiscovered = freezed,Object? isNewCycle = null,Object? exercisesToReplace = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? muscle = null,Object? action = null,Object? newVolume = null,Object? previousVolume = null,Object? newPhase = null,Object? reason = null,Object? confidence = null,Object? requiresMicrodeload = null,Object? weeksToMicrodeload = freezed,Object? vmrDiscovered = freezed,Object? isNewCycle = null,Object? exercisesToReplace = null,}) {
   return _then(_self.copyWith(
 muscle: null == muscle ? _self.muscle : muscle // ignore: cast_nullable_to_non_nullable
 as String,action: null == action ? _self.action : action // ignore: cast_nullable_to_non_nullable
 as VolumeAction,newVolume: null == newVolume ? _self.newVolume : newVolume // ignore: cast_nullable_to_non_nullable
+as int,previousVolume: null == previousVolume ? _self.previousVolume : previousVolume // ignore: cast_nullable_to_non_nullable
 as int,newPhase: null == newPhase ? _self.newPhase : newPhase // ignore: cast_nullable_to_non_nullable
 as ProgressionPhase,reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as String,confidence: null == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable
@@ -163,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String muscle,  VolumeAction action,  int newVolume,  ProgressionPhase newPhase,  String reason,  double confidence,  bool requiresMicrodeload,  int? weeksToMicrodeload,  int? vmrDiscovered,  bool isNewCycle,  List<ExerciseReplacement> exercisesToReplace)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String muscle,  VolumeAction action,  int newVolume,  int previousVolume,  ProgressionPhase newPhase,  String reason,  double confidence,  bool requiresMicrodeload,  int? weeksToMicrodeload,  int? vmrDiscovered,  bool isNewCycle,  List<ExerciseReplacement> exercisesToReplace)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MuscleDecision() when $default != null:
-return $default(_that.muscle,_that.action,_that.newVolume,_that.newPhase,_that.reason,_that.confidence,_that.requiresMicrodeload,_that.weeksToMicrodeload,_that.vmrDiscovered,_that.isNewCycle,_that.exercisesToReplace);case _:
+return $default(_that.muscle,_that.action,_that.newVolume,_that.previousVolume,_that.newPhase,_that.reason,_that.confidence,_that.requiresMicrodeload,_that.weeksToMicrodeload,_that.vmrDiscovered,_that.isNewCycle,_that.exercisesToReplace);case _:
   return orElse();
 
 }
@@ -184,10 +185,10 @@ return $default(_that.muscle,_that.action,_that.newVolume,_that.newPhase,_that.r
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String muscle,  VolumeAction action,  int newVolume,  ProgressionPhase newPhase,  String reason,  double confidence,  bool requiresMicrodeload,  int? weeksToMicrodeload,  int? vmrDiscovered,  bool isNewCycle,  List<ExerciseReplacement> exercisesToReplace)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String muscle,  VolumeAction action,  int newVolume,  int previousVolume,  ProgressionPhase newPhase,  String reason,  double confidence,  bool requiresMicrodeload,  int? weeksToMicrodeload,  int? vmrDiscovered,  bool isNewCycle,  List<ExerciseReplacement> exercisesToReplace)  $default,) {final _that = this;
 switch (_that) {
 case _MuscleDecision():
-return $default(_that.muscle,_that.action,_that.newVolume,_that.newPhase,_that.reason,_that.confidence,_that.requiresMicrodeload,_that.weeksToMicrodeload,_that.vmrDiscovered,_that.isNewCycle,_that.exercisesToReplace);case _:
+return $default(_that.muscle,_that.action,_that.newVolume,_that.previousVolume,_that.newPhase,_that.reason,_that.confidence,_that.requiresMicrodeload,_that.weeksToMicrodeload,_that.vmrDiscovered,_that.isNewCycle,_that.exercisesToReplace);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +205,10 @@ return $default(_that.muscle,_that.action,_that.newVolume,_that.newPhase,_that.r
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String muscle,  VolumeAction action,  int newVolume,  ProgressionPhase newPhase,  String reason,  double confidence,  bool requiresMicrodeload,  int? weeksToMicrodeload,  int? vmrDiscovered,  bool isNewCycle,  List<ExerciseReplacement> exercisesToReplace)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String muscle,  VolumeAction action,  int newVolume,  int previousVolume,  ProgressionPhase newPhase,  String reason,  double confidence,  bool requiresMicrodeload,  int? weeksToMicrodeload,  int? vmrDiscovered,  bool isNewCycle,  List<ExerciseReplacement> exercisesToReplace)?  $default,) {final _that = this;
 switch (_that) {
 case _MuscleDecision() when $default != null:
-return $default(_that.muscle,_that.action,_that.newVolume,_that.newPhase,_that.reason,_that.confidence,_that.requiresMicrodeload,_that.weeksToMicrodeload,_that.vmrDiscovered,_that.isNewCycle,_that.exercisesToReplace);case _:
+return $default(_that.muscle,_that.action,_that.newVolume,_that.previousVolume,_that.newPhase,_that.reason,_that.confidence,_that.requiresMicrodeload,_that.weeksToMicrodeload,_that.vmrDiscovered,_that.isNewCycle,_that.exercisesToReplace);case _:
   return null;
 
 }
@@ -219,12 +220,13 @@ return $default(_that.muscle,_that.action,_that.newVolume,_that.newPhase,_that.r
 @JsonSerializable()
 
 class _MuscleDecision implements MuscleDecision {
-  const _MuscleDecision({required this.muscle, required this.action, required this.newVolume, required this.newPhase, required this.reason, required this.confidence, this.requiresMicrodeload = false, this.weeksToMicrodeload, this.vmrDiscovered, this.isNewCycle = false, final  List<ExerciseReplacement> exercisesToReplace = const []}): _exercisesToReplace = exercisesToReplace;
+  const _MuscleDecision({required this.muscle, required this.action, required this.newVolume, required this.previousVolume, required this.newPhase, required this.reason, required this.confidence, this.requiresMicrodeload = false, this.weeksToMicrodeload, this.vmrDiscovered, this.isNewCycle = false, final  List<ExerciseReplacement> exercisesToReplace = const []}): _exercisesToReplace = exercisesToReplace;
   factory _MuscleDecision.fromJson(Map<String, dynamic> json) => _$MuscleDecisionFromJson(json);
 
 @override final  String muscle;
 @override final  VolumeAction action;
 @override final  int newVolume;
+@override final  int previousVolume;
 @override final  ProgressionPhase newPhase;
 @override final  String reason;
 @override final  double confidence;
@@ -253,16 +255,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MuscleDecision&&(identical(other.muscle, muscle) || other.muscle == muscle)&&(identical(other.action, action) || other.action == action)&&(identical(other.newVolume, newVolume) || other.newVolume == newVolume)&&(identical(other.newPhase, newPhase) || other.newPhase == newPhase)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.requiresMicrodeload, requiresMicrodeload) || other.requiresMicrodeload == requiresMicrodeload)&&(identical(other.weeksToMicrodeload, weeksToMicrodeload) || other.weeksToMicrodeload == weeksToMicrodeload)&&(identical(other.vmrDiscovered, vmrDiscovered) || other.vmrDiscovered == vmrDiscovered)&&(identical(other.isNewCycle, isNewCycle) || other.isNewCycle == isNewCycle)&&const DeepCollectionEquality().equals(other._exercisesToReplace, _exercisesToReplace));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MuscleDecision&&(identical(other.muscle, muscle) || other.muscle == muscle)&&(identical(other.action, action) || other.action == action)&&(identical(other.newVolume, newVolume) || other.newVolume == newVolume)&&(identical(other.previousVolume, previousVolume) || other.previousVolume == previousVolume)&&(identical(other.newPhase, newPhase) || other.newPhase == newPhase)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.confidence, confidence) || other.confidence == confidence)&&(identical(other.requiresMicrodeload, requiresMicrodeload) || other.requiresMicrodeload == requiresMicrodeload)&&(identical(other.weeksToMicrodeload, weeksToMicrodeload) || other.weeksToMicrodeload == weeksToMicrodeload)&&(identical(other.vmrDiscovered, vmrDiscovered) || other.vmrDiscovered == vmrDiscovered)&&(identical(other.isNewCycle, isNewCycle) || other.isNewCycle == isNewCycle)&&const DeepCollectionEquality().equals(other._exercisesToReplace, _exercisesToReplace));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,muscle,action,newVolume,newPhase,reason,confidence,requiresMicrodeload,weeksToMicrodeload,vmrDiscovered,isNewCycle,const DeepCollectionEquality().hash(_exercisesToReplace));
+int get hashCode => Object.hash(runtimeType,muscle,action,newVolume,previousVolume,newPhase,reason,confidence,requiresMicrodeload,weeksToMicrodeload,vmrDiscovered,isNewCycle,const DeepCollectionEquality().hash(_exercisesToReplace));
 
 @override
 String toString() {
-  return 'MuscleDecision(muscle: $muscle, action: $action, newVolume: $newVolume, newPhase: $newPhase, reason: $reason, confidence: $confidence, requiresMicrodeload: $requiresMicrodeload, weeksToMicrodeload: $weeksToMicrodeload, vmrDiscovered: $vmrDiscovered, isNewCycle: $isNewCycle, exercisesToReplace: $exercisesToReplace)';
+  return 'MuscleDecision(muscle: $muscle, action: $action, newVolume: $newVolume, previousVolume: $previousVolume, newPhase: $newPhase, reason: $reason, confidence: $confidence, requiresMicrodeload: $requiresMicrodeload, weeksToMicrodeload: $weeksToMicrodeload, vmrDiscovered: $vmrDiscovered, isNewCycle: $isNewCycle, exercisesToReplace: $exercisesToReplace)';
 }
 
 
@@ -273,7 +275,7 @@ abstract mixin class _$MuscleDecisionCopyWith<$Res> implements $MuscleDecisionCo
   factory _$MuscleDecisionCopyWith(_MuscleDecision value, $Res Function(_MuscleDecision) _then) = __$MuscleDecisionCopyWithImpl;
 @override @useResult
 $Res call({
- String muscle, VolumeAction action, int newVolume, ProgressionPhase newPhase, String reason, double confidence, bool requiresMicrodeload, int? weeksToMicrodeload, int? vmrDiscovered, bool isNewCycle, List<ExerciseReplacement> exercisesToReplace
+ String muscle, VolumeAction action, int newVolume, int previousVolume, ProgressionPhase newPhase, String reason, double confidence, bool requiresMicrodeload, int? weeksToMicrodeload, int? vmrDiscovered, bool isNewCycle, List<ExerciseReplacement> exercisesToReplace
 });
 
 
@@ -290,11 +292,12 @@ class __$MuscleDecisionCopyWithImpl<$Res>
 
 /// Create a copy of MuscleDecision
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? muscle = null,Object? action = null,Object? newVolume = null,Object? newPhase = null,Object? reason = null,Object? confidence = null,Object? requiresMicrodeload = null,Object? weeksToMicrodeload = freezed,Object? vmrDiscovered = freezed,Object? isNewCycle = null,Object? exercisesToReplace = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? muscle = null,Object? action = null,Object? newVolume = null,Object? previousVolume = null,Object? newPhase = null,Object? reason = null,Object? confidence = null,Object? requiresMicrodeload = null,Object? weeksToMicrodeload = freezed,Object? vmrDiscovered = freezed,Object? isNewCycle = null,Object? exercisesToReplace = null,}) {
   return _then(_MuscleDecision(
 muscle: null == muscle ? _self.muscle : muscle // ignore: cast_nullable_to_non_nullable
 as String,action: null == action ? _self.action : action // ignore: cast_nullable_to_non_nullable
 as VolumeAction,newVolume: null == newVolume ? _self.newVolume : newVolume // ignore: cast_nullable_to_non_nullable
+as int,previousVolume: null == previousVolume ? _self.previousVolume : previousVolume // ignore: cast_nullable_to_non_nullable
 as int,newPhase: null == newPhase ? _self.newPhase : newPhase // ignore: cast_nullable_to_non_nullable
 as ProgressionPhase,reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as String,confidence: null == confidence ? _self.confidence : confidence // ignore: cast_nullable_to_non_nullable

@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'volume_landmarks.dart';
 import 'weekly_muscle_metrics.dart';
+import 'muscle_progression.dart';
 
 part 'muscle_progression_tracker.freezed.dart';
 part 'muscle_progression_tracker.g.dart';
@@ -66,4 +67,28 @@ abstract class PhaseTransition with _$PhaseTransition {
 
   factory PhaseTransition.fromJson(Map<String, dynamic> json) =>
       _$PhaseTransitionFromJson(json);
+}
+
+/// Extension to convert Tracker to Scientific Progression for validation
+extension MuscleProgressionTrackerConversion on MuscleProgressionTracker {
+  MuscleProgression toScientificProgression() {
+    return MuscleProgression(
+      muscle: muscle,
+      priority: priority,
+      landmarks: landmarks,
+      currentSets: currentVolume,
+      vopSets: landmarks.vop,
+      mrvSets: landmarks.vmr,
+      hasDiscoveredMRV: vmrDiscovered != null,
+      currentPhase: currentPhase.name,
+      weeksInCurrentPhase: weekInCurrentPhase,
+      totalWeeksInTraining: totalWeeksInCycle, // Approximate
+      weeksSinceDeload: 0, // TODO: Calculate from history
+      weeksUntilAutoDeload: priority == 5 ? 5 : 6,
+      isAutoDeloadScheduled: false,
+      createdAt: DateTime.now(), // Placeholder
+      lastUpdated: lastUpdated,
+      lastDeloadDate: DateTime.now(), // Placeholder
+    );
+  }
 }

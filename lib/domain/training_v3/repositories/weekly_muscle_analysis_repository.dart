@@ -23,6 +23,12 @@ abstract class WeeklyMuscleAnalysisRepository {
     required int weekNumber,
   });
 
+  /// Returns the latest analysis for a muscle.
+  Future<WeeklyMuscleAnalysis?> getLatestAnalysis({
+    required String userId,
+    required String muscle,
+  });
+
   /// Returns analyses for a week for all muscles.
   ///
   /// Map key: muscle.

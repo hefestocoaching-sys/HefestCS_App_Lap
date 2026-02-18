@@ -1,5 +1,6 @@
 import 'package:hcs_app_lap/domain/training_v3/models/muscle_progression_tracker.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/weekly_muscle_metrics.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/progress_record.dart';
 
 /// Repository for persisting muscle progression state.
 ///
@@ -74,6 +75,24 @@ abstract class MuscleProgressionRepository {
     required String userId,
     required String muscle,
     required PhaseTransition transition,
+  });
+
+  /// Guarda un registro de progreso histórico.
+  ///
+  /// Persistencia:
+  /// - Firestore: users/{userId}/muscle_progression/{muscle}/progress_history/{weekId}
+  Future<void> saveProgressRecord({
+    required String userId,
+    required ProgressRecord record,
+  });
+
+  /// Recupera el historial de progreso para un músculo.
+  ///
+  /// Retorna la lista ordenada por fecha (más reciente primero).
+  Future<List<ProgressRecord>> getProgressHistory({
+    required String userId,
+    required String muscle,
+    int limit = 10,
   });
 
   /// Prunes old history (keep last N weeks).

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
+import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 
 /// Editor de distribución de series por intensidad (Heavy/Medium/Light)
 ///
@@ -8,11 +9,13 @@ import 'package:hcs_app_lap/utils/theme.dart';
 /// basado en evidencia científica (Schoenfeld, Krieger, Burd).
 class SeriesDistributionEditor extends StatefulWidget {
   final Map<String, dynamic> trainingExtra;
+  final TrainingPlanConfig? plan;
   final Function(Map<String, int>) onDistributionChanged;
 
   const SeriesDistributionEditor({
     super.key,
     required this.trainingExtra,
+    this.plan,
     required this.onDistributionChanged,
   });
 
@@ -340,9 +343,16 @@ class _SeriesDistributionEditorState extends State<SeriesDistributionEditor> {
   }
 
   Widget _buildPreviewTable() {
-    final targetSetsByMuscle =
+    Map<String, dynamic> targetSetsByMuscle =
         widget.trainingExtra['targetSetsByMuscle'] as Map<String, dynamic>? ??
         {};
+
+    // PRIORIDAD: Usar volumen del plan generado si existe (Motor V3)
+    if (widget.plan != null &&
+        widget.plan!.volumePerMuscle != null &&
+        widget.plan!.volumePerMuscle!.isNotEmpty) {
+      targetSetsByMuscle = widget.plan!.volumePerMuscle!;
+    }
 
     if (targetSetsByMuscle.isEmpty) {
       return _buildEmptyPreviewState();

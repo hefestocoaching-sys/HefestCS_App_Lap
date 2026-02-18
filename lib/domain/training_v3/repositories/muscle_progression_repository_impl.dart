@@ -6,6 +6,7 @@ import 'package:hcs_app_lap/domain/training_v3/engines/volume_landmarks_calculat
 import 'package:hcs_app_lap/domain/training_v3/models/muscle_progression_tracker.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/weekly_muscle_metrics.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/progress_record.dart';
 import 'muscle_progression_repository.dart';
 
 /// Firebase implementation of MuscleProgressionRepository.
@@ -80,10 +81,7 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
 
       await _firestore
           .doc(docPath)
-          .set(
-            _serializeTrackerForFirestore(tracker),
-            SetOptions(merge: true),
-          );
+          .set(_serializeTrackerForFirestore(tracker), SetOptions(merge: true));
 
       debugPrint(
         '[MuscleProgressionRepo] Saved tracker for ${tracker.muscle}: '
@@ -216,6 +214,54 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
   }
 
   @override
+  Future<void> saveProgressRecord({
+    required String userId,
+    required ProgressRecord record,
+  }) async {
+    try {
+      final weekId = 'week_${record.weekNumber}';
+      final docPath =
+          '${_getDocumentPath(userId, record.muscle)}/progress_history/$weekId';
+
+      await _firestore
+          .doc(docPath)
+          .set(record.toJson(), SetOptions(merge: true));
+
+      debugPrint(
+        '[MuscleProgressionRepo] Saved ProgressRecord for ${record.muscle} (week ${record.weekNumber})',
+      );
+    } catch (e) {
+      debugPrint('[MuscleProgressionRepo] Error saving ProgressRecord: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<ProgressRecord>> getProgressHistory({
+    required String userId,
+    required String muscle,
+    int limit = 10,
+  }) async {
+    try {
+      final collectionPath =
+          '${_getDocumentPath(userId, muscle)}/progress_history';
+
+      final snapshot = await _firestore
+          .collection(collectionPath)
+          .orderBy('weekNumber', descending: true)
+          .limit(limit)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => ProgressRecord.fromJson(doc.data()))
+          .toList();
+    } catch (e) {
+      debugPrint('[MuscleProgressionRepo] Error getting ProgressHistory: $e');
+      return []; // Return empty on error to avoid breaking UI
+    }
+  }
+
+  @override
   Future<void> pruneOldHistory({
     required String userId,
     int keepLastWeeks = 12,
@@ -261,8 +307,9 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
     final json = tracker.toJson();
     json['landmarks'] = tracker.landmarks.toJson();
     json['history'] = tracker.history.map((entry) => entry.toJson()).toList();
-    json['phaseTimeline'] =
-        tracker.phaseTimeline.map((entry) => entry.toJson()).toList();
+    json['phaseTimeline'] = tracker.phaseTimeline
+        .map((entry) => entry.toJson())
+        .toList();
     return json;
   }
 }

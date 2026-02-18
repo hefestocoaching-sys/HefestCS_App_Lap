@@ -119,6 +119,27 @@ class WeeklyMuscleAnalysisRepositoryImpl
   }
 
   @override
+  Future<WeeklyMuscleAnalysis?> getLatestAnalysis({
+    required String userId,
+    required String muscle,
+  }) async {
+    try {
+      final history = await getAnalysisHistory(
+        userId: userId,
+        muscle: muscle,
+        lastWeeks: 1,
+      );
+      if (history.isNotEmpty) {
+        return history.first;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[WeeklyAnalysisRepo] Error getting latest analysis: $e');
+      return null;
+    }
+  }
+
+  @override
   Future<List<WeeklyMuscleAnalysis>> getAnalysisHistory({
     required String userId,
     required String muscle,
