@@ -33,9 +33,9 @@ void main() {
         const weekNumber = 1;
 
         // Mock result
-        final enhancedResult = EnhancedProgressionResult(
+        final enhancedResult = const EnhancedProgressionResult(
           decisions: {
-            'pectorals': MuscleDecision(
+            'pectorals': const MuscleDecision(
               muscle: 'pectorals',
               action: VolumeAction.maintain,
               newVolume: 10,

@@ -377,7 +377,7 @@ class WeeklyProgressionServiceEnhancedImpl
     // Can progress?
     final performanceScore = _calculatePerformanceScore(analysis, feedback);
     if (performanceScore >= 0.65 && analysis.volumeAdherence >= 0.75) {
-      final increment = 1; // SECONDARY: +1 set/week
+      const increment = 1; // SECONDARY: +1 set/week
       final newVolume = min(currentVolume + increment, secondaryCap);
 
       return MuscleDecision(
@@ -466,12 +466,18 @@ class WeeklyProgressionServiceEnhancedImpl
     WeeklyMuscleAnalysis analysis,
     MuscleProgressionTracker currentTracker,
   ) {
-    if (feedback.deloadRequested) return 'Manual request from user';
-    if (feedback.fatigueLevel >= 8.0)
+    if (feedback.deloadRequested) {
+      return 'Manual request from user';
+    }
+    if (feedback.fatigueLevel >= 8.0) {
       return 'High fatigue (${feedback.fatigueLevel}/10)';
-    if (feedback.recoveryQuality <= 4.0)
+    }
+    if (feedback.recoveryQuality <= 4.0) {
       return 'Poor recovery (${feedback.recoveryQuality}/10)';
-    if (feedback.hasPainOrInjury) return 'Pain or injury reported';
+    }
+    if (feedback.hasPainOrInjury) {
+      return 'Pain or injury reported';
+    }
     return 'Unknown reason';
   }
 

@@ -20,11 +20,7 @@ class ValidationResult {
 
   /// Créa un ValidationResult exitoso
   factory ValidationResult.success({List<String> warnings = const []}) {
-    return ValidationResult(
-      isValid: true,
-      errors: const [],
-      warnings: warnings,
-    );
+    return ValidationResult(isValid: true, warnings: warnings);
   }
 
   /// Crea un ValidationResult fallido
@@ -55,7 +51,7 @@ class ValidationResult {
       for (final error in errors) {
         buf.writeln('  - $error');
       }
-      buf.writeln('');
+      buf.writeln();
     }
 
     if (warnings.isNotEmpty) {
@@ -63,7 +59,7 @@ class ValidationResult {
       for (final warning in warnings) {
         buf.writeln('  - $warning');
       }
-      buf.writeln('');
+      buf.writeln();
     }
 
     if (isValid && errors.isEmpty && warnings.isEmpty) {
@@ -410,7 +406,7 @@ class TrainingValidationEngine {
     buf.writeln('║          WEEKLY AUDIT REPORT - WEEK $weekNumber         ║');
     buf.writeln('║          User: $userId                ║');
     buf.writeln('╚═══════════════════════════════════════════════════════╝');
-    buf.writeln('');
+    buf.writeln();
 
     // Summary
     final totalMuscles = validationResults.length;
@@ -423,7 +419,7 @@ class TrainingValidationEngine {
     buf.writeln('  Total muscles: $totalMuscles');
     buf.writeln('  ✅ Passed: $passedMuscles');
     buf.writeln('  ❌ Failed: $failedMuscles');
-    buf.writeln('');
+    buf.writeln();
 
     // Details
     for (final entry in validationResults.entries) {
@@ -448,7 +444,7 @@ class TrainingValidationEngine {
       }
     }
 
-    buf.writeln('');
+    buf.writeln();
     buf.writeln('═══════════════════════════════════════════════════════');
 
     return buf.toString();

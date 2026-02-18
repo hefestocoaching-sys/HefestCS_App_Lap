@@ -39,10 +39,12 @@ class WeeklyProgressionServiceEnhancedAdapter
           weekNumber: weekNumber,
           weekStart: weekStart,
           weekEnd: weekEnd,
-          muscleActivation: (data['muscle_activation'] as num?)?.toDouble() ?? 5.0,
+          muscleActivation:
+              (data['muscle_activation'] as num?)?.toDouble() ?? 5.0,
           pumpQuality: (data['pump_quality'] as num?)?.toDouble() ?? 5.0,
           fatigueLevel: (data['fatigue_level'] as num?)?.toDouble() ?? 5.0,
-          recoveryQuality: (data['recovery_quality'] as num?)?.toDouble() ?? 5.0,
+          recoveryQuality:
+              (data['recovery_quality'] as num?)?.toDouble() ?? 5.0,
           hadPain: data['had_pain'] as bool? ?? false,
           deloadRequested: data['deload_requested'] as bool? ?? false,
           userComments: data['comments'] as String? ?? '',
@@ -91,16 +93,18 @@ class WeeklyProgressionServiceEnhancedAdapter
     required Map<String, dynamic> userFeedback,
   }) async {
     // 1. Convertir feedback
-    final feedbackEntry = FeedbackEntry(
+    final _ = FeedbackEntry(
       userId: userId,
       muscle: muscle,
       weekNumber: weekNumber,
       weekStart: weekStart,
       weekEnd: weekEnd,
-      muscleActivation: (userFeedback['muscle_activation'] as num?)?.toDouble() ?? 5.0,
+      muscleActivation:
+          (userFeedback['muscle_activation'] as num?)?.toDouble() ?? 5.0,
       pumpQuality: (userFeedback['pump_quality'] as num?)?.toDouble() ?? 5.0,
       fatigueLevel: (userFeedback['fatigue_level'] as num?)?.toDouble() ?? 5.0,
-      recoveryQuality: (userFeedback['recovery_quality'] as num?)?.toDouble() ?? 5.0,
+      recoveryQuality:
+          (userFeedback['recovery_quality'] as num?)?.toDouble() ?? 5.0,
       hadPain: userFeedback['had_pain'] as bool? ?? false,
       deloadRequested: userFeedback['deload_requested'] as bool? ?? false,
       userComments: userFeedback['comments'] as String? ?? '',
@@ -127,7 +131,6 @@ class WeeklyProgressionServiceEnhancedAdapter
     // Provisorio: usar export del enhanced service si soporta json
     final jsonString = await _enhancedService.exportTrainingHistory(
       userId: userId,
-      format: 'json',
     );
     // TODO: Parsear jsonString a Map legacy structure si es necesario
     return {'status': 'managed_by_enhanced_service', 'raw_export': jsonString};
