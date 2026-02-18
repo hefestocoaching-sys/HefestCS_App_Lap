@@ -226,12 +226,12 @@ class VolumeCapacityScientificView extends ConsumerWidget {
 
     if (isVolume && volumeValue != null) {
       // Codificación por volumen (verde = óptimo)
-      if (volumeValue >= 12 && volumeValue <= 20) {
+      if (volumeValue >= 6 && volumeValue <= 24) {
         textColor = Colors.green;
-      } else if (volumeValue < 12) {
+      } else if (volumeValue < 6) {
         textColor = Colors.orange;
       } else {
-        textColor = Colors.yellow[700]!;
+        textColor = Colors.amber; // High volume risk
       }
     } else if (phaseColor != null) {
       textColor = phaseColor;

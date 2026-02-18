@@ -264,8 +264,7 @@ class _DepletionTabState extends ConsumerState<DepletionTab>
                       final weight = double.tryParse(weightCtrl.text);
                       final abdFold = double.tryParse(abdFoldCtrl.text);
                       final waist = double.tryParse(waistCircCtrl.text);
-                      final urineColor =
-                          int.tryParse(urineColorCtrl.text) ?? 3;
+                      final urineColor = int.tryParse(urineColorCtrl.text) ?? 3;
 
                       final updatedRecord = DailyTrackingRecord(
                         date: date,
@@ -298,11 +297,11 @@ class _DepletionTabState extends ConsumerState<DepletionTab>
     }
   }
 
-  void _saveDayRecord(
+  Future<void> _saveDayRecord(
     String dateKey,
     DailyTrackingRecord recordToSave,
     Map<String, dynamic> feedback,
-  ) {
+  ) async {
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
@@ -314,26 +313,46 @@ class _DepletionTabState extends ConsumerState<DepletionTab>
       (record) => record.date,
     );
 
-    ref.read(clientsProvider.notifier).updateActiveClient((current) {
-      final sortedTracking = upsertRecordByDate<DailyTrackingRecord>(
-        existingRecords: current.tracking,
-        newRecord: recordToSave,
-        dateExtractor: (record) => record.date,
+    try {
+      await ref.read(clientsProvider.notifier).updateActiveClient((current) {
+        final sortedTracking = upsertRecordByDate<DailyTrackingRecord>(
+          existingRecords: current.tracking,
+          newRecord: recordToSave,
+          dateExtractor: (record) => record.date,
+        );
+        return current.copyWith(tracking: sortedTracking);
+      });
+
+      if (!mounted) return;
+      final currentTimeline = Map<String, DailyTrackingRecord>.from(
+        _fullTimelineNotifier.value,
       );
-      return current.copyWith(tracking: sortedTracking);
-    });
+      currentTimeline[dateKey] = recordToSave;
+      _fullTimelineNotifier.value = currentTimeline;
 
-    final currentTimeline = Map<String, DailyTrackingRecord>.from(
-      _fullTimelineNotifier.value,
-    );
-    currentTimeline[dateKey] = recordToSave;
-    _fullTimelineNotifier.value = currentTimeline;
+      final currentFeedback = Map<String, Map<String, dynamic>>.from(
+        _visualFeedbackNotifier.value,
+      );
+      currentFeedback[dateKey] = feedback;
+      _visualFeedbackNotifier.value = currentFeedback;
 
-    final currentFeedback = Map<String, Map<String, dynamic>>.from(
-      _visualFeedbackNotifier.value,
-    );
-    currentFeedback[dateKey] = feedback;
-    _visualFeedbackNotifier.value = currentFeedback;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${isEditing ? "Actualizado" : "Guardado"} seguimiento del ${DateFormat("dd/MM").format(recordToSave.date)}',
+          ),
+          backgroundColor: kPrimaryColor,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al guardar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -805,15 +824,11 @@ class _DepletionTabState extends ConsumerState<DepletionTab>
     final isFirstDay = (daysUntil == -7);
 
     if (recordToday == null && recordPrev != null) {
-      recordToday = recordPrev.copyWith(
-        date: date,
-      );
+      recordToday = recordPrev.copyWith(date: date);
     }
 
     if (recordToday == null && baseDailyRecord != null) {
-      recordToday = baseDailyRecord.copyWith(
-        date: date,
-      );
+      recordToday = baseDailyRecord.copyWith(date: date);
     }
 
     bool canCompute =

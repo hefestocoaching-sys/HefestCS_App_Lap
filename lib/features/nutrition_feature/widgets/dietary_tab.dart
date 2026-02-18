@@ -425,10 +425,11 @@ class DietaryTabState extends ConsumerState<DietaryTab>
     _recalculateAll();
   }
 
-  void _saveKcalToClient({bool showSnackbar = true}) {
+  Future<void> _saveKcalToClient({bool showSnackbar = true}) async {
     // GUARD: Validar que activeDateIso sea un formato ISO válido
     if (widget.activeDateIso.isEmpty) {
       if (showSnackbar) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error: Fecha no válida'),
@@ -445,6 +446,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       targetDate = DateTime.parse(widget.activeDateIso);
     } catch (e) {
       if (showSnackbar) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -457,6 +459,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       return;
     }
 
+    if (!mounted) return;
     final blockedState = ref.read(nutritionBlockedProvider);
     if (blockedState.isBlocked) {
       if (showSnackbar && blockedState.userMessage.isNotEmpty) {
@@ -485,18 +488,13 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         }
       }
       if (showSnackbar) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
         );
       }
       return;
     }
-
-    // Legacy: adjustmentKcal ya no se usa (calcs en _recalculateAll con déficit%)
-    // final double adjustmentKcal =
-    //     double.tryParse(_calorieAdjustmentController.text) ?? 0;
-    // final double weightGoal =
-    //     double.tryParse(_weightGoalController.text) ?? 0.0;
 
     // Recalcular dailyGet y dailyActivities para persistencia
     final Map<String, double> dailyGet = {};
@@ -513,70 +511,83 @@ class DietaryTabState extends ConsumerState<DietaryTab>
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
-    // Merge records into persisted nutrition.extra to avoid overwriting other keys
-    const recordsKey = NutritionExtraKeys.evaluationRecords;
-    ref.read(clientsProvider.notifier).updateActiveClient((current) {
-      final extra = Map<String, dynamic>.from(current.nutrition.extra);
-      final records = readNutritionRecordList(extra[recordsKey]);
-      records.removeWhere(
-        (record) => record['dateIso']?.toString() == widget.activeDateIso,
-      );
+    try {
+      // Merge records into persisted nutrition.extra to avoid overwriting other keys
+      const recordsKey = NutritionExtraKeys.evaluationRecords;
+      await ref.read(clientsProvider.notifier).updateActiveClient((current) {
+        final extra = Map<String, dynamic>.from(current.nutrition.extra);
+        final records = readNutritionRecordList(extra[recordsKey]);
+        records.removeWhere(
+          (record) => record['dateIso']?.toString() == widget.activeDateIso,
+        );
 
-      // NEW v2: Preparar datos de déficit porcentual
-      final deficitPct = double.tryParse(_deficitPctController.text) ?? 0.15;
-      const floorPct = 0.95;
+        // NEW v2: Preparar datos de déficit porcentual
+        final deficitPct = double.tryParse(_deficitPctController.text) ?? 0.15;
+        const floorPct = 0.95;
 
-      records.add({
-        'dateIso': widget.activeDateIso,
-        'selectedTmbFormulaKey': dietaryState.selectedTMBFormulaKey,
-        'tmbValue': baseTMB,
-        'avgGet': _calculateAverageGET(),
-        'dailyGet': dailyGet,
-        'dailyNafFactors': dietaryState.dailyNafFactors,
-        'dailyActivities': dailyActivities,
-        'kcalTarget': _finalKcal.toInt(),
-        'kcal': _finalKcal.toInt(),
-        'dailyKcal': _dailyTargetKcal, // NEW: targets diarios finales
-        // NEW v2: Déficit porcentual y estimaciones
-        'deficitPct': deficitPct,
-        'floorPct': floorPct,
-        'deficitKcalAvg': _avgDailyDeficitKcal,
-        'estimatedKgWeek': _estimatedKgWeek,
-        'estimatedKgMonth': _estimatedKgMonth,
+        records.add({
+          'dateIso': widget.activeDateIso,
+          'selectedTmbFormulaKey': dietaryState.selectedTMBFormulaKey,
+          'tmbValue': baseTMB,
+          'avgGet': _calculateAverageGET(),
+          'dailyGet': dailyGet,
+          'dailyNafFactors': dietaryState.dailyNafFactors,
+          'dailyActivities': dailyActivities,
+          'kcalTarget': _finalKcal.toInt(),
+          'kcal': _finalKcal.toInt(),
+          'dailyKcal': _dailyTargetKcal, // NEW: targets diarios finales
+          // NEW v2: Déficit porcentual y estimaciones
+          'deficitPct': deficitPct,
+          'floorPct': floorPct,
+          'deficitKcalAvg': _avgDailyDeficitKcal,
+          'estimatedKgWeek': _estimatedKgWeek,
+          'estimatedKgMonth': _estimatedKgMonth,
 
-        // Legacy: mantener para no romper lecturas viejas
-        'kcalAdjustment': 0.0,
-        'weightGoal': 0.0,
+          // Legacy: mantener para no romper lecturas viejas
+          'kcalAdjustment': 0.0,
+          'weightGoal': 0.0,
 
-        'computedAtIso': DateTime.now().toIso8601String(),
+          'computedAtIso': DateTime.now().toIso8601String(),
+        });
+        sortNutritionRecordsByDate(records);
+        final merged = Map<String, dynamic>.from(current.nutrition.extra);
+        merged[recordsKey] = records;
+        return current.copyWith(
+          nutrition: current.nutrition.copyWith(extra: merged),
+        );
       });
-      sortNutritionRecordsByDate(records);
-      final merged = Map<String, dynamic>.from(current.nutrition.extra);
-      merged[recordsKey] = records;
-      return current.copyWith(
-        nutrition: current.nutrition.copyWith(extra: merged),
-      );
-    });
 
-    if (showSnackbar) {
-      final feedback = SaveActionDetector.getFeedback(
-        readNutritionRecordList(
-          client.nutrition.extra[NutritionExtraKeys.evaluationRecords],
-        ),
-        targetDate,
-        (record) {
-          final dateIsoStr = record['dateIso'].toString();
-          return _safeParseDateIso(dateIsoStr) ??
-              DateTime.fromMillisecondsSinceEpoch(0);
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(feedback),
-          backgroundColor: kPrimaryColor,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      if (showSnackbar) {
+        if (!mounted) return;
+        final feedback = SaveActionDetector.getFeedback(
+          readNutritionRecordList(
+            client.nutrition.extra[NutritionExtraKeys.evaluationRecords],
+          ),
+          targetDate,
+          (record) {
+            final dateIsoStr = record['dateIso'].toString();
+            return _safeParseDateIso(dateIsoStr) ??
+                DateTime.fromMillisecondsSinceEpoch(0);
+          },
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(feedback),
+            backgroundColor: kPrimaryColor,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (showSnackbar) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 

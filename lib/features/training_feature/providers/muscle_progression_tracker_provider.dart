@@ -13,6 +13,8 @@ import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_servi
 import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_enhanced_adapter.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/client_derived_providers.dart';
 import 'package:hcs_app_lap/features/training_feature/viewmodels/muscle_progression_dashboard_viewmodel.dart';
+import 'package:hcs_app_lap/domain/training_v3/repositories/training_audit_log_repository.dart';
+import 'package:hcs_app_lap/domain/training_v3/repositories/training_audit_log_repository_impl.dart';
 
 final muscleProgressionRepositoryProvider =
     riverpod.Provider<MuscleProgressionRepository>((ref) {
@@ -24,15 +26,22 @@ final weeklyMuscleAnalysisRepositoryProvider =
       return WeeklyMuscleAnalysisRepositoryImpl();
     });
 
+final trainingAuditLogRepositoryProvider =
+    riverpod.Provider<TrainingAuditLogRepository>((ref) {
+      return TrainingAuditLogRepositoryImpl();
+    });
+
 final weeklyProgressionServiceProvider =
     riverpod.Provider<WeeklyProgressionService>((ref) {
       final progressionRepo = ref.watch(muscleProgressionRepositoryProvider);
       final analysisRepo = ref.watch(weeklyMuscleAnalysisRepositoryProvider);
+      final auditRepo = ref.watch(trainingAuditLogRepositoryProvider);
 
       // Instanciamos el servicio Enhanced (Motor V3 logic)
       final enhancedService = WeeklyProgressionServiceEnhancedImpl(
         progressionRepo: progressionRepo,
         analysisRepo: analysisRepo,
+        auditRepo: auditRepo,
       );
 
       // Retornamos el adaptador para mantener compatibilidad con UI/UnifiedService

@@ -11,6 +11,7 @@ import "package:hcs_app_lap/features/main_shell/providers/clients_provider.dart"
 import "package:hcs_app_lap/ui/clinic_section_surface.dart";
 import "package:hcs_app_lap/utils/widgets/shared_form_widgets.dart";
 import "package:hcs_app_lap/utils/widgets/hcs_input_decoration.dart";
+import "package:hcs_app_lap/utils/theme.dart";
 
 class GeneralEvaluationTab extends ConsumerStatefulWidget {
   const GeneralEvaluationTab({super.key});
@@ -505,15 +506,27 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
           training: updatedClient.training,
         );
       });
+
+      if (!mounted) return;
+      _client = updatedClient;
+      _isDirty = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Evaluación general guardada'),
+          backgroundColor: kPrimaryColor,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al guardar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       _justSaved = false;
     }
-    if (!mounted) return;
-    _client = updatedClient;
-    _isDirty = false;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Evaluación general guardada')),
-    );
   }
 
   @override
@@ -562,9 +575,11 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
 
     final client = ref.watch(clientsProvider).value?.activeClient;
     final isDifferentClient = _client?.id != client?.id;
-    if (_client == null ||
-        (isDifferentClient && client != null) ||
-        (!_isDirty && _client != client && client != null)) {
+    // ✅ BUGFIX: No recargar durante/después de guardar (_justSaved=true)
+    if (!_justSaved &&
+        (_client == null ||
+            (isDifferentClient && client != null) ||
+            (!_isDirty && _client != client && client != null))) {
       _client = client;
       if (client != null) {
         _initializeFromClient(client);

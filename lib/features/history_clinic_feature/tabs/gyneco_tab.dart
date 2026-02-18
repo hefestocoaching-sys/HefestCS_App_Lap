@@ -136,14 +136,26 @@ class GynecoTabState extends ConsumerState<GynecoTab>
           .updateActiveClient(
             (prev) => prev.copyWith(history: updatedClient.history),
           );
+
+      if (!mounted) return;
+      _isDirty = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Datos gineco guardados'),
+          backgroundColor: kPrimaryColor,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al guardar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       _justSaved = false;
     }
-    if (!mounted) return;
-    _isDirty = false;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Datos gineco guardados')));
   }
 
   @override
@@ -173,9 +185,11 @@ class GynecoTabState extends ConsumerState<GynecoTab>
 
     final client = ref.watch(clientsProvider).value?.activeClient;
     final isDifferentClient = _client?.id != client?.id;
-    if (_client == null ||
-        (isDifferentClient && client != null) ||
-        (!_isDirty && _client != client && client != null)) {
+    // ✅ BUGFIX: No recargar durante/después de guardar (_justSaved=true)
+    if (!_justSaved &&
+        (_client == null ||
+            (isDifferentClient && client != null) ||
+            (!_isDirty && _client != client && client != null))) {
       _client = client;
       if (client != null) {
         _initializeFromClient(client);

@@ -192,11 +192,11 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildLegendItem('Óptimo', Colors.green, '12-20 sets'),
+              _buildLegendItem('Óptimo', Colors.green, '6-24 sets'),
               const SizedBox(width: 24),
-              _buildLegendItem('Bajo', Colors.orange, '<12 sets'),
+              _buildLegendItem('Bajo', Colors.orange, '<6 sets'),
               const SizedBox(width: 24),
-              _buildLegendItem('Alto', Colors.amber, '>20 sets'),
+              _buildLegendItem('Alto', Colors.amber, '>24 sets'),
             ],
           ),
           const SizedBox(height: 12),
@@ -235,15 +235,15 @@ class VolumeRangeMuscleTableV3 extends StatelessWidget {
 
   /// Determina la zona según volumen semanal
   String _getVolumeZone(int sets) {
-    if (sets < 12) return 'Bajo';
-    if (sets > 20) return 'Alto';
+    if (sets < 6) return 'Bajo';
+    if (sets > 24) return 'Alto';
     return 'Óptimo';
   }
 
   /// Color del volumen numérico
   Color _getVolumeColor(int sets) {
-    if (sets < 12) return Colors.orange;
-    if (sets > 20) return Colors.amber;
+    if (sets < 6) return Colors.orange; // Sub-maintenance
+    if (sets > 24) return Colors.amber; // Junk volume risk
     return Colors.green;
   }
 

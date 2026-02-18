@@ -1177,13 +1177,34 @@ class _TrainingWorkspaceScreenState
       status: evaluation.status,
     );
 
-    await ref.read(clientsProvider.notifier).updateActiveClient((current) {
-      final extra = Map<String, dynamic>.from(current.training.extra);
-      extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] = updated.toJson();
-      return current.copyWith(
-        training: current.training.copyWith(extra: extra),
-      );
-    });
+    try {
+      await ref.read(clientsProvider.notifier).updateActiveClient((current) {
+        final extra = Map<String, dynamic>.from(current.training.extra);
+        extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] = updated
+            .toJson();
+        return current.copyWith(
+          training: current.training.copyWith(extra: extra),
+        );
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Regla de dolor guardada'),
+            backgroundColor: kPrimaryColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar regla: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // ignore: unused_element

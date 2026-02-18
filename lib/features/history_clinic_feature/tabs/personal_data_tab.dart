@@ -122,44 +122,82 @@ class PersonalDataTabState extends ConsumerState<PersonalDataTab>
     _draftProfile = client.profile;
     _draftNutrition = client.nutrition;
 
-    _nombreController = TextEditingController(text: _draftProfile.fullName);
-    _emailController = TextEditingController(text: _draftProfile.email);
-    _telefonoController = TextEditingController(text: _draftProfile.phone);
-    _paisController = TextEditingController(text: _draftProfile.country);
-    _ocupacionController = TextEditingController(
-      text: _draftProfile.occupation,
-    );
+    // ✅ BUGFIX: Si los controladores ya existen, solo actualiza valores
+    // Esto evita crear nuevos controladores que descarten datos no guardados
+    if (_controllersReady) {
+      _updateControllerValues();
+    } else {
+      // Primera vez: crear controladores
+      _nombreController = TextEditingController(text: _draftProfile.fullName);
+      _emailController = TextEditingController(text: _draftProfile.email);
+      _telefonoController = TextEditingController(text: _draftProfile.phone);
+      _paisController = TextEditingController(text: _draftProfile.country);
+      _ocupacionController = TextEditingController(
+        text: _draftProfile.occupation,
+      );
+
+      _isCustomObjective = !_objectiveOptions.contains(_draftProfile.objective);
+      _objetivoController = TextEditingController(
+        text: _isCustomObjective ? _draftProfile.objective : '',
+      );
+
+      _fechaNacimientoController = TextEditingController(
+        text: _draftProfile.birthDate != null
+            ? _dateFormat.format(_draftProfile.birthDate!)
+            : '',
+      );
+
+      _inicioPlanController = TextEditingController(
+        text: _draftNutrition.planStartDate != null
+            ? _dateFormat.format(_draftNutrition.planStartDate!)
+            : '',
+      );
+
+      _terminoPlanController = TextEditingController(
+        text: _draftNutrition.planEndDate != null
+            ? _dateFormat.format(_draftNutrition.planEndDate!)
+            : '',
+      );
+
+      final age = _draftProfile.age ?? _calculateAge(_draftProfile.birthDate);
+      _edadController = TextEditingController(
+        text: age != null ? age.toString() : '',
+      );
+
+      _controllersReady = true;
+    }
+
+    _isDirty = false;
+  }
+
+  void _updateControllerValues() {
+    // ✅ BUGFIX: Solo actualiza valores de controllers sin reemplazarlos
+    // Esto previene que se pierdan datos cuando ref.watch se dispara
+    _nombreController.text = _draftProfile.fullName;
+    _emailController.text = _draftProfile.email;
+    _telefonoController.text = _draftProfile.phone;
+    _paisController.text = _draftProfile.country;
+    _ocupacionController.text = _draftProfile.occupation;
 
     _isCustomObjective = !_objectiveOptions.contains(_draftProfile.objective);
-    _objetivoController = TextEditingController(
-      text: _isCustomObjective ? _draftProfile.objective : '',
-    );
+    _objetivoController.text = _isCustomObjective
+        ? _draftProfile.objective
+        : '';
 
-    _fechaNacimientoController = TextEditingController(
-      text: _draftProfile.birthDate != null
-          ? _dateFormat.format(_draftProfile.birthDate!)
-          : '',
-    );
+    _fechaNacimientoController.text = _draftProfile.birthDate != null
+        ? _dateFormat.format(_draftProfile.birthDate!)
+        : '';
 
-    _inicioPlanController = TextEditingController(
-      text: _draftNutrition.planStartDate != null
-          ? _dateFormat.format(_draftNutrition.planStartDate!)
-          : '',
-    );
+    _inicioPlanController.text = _draftNutrition.planStartDate != null
+        ? _dateFormat.format(_draftNutrition.planStartDate!)
+        : '';
 
-    _terminoPlanController = TextEditingController(
-      text: _draftNutrition.planEndDate != null
-          ? _dateFormat.format(_draftNutrition.planEndDate!)
-          : '',
-    );
+    _terminoPlanController.text = _draftNutrition.planEndDate != null
+        ? _dateFormat.format(_draftNutrition.planEndDate!)
+        : '';
 
     final age = _draftProfile.age ?? _calculateAge(_draftProfile.birthDate);
-    _edadController = TextEditingController(
-      text: age != null ? age.toString() : '',
-    );
-
-    _controllersReady = true;
-    _isDirty = false;
+    _edadController.text = age != null ? age.toString() : '';
   }
 
   int? _calculateAge(DateTime? birthDate) {
@@ -307,20 +345,31 @@ class PersonalDataTabState extends ConsumerState<PersonalDataTab>
     );
 
     _client = updatedClient;
-    _justSaved = true; // ✅ Flag para prevenir reload desde BD
+    // ✅ Flag para prevenir reload desde BD
+    _justSaved = true;
     try {
       await ref
           .read(clientsProvider.notifier)
           .updateActiveClient((prev) => updatedClient.copyWith(id: prev.id));
-    } finally {
-      _justSaved = false; // ✅ Reset flag después de guardar (garantizado)
-    }
-    _isDirty = false;
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Datos personales guardados')),
-      );
+      // SOLO si no hay error:
+      _isDirty = false;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Datos personales guardados')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      _justSaved = false; // ✅ Reset flag garantizado
     }
   }
 
@@ -344,9 +393,11 @@ class PersonalDataTabState extends ConsumerState<PersonalDataTab>
 
     final client = ref.watch(clientsProvider).value?.activeClient;
     final isDifferentClient = _client?.id != client?.id;
-    if (_client == null ||
-        (isDifferentClient && client != null) ||
-        (!_isDirty && _client != client && client != null)) {
+    // ✅ BUGFIX: No recargar durante/después de guardar (_justSaved=true)
+    if (!_justSaved &&
+        (_client == null ||
+            (isDifferentClient && client != null) ||
+            (!_isDirty && _client != client && client != null))) {
       _client = client;
       if (client != null) {
         _loadFromClient(client);

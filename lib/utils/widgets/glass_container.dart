@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hcs_app_lap/utils/theme.dart';
+
+import 'package:hcs_app_lap/core/design/hcs_glass_container.dart';
 
 /// Un contenedor reutilizable que aplica el estilo "Glassmorphism" estándar de la app.
 /// Centraliza el color, opacidad y bordes para mantener consistencia visual.
@@ -28,18 +29,22 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ⚠️ REFACTOR: Wraps HcsGlassContainer for consistent visual style (Glass V3)
+    // Maps legacy properties to the new component.
     return Container(
       width: width,
       height: height,
-      padding: padding ?? const EdgeInsets.all(24),
       margin: margin,
-      decoration: BoxDecoration(
-        // Usa el color por defecto (kAppBarColor con alpha) si no se especifica uno
-        color: color ?? kAppBarColor.withAlpha(110),
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
-        border: border,
+      child: HcsGlassContainer(
+        padding: padding ?? const EdgeInsets.all(24),
+        borderRadius: borderRadius is BorderRadius
+            ? (borderRadius as BorderRadius).topLeft.x
+            : 16.0,
+        backgroundColor:
+            color, // Allow override, but HcsGlassContainer has its own default
+        borderColor: border is Border ? (border as Border).top.color : null,
+        child: child,
       ),
-      child: child,
     );
   }
 }

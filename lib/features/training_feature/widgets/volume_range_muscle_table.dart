@@ -44,16 +44,16 @@ class VolumeRangeUiRow {
   /// Amarillo: <40% (bajo)
   /// Ámbar: >70% (alto)
   Color get zoneColor {
-    final pos = positionInRange;
-    if (pos < 0.4) return Colors.amber.shade600; // Bajo
-    if (pos > 0.7) return Colors.orange.shade700; // Alto
-    return Colors.green.shade600; // Óptimo
+    if (targetSets == null) return Colors.grey;
+    if (targetSets! < mev) return Colors.orange; // Sub-MEV
+    if (targetSets! > mrv) return Colors.red; // Over-MRV
+    return Colors.green; // Optimal (Within MEV-MRV range)
   }
 
   String get zoneLabel {
-    final pos = positionInRange;
-    if (pos < 0.4) return 'Bajo';
-    if (pos > 0.7) return 'Alto';
+    if (targetSets == null) return '--';
+    if (targetSets! < mev) return 'Bajo';
+    if (targetSets! > mrv) return 'Alto';
     return 'Óptimo';
   }
 }
@@ -659,11 +659,7 @@ class VolumeRangeMuscleTable extends StatelessWidget {
       statusColor = Colors.red;
       statusText = 'Bajo VME';
       statusIcon = Icons.warning;
-    } else if (data.target >= data.vme && data.target < data.vma) {
-      statusColor = Colors.orange;
-      statusText = 'Subóptimo';
-      statusIcon = Icons.trending_down;
-    } else if (data.target >= data.vma && data.target < data.vmr) {
+    } else if (data.target >= data.vme && data.target <= data.vmr) {
       statusColor = Colors.green;
       statusText = 'Óptimo';
       statusIcon = Icons.check_circle;
@@ -715,7 +711,7 @@ class VolumeRangeMuscleTable extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              _buildPercentageCell(percentage),
+              _buildPercentageCell(percentage, statusColor),
             ],
           ),
         ),
@@ -787,23 +783,21 @@ class VolumeRangeMuscleTable extends StatelessWidget {
     );
   }
 
-  Widget _buildPercentageCell(double percentage) {
-    final visualState = _VolumeRangeMuscleTableState();
-
+  Widget _buildPercentageCell(double percentage, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: visualState._getBackgroundForPercentage(percentage),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
             '${percentage.toStringAsFixed(0)}%',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: visualState._getTextColorForPercentage(percentage),
+              color: color,
               fontWeight: FontWeight.bold,
               fontSize: 11,
             ),
@@ -903,21 +897,5 @@ class VolumeRangeMuscleTable extends StatelessWidget {
       'baseVME': vme,
       'alerts': const <Map<String, dynamic>>[],
     };
-  }
-}
-
-class _VolumeRangeMuscleTableState {
-  /// Retorna color de fondo según porcentaje de MAV
-  Color _getBackgroundForPercentage(double percentage) {
-    if (percentage < 80) return kWarningSubtle; // Bajo MEV
-    if (percentage > 110) return kErrorSubtle; // Sobre MRV
-    return kSuccessSubtle; // Zona óptima MAV
-  }
-
-  /// Retorna color de texto según porcentaje de MAV
-  Color _getTextColorForPercentage(double percentage) {
-    if (percentage < 80) return kWarningColor;
-    if (percentage > 110) return kErrorColor;
-    return kSuccessColor;
   }
 }

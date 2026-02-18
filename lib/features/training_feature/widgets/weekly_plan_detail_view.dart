@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/design/hcs_glass_container.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/domain/entities/training_session.dart';
+import 'package:hcs_app_lap/domain/entities/exercise_prescription.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Vista semanal del plan Motor V3 con navegación por microciclos.
@@ -175,7 +177,10 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: const TextStyle(color: kTextColorSecondary, fontSize: 11),
+                  style: const TextStyle(
+                    color: kTextColorSecondary,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -185,13 +190,8 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
     );
   }
 
-  Widget _buildSessionCard(dynamic session, int dayNumber) {
-    final rawPrescriptions = session.prescriptions as List<dynamic>;
-    final prescriptions = rawPrescriptions.map<Map<String, dynamic>>((p) {
-      if (p is Map<String, dynamic>) return p;
-      final dynamic json = (p as dynamic).toJson();
-      return (json as Map).cast<String, dynamic>();
-    }).toList();
+  Widget _buildSessionCard(TrainingSession session, int dayNumber) {
+    final prescriptions = session.prescriptions;
 
     if (prescriptions.isEmpty) {
       return const Padding(
@@ -249,17 +249,12 @@ class _WeeklyPlanDetailViewState extends ConsumerState<WeeklyPlanDetailView> {
     );
   }
 
-  Widget _buildExerciseRow(Map<String, dynamic> prescription, int order) {
-    final exercise = prescription['exercise'];
-    final name = (exercise is Map && exercise['name'] != null)
-        ? exercise['name'].toString()
-        : (prescription['exerciseName']?.toString() ?? 'Ejercicio');
-    final sets = prescription['sets']?.toString() ?? '0';
-    final reps =
-        prescription['reps']?.toString() ??
-        prescription['repRange']?.toString() ??
-        '-';
-    final rir = prescription['rir']?.toString() ?? '2';
+  Widget _buildExerciseRow(ExercisePrescription prescription, int order) {
+    final name = prescription.exerciseName;
+    final sets = prescription.sets.toString();
+    // Use repRange.toString() directly or a getter if available
+    final reps = prescription.repRange.toString();
+    final rir = prescription.rir;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

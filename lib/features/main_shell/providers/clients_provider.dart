@@ -219,6 +219,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
         state = AsyncValue.data(
           current.copyWith(isLoading: false, error: e.toString()),
         );
+        rethrow; // ✅ Rethrow so the UI knows the save failed!
       }
     });
   }

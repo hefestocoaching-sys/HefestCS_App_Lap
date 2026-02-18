@@ -33,8 +33,6 @@ class DietaryActivitySection extends StatefulWidget {
 }
 
 class _DietaryActivitySectionState extends State<DietaryActivitySection> {
-  UserActivity? _hoveredActivity;
-
   @override
   Widget build(BuildContext context) {
     const orderedDays = [
@@ -293,87 +291,12 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
     );
   }
 
-  /// ✅ Tile compacto para lista vertical en header fijo
   Widget _buildCompactActivityTile(String day, UserActivity activity) {
-    final bool isHovering = _hoveredActivity == activity;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hoveredActivity = activity),
-      onExit: (_) => setState(() => _hoveredActivity = null),
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: isHovering
-              ? kPrimaryColor.withAlpha((255 * 0.12).round())
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Título + Subtítulo (mejorado con jerarquía visual)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text(
-                    activity.metActivity.activityName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    '${activity.durationMinutes} min • ${activity.metValue} METs',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Icons siempre visible pero mutan en hover
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                InkWell(
-                  onTap: () {
-                    // Editar (placeholder)
-                  },
-                  child: Icon(
-                    Icons.edit,
-                    size: 14,
-                    color: isHovering ? kPrimaryColor : Colors.white54,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: () {
-                    widget.onRemoveActivity(day, activity);
-                    setState(() => _hoveredActivity = null);
-                  },
-                  child: Icon(
-                    Icons.close,
-                    size: 14,
-                    color: isHovering ? Colors.redAccent : Colors.white38,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    return _CompactActivityTile(
+      activity: activity,
+      onRemove: () => widget.onRemoveActivity(day, activity),
     );
   }
-
-  // ❌ Método _buildTotalsBar removido - ahora los totales están en el header y acciones en footer
 
   Widget _buildEmptyState(String day) {
     return Center(
@@ -620,15 +543,16 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
                                     selectedCategory = newValue;
                                     selectedActivity = null;
                                     selectedMetValue = null;
-                                    filteredActivities = selectedCategory == null
+                                    filteredActivities =
+                                        selectedCategory == null
                                         ? []
                                         : metLibrary
-                                            .where(
-                                              (activity) =>
-                                                  activity.category ==
-                                                  selectedCategory,
-                                            )
-                                            .toList();
+                                              .where(
+                                                (activity) =>
+                                                    activity.category ==
+                                                    selectedCategory,
+                                              )
+                                              .toList();
                                     metOptions = [];
                                   });
                                 },
@@ -649,8 +573,8 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
                                 onChanged: (MetActivity? newValue) {
                                   setStateSB(() {
                                     selectedActivity = newValue;
-                                    metOptions = newValue?.metOptions.toList() ??
-                                        [];
+                                    metOptions =
+                                        newValue?.metOptions.toList() ?? [];
                                     selectedMetValue = metOptions.isNotEmpty
                                         ? metOptions[metOptions.length ~/ 2]
                                         : null;
@@ -932,6 +856,94 @@ class _DietaryActivitySectionState extends State<DietaryActivitySection> {
           },
         );
       },
+    );
+  }
+}
+
+class _CompactActivityTile extends StatefulWidget {
+  final UserActivity activity;
+  final VoidCallback onRemove;
+
+  const _CompactActivityTile({required this.activity, required this.onRemove});
+
+  @override
+  State<_CompactActivityTile> createState() => _CompactActivityTileState();
+}
+
+class _CompactActivityTileState extends State<_CompactActivityTile> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: _isHovering
+              ? kPrimaryColor.withAlpha((255 * 0.12).round())
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(
+                    widget.activity.metActivity.activityName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    '${widget.activity.durationMinutes} min • ${widget.activity.metValue} METs',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () {
+                    // Editar (placeholder)
+                  },
+                  child: Icon(
+                    Icons.edit,
+                    size: 14,
+                    color: _isHovering ? kPrimaryColor : Colors.white54,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: widget.onRemove,
+                  child: Icon(
+                    Icons.close,
+                    size: 14,
+                    color: _isHovering ? Colors.redAccent : Colors.white38,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
