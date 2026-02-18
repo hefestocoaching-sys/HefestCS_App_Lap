@@ -116,12 +116,18 @@ extension MuscleProgressionExtension on MuscleProgression {
 
   /// Incremento de volumen recomendado
   int get recommendedIncrement {
-    if (!canProgress) return 0;
+    if (!canProgress) {
+      return 0;
+    }
 
     // Más agresivo al principio, más conservador cerca del MRV
     final percentUsed = currentSets / volumeCap;
-    if (percentUsed < 0.5) return 3; // 0-50%: +3 sets
-    if (percentUsed < 0.75) return 2; // 50-75%: +2 sets
+    if (percentUsed < 0.5) {
+      return 3; // 0-50%: +3 sets
+    }
+    if (percentUsed < 0.75) {
+      return 2; // 50-75%: +2 sets
+    }
     return 1; // 75-100%: +1 set
   }
 
@@ -131,8 +137,12 @@ extension MuscleProgressionExtension on MuscleProgression {
 
   /// ¿Debe hacer deload automático?
   bool get shouldAutoDeload {
-    if (isTertiary) return false; // Terciario nunca deload
-    if (weeksSinceDeload < weeksUntilAutoDeload) return false;
+    if (isTertiary) {
+      return false; // Terciario nunca deload
+    }
+    if (weeksSinceDeload < weeksUntilAutoDeload) {
+      return false;
+    }
 
     // Deload automático cada 4-5 semanas en P, 5-6 en S
     return true;
@@ -140,21 +150,29 @@ extension MuscleProgressionExtension on MuscleProgression {
 
   /// Promedio de adherencia últimas 4 semanas
   double get avgAdherence4Weeks {
-    if (last4WeeksAdherence.isEmpty) return 1.0;
+    if (last4WeeksAdherence.isEmpty) {
+      return 1.0;
+    }
     return last4WeeksAdherence.reduce((a, b) => a + b) /
         last4WeeksAdherence.length;
   }
 
   /// Tendencia de volumen (aumentando, estable, disminuyendo)
   String get volumeTrend {
-    if (last4WeeksVolume.length < 2) return 'unknown';
+    if (last4WeeksVolume.length < 2) {
+      return 'unknown';
+    }
 
     final latest = last4WeeksVolume.last;
     final avg =
         last4WeeksVolume.reduce((a, b) => a + b) / last4WeeksVolume.length;
 
-    if (latest > avg * 1.05) return 'increasing';
-    if (latest < avg * 0.95) return 'decreasing';
+    if (latest > avg * 1.05) {
+      return 'increasing';
+    }
+    if (latest < avg * 0.95) {
+      return 'decreasing';
+    }
     return 'stable';
   }
 
