@@ -171,8 +171,9 @@ class TrainingAuditLogFilter {
   /// Aplicar filtro a una entrada
   bool matches(TrainingAuditLogEntry entry) {
     if (userId != null && entry.userId != userId) return false;
-    if (muscleAffected != null && entry.muscleAffected != muscleAffected)
+    if (muscleAffected != null && entry.muscleAffected != muscleAffected) {
       return false;
+    }
     if (eventType != null && entry.eventType != eventType) return false;
     if (actorType != null && entry.actorType != actorType) return false;
     if (severity != null && entry.severity != severity) return false;
