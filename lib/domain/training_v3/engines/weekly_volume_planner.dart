@@ -38,7 +38,7 @@ class WeeklyVolumePlanner {
     }
 
     // 2. Progression logic for subsequent weeks
-    baseVop.keys.forEach((muscle) {
+    for (final muscle in baseVop.keys) {
       final startSets = baseVop[muscle] ?? 10; // Fallback safe
       final currentMev = mevByMuscle[muscle] ?? 8;
       final currentMrv = mrvByMuscle[muscle] ?? 20; // Default safe cap
@@ -149,8 +149,9 @@ class WeeklyVolumePlanner {
           );
 
           newSets = (previousWeekVol * 0.50).round();
-          if (newSets < currentMev)
+          if (newSets < currentMev) {
             newSets = currentMev; // Ensure minimum stimulus
+          }
           decision = 'Deload: -50% volume (Recovery)';
           break;
 
@@ -161,7 +162,7 @@ class WeeklyVolumePlanner {
 
       weekVolume[muscle] = newSets;
       weekTrace[muscle] = decision;
-    });
+    }
 
     _recordTrace(weekNumber, weekVolume, weekTrace);
     return weekVolume;

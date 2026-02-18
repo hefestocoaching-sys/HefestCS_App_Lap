@@ -40,7 +40,7 @@ class PlanDebugPrinter {
     }
 
     // Print Decision Trace if available
-    if (plan.extra != null && plan.extra['v3_decision_trace'] != null) {
+    if (plan.extra['v3_decision_trace'] != null) {
       buffer.writeln('\n=== DECISION TRACE ===');
       final trace = plan.extra['v3_decision_trace'] as Map;
       if (trace['weekDecisions'] != null) {

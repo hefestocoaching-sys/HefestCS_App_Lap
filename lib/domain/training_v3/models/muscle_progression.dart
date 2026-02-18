@@ -77,8 +77,12 @@ extension MuscleProgressionExtension on MuscleProgression {
 
   /// Tope de sets según prioridad
   int get volumeCap {
-    if (isPrimary) return mrvSets;
-    if (isSecondary) return (mrvSets * 0.8).ceil();
+    if (isPrimary) {
+      return mrvSets;
+    }
+    if (isSecondary) {
+      return (mrvSets * 0.8).ceil();
+    }
     return vopSets; // Terciario siempre VOP
   }
 
@@ -88,16 +92,24 @@ extension MuscleProgressionExtension on MuscleProgression {
   /// ¿Puede progresar (subir volumen)?
   bool get canProgress {
     // Terciario nunca progresa
-    if (isTertiary) return false;
+    if (isTertiary) {
+      return false;
+    }
 
     // Debe estar en discovering
-    if (currentPhase != 'discovering') return false;
+    if (currentPhase != 'discovering') {
+      return false;
+    }
 
     // No debe haber alcanzado cap
-    if (hasReachedVolumeCap) return false;
+    if (hasReachedVolumeCap) {
+      return false;
+    }
 
     // No debe estar muy cerca de deload automático
-    if (weeksSinceDeload >= (weeksUntilAutoDeload - 1)) return false;
+    if (weeksSinceDeload >= (weeksUntilAutoDeload - 1)) {
+      return false;
+    }
 
     return true;
   }
@@ -157,30 +169,33 @@ extension MuscleProgressionExtension on MuscleProgression {
     var score = 50.0;
 
     // Adherencia contribuye
-    if (avgAdherence4Weeks >= 0.9)
+    if (avgAdherence4Weeks >= 0.9) {
       score += 20;
-    else if (avgAdherence4Weeks >= 0.7)
+    } else if (avgAdherence4Weeks >= 0.7) {
       score += 10;
-    else
+    } else {
       score -= 10;
+    }
 
     // Tendencia contribuye
-    if (volumeTrend == 'increasing')
+    if (volumeTrend == 'increasing') {
       score += 15;
-    else if (volumeTrend == 'stable')
+    } else if (volumeTrend == 'stable') {
       score += 5;
-    else
+    } else {
       score -= 15;
+    }
 
     // Fase contribuye
-    if (currentPhase == 'discovering')
+    if (currentPhase == 'discovering') {
       score += 10;
-    else if (currentPhase == 'maintaining')
+    } else if (currentPhase == 'maintaining') {
       score += 5;
-    else if (currentPhase == 'overreaching')
+    } else if (currentPhase == 'overreaching') {
       score -= 15;
-    else if (currentPhase == 'deloading')
+    } else if (currentPhase == 'deloading') {
       score -= 10;
+    }
 
     // Semanas desde deload (demasiadas = menos saludable)
     if (weeksSinceDeload > weeksUntilAutoDeload) score -= 20;
