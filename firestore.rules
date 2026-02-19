@@ -12,6 +12,19 @@ service cloud.firestore {
     function isCoach(coachId) {
       return request.auth.uid == coachId;
     }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isCoachOfClient(clientId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/coaches/$(request.auth.uid)/clients/$(clientId));
+    }
+
+    function canAccessUserTrainingData(userId) {
+      return isOwner(userId) || isCoachOfClient(userId);
+    }
     
     // ════════════════════════════════════════════════════════════
     // COACHES & CLIENTS (MANTENER)
@@ -61,6 +74,33 @@ service cloud.firestore {
       // Leer/Actualizar/Eliminar: Solo si ya es dueño del documento
       allow read, update, delete: if isAuthenticated() &&
         resource.data.coachId == request.auth.uid;
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // TRAINING V3 USER DATA (MÚSCULO / ANÁLISIS / AUDITORÍA)
+    // Permite acceso al propio usuario o al coach dueño del cliente.
+    // ════════════════════════════════════════════════════════════
+
+    match /users/{userId} {
+      match /muscle_progression/{muscleId} {
+        allow read, write: if canAccessUserTrainingData(userId);
+
+        match /progress_history/{weekId} {
+          allow read, write: if canAccessUserTrainingData(userId);
+        }
+      }
+
+      match /weekly_analysis/{analysisId} {
+        allow read, write: if canAccessUserTrainingData(userId);
+      }
+
+      match /audit_logs/{logId} {
+        allow read, write: if canAccessUserTrainingData(userId);
+      }
+
+      match /angle_coverage/{coverageId} {
+        allow read, write: if canAccessUserTrainingData(userId);
+      }
     }
   }
 }
