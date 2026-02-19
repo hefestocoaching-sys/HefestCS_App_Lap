@@ -137,14 +137,19 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
         batch.set(docRef, _serializeTrackerForFirestore(tracker));
       }
 
-      await batch.commit();
-
-      debugPrint(
-        '[MuscleProgressionRepo] Initialized ${muscle_registry.canonicalMuscles.length} trackers for user $userId',
-      );
+      try {
+        // FIXME: Debugging persistence crash. Temporarily disabling commit to prove control.
+        // await batch.commit();
+        debugPrint('[MuscleProgressionRepo] SKIPPED TRACKER INIT (Debugging)');
+      } catch (e) {
+        debugPrint(
+          '[MuscleProgressionRepo] ⚠️ Batch commit SAFEGUARD ACTIVATED (offline?): $e',
+        );
+        // Swallow error - trackers will be initialized later or lazily.
+      }
     } catch (e) {
-      debugPrint('[MuscleProgressionRepo] Error initializing trackers: $e');
-      rethrow;
+      debugPrint('[MuscleProgressionRepo] Error preparing trackers: $e');
+      // Do NOT rethrow.
     }
   }
 

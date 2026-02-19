@@ -6,6 +6,7 @@ class EquivalentDefinition {
   final double proteinG; // gramos proteína
   final double fatG; // gramos grasas
   final double carbG; // gramos carbohidratos
+  final double ethanolG; // gramos etanol (alcohol)
 
   const EquivalentDefinition({
     required this.id,
@@ -15,6 +16,7 @@ class EquivalentDefinition {
     required this.proteinG,
     required this.fatG,
     required this.carbG,
+    this.ethanolG = 0.0,
   });
 
   /// Macro llave por grupo (para cálculo de conversión)
@@ -147,9 +149,18 @@ class EquivalentCatalog {
       group: 'leches',
       subgroup: 'entera',
       kcal: 150.0,
-      proteinG: 8.0,
+      proteinG: 9.0,
       fatG: 8.0,
       carbG: 12.0,
+    ),
+    EquivalentDefinition(
+      id: 'leche_con_azucar',
+      group: 'leches',
+      subgroup: 'con_azucar',
+      kcal: 200.0,
+      proteinG: 8.0,
+      fatG: 5.0,
+      carbG: 30.0,
     ),
     EquivalentDefinition(
       id: 'grasas_sin_proteina',

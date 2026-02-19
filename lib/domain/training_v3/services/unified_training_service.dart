@@ -76,19 +76,37 @@ class UnifiedTrainingService {
         }
       }
 
-      await _progressionRepo.initializeAllTrackers(
-        userId: client.id,
-        musclePriorities: musclePriorities,
-        trainingLevel:
-            client.trainingEvaluation?.experienceLevel ??
-            client.training.trainingLevel?.name ??
-            'intermediate',
-        age: client.profile.age ?? 30,
-      );
+      debugPrint('[UnifiedTraining] Initializing trackers...');
+      try {
+        await _progressionRepo.initializeAllTrackers(
+          userId: client.id,
+          musclePriorities: musclePriorities,
+          trainingLevel:
+              client.trainingEvaluation?.experienceLevel ??
+              client.training.trainingLevel?.name ??
+              'intermediate',
+          age: client.profile.age ?? 30,
+        );
+      } catch (e) {
+        // P0 Offline-First: Don't block generation if Firebase fails/offline
+        debugPrint(
+          '[UnifiedTraining] ⚠️ Error initializing trackers (Offline Mode?): $e',
+        );
+        // Proceed without trackers implies 'feedback' might be empty, handled by Orquestrator defaults.
+      }
 
-      final initialTrackers = await _progressionRepo.getAllTrackers(
-        userId: client.id,
-      );
+      Map<String, MuscleProgressionTracker> initialTrackers = {};
+      try {
+        initialTrackers = await _progressionRepo.getAllTrackers(
+          userId: client.id,
+        );
+      } catch (e) {
+        debugPrint(
+          '[UnifiedTraining] ⚠️ Error loading trackers SAFEGUARD (Offline Mode?): $e',
+        );
+        // Fallback: empty trackers map, Orchestrator will use defaults
+        initialTrackers = {};
+      }
 
       debugPrint('[UnifiedTraining] Generation complete');
 

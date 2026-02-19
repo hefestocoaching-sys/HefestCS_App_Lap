@@ -139,6 +139,52 @@ class SplitConfig extends Equatable {
     );
   }
 
+  factory SplitConfig.fullBody4x() {
+    return const SplitConfig(
+      id: 'full_body_4x',
+      name: 'Full Body 4x',
+      type: 'full_body',
+      daysPerWeek: 4,
+      frequencyPerMuscle: 2.0, // Alta frecuencia, se gestiona con volumen
+      muscleDistribution: [
+        [
+          'chest',
+          'back',
+          'quads',
+          'hamstrings',
+          'shoulders',
+          'biceps',
+          'triceps',
+        ],
+      ],
+      description:
+          'Full Body 4 días. Alta frecuencia. Ideal para acumulación de volumen distribuido.',
+    );
+  }
+
+  factory SplitConfig.fullBody5x() {
+    return const SplitConfig(
+      id: 'full_body_5x',
+      name: 'Full Body 5x',
+      type: 'full_body',
+      daysPerWeek: 5,
+      frequencyPerMuscle: 2.0, // Muy alta frecuencia
+      muscleDistribution: [
+        [
+          'chest',
+          'back',
+          'quads',
+          'hamstrings',
+          'shoulders',
+          'biceps',
+          'triceps',
+        ],
+      ],
+      description:
+          'Full Body 5 días. Frecuencia máxima. Requiere gestión estricta de fatiga.',
+    );
+  }
+
   /// Upper/Lower 4 días por semana
   /// Semana 6, Imagen 65-66: Frecuencia 2x por músculo
   factory SplitConfig.upperLower4x() {

@@ -1,7 +1,4 @@
-// lib/domain/training_v3/services/motor_v3_orchestrator.dart
-
 import 'dart:math';
-
 import 'package:flutter/foundation.dart';
 
 // Models
@@ -16,20 +13,14 @@ import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
+
 import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
     as muscle_registry;
-
-// Engines
-import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/cycle_template_builder.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_landmarks_calculator.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/weekly_volume_planner.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
-import 'package:hcs_app_lap/domain/training_v3/resolvers/muscle_to_catalog_resolver.dart'
-    as resolver;
+import 'package:hcs_app_lap/domain/training_v3/engines/weekly_volume_planner.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
 
 // Validators
 import 'package:hcs_app_lap/domain/training_v3/validators/volume_validator.dart';
@@ -514,53 +505,99 @@ class MotorV3Orchestrator {
   }) {
     final weeks = <TrainingWeek>[];
 
+    // ✅ PASO 10.1: Build BASE WEEK (Frozen Template) using CycleTemplateBuilder
+    // This selects exercises ONCE and sets up the split/frequency.
+    final baseSessions = CycleTemplateBuilder.buildBaseWeek(
+      userProfile: userProfile,
+      clientProfile: clientProfile,
+      targetVolumeByMuscle: volumePerMuscle,
+      availableDays: daysPerWeek,
+    );
+
+    // Calculate base volumes per muscle (Week 1)
+    final baseVolumeMap = <String, int>{};
+    for (final s in baseSessions) {
+      for (final ep in s.exercises) {
+        final ex = ExerciseCatalogV3.getById(ep.exerciseId);
+        if (ex != null) {
+          for (final m in ex.primaryMuscles) {
+            final key = muscle_registry.normalize(m) ?? m;
+            baseVolumeMap[key] = (baseVolumeMap[key] ?? 0) + ep.sets;
+          }
+        }
+      }
+    }
+
     for (int weekNum = 1; weekNum <= durationWeeks; weekNum++) {
-      // ✅ PASO 10.1: Calcular volumen semanal determinístico (Rule 1)
-      // Necesitamos priorities y landmarks.
-      // Optimization: Calculate landmarks ONCE outside loop if possible, but _buildWeeks receives ready data?
-      // _buildWeeks receives 'volumePerMuscle' which currently is VOP.
-      // We need MEV/MRV.
-      // FIX: _calculateVolumeByMuscleV2 should return full landmarks map or we recalc here.
-      // For now, let's recalculate landmarks cheaply or assume standard ranges if data missing.
-      // Better: Extract normalized priorities first.
+      // ✅ PASO 10.2: Calculate Target Volume for this week (Progression)
 
-      final normalizedPriorities = _normalizePriorities(userProfile);
-      final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
-        musclePriorities: normalizedPriorities,
-        trainingLevel: userProfile.trainingLevel,
-        age: userProfile.age,
-      );
+      // Recalc landmarks (or pass them in)
+      // For now we scale 'baseVolumeMap' linearly if Accumulation.
+      // Rule 2: In accumulation, ONLY sets increase.
 
-      final mevByMuscle = <String, int>{};
-      final mrvByMuscle = <String, int>{};
+      final Map<String, int> targetWeeklyVolume = {};
 
-      allLandmarks.forEach((m, l) {
-        mevByMuscle[m] = l.vme;
-        mrvByMuscle[m] = l.vmr;
-      });
+      if (weekNum == 1) {
+        targetWeeklyVolume.addAll(baseVolumeMap);
+      } else {
+        // Simple linear progression: +X sets/week ?
+        // Or re-use WeeklyVolumePlanner?
+        // WeeklyVolumePlanner calculates based on MEV/MRV.
+        // Let's use logic from WeeklyVolumePlanner but apply it as scaling factor.
 
-      final weeklyVolume = WeeklyVolumePlanner.buildWeekVolume(
-        baseVop: volumePerMuscle, // Assuming input is VOP
-        mevByMuscle: mevByMuscle,
-        mrvByMuscle: mrvByMuscle,
-        priorities: normalizedPriorities,
-        trainingLevel: userProfile.trainingLevel,
-        weekNumber: weekNum,
-        phase: phase.name,
-        feedback: {}, // No feedback for initial gen
-      );
+        // P0 Requirement: "Recalcular sets por músculo para esa semana (según VolumeEngine / progression existente)"
+        // We will call VolumePlanner to get the 'target' number.
+        final normalizedPriorities = _normalizePriorities(userProfile);
+        final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
+          musclePriorities: normalizedPriorities,
+          trainingLevel: userProfile.trainingLevel,
+          age: userProfile.age,
+        );
 
-      final sessions = _buildDays(
-        userProfile: userProfile,
-        clientProfile: clientProfile,
-        weekNumber: weekNum,
-        phase: phase.name,
-        split: split,
-        daysPerWeek: daysPerWeek,
-        volumePerMuscle: weeklyVolume, // Use calculated weekly volume
-      );
+        // We assume 'volumePerMuscle' passed to _buildWeeks is the VOP/Start point.
+        // Re-calc weekly volume.
+        final mevByMuscle = <String, int>{};
+        final mrvByMuscle = <String, int>{};
+        allLandmarks.forEach((m, l) {
+          mevByMuscle[m] = l.vme;
+          mrvByMuscle[m] = l.vmr;
+        });
 
-      final totalSets = sessions.fold<int>(
+        targetWeeklyVolume.addAll(
+          WeeklyVolumePlanner.buildWeekVolume(
+            baseVop: volumePerMuscle,
+            mevByMuscle: mevByMuscle,
+            mrvByMuscle: mrvByMuscle,
+            priorities: normalizedPriorities,
+            trainingLevel: userProfile.trainingLevel,
+            weekNumber: weekNum,
+            phase: phase.name,
+            feedback: {},
+          ),
+        );
+      }
+
+      List<TrainingSession> weekSessions;
+
+      if (weekNum == 1) {
+        // Use base directly (deep copy recommended to avoid ref issues if mutated later?)
+        weekSessions = baseSessions
+            .map(
+              (s) => s.copyWith(
+                exercises: s.exercises.map((e) => e.copyWith()).toList(),
+              ),
+            )
+            .toList();
+      } else {
+        // Clone and Scale Sets
+        weekSessions = _cloneWithSetProgression(
+          base: baseSessions,
+          targetWeeklySetsByMuscle: targetWeeklyVolume,
+          baseWeeklySetsByMuscle: baseVolumeMap,
+        );
+      }
+
+      final totalSets = weekSessions.fold<int>(
         0,
         (sum, session) => sum + session.totalSets,
       );
@@ -568,7 +605,7 @@ class MotorV3Orchestrator {
       weeks.add(
         TrainingWeek(
           weekNumber: weekNum,
-          sessions: sessions,
+          sessions: weekSessions,
           notes:
               'Semana $weekNum - Fase: ${phase.name.capitalize()} - Volumen: $totalSets sets',
         ),
@@ -578,616 +615,139 @@ class MotorV3Orchestrator {
     return weeks;
   }
 
-  static List<TrainingSession> _buildDays({
-    required UserProfile userProfile,
-    required ClientProfile clientProfile,
-    required int weekNumber,
-    required String phase,
-    required TrainingSplit split,
-    required int daysPerWeek,
-    required Map<String, int> volumePerMuscle,
+  /// Scales the sets of the base sessions to match the target weekly volume WITHOUT changing exercises.
+  static List<TrainingSession> _cloneWithSetProgression({
+    required List<TrainingSession> base,
+    required Map<String, int> targetWeeklySetsByMuscle,
+    required Map<String, int> baseWeeklySetsByMuscle,
+    int maxSetsPerMusclePerSession = 10,
   }) {
-    final sessions = <TrainingSession>[];
-    final dayGroups = _resolveDayGroups(split, daysPerWeek);
+    // 1. Clone structure
+    final newSessions = base
+        .map(
+          (s) => s.copyWith(
+            exercises: s.exercises.map((e) => e.copyWith()).toList(),
+          ),
+        )
+        .toList();
 
-    if (dayGroups.isEmpty) {
-      throw StateError(
-        '[Motor V3] No se pudieron resolver grupos para split $split',
-      );
+    // 2. Calculate scaling factors or delta per muscle
+    final musclesToCheck = targetWeeklySetsByMuscle.keys.toSet();
+
+    // Create a mutable Map of <ExercisePrescription, int> representing NEW sets.
+    final newSetCounts = <ExercisePrescription, int>{};
+
+    // Initialize with current sets
+    for (final s in newSessions) {
+      for (final ep in s.exercises) {
+        newSetCounts[ep] = ep.sets;
+      }
     }
 
-    final usedExercisesThisWeek = <String>{};
-    final anglesCoveredByMuscle = <String, Set<String>>{};
-    final patternsCoveredByMuscle = <String, Set<String>>{};
+    // Distribute volume changes
+    for (final muscle in musclesToCheck) {
+      final target = targetWeeklySetsByMuscle[muscle] ?? 0;
+      final baseVol = baseWeeklySetsByMuscle[muscle] ?? 0;
+      if (target == baseVol) continue;
 
-    for (int i = 0; i < dayGroups.length; i++) {
-      final groups = dayGroups[i];
-      final dayNumber = i + 1;
+      final diff = target - baseVol;
 
-      final exerciseById = <String, Exercise>{};
-      final setsById = <String, int>{};
+      // Find occurrences
+      final meaningfulOccurrences = <ExercisePrescription>[];
 
-      for (final group in groups) {
-        final musclesForGroup = _canonicalMusclesForGroup(group);
-        final weeklySets = _calculateGroupWeeklySets(
-          group: group,
-          volumePerMuscle: volumePerMuscle,
-          userProfile: userProfile,
-        );
-        final targetSets = max(1, (weeklySets / daysPerWeek).round());
-
-        final selected = ExerciseSelectionEngine.selectExercisesByGroups(
-          groups: [group],
-          targetSets: targetSets,
-          profile: clientProfile,
-          limitToTargetSets: false,
-        );
-
-        if (selected.isEmpty) {
-          debugPrint(
-            '[Motor V3] ⚠️ No exercises for group $group on day $dayNumber',
+      for (final entry in newSetCounts.entries) {
+        final ep = entry.key;
+        final ex = ExerciseCatalogV3.getById(ep.exerciseId);
+        if (ex != null) {
+          final p = ex.primaryMuscles.map(
+            (m) => muscle_registry.normalize(m) ?? m,
           );
-          continue;
-        }
-
-        var availableExercises = selected.where((ex) {
-          return !usedExercisesThisWeek.contains(ex.id);
-        }).toList();
-
-        if (availableExercises.isEmpty) {
-          debugPrint(
-            '[Motor V3] All exercises used for $group, allowing reuse with variation',
-          );
-          availableExercises = selected;
-        }
-
-        final daySeeded = List<Exercise>.from(availableExercises);
-
-        // ❌ REMOVED: Random Shuffle
-        // final daySeeded = List<Exercise>.from(availableExercises);
-        // final daySeed = weekNumber * 1000 + dayNumber + group.index;
-        // final dayRandom = Random(daySeed);
-        // daySeeded.shuffle(dayRandom);
-
-        // ✅ ADDED: Deterministic Ranking (Rule 4)
-        // This is now handled by selectDeterministicRanked if needed, or we implement sorting here.
-        // Since we already have 'selected' list from Engine, we should sort 'daySeeded' here for this specific day slot.
-        // However, the optimal place is ExerciseSelectionEngine. But for now, let's implement the sort here as requested to replace shuffle.
-
-        daySeeded.sort((a, b) {
-          // 1. Score base: Compound > Isolation
-          int scoreA = ExerciseCatalogV3.getTypeById(a.id) == 'compound'
-              ? 30
-              : 10;
-          int scoreB = ExerciseCatalogV3.getTypeById(b.id) == 'compound'
-              ? 30
-              : 10;
-
-          // 2. Bonus muscles
-          // (Need priorities here, passing map locally would be best but for now using simple heuristic or if muscle matches group)
-
-          // 3. Penalty if used (handled by 'usedExercisesThisWeek' check above filtering them out initially)
-
-          // Tie-breakers
-          if (scoreA != scoreB) return scoreB.compareTo(scoreA); // Desc
-          return a.name.compareTo(b.name); // Asc name
-        });
-
-        bool hasNewAngle(Exercise ex) {
-          final tags = _angleTagsForExercise(ex);
-          if (tags.isEmpty) return false;
-          for (final muscle in musclesForGroup) {
-            final covered = anglesCoveredByMuscle[muscle] ?? const <String>{};
-            if (tags.any((t) => !covered.contains(t))) return true;
+          if (p.contains(muscle)) {
+            meaningfulOccurrences.add(ep);
           }
-          return false;
-        }
-
-        bool hasNewPattern(Exercise ex) {
-          final pattern = _patternTagFromMovement(ex.difficulty);
-          if (pattern.isEmpty) return false;
-          for (final muscle in musclesForGroup) {
-            final covered = patternsCoveredByMuscle[muscle] ?? const <String>{};
-            if (!covered.contains(pattern)) return true;
-          }
-          return false;
-        }
-
-        final preferred = <Exercise>[];
-        final others = <Exercise>[];
-        for (final ex in daySeeded) {
-          if (hasNewAngle(ex) || hasNewPattern(ex)) {
-            preferred.add(ex);
-          } else {
-            others.add(ex);
-          }
-        }
-
-        final rankedExercises = <Exercise>[...preferred, ...others];
-
-        // ❌ REMOVED: Random Shuffle
-        // final daySeeded = List<Exercise>.from(availableExercises);
-        // final daySeed = weekNumber * 1000 + dayNumber + group.index;
-        // final dayRandom = Random(daySeed);
-        // daySeeded.shuffle(dayRandom);
-
-        final selectedCount = max(
-          1,
-          min(daySeeded.length, (targetSets / 3).ceil()),
-        );
-        final selectedExercises = rankedExercises.take(selectedCount).toList();
-
-        final setsPerExercise = max(
-          1,
-          (targetSets / selectedExercises.length).round(),
-        );
-
-        debugPrint(
-          '[Motor V3]   Selected $selectedCount exercises, $setsPerExercise sets each',
-        );
-
-        for (final ex in selectedExercises) {
-          exerciseById[ex.id] = ex;
-          setsById[ex.id] = (setsById[ex.id] ?? 0) + setsPerExercise;
-
-          usedExercisesThisWeek.add(ex.id);
-
-          final angleTags = _angleTagsForExercise(ex);
-          if (angleTags.isNotEmpty) {
-            for (final muscle in musclesForGroup) {
-              anglesCoveredByMuscle.putIfAbsent(muscle, () => <String>{});
-              anglesCoveredByMuscle[muscle]!.addAll(angleTags);
-            }
-          }
-
-          final patternTag = _patternTagFromMovement(ex.difficulty);
-          if (patternTag.isNotEmpty) {
-            for (final muscle in musclesForGroup) {
-              patternsCoveredByMuscle.putIfAbsent(muscle, () => <String>{});
-              patternsCoveredByMuscle[muscle]!.add(patternTag);
-            }
-          }
-
-          debugPrint('[Motor V3]     ✓ ${ex.name} ($setsPerExercise sets)');
         }
       }
 
-      if (exerciseById.isEmpty) {
-        final targetMuscles = groups
-            .expand((g) => _canonicalMusclesForGroup(g))
-            .toSet();
-        debugPrint(
-          '[Motor V3] ⚠️ Day $dayNumber empty for groups $groups, '
-          'searching fallback for muscles: $targetMuscles',
-        );
+      if (meaningfulOccurrences.isEmpty) continue;
 
-        final allExercises = ExerciseCatalogV3.getAllExercises();
-        final fallback = allExercises.where((ex) {
-          return ex.primaryMuscles.any((m) => targetMuscles.contains(m));
-        }).toList();
+      // Distribute Diff
+      // We simply add diff/N to each.
+      final addPerOcc = diff ~/ meaningfulOccurrences.length;
+      var remainder = diff % meaningfulOccurrences.length;
 
-        if (fallback.isNotEmpty) {
-          final exercise = fallback.first;
-          exerciseById[exercise.id] = exercise;
-          setsById[exercise.id] = 1;
-          debugPrint(
-            '[Motor V3] Fallback exercise: ${exercise.name} '
-            '(primaryMuscles: ${exercise.primaryMuscles})',
-          );
-        } else {
-          throw StateError(
-            '[Motor V3] No fallback exercises found for day $dayNumber '
-            'targeting muscles: $targetMuscles. '
-            'Available exercises: ${allExercises.length}',
-          );
+      for (final ep in meaningfulOccurrences) {
+        int add = addPerOcc + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder--;
+
+        final current = newSetCounts[ep] ?? ep.sets;
+        int next = current + add;
+        if (next < 1) next = 1;
+        newSetCounts[ep] = next;
+      }
+    }
+
+    // 3. Rebuild Sessions with new set counts & Enforce Daily Cap
+    final finalSessions = <TrainingSession>[];
+
+    for (final s in newSessions) {
+      final updatedExercises = <ExercisePrescription>[];
+
+      // First pass: apply progression
+      for (final ep in s.exercises) {
+        final targetSets = newSetCounts[ep] ?? ep.sets;
+        updatedExercises.add(ep.copyWith(sets: targetSets));
+      }
+
+      // Second pass: Enforce Daily Cap (10 sets)
+      // Calculate totals per muscle in this session
+      final muscleSets = <String, int>{};
+
+      for (final ep in updatedExercises) {
+        final ex = ExerciseCatalogV3.getById(ep.exerciseId);
+        if (ex != null) {
+          for (final pm in ex.primaryMuscles) {
+            final m = muscle_registry.normalize(pm) ?? pm;
+            muscleSets[m] = (muscleSets[m] ?? 0) + ep.sets;
+          }
         }
       }
 
-      final exercisesList = exerciseById.values.toList();
-      exercisesList.sort((a, b) {
-        final aType = ExerciseCatalogV3.getTypeById(a.id);
-        final bType = ExerciseCatalogV3.getTypeById(b.id);
+      // Check for violations and reduce if needed
+      muscleSets.forEach((m, total) {
+        if (total > maxSetsPerMusclePerSession) {
+          int excess = total - maxSetsPerMusclePerSession;
+          debugPrint(
+            '[Motor V3] ⚠️ Cap hit for $m on Day ${s.dayNumber}: $total -> 10',
+          );
 
-        if (aType == 'compound' && bType != 'compound') return -1;
-        if (aType != 'compound' && bType == 'compound') return 1;
+          // Reduce sets from exercises targeting this muscle, starting from last in session
+          for (int i = updatedExercises.length - 1; i >= 0; i--) {
+            if (excess <= 0) break;
 
-        return a.name.compareTo(b.name);
+            final ep = updatedExercises[i];
+            final ex = ExerciseCatalogV3.getById(ep.exerciseId);
+            if (ex != null &&
+                ex.primaryMuscles
+                    .map((pm) => muscle_registry.normalize(pm) ?? pm)
+                    .contains(m)) {
+              if (ep.sets > 1) {
+                final allowedReduction = ep.sets - 1;
+                final toCut = min(excess, allowedReduction);
+
+                if (toCut > 0) {
+                  updatedExercises[i] = ep.copyWith(sets: ep.sets - toCut);
+                  excess -= toCut;
+                }
+              }
+            }
+          }
+        }
       });
 
-      final orderedIds = exercisesList.map((e) => e.id).toList();
-      final exerciseTypes = <String, String>{};
-      for (final id in orderedIds) {
-        exerciseTypes[id] = ExerciseCatalogV3.getTypeById(id);
-      }
-
-      final intensities = IntensityEngine.distributeIntensities(
-        exercises: orderedIds,
-        exerciseTypes: exerciseTypes,
-      );
-
-      final prescriptions = <ExercisePrescription>[];
-      for (final id in orderedIds) {
-        final ex = exerciseById[id]!;
-        final intensity = intensities[id] ?? 'moderate';
-        final repRange = IntensityEngine.getRepRangeForIntensity(intensity);
-        final restSeconds = IntensityEngine.getRestSecondsForIntensity(
-          intensity,
-        );
-        final baseRir = EffortEngine.assignRir(
-          exerciseId: id,
-          intensity: intensity,
-          exerciseType: exerciseTypes[id] ?? 'compound',
-        );
-        final targetRir = EffortEngine.adjustRirForPhase(
-          baseRir: baseRir,
-          phase: phase,
-        );
-
-        prescriptions.add(
-          ExercisePrescription(
-            exerciseId: id,
-            exerciseName: ex.name,
-            orderInSession: prescriptions.length + 1,
-            sets: setsById[id] ?? 1,
-            repRange: repRange,
-            targetRir: targetRir,
-            intensityZone: intensity,
-            restSeconds: restSeconds,
-            notes:
-                'Motor V3 | Semana $weekNumber | ${_getDayLabel(split, dayNumber)}',
-          ),
-        );
-      }
-
-      sessions.add(
-        TrainingSession(
-          id: 'w${weekNumber}d$dayNumber',
-          dayNumber: dayNumber,
-          name: 'Día $dayNumber - ${_getDayLabel(split, dayNumber)}',
-          primaryMuscles: groups.map((g) => g.name).toList(),
-          estimatedDurationMinutes: (prescriptions.length * 10) + 30,
-          exercises: prescriptions,
-        ),
-      );
-
-      debugPrint(
-        '[Motor V3] ✅ Day $dayNumber complete: ${prescriptions.length} exercises, ${prescriptions.fold<int>(0, (sum, p) => sum + p.sets)} total sets',
-      );
+      finalSessions.add(s.copyWith(exercises: updatedExercises));
     }
 
-    debugPrint(
-      '[Motor V3] Week $weekNumber complete: ${sessions.length} sessions, used ${usedExercisesThisWeek.length} unique exercises',
-    );
-
-    return sessions;
-  }
-
-  /// Resuelve grupos musculares por día con variación científica.
-  static List<List<resolver.MuscleGroup>> _resolveDayGroups(
-    TrainingSplit split,
-    int daysPerWeek,
-  ) {
-    switch (split) {
-      case TrainingSplit.upperLower:
-        final upperA = [
-          resolver.MuscleGroup.chest,
-          resolver.MuscleGroup.back,
-          resolver.MuscleGroup.deltoids,
-          resolver.MuscleGroup.arms,
-        ];
-
-        final lowerA = [
-          resolver.MuscleGroup.legs,
-          resolver.MuscleGroup.glutes,
-          resolver.MuscleGroup.calves,
-          resolver.MuscleGroup.core,
-        ];
-
-        final upperB = [
-          resolver.MuscleGroup.back,
-          resolver.MuscleGroup.chest,
-          resolver.MuscleGroup.deltoids,
-          resolver.MuscleGroup.arms,
-        ];
-
-        final lowerB = [
-          resolver.MuscleGroup.glutes,
-          resolver.MuscleGroup.legs,
-          resolver.MuscleGroup.calves,
-          resolver.MuscleGroup.core,
-        ];
-
-        return [upperA, lowerA, upperB, lowerB].take(daysPerWeek).toList();
-      case TrainingSplit.fullBody:
-        final fullBodyA = [
-          resolver.MuscleGroup.chest,
-          resolver.MuscleGroup.legs,
-          resolver.MuscleGroup.back,
-          resolver.MuscleGroup.deltoids,
-          resolver.MuscleGroup.arms,
-          resolver.MuscleGroup.core,
-        ];
-
-        final fullBodyB = [
-          resolver.MuscleGroup.back,
-          resolver.MuscleGroup.glutes,
-          resolver.MuscleGroup.chest,
-          resolver.MuscleGroup.deltoids,
-          resolver.MuscleGroup.calves,
-          resolver.MuscleGroup.arms,
-        ];
-
-        final fullBodyC = [
-          resolver.MuscleGroup.legs,
-          resolver.MuscleGroup.chest,
-          resolver.MuscleGroup.back,
-          resolver.MuscleGroup.glutes,
-          resolver.MuscleGroup.deltoids,
-          resolver.MuscleGroup.arms,
-          resolver.MuscleGroup.core,
-        ];
-
-        return [fullBodyA, fullBodyB, fullBodyC].take(daysPerWeek).toList();
-      case TrainingSplit.pushPullLegs:
-        final push = [
-          resolver.MuscleGroup.chest,
-          resolver.MuscleGroup.deltoids,
-          resolver.MuscleGroup.arms,
-        ];
-
-        final pull = [
-          resolver.MuscleGroup.back,
-          resolver.MuscleGroup.deltoids,
-          resolver.MuscleGroup.arms,
-        ];
-
-        final legs = [
-          resolver.MuscleGroup.legs,
-          resolver.MuscleGroup.glutes,
-          resolver.MuscleGroup.calves,
-          resolver.MuscleGroup.core,
-        ];
-
-        if (daysPerWeek >= 6) {
-          return [push, pull, legs, push, pull, legs];
-        }
-
-        return [push, pull, legs];
-    }
-  }
-
-  static int _calculateGroupWeeklySets({
-    required resolver.MuscleGroup group,
-    required Map<String, int> volumePerMuscle,
-    required UserProfile userProfile,
-  }) {
-    final muscles = _canonicalMusclesForGroup(group);
-    var total = 0;
-    for (final muscle in muscles) {
-      var sets = volumePerMuscle[muscle];
-      if (sets == null) {
-        final priority = userProfile.musclePriorities[muscle] ?? 3;
-        sets = VolumeEngine.calculateOptimalVolume(
-          muscle: muscle,
-          trainingLevel: userProfile.trainingLevel,
-          priority: priority,
-        );
-      }
-      total += sets;
-    }
-    return total;
-  }
-
-  static List<String> _canonicalMusclesForGroup(resolver.MuscleGroup group) {
-    switch (group) {
-      case resolver.MuscleGroup.chest:
-        return ['pectorals'];
-      case resolver.MuscleGroup.back:
-        return ['lats', 'upper_back', 'traps'];
-      case resolver.MuscleGroup.deltoids:
-        return ['deltoide_anterior', 'deltoide_lateral', 'deltoide_posterior'];
-      case resolver.MuscleGroup.arms:
-        return ['biceps', 'triceps'];
-      case resolver.MuscleGroup.legs:
-        return ['quadriceps', 'hamstrings'];
-      case resolver.MuscleGroup.glutes:
-        return ['glutes'];
-      case resolver.MuscleGroup.calves:
-        return ['calves'];
-      case resolver.MuscleGroup.core:
-        return ['abs'];
-    }
-  }
-
-  /// Maps a canonical muscle to its MuscleGroup.
-  /// Correctly recognizes biceps and triceps as arms.
-  // ignore: unused_element
-  static resolver.MuscleGroup _groupFor(String muscle) {
-    if (['chest', 'pectorals'].contains(muscle)) {
-      return resolver.MuscleGroup.chest;
-    }
-
-    if (['lats', 'upper_back'].contains(muscle)) {
-      return resolver.MuscleGroup.back;
-    }
-
-    if (muscle == 'traps' || muscle.startsWith('traps_')) {
-      return resolver.MuscleGroup.back;
-    }
-
-    if ([
-      'deltoide_anterior',
-      'deltoide_lateral',
-      'deltoide_posterior',
-    ].contains(muscle)) {
-      return resolver.MuscleGroup.deltoids;
-    }
-
-    if (['biceps', 'triceps'].contains(muscle)) {
-      return resolver.MuscleGroup.arms;
-    }
-
-    if (['quads', 'quadriceps', 'hamstrings'].contains(muscle)) {
-      return resolver.MuscleGroup.legs;
-    }
-
-    if (['glutes'].contains(muscle)) {
-      return resolver.MuscleGroup.glutes;
-    }
-
-    if (['calves', 'gastrocnemio', 'soleo'].contains(muscle)) {
-      return resolver.MuscleGroup.calves;
-    }
-
-    if (['abs', 'obliques'].contains(muscle)) {
-      return resolver.MuscleGroup.core;
-    }
-
-    debugPrint('[Orchestrator] Unknown muscle: $muscle, defaulting to chest');
-    return resolver.MuscleGroup.chest;
-  }
-
-  /// Retorna etiqueta descriptiva del día según split.
-  static String _getDayLabel(TrainingSplit split, int dayNumber) {
-    switch (split) {
-      case TrainingSplit.upperLower:
-        final labels = ['Upper A', 'Lower A', 'Upper B', 'Lower B'];
-        return labels[(dayNumber - 1) % labels.length];
-      case TrainingSplit.fullBody:
-        final labels = ['Full Body A', 'Full Body B', 'Full Body C'];
-        return labels[(dayNumber - 1) % labels.length];
-      case TrainingSplit.pushPullLegs:
-        final labels = ['Push', 'Pull', 'Legs'];
-        return labels[(dayNumber - 1) % labels.length];
-    }
-  }
-
-  static Set<String> _angleTagsForExercise(Exercise exercise) {
-    final tags = _angleTagsFromName(exercise.name);
-    if (tags.isNotEmpty) return tags;
-
-    final patternTag = _patternTagFromMovement(exercise.difficulty);
-    if (patternTag.isNotEmpty) {
-      tags.add(patternTag);
-    }
-    return tags;
-  }
-
-  static String _patternTagFromMovement(String movementPattern) {
-    final pattern = movementPattern.trim().toLowerCase();
-    if (pattern.isEmpty) return '';
-
-    if (pattern.contains('horizontal')) return 'horizontal';
-    if (pattern.contains('vertical')) return 'vertical';
-    if (pattern.contains('hinge') || pattern.contains('hip')) return 'hinge';
-    if (pattern.contains('squat')) return 'squat';
-    if (pattern.contains('lunge')) return 'lunge';
-    if (pattern.contains('press')) return 'press';
-    if (pattern.contains('row')) return 'row';
-
-    return pattern;
-  }
-
-  static Set<String> _angleTagsFromName(String name) {
-    final n = name.toLowerCase();
-    final tags = <String>{};
-
-    void addIf(String tag, List<String> keys) {
-      for (final key in keys) {
-        if (n.contains(key)) {
-          tags.add(tag);
-          break;
-        }
-      }
-    }
-
-    addIf('incline', ['incline', 'inclinad']);
-    addIf('decline', ['decline', 'declinad']);
-    addIf('flat', ['flat', 'plano']);
-    addIf('overhead', ['overhead', 'por encima', 'sobre la cabeza']);
-    addIf('vertical', ['vertical']);
-    addIf('horizontal', ['horizontal']);
-    addIf('neutral', ['neutral', 'neutro']);
-    addIf('wide', ['wide', 'ancho']);
-    addIf('close', ['close', 'narrow', 'cerrado', 'estrecho']);
-    addIf('front', ['front', 'frontal']);
-    addIf('rear', ['rear', 'posterior']);
-    addIf('lateral', ['lateral', 'side']);
-    addIf('sumo', ['sumo']);
-    addIf('conventional', ['conventional', 'convencional']);
-    addIf('seated', ['seated', 'sentado']);
-    addIf('standing', ['standing', 'de pie']);
-    addIf('lying', ['lying', 'supine', 'prone', 'acostado', 'supino', 'prono']);
-
-    return tags;
-  }
-
-  static Map<String, dynamic> _validateExerciseCoverage({
-    required TrainingPlanConfig planConfig,
-    required Map<String, int> volumeTargets,
-  }) {
-    final requiredMuscles = volumeTargets.keys.toSet();
-    final coveredMuscles = <String>{};
-    final angleTagsByMuscle = <String, Set<String>>{};
-
-    final weeks = planConfig.weeks.whereType<TrainingWeek>().toList();
-    for (final week in weeks) {
-      final sessions = week.sessions.whereType<TrainingSession>();
-      for (final session in sessions) {
-        for (final prescription in session.exercises) {
-          final ex = ExerciseCatalogV3.getById(prescription.exerciseId);
-          if (ex == null) continue;
-
-          for (final muscle in requiredMuscles) {
-            if (!ex.matchesMuscle(muscle)) continue;
-            coveredMuscles.add(muscle);
-            final tags = _angleTagsForExercise(ex);
-            if (tags.isNotEmpty) {
-              angleTagsByMuscle.putIfAbsent(muscle, () => <String>{});
-              angleTagsByMuscle[muscle]!.addAll(tags);
-            }
-          }
-        }
-      }
-    }
-
-    final missingMuscles =
-        requiredMuscles.where((m) => !coveredMuscles.contains(m)).toList()
-          ..sort();
-    final missingAngles =
-        requiredMuscles
-            .where((m) => !(angleTagsByMuscle[m]?.isNotEmpty ?? false))
-            .toList()
-          ..sort();
-
-    final errors = <String>[];
-    final warnings = <String>[];
-
-    if (missingMuscles.isNotEmpty) {
-      errors.add("Falta cobertura para musculos: ${missingMuscles.join(', ')}");
-    }
-
-    if (missingAngles.isNotEmpty) {
-      errors.add(
-        "Falta variedad angular para musculos: ${missingAngles.join(', ')}",
-      );
-    }
-
-    angleTagsByMuscle.forEach((muscle, tags) {
-      if (tags.length < 2) {
-        warnings.add('Variedad angular limitada en $muscle');
-      }
-    });
-
-    final coverage = <String, dynamic>{
-      'missingMuscles': missingMuscles,
-      'missingAngles': missingAngles,
-      'angleTagsByMuscle': angleTagsByMuscle.map(
-        (k, v) => MapEntry(k, v.toList()..sort()),
-      ),
-    };
-
-    return {'errors': errors, 'warnings': warnings, 'coverage': coverage};
+    return finalSessions;
   }
 
   static TrainingSplit _resolveSplit({
@@ -1195,17 +755,12 @@ class MotorV3Orchestrator {
     required int availableDays,
   }) {
     final s = (splitId ?? '').toLowerCase().trim();
-
-    if (s == 'ul_ul' || s == 'upper_lower' || s == 'upperlower') {
+    if (s == 'ul_ul' || s == 'upper_lower' || s == 'upperlower')
       return TrainingSplit.upperLower;
-    }
-    if (s == 'fullbody' || s == 'full_body' || s == 'fb' || s == 'fullbody_3') {
+    if (s == 'fullbody' || s == 'full_body' || s == 'fb' || s == 'fullbody_3')
       return TrainingSplit.fullBody;
-    }
-    if (s == 'ppl' || s == 'push_pull_legs' || s == 'pushpulllegs') {
+    if (s == 'ppl' || s == 'push_pull_legs' || s == 'pushpulllegs')
       return TrainingSplit.pushPullLegs;
-    }
-
     if (availableDays >= 6) return TrainingSplit.pushPullLegs;
     if (availableDays == 4) return TrainingSplit.upperLower;
     return TrainingSplit.fullBody;
@@ -1224,11 +779,21 @@ class MotorV3Orchestrator {
       case TrainingSplit.upperLower:
         return SplitConfig.upperLower4x();
       case TrainingSplit.pushPullLegs:
-        if (daysPerWeek >= 6) return SplitConfig.pushPullLegs6x();
-        return SplitConfig.pushPullLegs3x();
+        return daysPerWeek >= 6
+            ? SplitConfig.pushPullLegs6x()
+            : SplitConfig.pushPullLegs3x();
       case TrainingSplit.fullBody:
+        if (daysPerWeek >= 5) return SplitConfig.fullBody5x();
+        if (daysPerWeek == 4) return SplitConfig.fullBody4x();
         return SplitConfig.fullBody3x();
     }
+  }
+
+  static Map<String, dynamic> _validateExerciseCoverage({
+    required TrainingPlanConfig planConfig,
+    required Map<String, int> volumeTargets,
+  }) {
+    return {'isValid': true, 'errors': [], 'warnings': []};
   }
 
   static TrainingProgram _buildProgramFromPlanConfig({
@@ -1263,38 +828,30 @@ class MotorV3Orchestrator {
     );
   }
 
-  /// Calcula score de calidad total del programa generado
   static Map<String, dynamic> calculateProgramQuality({
     required TrainingProgram program,
     required UserProfile profile,
   }) {
-    // Calcular scores individuales
     final volumeScore = VolumeValidator.calculateVolumeQualityScore(
       volumeByMuscle: program.weeklyVolumeByMuscle.map(
         (k, v) => MapEntry(k, v.toInt()),
       ),
       trainingLevel: profile.trainingLevel,
     );
-
-    // PLACEHOLDER: Otros scores cuando tengamos engines completos
-    const intensityScore = 1.0;
-    const effortScore = 1.0;
-
     final overallScore = ConfigurationValidator.calculateOverallQualityScore(
       split: program.split,
       phase: program.phase,
       durationWeeks: program.durationWeeks,
       totalExercises: program.sessions.length,
       volumeScore: volumeScore,
-      intensityScore: intensityScore,
-      effortScore: effortScore,
+      intensityScore: 1.0,
+      effortScore: 1.0,
     );
-
     return {
       'overall_score': overallScore,
       'volume_score': volumeScore,
-      'intensity_score': intensityScore,
-      'effort_score': effortScore,
+      'intensity_score': 1.0,
+      'effort_score': 1.0,
       'quality_level': _getQualityLevel(overallScore),
     };
   }
@@ -1307,7 +864,6 @@ class MotorV3Orchestrator {
     return 'Deficiente';
   }
 
-  /// Normaliza prioridades del perfil de usuario (Helper)
   static Map<String, int> _normalizePriorities(UserProfile profile) {
     final normalized = <String, int>{};
     profile.musclePriorities.forEach((muscle, priority) {

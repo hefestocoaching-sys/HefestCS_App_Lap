@@ -485,9 +485,13 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
           0;
       final ageYears = _readNumExtra(extra, [TrainingExtraKeys.ageYears]) ?? 0;
 
-      _heightCmCtrl.text = heightCm > 0 ? heightCm.toString() : '';
-      _weightKgCtrl.text = weightKg > 0 ? weightKg.toString() : '';
-      _ageYearsCtrl.text = ageYears > 0 ? ageYears.toString() : '';
+      _heightCmCtrl.text = heightCm > 0
+          ? heightCm.toInt().toString()
+          : ''; // Simplificado a int por ahora
+      _weightKgCtrl.text = weightKg > 0
+          ? weightKg.toString().replaceAll(RegExp(r'\.0$'), '')
+          : '';
+      _ageYearsCtrl.text = ageYears > 0 ? ageYears.toInt().toString() : '';
     }
 
     // LOG TEMPORAL: Verificar que se cargaron correctamente
@@ -616,8 +620,17 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   }
 
   int? _parseIntFromText(String raw) {
+    if (raw.trim().isEmpty) return null;
+    // Intentar parsear como int directo
+    final intVal = int.tryParse(raw);
+    if (intVal != null) return intVal;
+
+    // Intentar parsear como double y redondear (para casos "30.0")
+    final doubleVal = double.tryParse(raw);
+    if (doubleVal != null) return doubleVal.round();
+
+    // Fallback: limpieza agresiva (solo si no es numero valido)
     final cleaned = raw.replaceAll(RegExp(r'[^0-9]'), '');
-    if (cleaned.isEmpty) return null;
     return int.tryParse(cleaned);
   }
 
@@ -1626,10 +1639,9 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     String? errorText,
     required void Function(int?) onChanged,
   }) {
-    final normalizedOptions =
-        value == null || options.contains(value)
-            ? options
-            : ([...options, value]..sort());
+    final normalizedOptions = value == null || options.contains(value)
+        ? options
+        : ([...options, value]..sort());
     final safeValue = normalizedOptions.contains(value) ? value : null;
     return DropdownButtonFormField<int>(
       initialValue: safeValue,

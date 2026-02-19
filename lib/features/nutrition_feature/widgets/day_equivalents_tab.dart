@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
+import 'package:hcs_app_lap/features/nutrition_feature/providers/general_equivalents_provider.dart';
+import 'package:hcs_app_lap/features/nutrition_feature/widgets/general_equivalents_table.dart';
+import 'package:hcs_app_lap/nutrition_engine/equivalents/adaptive_equivalents_engine.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/providers/equivalents_by_day_provider.dart';
 import 'package:hcs_app_lap/domain/entities/daily_macro_settings.dart';
 import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_definition.dart';
@@ -59,29 +62,84 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
   void _ensureDaySetup() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final mealsCount = widget.planResult.mealsPerDay;
-      final groupIds = EquivalentCatalog.v1Definitions
-          .map((def) => def.id)
-          .toList();
+
       final state = ref.read(equivalentsByDayProvider);
       final dayEquivalents = state.dayEquivalents[widget.dayKey];
-      final dayMeals = state.dayMealEquivalents[widget.dayKey];
-      final hasAllGroups = dayEquivalents != null &&
-          groupIds.every(dayEquivalents.containsKey);
-      final hasAllMeals = dayMeals != null &&
-          groupIds.every((id) {
-            final meals = dayMeals[id];
-            if (meals == null) return false;
-            for (var i = 0; i < mealsCount; i++) {
-              if (!meals.containsKey(i)) return false;
-            }
-            return true;
-          });
-      if (hasAllGroups && hasAllMeals) return;
+
+      // If data exists, we assume it's valid (persistence).
+      // However, if it's empty, we generate it from General Baseline (Native Adaptive Logic).
+      if (dayEquivalents != null && dayEquivalents.isNotEmpty) return;
+
+      final generalState = ref.read(generalEquivalentsProvider);
+      if (generalState.equivalents.isEmpty) {
+        // Fallback: Just ensure empty day structure
+        _initializeEmptyDay();
+        return;
+      }
+
+      // Calculate Target Kcal for this day
+      double targetKcal = _calculateDayTargetKcal();
+      if (targetKcal == 0) targetKcal = 2000; // Safe default
+
+      // Run Adaptive Engine
+      final engine = AdaptiveEquivalentsEngine();
+      final adaptedTotals = engine.adaptToDay(
+        generalState.equivalents,
+        targetKcal,
+      );
+
+      final mealsCount = widget.planResult.mealsPerDay ?? 3;
+      final adaptedMeals = engine.adaptMeals(
+        generalState.mealEquivalents,
+        adaptedTotals,
+        mealsCount,
+      );
+
+      // Populate Provider
       ref
           .read(equivalentsByDayProvider.notifier)
-          .ensureDay(widget.dayKey, mealsCount, groupIds);
+          .setDayData(widget.dayKey, adaptedTotals, adaptedMeals);
+
+      // Notify user purely visual?
+      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan Adaptado de General')));
     });
+  }
+
+  void _initializeEmptyDay() {
+    final mealsCount = widget.planResult.mealsPerDay;
+    final groupIds = EquivalentCatalog.v1Definitions
+        .map((def) => def.id)
+        .toList();
+    ref
+        .read(equivalentsByDayProvider.notifier)
+        .ensureDay(widget.dayKey, mealsCount, groupIds);
+  }
+
+  double _calculateDayTargetKcal() {
+    // Use the same logic as _buildGeneralEquivalentsTab to find target
+    final client = ref.read(clientsProvider).value?.activeClient;
+    if (client == null) return widget.planResult?.kcalTargetDay ?? 0.0;
+
+    final activeDateIso = dateIsoFrom(ref.read(globalDateProvider));
+    final macroRecords = readNutritionRecordList(
+      client.nutrition.extra[NutritionExtraKeys.macrosRecords],
+    );
+    final macroRecord =
+        nutritionRecordForDate(macroRecords, activeDateIso) ??
+        latestNutritionRecordByDate(macroRecords);
+    final activeMacros = parseWeeklyMacroSettings(
+      macroRecord?['weeklyMacroSettings'],
+    );
+
+    if (activeMacros != null && activeMacros[widget.dayKey] != null) {
+      final daySettings = activeMacros[widget.dayKey]!;
+      if (daySettings.totalCalories > 0) return daySettings.totalCalories;
+      final w = client.lastWeight ?? 70.0;
+      return (daySettings.proteinSelected * w * 4) +
+          (daySettings.carbSelected * w * 4) +
+          (daySettings.fatSelected * w * 9);
+    }
+    return widget.planResult?.kcalTargetDay ?? 0.0;
   }
 
   @override
@@ -119,11 +177,10 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
   // =====================================================================
 
   Widget _buildGeneralEquivalentsTab(BuildContext context) {
-    final allGroups = _getAllSMAEGroups();
     final state = ref.watch(equivalentsByDayProvider);
     final dayEquivalents = state.dayEquivalents[widget.dayKey] ?? {};
-    final totals = _calculateTotals(dayEquivalents);
 
+    // Calculate Targets
     double kcalTarget = 0.0;
     double proteinTarget = 0.0;
     double fatTarget = 0.0;
@@ -142,12 +199,12 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
           nutritionRecordForDate(macroRecords, activeDateIso) ??
           latestNutritionRecordByDate(macroRecords);
 
-      final activeMacros =
-          parseWeeklyMacroSettings(macroRecord?['weeklyMacroSettings']);
+      final activeMacros = parseWeeklyMacroSettings(
+        macroRecord?['weeklyMacroSettings'],
+      );
 
       if (activeMacros != null) {
         final double weight = client.lastWeight ?? 70.0;
-
         final DailyMacroSettings? daySettings = activeMacros[widget.dayKey];
 
         if (daySettings != null) {
@@ -169,167 +226,37 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       carbTarget = widget.planResult.carbTargetDay ?? 0.0;
     }
 
-    final groupsWithValues = allGroups
-        .where((group) => (dayEquivalents[group.id] ?? 0) > 0)
-        .toList();
-    final emptyGroups = allGroups
-        .where((group) => (dayEquivalents[group.id] ?? 0) == 0)
-        .toList();
+    final targets = {
+      'kcal': kcalTarget,
+      'protein': proteinTarget,
+      'fat': fatTarget,
+      'carbs': carbTarget,
+    };
 
-    return CustomScrollView(
-      slivers: [
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _SummaryHeaderDelegate(
-            minHeight: 240,
-            maxHeight: 240,
-            child: _buildSummaryCard(
-              context,
-              totals,
-              kcalTarget: kcalTarget,
-              proteinTarget: proteinTarget,
-              fatTarget: fatTarget,
-              carbTarget: carbTarget,
-            ),
+    return Column(
+      children: [
+        // Table
+        Expanded(
+          child: GeneralEquivalentsTable(
+            targets: targets,
+            equivalentsOverride: dayEquivalents,
+            onUpdateOverride: (id, delta) {
+              ref
+                  .read(equivalentsByDayProvider.notifier)
+                  .updateEquivalent(widget.dayKey, id, delta);
+            },
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
-        if (groupsWithValues.isNotEmpty)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'GRUPOS ASIGNADOS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: kTextColorSecondary.withValues(alpha: 0.9),
-                ),
-              ),
-            ),
-          ),
-        if (groupsWithValues.isNotEmpty)
-          SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final group = groupsWithValues[index];
-              final qty = dayEquivalents[group.id] ?? 0;
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: _buildGroupCard(group, qty),
-              );
-            }, childCount: groupsWithValues.length),
-          ),
-        if (groupsWithValues.isEmpty)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: _buildEmptyGroupsCard(),
-            ),
-          ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: OutlinedButton.icon(
-              onPressed: () => _showAddGroupDialog(context, emptyGroups),
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text('Agregar Grupo de Alimentos'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                minimumSize: const Size(double.infinity, 50),
-              ),
-            ),
-          ),
-        ),
-        if (emptyGroups.isNotEmpty)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              child: _buildEmptyGroupsExpansion(emptyGroups),
-            ),
-          ),
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
-      ],
-    );
-  }
-
-  Widget _buildSummaryCard(
-    BuildContext context,
-    Map<String, double> totals, {
-    required double kcalTarget,
-    required double proteinTarget,
-    required double fatTarget,
-    required double carbTarget,
-  }) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            kPrimaryColor.withValues(alpha: 0.14),
-            kCardColor.withValues(alpha: 0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kPrimaryColor.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.calendar_today, size: 18, color: kPrimaryColor),
-              const SizedBox(width: 8),
-              Text(
-                'RESUMEN DEL DIA: ${widget.dayLabel.toUpperCase()}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: kPrimaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildMacroProgressRow(
-            label: 'Energia',
-            current: totals['kcal'] ?? 0,
-            target: kcalTarget,
-            unit: 'kcal',
-            color: Colors.orange,
-          ),
-          const SizedBox(height: 10),
-          _buildMacroProgressRow(
-            label: 'Proteina',
-            current: totals['protein'] ?? 0,
-            target: proteinTarget,
-            unit: 'g',
-            color: Colors.blue,
-          ),
-          const SizedBox(height: 10),
-          _buildMacroProgressRow(
-            label: 'Grasas',
-            current: totals['fat'] ?? 0,
-            target: fatTarget,
-            unit: 'g',
-            color: Colors.purple,
-          ),
-          const SizedBox(height: 10),
-          _buildMacroProgressRow(
-            label: 'Carbos',
-            current: totals['carb'] ?? 0,
-            target: carbTarget,
-            unit: 'g',
-            color: Colors.amber,
-          ),
-          const SizedBox(height: 12),
-          Row(
+        // Action Buttons (Copy/Auto)
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _showCopyDayDialog(context),
                   icon: const Icon(Icons.copy, size: 18),
-                  label: const Text('Copiar de otro dia'),
+                  label: const Text('Copiar Dia'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
@@ -340,7 +267,7 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
                 child: ElevatedButton.icon(
                   onPressed: () => _autoDistribute(context),
                   icon: const Icon(Icons.auto_awesome, size: 18),
-                  label: const Text('Distribucion auto'),
+                  label: const Text('Auto Dist'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrimaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -370,292 +297,8 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMacroProgressRow({
-    required String label,
-    required double current,
-    required double target,
-    required String unit,
-    required Color color,
-  }) {
-    final progress = target <= 0 ? 0 : current / target;
-    final percentage = (progress * 100).clamp(0, 200);
-    final diff = current - target;
-    final progressColor = percentage >= 90 && percentage <= 110
-        ? Colors.green
-        : percentage >= 80 && percentage <= 120
-        ? Colors.orange
-        : Colors.red;
-
-    final diffText = diff.abs() < 1
-        ? 'Objetivo alcanzado'
-        : diff > 0
-        ? 'Sobran ${diff.toStringAsFixed(0)}$unit'
-        : 'Faltan ${diff.abs().toStringAsFixed(0)}$unit';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-            Text(
-              '${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} $unit',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: kTextColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: LinearProgressIndicator(
-                value: progress.clamp(0, 1).toDouble(),
-                backgroundColor: Colors.white.withValues(alpha: 0.08),
-                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
-                minHeight: 8,
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              '${percentage.toStringAsFixed(0)}%',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: progressColor,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          diffText,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: progressColor,
-          ),
         ),
       ],
-    );
-  }
-
-  Widget _buildGroupCard(EquivalentDefinition def, double qty) {
-    final kcal = def.kcal * qty;
-    final protein = def.proteinG * qty;
-    final fat = def.fatG * qty;
-    final carb = def.carbG * qty;
-    final groupColor = _getGroupColor(def.group);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _getGroupBackgroundColor(def.group),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: groupColor.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: groupColor.withValues(alpha: 0.2),
-                child: Icon(Icons.restaurant, color: groupColor, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _getGroupMainLabel(def.group),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: kTextColor,
-                      ),
-                    ),
-                    if (def.subgroup.isNotEmpty)
-                      Text(
-                        _getSubgroupLabel(def.subgroup),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: kTextColorSecondary,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Row(
-                children: [
-                  InkWell(
-                    onTap: qty >= 0.5
-                        ? () => ref
-                              .read(equivalentsByDayProvider.notifier)
-                              .updateEquivalent(widget.dayKey, def.id, -0.5)
-                        : null,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Padding(
-                      padding: const EdgeInsets.all(6),
-                      child: Icon(
-                        Icons.remove_circle_outline,
-                        size: 22,
-                        color: qty >= 0.5
-                            ? kPrimaryColor
-                            : kTextColorSecondary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 46,
-                    child: Text(
-                      qty.toStringAsFixed(1),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: kTextColor,
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () => ref
-                        .read(equivalentsByDayProvider.notifier)
-                        .updateEquivalent(widget.dayKey, def.id, 0.5),
-                    borderRadius: BorderRadius.circular(20),
-                    child: const Padding(
-                      padding: EdgeInsets.all(6),
-                      child: Icon(
-                        Icons.add_circle_outline,
-                        size: 22,
-                        color: kPrimaryColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildMacroChip('${kcal.toStringAsFixed(0)} kcal', Colors.orange),
-              _buildMacroChip(
-                '${protein.toStringAsFixed(1)}g prot',
-                Colors.blue,
-              ),
-              _buildMacroChip('${carb.toStringAsFixed(1)}g HC', Colors.amber),
-              _buildMacroChip(
-                '${fat.toStringAsFixed(1)}g grasa',
-                Colors.purple,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMacroChip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyGroupsCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: kCardColor.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kTextColorSecondary.withValues(alpha: 0.2)),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.info_outline, color: kTextColorSecondary),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'No hay grupos asignados. Agrega grupos para empezar.',
-              style: TextStyle(fontSize: 12, color: kTextColorSecondary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyGroupsExpansion(List<EquivalentDefinition> emptyGroups) {
-    return Container(
-      decoration: BoxDecoration(
-        color: kCardColor.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kTextColorSecondary.withValues(alpha: 0.15)),
-      ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        title: Text(
-          'Grupos sin asignar (${emptyGroups.length})',
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: kTextColorSecondary,
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: emptyGroups
-                  .map(
-                    (g) => Chip(
-                      label: Text(
-                        _getGroupMainLabel(g.group),
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                      backgroundColor: kCardColor.withValues(alpha: 0.3),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1047,60 +690,6 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     );
   }
 
-  void _showAddGroupDialog(
-    BuildContext context,
-    List<EquivalentDefinition> emptyGroups,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: kCardColor,
-          title: const Text(
-            'Agregar Grupo',
-            style: TextStyle(color: kTextColor),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: emptyGroups.length,
-              itemBuilder: (context, index) {
-                final def = emptyGroups[index];
-                return ListTile(
-                  leading: Icon(
-                    Icons.restaurant,
-                    color: _getGroupColor(def.group),
-                  ),
-                  title: Text(
-                    _getGroupMainLabel(def.group),
-                    style: const TextStyle(
-                      color: kTextColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'P:${def.proteinG}g • C:${def.carbG}g • G:${def.fatG}g • ${def.kcal}kcal',
-                    style: const TextStyle(
-                      color: kTextColorSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                  onTap: () {
-                    ref
-                        .read(equivalentsByDayProvider.notifier)
-                        .updateEquivalent(widget.dayKey, def.id, 1.0);
-                    Navigator.pop(context);
-                  },
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void _autoDistribute(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -1139,20 +728,6 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     final list = EquivalentCatalog.v1Definitions.toList();
     list.sort((a, b) => _getGroupOrder(a.id).compareTo(_getGroupOrder(b.id)));
     return list;
-  }
-
-  Map<String, double> _calculateTotals(Map<String, double> dayEquivalents) {
-    double kcal = 0, protein = 0, fat = 0, carb = 0;
-    for (final entry in dayEquivalents.entries) {
-      final def = EquivalentCatalog.v1Definitions.firstWhere(
-        (d) => d.id == entry.key,
-      );
-      kcal += def.kcal * entry.value;
-      protein += def.proteinG * entry.value;
-      fat += def.fatG * entry.value;
-      carb += def.carbG * entry.value;
-    }
-    return {'kcal': kcal, 'protein': protein, 'fat': fat, 'carb': carb};
   }
 
   Map<String, double> _calculateMealTotals(
@@ -1207,38 +782,6 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     return order[groupId] ?? 99;
   }
 
-  Color _getGroupBackgroundColor(String group) {
-    const colors = {
-      'vegetales': Color(0xFF4CAF50),
-      'frutas': Color(0xFFFFC107),
-      'cereales_tuberculos': Color(0xFF795548),
-      'leguminosas': Color(0xFF8BC34A),
-      'aoa': Color(0xFF90CAF9),
-      'leches': Color(0xFFE0E0E0),
-      'grasas': Color(0xFFFFC107),
-      'azucares': Color(0xFF90CAF9),
-      'libres': Color(0xFFBDBDBD),
-      'alcohol': Color(0xFFD7CCC8),
-    };
-    return (colors[group] ?? kCardColor).withValues(alpha: 0.12);
-  }
-
-  Color _getGroupColor(String group) {
-    const colors = {
-      'vegetales': Color(0xFF66BB6A),
-      'frutas': Color(0xFFFFB300),
-      'cereales_tuberculos': Color(0xFF8D6E63),
-      'leguminosas': Color(0xFF7CB342),
-      'aoa': Color(0xFF64B5F6),
-      'leches': Color(0xFF90A4AE),
-      'grasas': Color(0xFFFFA726),
-      'azucares': Color(0xFF42A5F5),
-      'libres': Color(0xFF9E9E9E),
-      'alcohol': Color(0xFFBCAAA4),
-    };
-    return colors[group] ?? kPrimaryColor;
-  }
-
   String _getGroupMainLabel(String group) {
     const labels = {
       'vegetales': 'Vegetales',
@@ -1273,39 +816,5 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       '': '',
     };
     return labels[subgroup] ?? subgroup;
-  }
-}
-
-class _SummaryHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final double minHeight;
-  final double maxHeight;
-  final Widget child;
-
-  _SummaryHeaderDelegate({
-    required this.minHeight,
-    required this.maxHeight,
-    required this.child,
-  });
-
-  @override
-  double get minExtent => minHeight;
-
-  @override
-  double get maxExtent => maxHeight;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
-  bool shouldRebuild(covariant _SummaryHeaderDelegate oldDelegate) {
-    return maxHeight != oldDelegate.maxHeight ||
-        minHeight != oldDelegate.minHeight ||
-        child != oldDelegate.child;
   }
 }

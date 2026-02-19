@@ -163,6 +163,7 @@ String? normalize(String rawKey) {
     'abs': 'abs',
     'abdomen': 'abs',
     'abdominales': 'abs',
+    'obliques': 'abs',
     'core': 'abs',
   };
 

@@ -36,6 +36,7 @@ class NutritionExtraKeys {
 
   // NEW v3: SMAE Equivalents
   static const String equivalentsByDay = 'equivalentsByDay';
+  static const String generalEquivalents = 'generalEquivalents';
 
   // NEW v3: Unified nutrition plans
   static const String nutritionPlansV3 = 'nutritionPlansV3';

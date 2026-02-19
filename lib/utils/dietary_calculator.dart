@@ -476,24 +476,35 @@ class DietaryCalculator {
   static double calculateTargetCaloriesPct({
     required double tmb,
     required double get,
-    required double deficitPct, // 0.10..0.25
+    required double
+    adjustmentPct, // Positive = Deficit (0.15), Negative = Surplus (-0.10)
     double floorPct = 0.95,
   }) {
-    final prelim = get * (1.0 - deficitPct);
-    final floor = tmb * floorPct;
-    return max(prelim, floor);
+    // adjustmentPct > 0: Deficit (1.0 - 0.15 = 0.85) -> Reduces calories
+    // adjustmentPct < 0: Surplus (1.0 - (-0.10) = 1.10) -> Increases calories
+    final prelim = get * (1.0 - adjustmentPct);
+
+    // Floor logic only applies to deficit to prevent dangerous lows.
+    // In surplus, we just take the calculated value.
+    if (adjustmentPct > 0) {
+      final floor = tmb * floorPct;
+      return max(prelim, floor);
+    }
+    return prelim;
   }
 
-  /// Déficit real (kcal) de un día, ya con piso aplicado
-  static double calculateDailyDeficitKcal({
+  /// Diferencia real (kcal) de un día.
+  /// Positive = Deficit (burnt > target)
+  /// Negative = Surplus (target > burnt)
+  static double calculateDailyDiffKcal({
     required double get,
     required double target,
   }) {
-    return max(0.0, get - target);
+    return get - target;
   }
 
-  /// Déficit promedio diario real (post-piso)
-  static double calculateAverageDailyDeficitKcal({
+  /// Diferencia promedio diaria real (post-piso)
+  static double calculateAverageDailyDiffKcal({
     required Map<String, double> dailyGet,
     required Map<String, int> dailyTargetKcal,
   }) {
@@ -502,19 +513,25 @@ class DietaryCalculator {
     int n = 0;
     dailyGet.forEach((day, get) {
       final target = (dailyTargetKcal[day] ?? get.round()).toDouble();
-      sum += calculateDailyDeficitKcal(get: get, target: target);
+      sum += calculateDailyDiffKcal(get: get, target: target);
       n++;
     });
     return n == 0 ? 0.0 : (sum / n);
   }
 
-  /// Estimación kg/semana y kg/mes basado en déficit real
-  static Map<String, double> estimateWeightLossFromDeficit({
-    required double avgDailyDeficitKcal,
+  /// Estimación kg/semana y kg/mes basado en diferencia real
+  /// Retorna positivo para pérdida, negativo para ganancia (o viceversa, ajustamos nombres)
+  static Map<String, double> estimateWeightChange({
+    required double avgDailyDiffKcal,
   }) {
-    final weeklyDeficit = avgDailyDeficitKcal * 7.0;
-    final kgWeek = weeklyDeficit / kcalPerKgFatApprox;
+    // avgDailyDiffKcal > 0 means Deficit (Weight Loss)
+    // avgDailyDiffKcal < 0 means Surplus (Weight Gain)
+
+    final weeklyDiff = avgDailyDiffKcal * 7.0;
+    // 7700 kcal approx for 1kg of tissue change (fat/muscle mix)
+    final kgWeek = weeklyDiff / kcalPerKgFatApprox;
     final kgMonth = kgWeek * 4.3;
+
     return {'kgWeek': kgWeek, 'kgMonth': kgMonth};
   }
 

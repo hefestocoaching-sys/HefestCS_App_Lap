@@ -28,8 +28,8 @@ class EquivalentsByDayState {
 
 final equivalentsByDayProvider =
     NotifierProvider<EquivalentsByDayNotifier, EquivalentsByDayState>(
-  EquivalentsByDayNotifier.new,
-);
+      EquivalentsByDayNotifier.new,
+    );
 
 class EquivalentsByDayNotifier extends Notifier<EquivalentsByDayState> {
   String? _loadedClientId;
@@ -95,6 +95,28 @@ class EquivalentsByDayNotifier extends Notifier<EquivalentsByDayState> {
     state = state.copyWith(
       dayEquivalents: dayEquivalents,
       dayMealEquivalents: dayMeals,
+    );
+  }
+
+  void setDayData(
+    String dayKey,
+    Map<String, double> newTotals,
+    Map<String, Map<int, double>> newMeals,
+  ) {
+    final dayEquivalents = Map<String, Map<String, double>>.from(
+      state.dayEquivalents,
+    );
+    final dayMealEquivalents = Map<String, Map<String, Map<int, double>>>.from(
+      state.dayMealEquivalents,
+    );
+
+    dayEquivalents[dayKey] = newTotals;
+    dayMealEquivalents[dayKey] = newMeals;
+
+    state = state.copyWith(
+      dayEquivalents: dayEquivalents,
+      dayMealEquivalents: dayMealEquivalents,
+      isDirty: true,
     );
   }
 

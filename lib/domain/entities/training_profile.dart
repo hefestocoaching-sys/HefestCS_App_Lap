@@ -540,8 +540,12 @@ class TrainingProfile extends Equatable {
             ?.toString();
     final resolvedPeakWeekHistory =
         (extraMap['peakWeekHistory'] ?? json['peakWeekHistory'])?.toString();
-    final resolvedAvgSleepHours =
-        parseDouble(extraMap['avgSleepHours'] ?? json['avgSleepHours']) ?? 0.0;
+    final resolvedAvgSleepHours = (() {
+      final val = parseDouble(
+        extraMap['avgSleepHours'] ?? json['avgSleepHours'],
+      );
+      return (val != null && val > 0) ? val : 0.0;
+    })();
 
     final monthsTrainingNow = parseInt(
       extraMap[TrainingInterviewKeys.monthsTrainingNow],
@@ -550,14 +554,25 @@ class TrainingProfile extends Equatable {
       json['yearsTrainingContinuous'] ??
           extraMap[TrainingInterviewLegacyKeys.yearsTrainingContinuous],
     );
-    final resolvedSessionDurationMinutes = parseInt(
+
+    // FIX: Fallback a timePerSessionMinutes si sessionDurationMinutes es 0
+    final rawSessionDuration = parseInt(
       json['sessionDurationMinutes'] ??
           extraMap[TrainingInterviewLegacyKeys.sessionDurationMinutes],
     );
-    final resolvedRestBetweenSetsSeconds = parseInt(
+    final resolvedSessionDurationMinutes = rawSessionDuration > 0
+        ? rawSessionDuration
+        : parseInt(extraMap[TrainingExtraKeys.timePerSessionMinutes]);
+
+    // FIX: Fallback correcto para restBetweenSets
+    final rawRestBetweenSets = parseInt(
       json['restBetweenSetsSeconds'] ??
           extraMap[TrainingInterviewLegacyKeys.restBetweenSetsSeconds],
     );
+    final resolvedRestBetweenSetsSeconds = rawRestBetweenSets > 0
+        ? rawRestBetweenSets
+        : parseInt(extraMap[TrainingExtraKeys.restBetweenSetsSeconds]);
+
     final resolvedPerceivedStress =
         (extraMap['perceivedStress'] ?? json['perceivedStress'])?.toString();
     final resolvedRecoveryQuality =

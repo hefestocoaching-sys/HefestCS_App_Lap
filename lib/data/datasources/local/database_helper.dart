@@ -24,12 +24,36 @@ List<Client> _parseClientsIsolate(List<Map<String, dynamic>> snapshot) {
           if (json == null) return null;
           return Client.fromJson(json);
         } catch (e) {
-          debugPrint('Error parsing client ${row['id']}: $e');
+          logger.warning('Error parsing client ${row['id']}: $e');
           return null;
         }
       })
       .whereType<Client>()
       .toList();
+}
+
+Map<String, dynamic> _encodeClientJsonIsolate(Client client) {
+  final payload = Map<String, dynamic>.from(client.toJson());
+  payload['schemaVersion'] = 1;
+  final nowIso = DateTime.now().toIso8601String();
+  payload['migratedAt'] = nowIso;
+  // Ensure the payload JSON contains the same updatedAt timestamp we store in the DB column
+  payload['updatedAt'] = nowIso;
+  return {
+    "id": client.id,
+    "json": jsonEncode(payload),
+    "isSynced": 0,
+    "isDeleted": 0,
+    "updatedAt": nowIso,
+  };
+}
+
+Client _decodeClientJsonIsolate(Map<String, dynamic> map) {
+  final decoded = SafeJson.decode(map['json'] as String?);
+  if (decoded == null) {
+    throw const FormatException('Invalid client JSON payload');
+  }
+  return Client.fromJson(decoded);
 }
 
 class DatabaseHelper {
@@ -40,6 +64,7 @@ class DatabaseHelper {
 
   static const String _dbName = 'hcs_app_lap_v4.db';
   static const int _dbVersion = 6;
+  static const int _busyTimeout = 3000; // 3000ms = 3s
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -60,6 +85,7 @@ class DatabaseHelper {
           await _ensureAppStateTable(db);
           await _ensureTrainingInterviewsTable(db);
           await SyncQueueHelper.ensureTable(db);
+          await db.execute('PRAGMA busy_timeout = $_busyTimeout');
           await db.execute('PRAGMA journal_mode=WAL');
           await db.execute('PRAGMA foreign_keys=ON');
         },
@@ -231,31 +257,15 @@ class DatabaseHelper {
   }
 
   // -------------------------------
-  // Internal Helpers
+  // Internal Helpers (Offloaded to Isolate)
   // -------------------------------
 
-  Map<String, dynamic> _wrapClientJson(Client client) {
-    final payload = Map<String, dynamic>.from(client.toJson());
-    payload['schemaVersion'] = 1;
-    final nowIso = DateTime.now().toIso8601String();
-    payload['migratedAt'] = nowIso;
-    // Ensure the payload JSON contains the same updatedAt timestamp we store in the DB column
-    payload['updatedAt'] = nowIso;
-    return {
-      "id": client.id,
-      "json": jsonEncode(payload),
-      "isSynced": 0,
-      "isDeleted": 0,
-      "updatedAt": nowIso,
-    };
+  Future<Map<String, dynamic>> _wrapClientJson(Client client) async {
+    return compute(_encodeClientJsonIsolate, client);
   }
 
-  Client _unwrapClientJson(Map<String, dynamic> map) {
-    final decoded = SafeJson.decode(map['json'] as String?);
-    if (decoded == null) {
-      throw const FormatException('Invalid client JSON payload');
-    }
-    return Client.fromJson(decoded);
+  Future<Client> _unwrapClientJson(Map<String, dynamic> map) async {
+    return compute(_decodeClientJsonIsolate, map);
   }
 
   // -------------------------------
@@ -263,25 +273,30 @@ class DatabaseHelper {
   // -------------------------------
 
   Future<void> upsertClient(Client client) async {
-    final db = await database;
-    final batch = db.batch();
+    await _runWithRetry(() async {
+      // Offload JSON encoding to isolate before starting transaction
+      final clientJson = await _wrapClientJson(client);
 
-    batch.insert(
-      'clients',
-      _wrapClientJson(client),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+      final db = await database;
+      final batch = db.batch();
 
-    final lastInterview = await getActiveTrainingInterview(client.id);
-    final newInterview = _buildInterviewFromClient(client, lastInterview);
+      batch.insert(
+        'clients',
+        clientJson,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
 
-    batch.insert(
-      'training_interviews',
-      newInterview.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+      final lastInterview = await getActiveTrainingInterview(client.id);
+      final newInterview = _buildInterviewFromClient(client, lastInterview);
 
-    await batch.commit(noResult: true);
+      batch.insert(
+        'training_interviews',
+        newInterview.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      await batch.commit(noResult: true);
+    });
   }
 
   Future<Client?> getClientById(String id) async {
@@ -294,7 +309,7 @@ class DatabaseHelper {
     );
 
     if (result.isEmpty) return null;
-    return _unwrapClientJson(result.first);
+    return await _unwrapClientJson(result.first);
   }
 
   Future<List<Client>> getAllClients() async {
@@ -302,27 +317,32 @@ class DatabaseHelper {
 
     final result = await db.query('clients', where: 'isDeleted = 0');
     if (result.isEmpty) return [];
+    // Already using compute in _parseClientsIsolate
     return compute(_parseClientsIsolate, result);
   }
 
   Future<void> softDeleteClient(String id) async {
-    final db = await database;
-    await db.update(
-      'clients',
-      {"isDeleted": 1, "updatedAt": DateTime.now().toIso8601String()},
-      where: "id = ?",
-      whereArgs: [id],
-    );
+    await _runWithRetry(() async {
+      final db = await database;
+      await db.update(
+        'clients',
+        {"isDeleted": 1, "updatedAt": DateTime.now().toIso8601String()},
+        where: "id = ?",
+        whereArgs: [id],
+      );
+    });
   }
 
   Future<void> markClientAsSynced(String id) async {
-    final db = await database;
-    await db.update(
-      'clients',
-      {"isSynced": 1},
-      where: "id = ?",
-      whereArgs: [id],
-    );
+    await _runWithRetry(() async {
+      final db = await database;
+      await db.update(
+        'clients',
+        {"isSynced": 1},
+        where: "id = ?",
+        whereArgs: [id],
+      );
+    });
   }
 
   Future<List<Client>> getUnsyncedClients() async {
@@ -333,7 +353,13 @@ class DatabaseHelper {
       where: 'isSynced = 0 AND isDeleted = 0',
     );
 
-    return result.map(_unwrapClientJson).toList();
+    // Optimize: handle potential large list with mapping
+    // But individual unwrap also uses isolate.
+    // For list, prefer bulk compute if possible, but _unwrapClientJson is singular.
+    // Let's stick to singular usage or refactor list fetching later.
+    // Given internal usage, loop await is acceptable or Future.wait.
+    final futures = result.map(_unwrapClientJson);
+    return Future.wait(futures);
   }
 
   // --- Compat helpers (mantienen API usada en otras capas) ---
@@ -342,22 +368,26 @@ class DatabaseHelper {
   Future<void> updateClient(Client client) => upsertClient(client);
 
   Future<void> insertTrainingInterview(TrainingInterview interview) async {
-    final db = await database;
-    await db.insert(
-      'training_interviews',
-      interview.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _runWithRetry(() async {
+      final db = await database;
+      await db.insert(
+        'training_interviews',
+        interview.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
   }
 
   Future<void> updateTrainingInterview(TrainingInterview interview) async {
-    final db = await database;
-    await db.update(
-      'training_interviews',
-      interview.toMap(),
-      where: 'id = ?',
-      whereArgs: [interview.id],
-    );
+    await _runWithRetry(() async {
+      final db = await database;
+      await db.update(
+        'training_interviews',
+        interview.toMap(),
+        where: 'id = ?',
+        whereArgs: [interview.id],
+      );
+    });
   }
 
   Future<TrainingInterview?> getActiveTrainingInterview(String clientId) async {
@@ -451,5 +481,37 @@ class DatabaseHelper {
     final value = result.first['value'] as String?;
     if (value == null || value.isEmpty) return null;
     return value;
+  }
+
+  /// Helper to retry DB operations on SQLITE_BUSY errors
+  Future<T> _runWithRetry<T>(
+    Future<T> Function() action, {
+    int retries = 3,
+  }) async {
+    for (int i = 0; i < retries; i++) {
+      try {
+        return await action();
+      } catch (e) {
+        final isBusy =
+            e.toString().contains('database is locked') ||
+            (e is DatabaseException &&
+                e.isDatabaseClosedError() == false &&
+                e.getResultCode() == 5); // 5 = SQLITE_BUSY
+
+        if (isBusy && i < retries - 1) {
+          logger.warning(
+            'Database locked, retrying operation (${i + 1}/$retries)...',
+          );
+          await Future.delayed(
+            Duration(milliseconds: 50 * (i + 1)),
+          ); // Exponential backoff light
+          continue;
+        }
+        rethrow;
+      }
+    }
+    throw Exception(
+      'Database retry failed after $retries attempts',
+    ); // Should not reach here
   }
 }

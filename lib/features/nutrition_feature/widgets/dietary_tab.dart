@@ -85,9 +85,9 @@ class DietaryTabState extends ConsumerState<DietaryTab>
 
   double _finalKcal = 0.0;
 
-  // NEW: Variables de estado para déficit porcentual
+  // NEW: Variables de estado para déficit/superávit porcentual (adjustment)
   Map<String, int> _dailyTargetKcal = {};
-  double _avgDailyDeficitKcal = 0.0;
+  double _avgDailyDiffKcal = 0.0; // Positive = Deficit, Negative = Surplus
   double _estimatedKgWeek = 0.0;
   double _estimatedKgMonth = 0.0;
 
@@ -300,7 +300,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       final target = DietaryCalculator.calculateTargetCaloriesPct(
         tmb: baseTMB,
         get: dailyGET,
-        deficitPct: deficitPct,
+        adjustmentPct: deficitPct,
       );
       dailyTarget[day] = target.round();
     }
@@ -319,19 +319,19 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       ref.read(dietaryProvider.notifier).updateFinalKcal(avg);
     }
 
-    // Calcular déficit real promedio y estimaciones de kg
+    // Calcular déficit/superávit real promedio y estimaciones de kg
     final dailyGetMap = <String, double>{
       for (final day in dietaryState.dailyActivities.keys)
         day: _calculateDailyGET(day),
     };
 
-    _avgDailyDeficitKcal = DietaryCalculator.calculateAverageDailyDeficitKcal(
+    _avgDailyDiffKcal = DietaryCalculator.calculateAverageDailyDiffKcal(
       dailyGet: dailyGetMap,
       dailyTargetKcal: dailyTarget,
     );
 
-    final est = DietaryCalculator.estimateWeightLossFromDeficit(
-      avgDailyDeficitKcal: _avgDailyDeficitKcal,
+    final est = DietaryCalculator.estimateWeightChange(
+      avgDailyDiffKcal: _avgDailyDiffKcal,
     );
 
     setState(() {
@@ -539,7 +539,8 @@ class DietaryTabState extends ConsumerState<DietaryTab>
           // NEW v2: Déficit porcentual y estimaciones
           'deficitPct': deficitPct,
           'floorPct': floorPct,
-          'deficitKcalAvg': _avgDailyDeficitKcal,
+          'deficitKcalAvg':
+              _avgDailyDiffKcal, // Reusing key for compatibility? Ideally rename, but this works as "diff"
           'estimatedKgWeek': _estimatedKgWeek,
           'estimatedKgMonth': _estimatedKgMonth,
 
@@ -1573,7 +1574,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
           title: 'Ajuste Final y Objetivo',
           child: DietaryAdjustmentSection(
             deficitPctController: _deficitPctController,
-            avgDailyDeficitKcal: _avgDailyDeficitKcal,
+            avgDailyDiffKcal: _avgDailyDiffKcal,
             estimatedKgWeek: _estimatedKgWeek,
             estimatedKgMonth: _estimatedKgMonth,
             days: dietaryState.dailyActivities.keys.toList(),
