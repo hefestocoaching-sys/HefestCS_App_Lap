@@ -87,7 +87,13 @@ class ExercisePrescription extends Equatable {
   /// Notas adicionales del coach
   final String? notes;
 
+  /// Músculo que recibe el volumen DIRECTO asignado por el motor.
+  /// Este campo es SSOT para progresión y validación.
+  /// NO usar anatomy.primaryMuscles para volumen directo.
+  final String directTargetMuscleKey;
+
   const ExercisePrescription({
+    required this.directTargetMuscleKey,
     required this.exerciseId,
     required this.exerciseName,
     required this.orderInSession,
@@ -175,6 +181,7 @@ class ExercisePrescription extends Equatable {
       'tempo': tempo,
       'intensificationTechnique': intensificationTechnique,
       'notes': notes,
+      'directTargetMuscleKey': directTargetMuscleKey,
     };
   }
 
@@ -192,9 +199,12 @@ class ExercisePrescription extends Equatable {
       tempo: json['tempo'] as String?,
       intensificationTechnique: json['intensificationTechnique'] as String?,
       notes: json['notes'] as String?,
+      directTargetMuscleKey:
+          (json['directTargetMuscleKey'] as String?) ?? 'unknown',
     );
   }
 
+  /// CopyWith para actualizaciones inmutables
   /// CopyWith para actualizaciones inmutables
   ExercisePrescription copyWith({
     String? exerciseId,
@@ -208,6 +218,7 @@ class ExercisePrescription extends Equatable {
     String? tempo,
     String? intensificationTechnique,
     String? notes,
+    String? directTargetMuscleKey,
   }) {
     return ExercisePrescription(
       exerciseId: exerciseId ?? this.exerciseId,
@@ -222,6 +233,8 @@ class ExercisePrescription extends Equatable {
       intensificationTechnique:
           intensificationTechnique ?? this.intensificationTechnique,
       notes: notes ?? this.notes,
+      directTargetMuscleKey:
+          directTargetMuscleKey ?? this.directTargetMuscleKey,
     );
   }
 
@@ -238,6 +251,7 @@ class ExercisePrescription extends Equatable {
     tempo,
     intensificationTechnique,
     notes,
+    directTargetMuscleKey,
   ];
 
   @override

@@ -1,5 +1,13 @@
 // lib/domain/training_v3/engines/intensity_engine.dart
 
+// [V3][P0] Intensity zone range constants
+const int kHeavyMin = 15;
+const int kHeavyMax = 30;
+const int kMediumMin = 40;
+const int kMediumMax = 70;
+const int kLightMin = 15;
+const int kLightMax = 30;
+
 /// Motor de distribución de intensidad por ejercicio
 ///
 /// Implementa las reglas científicas de la Semana 3 (12 imágenes):
@@ -20,6 +28,48 @@
 ///
 /// Versión: 1.0.0
 class IntensityEngine {
+  // ── P0.2-IE-2: Default split (no log/bitácora) ──
+  Map<String, int> defaultSplitNoLog() {
+    return const {'heavy': 20, 'medium': 60, 'light': 20};
+  }
+
+  // ── P0.2-IE-3: Validator ──
+  Map<String, int> validateOrDefaultSplit(Map<String, int> split) {
+    final heavy = split['heavy'] ?? -1;
+    final medium = split['medium'] ?? -1;
+    final light = split['light'] ?? -1;
+    final total = heavy + medium + light;
+
+    final ok =
+        (heavy >= kHeavyMin && heavy <= kHeavyMax) &&
+        (medium >= kMediumMin && medium <= kMediumMax) &&
+        (light >= kLightMin && light <= kLightMax) &&
+        (total == 100);
+
+    return ok ? split : defaultSplitNoLog();
+  }
+
+  // ── P0.2-IE-4: Deterministic set split for a day ──
+  Map<String, int> computeSetSplitForDay({
+    required int setsForDay,
+    Map<String, int>? desiredSplit,
+  }) {
+    final split = validateOrDefaultSplit(desiredSplit ?? defaultSplitNoLog());
+
+    final heavyPct = split['heavy']!;
+    final lightPct = split['light']!;
+
+    final heavySets = (setsForDay * (heavyPct / 100.0)).round();
+    final lightSets = (setsForDay * (lightPct / 100.0)).round();
+    final mediumSets = setsForDay - heavySets - lightSets;
+
+    return {
+      'heavy': heavySets < 0 ? 0 : heavySets,
+      'medium': mediumSets < 0 ? 0 : mediumSets,
+      'light': lightSets < 0 ? 0 : lightSets,
+    };
+  }
+
   /// Distribuye intensidades a una lista de ejercicios
   ///
   /// ALGORITMO:

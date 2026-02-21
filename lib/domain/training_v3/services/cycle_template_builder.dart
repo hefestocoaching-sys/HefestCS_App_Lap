@@ -6,6 +6,11 @@ import 'package:hcs_app_lap/domain/training_v3/models/client_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_ordering_rules.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/exercise_prescription.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/policies/split_table_ssot.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
 
 /// Builds the template for the training cycle (Frozen Week 1).
 ///
@@ -13,46 +18,57 @@ import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 /// 1. Frequency based on volume (<=10->1x, 11-20->2x, >=21->3x).
 /// 2. Daily Cap 10 sets/muscle (hard cap).
 /// 3. Frozen exercises (selected once here).
-/// 4. Dynamic Split based on frequency needs.
+/// 4. Dynamic Split based on frequency needs and SplitTableSSOT priorities.
 class CycleTemplateBuilder {
   /// Builds the Base Week (Week 1) with all exercises selected and frozen.
-  static List<TrainingSession> buildBaseWeek({
+  static TemplateBuildResult buildBaseWeek({
     required UserProfile userProfile,
     required ClientProfile clientProfile,
     required Map<String, int> targetVolumeByMuscle, // Week 1 Volume
     required int availableDays,
   }) {
     debugPrint(
-      '[CycleTemplateBuilder] Building Base Week for ${availableDays} days...',
+      '[CycleTemplateBuilder] Building Base Week for $availableDays days...',
     );
 
     // 1. Calculate Frequency & Sets per Session needed per muscle
-    final muscleConfig = _calculateMuscleConfig(
+    // P0.1: _calculateMuscleConfig now returns TemplateBuildResult on infeasibility.
+    final configResult = _calculateMuscleConfigOrFail(
       targetVolumeByMuscle,
       availableDays,
     );
+    if (!configResult.success) return configResult.asBuildResult;
+    final muscleConfig = configResult._muscleConfig!;
 
     // 2. Distribute Muscles into Days (Dynamic Split)
-    final normalizedPriorities = <String, int>{};
+    // We use the SSOT logic to determine priority if needed,
+    // though UserProfile priorities override defaults if present.
+    final priorities = <String, int>{};
+
+    // Initialize with SSOT defaults
+    for (final m in targetVolumeByMuscle.keys) {
+      priorities[m] = SplitTableSSOT.getPriority(m);
+    }
+
+    // Override with User Protocol if explicitly set
     userProfile.musclePriorities.forEach((m, p) {
-      normalizedPriorities[m] = p;
+      // Normalize first to ensure key match
+      final key = muscle_registry.normalize(m) ?? m;
+      priorities[key] = p;
     });
 
     final dailyAllocations = _distributeMusclesToDays(
       muscleConfig,
       availableDays,
-      normalizedPriorities,
+      priorities,
     );
 
     // 3. Select Exercises & Build Sessions
     final sessions = <TrainingSession>[];
-
-    // Track used exercises to avoid repetition if possible (or force variation)
     final usedExercises = <String>{};
 
     for (int dayIndex = 0; dayIndex < dailyAllocations.length; dayIndex++) {
       final dayAlloc = dailyAllocations[dayIndex];
-      // Day number 1-based
       final dayNum = dayIndex + 1;
 
       debugPrint(
@@ -60,45 +76,31 @@ class CycleTemplateBuilder {
       );
 
       final sessionExercises = <ExercisePrescription>[];
-
-      // Sort muscles by priority/size for ordering within session
-      // Big/Compound/Primary first logic handled by Engine but we iterate muscles here.
-      // We rely on dailyAlloc keys order (sorted by load).
-      // We can also sort keys by catalog 'size' logic if we had it. Keeping simplistic for now.
-
       final musclesOnDay = dayAlloc.keys.toList();
 
       for (final muscle in musclesOnDay) {
         final setsForDay = dayAlloc[muscle]!;
 
-        // Select Exercises
-        // Map muscle string to MuscleGroup enum?
-        // ExerciseSelectionEngine.selectExercisesByGroups expects specific enums.
-        // We can use a direct catalog lookup if Engine is too strict.
-        // Or we construct a generic request.
+        // Use normalized muscle for catalog lookup
+        final normalizedMuscle = muscle_registry.normalize(muscle) ?? muscle;
+        final candidates = ExerciseCatalogV3.getByMuscle(normalizedMuscle);
 
-        // Since we refactored Engine to use 'resolver', let's try to map string -> enum?
-        // Actually, Engine selects by 'resolver.MuscleGroup'.
-        // If 'muscle' string matches a group name, we can use it.
-        // If not, we fall back to Catalog.
-
-        // Simpler: Use Catalog directly as P0 requires specific muscle targeting.
-        final candidates = ExerciseCatalogV3.getByMuscle(muscle);
-
-        // Filter used?
         final available = candidates
             .where((e) => !usedExercises.contains(e.id))
             .toList();
+
+        // Retry logic: if strict filter yields nothing, reuse exercises
         final pool = available.isNotEmpty ? available : candidates;
 
         if (pool.isEmpty) {
-          debugPrint(
-            '[CycleTemplateBuilder] ⚠️ No exercises found for $muscle',
+          return TemplateBuildResult.failure(
+            error:
+                'No exercises available for muscle "$muscle". '
+                'Catalog does not cover requested volume.',
           );
-          continue;
         }
 
-        // Sort pool by "Quality" (Compounds first)
+        // Sort pool by "Quality" (Compounds first) as per SSOT/Ordering Rules
         pool.sort(
           (a, b) => ExerciseOrderingRules.getScore(
             b,
@@ -106,42 +108,30 @@ class CycleTemplateBuilder {
         );
 
         // Select top N needed to fill sets
+        // Heuristic: ~3 sets per exercise.
         final numExercises = (setsForDay / 3)
             .ceil()
             .clamp(1, min(4, pool.length))
             .toInt();
-        final selected = pool.take(numExercises).toList();
 
+        final selected = pool.take(numExercises).toList();
         usedExercises.addAll(selected.map((e) => e.id));
 
-        // Distribute Sets
-        final baseSets = setsForDay ~/ selected.length;
-        var remainder = setsForDay % selected.length;
-
-        for (int i = 0; i < selected.length; i++) {
-          final ex = selected[i];
-          int sets = baseSets + (remainder > 0 ? 1 : 0);
-          if (remainder > 0) remainder--;
-
-          // Add to session
+        // [V3][P0.2] Distribute sets using intensity split (heavy/medium/light)
+        final eps = _buildIntensityPrescriptions(
+          muscleKey: muscle,
+          exercises: selected,
+          setsForDay: setsForDay,
+        );
+        // Assign orderInSession
+        for (final ep in eps) {
           sessionExercises.add(
-            ExercisePrescription(
-              exerciseId: ex.id,
-              exerciseName: ex.name,
-              orderInSession: sessionExercises.length + 1,
-              sets: sets,
-              repRange: _defaultReps(userProfile),
-              targetRir: 2,
-              intensityZone: 'moderate', // Logic to refine later?
-              restSeconds: 90,
-              notes: 'Week 1 Base',
-            ),
+            ep.copyWith(orderInSession: sessionExercises.length + 1),
           );
         }
       }
 
-      // Sort Intra-session (Rule 6)
-      // Now we have Prescriptions. We need to look up Exercise to sort.
+      // Sort Intra-session (Rule D: Follow table/ordering)
       sessionExercises.sort((a, b) {
         final exA = ExerciseCatalogV3.getById(a.exerciseId);
         final exB = ExerciseCatalogV3.getById(b.exerciseId);
@@ -173,78 +163,100 @@ class CycleTemplateBuilder {
       );
     }
 
-    return sessions;
+    return TemplateBuildResult.success(sessions);
   }
 
-  /// Calculates how many times/week each muscle should be hit and sets/session.
-  static Map<String, _MuscleFreqConfig> _calculateMuscleConfig(
+  // ─────────────────────────────────────────────────────────────────────────
+  // P0.1 — Feasibility helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  static const int _defaultDailyCapPerMuscle = 10;
+
+  static TemplateBuildResult _failIfInfeasible({
+    required String muscle,
+    required int targetSets,
+    required int frequency,
+    required int daysPerWeek,
+    int dailyCapPerMuscle = _defaultDailyCapPerMuscle,
+  }) {
+    final maxAssignable = frequency * dailyCapPerMuscle;
+
+    if (targetSets > maxAssignable) {
+      return TemplateBuildResult.failure(
+        error:
+            '[V3][P0.2][INFEASIBLE] muscle="$muscle" '
+            'target=$targetSets exceeds maxAssignable=$maxAssignable '
+            '(freq=$frequency, dailyCap=$dailyCapPerMuscle, days=$daysPerWeek). '
+            'Fix: increase days/split capacity OR reduce target volume.',
+      );
+    }
+
+    debugPrint(
+      '[V3][P0.2][FEASIBLE] muscle=$muscle target=$targetSets '
+      'freq=$frequency dailyCap=$dailyCapPerMuscle maxAssignable=$maxAssignable',
+    );
+
+    return TemplateBuildResult.success(null);
+  }
+
+  /// [P0.1] Calculates frequency config for each muscle, performing a
+  /// hard-fail feasibility check instead of silently capping volume.
+  ///
+  /// Returns a [_ConfigOrFail] that either carries the config map or an error.
+  static _ConfigOrFail _calculateMuscleConfigOrFail(
     Map<String, int> volume,
     int availableDays,
   ) {
     final config = <String, _MuscleFreqConfig>{};
 
-    // Cap total volume if days are low (Rule 3.4)
-    final effectiveVolume = Map<String, int>.from(volume);
-    if (availableDays <= 4) {
-      for (final m in effectiveVolume.keys) {
-        if (effectiveVolume[m]! > 20) {
-          debugPrint(
-            '[CycleTemplateBuilder] Capping $m to 20 sets (4 days limit).',
-          );
-          effectiveVolume[m] = 20;
-        }
-      }
-    }
+    for (final entry in volume.entries) {
+      final muscle = entry.key;
+      final sets = entry.value;
 
-    effectiveVolume.forEach((muscle, sets) {
       int freq = 1;
-
-      // P0 Frequency Logic:
-      // <= 20 sets -> Freq 1-2 (Prefer 2)
-      // >= 21 sets -> Freq 3
-
-      if (sets >= 21 && availableDays >= 3) {
-        freq = 3;
-      } else if (sets > 6) {
-        // If sets > 6, we prefer Freq 2 to split volume (better quality).
-        // If sets <= 6, Freq 1 is fine (6 sets in 1 session is easy).
+      if (sets <= 10) {
+        freq = 1;
+      } else if (sets <= 20) {
         freq = 2;
       } else {
-        freq = 1;
+        freq = 3;
       }
 
-      // Cap frequency to available days
+      // Hard Cap freq to available days (cannot train a muscle more days than exist)
       if (freq > availableDays) freq = availableDays;
 
+      final feasResult = _failIfInfeasible(
+        muscle: muscle,
+        targetSets: sets,
+        frequency: freq,
+        daysPerWeek: availableDays,
+      );
+      if (!feasResult.success) {
+        return _ConfigOrFail.failure(feasResult);
+      }
+
       config[muscle] = _MuscleFreqConfig(weeklySets: sets, frequency: freq);
-    });
-    return config;
+    }
+    return _ConfigOrFail.ok(config);
   }
 
-  /// Distributes muscles into days attempting to respect frequency and spacing.
+  /// Distributes muscles into days using SSOT Rule D (Priorities).
   static List<Map<String, int>> _distributeMusclesToDays(
     Map<String, _MuscleFreqConfig> config,
     int days,
     Map<String, int> priorities,
   ) {
-    // List of days, each is a Map<Muscle, Sets>
     final allocation = List.generate(days, (_) => <String, int>{});
 
-    // P0 Ordering Logic:
-    // 1. Priority (High to Low: 2->Primary, 1->Secondary, 0->Tertiary)
-    // 2. Volume (High to Low)
-
+    // Rule D: Order by priority
     final sortedMuscles = config.keys.toList()
       ..sort((a, b) {
         final pA = priorities[a] ?? 0;
         final pB = priorities[b] ?? 0;
-
-        if (pA != pB) {
-          return pB.compareTo(pA); // Descending Priority
-        }
-
-        // Tie-breaker: Volume
-        return config[b]!.weeklySets.compareTo(config[a]!.weeklySets);
+        if (pA != pB) return pB.compareTo(pA); // Descending Priority
+        return config[b]!.weeklySets.compareTo(
+          config[a]!.weeklySets,
+        ); // Volume Tie-breaker
       });
 
     for (final muscle in sortedMuscles) {
@@ -252,17 +264,15 @@ class CycleTemplateBuilder {
       final freq = info.frequency;
       final totalSets = info.weeklySets;
 
+      // Select Days with Min Load logic
       final indices = <int>[];
-      if (freq == 1) {
+
+      // Initial day selection
+      if (freq <= 1) {
         indices.add(_findDayWithMinLoad(allocation));
-      } else if (freq == 2) {
-        int first = _findDayWithMinLoad(allocation);
-        int second = (first + (days / 2).ceil()) % days;
-        if (second == first) second = (first + 1) % days;
-        indices.add(first);
-        indices.add(second);
       } else {
-        double step = days / freq;
+        // Distributed logic
+        final step = days / freq;
         int start = _findDayWithMinLoad(allocation);
         for (int i = 0; i < freq; i++) {
           indices.add((start + (i * step).round()) % days);
@@ -271,7 +281,7 @@ class CycleTemplateBuilder {
 
       final uniqueIndices = indices.toSet().toList();
 
-      // Distribute sets
+      // Calculate allocation per day
       int setsPerDay = totalSets ~/ uniqueIndices.length;
       int extra = totalSets % uniqueIndices.length;
 
@@ -279,12 +289,17 @@ class CycleTemplateBuilder {
         int s = setsPerDay + (extra > 0 ? 1 : 0);
         if (extra > 0) extra--;
 
-        // Cap check (Rule 4)
+        // P0.1: No silent cap here. Feasibility was already validated in
+        // _calculateMuscleConfigOrFail. If sets per day still exceeds the
+        // daily cap it means a bug in the distribution logic — log as ERROR
+        // (volume is NOT silently dropped).
         if (s > 10) {
           debugPrint(
-            '[CycleTemplateBuilder] ⚠️ Cap hit for $muscle on Day ${idx + 1}: $s -> 10. Volume lost.',
+            '[V3][P0.1][BUG] DISTRIBUTION OVERFLOW: muscle=$muscle '
+            'day=${idx + 1} setsComputed=$s > dailyCap=10. '
+            'This should have been caught by feasibility check. '
+            'Assigning as-is to preserve target volume.',
           );
-          s = 10;
         }
 
         allocation[idx][muscle] = s;
@@ -298,28 +313,144 @@ class CycleTemplateBuilder {
     List<Map<String, int>> allocation, {
     Set<int>? exclude,
   }) {
+    int minIndex = -1;
     int minLoad = 9999;
-    int minIdx = 0;
+
     for (int i = 0; i < allocation.length; i++) {
       if (exclude != null && exclude.contains(i)) continue;
-      int load = allocation[i].values.fold(0, (a, b) => a + b);
+
+      // Load = sum of sets assigned to that day
+      final load = allocation[i].values.fold(0, (sum, v) => sum + v);
       if (load < minLoad) {
         minLoad = load;
-        minIdx = i;
+        minIndex = i;
       }
     }
-    return minIdx;
+    return minIndex == -1 ? 0 : minIndex;
   }
 
-  static List<int> _defaultReps(UserProfile p) {
-    if (p.primaryGoal == 'strength') return [3, 5];
-    if (p.primaryGoal == 'endurance') return [15, 20];
-    return [8, 12];
+  static List<int> _roundRobinDistribute(int totalSets, int n) {
+    final out = List<int>.filled(n, 0);
+    if (n <= 0 || totalSets <= 0) return out;
+    var remaining = totalSets;
+    var idx = 0;
+    while (remaining > 0) {
+      out[idx] += 1;
+      remaining -= 1;
+      idx = (idx + 1) % n;
+    }
+    return out;
   }
+
+  static List<ExercisePrescription> _buildIntensityPrescriptions({
+    required String muscleKey,
+    required List<dynamic> exercises,
+    required int setsForDay,
+  }) {
+    final split = IntensityEngine().computeSetSplitForDay(
+      setsForDay: setsForDay,
+    );
+    final heavySets = split['heavy']!;
+    final mediumSets = split['medium']!;
+    final lightSets = split['light']!;
+
+    debugPrint(
+      '[V3][P0.2][INT] muscle=$muscleKey setsForDay=$setsForDay '
+      'heavy=$heavySets medium=$mediumSets light=$lightSets exCount=${exercises.length}',
+    );
+
+    final n = exercises.length;
+    final heavyPer = _roundRobinDistribute(heavySets, n);
+    final mediumPer = _roundRobinDistribute(mediumSets, n);
+    final lightPer = _roundRobinDistribute(lightSets, n);
+
+    final out = <ExercisePrescription>[];
+
+    for (var i = 0; i < n; i++) {
+      final ex = exercises[i];
+      final isCompound = (ex.primaryMuscles.length > 1);
+
+      void addZone(String zone, int zoneSets) {
+        if (zoneSets <= 0) return;
+
+        final repRange = IntensityEngine.getRepRangeForIntensity(zone);
+        final restSec = IntensityEngine.getRestSecondsForIntensity(zone);
+
+        int baseRir = EffortEngine.assignRir(
+          exerciseId: ex.id,
+          intensity: zone,
+          exerciseType: isCompound ? 'compound' : 'isolation',
+        );
+
+        int targetRir = EffortEngine.adjustRirForPhase(
+          baseRir: baseRir,
+          phase: 'accumulation', // P0.2: week1 default
+        );
+
+        out.add(
+          ExercisePrescription(
+            exerciseId: ex.id,
+            exerciseName: ex.name,
+            orderInSession: 0,
+            sets: zoneSets,
+            intensityZone: zone, // heavy/medium/light
+            repRange: repRange,
+            restSeconds: restSec,
+            targetRir: targetRir,
+            directTargetMuscleKey: muscleKey, // SSOT volumen directo
+            notes: 'Week 1 Base',
+          ),
+        );
+      }
+
+      addZone('heavy', heavyPer[i]);
+      addZone('medium', mediumPer[i]);
+      addZone('light', lightPer[i]);
+    }
+
+    return out;
+  }
+}
+
+/// Internal helper: holds either a valid muscleConfig map OR a failure result.
+class _ConfigOrFail {
+  final Map<String, _MuscleFreqConfig>? _muscleConfig;
+  final TemplateBuildResult? _failure;
+
+  bool get success => _failure == null;
+
+  _ConfigOrFail.ok(Map<String, _MuscleFreqConfig> config)
+    : _muscleConfig = config,
+      _failure = null;
+
+  _ConfigOrFail.failure(TemplateBuildResult fail)
+    : _muscleConfig = null,
+      _failure = fail;
+
+  /// Returns the failure result. Only call when success == false.
+  bool get isFailure => !success;
+
+  // Expose the failure result as a TemplateBuildResult so callers can
+  // propagate it directly.
+  TemplateBuildResult get asBuildResult =>
+      _failure ?? TemplateBuildResult.failure(error: 'Unknown config error');
 }
 
 class _MuscleFreqConfig {
   final int weeklySets;
   final int frequency;
+
   _MuscleFreqConfig({required this.weeklySets, required this.frequency});
+}
+
+class TemplateBuildResult {
+  final bool success;
+  final String? error;
+  final List<TrainingSession>? sessions;
+
+  TemplateBuildResult.success(this.sessions) : success = true, error = null;
+
+  TemplateBuildResult.failure({required this.error})
+    : success = false,
+      sessions = null;
 }

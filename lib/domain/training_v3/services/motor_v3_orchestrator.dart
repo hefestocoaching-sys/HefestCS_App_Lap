@@ -45,6 +45,17 @@ import 'package:hcs_app_lap/domain/training_v3/validators/configuration_validato
 class MotorV3Orchestrator {
   static final _logger = _MotorLogger();
 
+  static const int _adaptationWeeksDefault = 2;
+  static const int _maintenanceWeeksDefault = 2;
+  static const int _deloadWeeksDefault = 2;
+
+  static const int _microDeloadWindowMin = 4;
+  static const int _microDeloadWindowMax = 6;
+  static const int _microDeloadDefaultAt = 5; // si no hay bitácora
+
+  static const double _microDeloadVolumeFactor = 0.75; // -25%
+  static const double _deloadVolumeFactor = 0.65; // -35%
+
   /// Genera un programa de entrenamiento completo con lógica científica
   ///
   /// **ALGORITMO CIENTÍFICO COMPLETO (10 PASOS):**
@@ -160,7 +171,28 @@ class MotorV3Orchestrator {
       debugPrint('📅 Fase periodización: ${trainingPhase.name}');
 
       // ✅ PASO 10: Construir TrainingPlanConfig real
-      final planConfig = _buildRealTrainingPlan(
+      // P0.2-MVO-2: Feasibility check BEFORE building the plan — hard-fail.
+      final feasErrors = _feasibilityErrors(
+        targetVolume: volumeTargets,
+        daysPerWeek: daysPerWeek,
+      );
+      if (feasErrors.isNotEmpty) {
+        for (final e in feasErrors) {
+          debugPrint(e);
+        }
+        return {
+          'success': false,
+          'errors': feasErrors,
+          'warnings': warnings,
+          'planConfig': null,
+        };
+      }
+
+      var cycleStateWrapper = _CycleStateWrapper(
+        _readCycleState(null, profile: userProfile),
+      );
+
+      var planConfig = _buildRealTrainingPlan(
         client: client,
         asOfDate: DateTime.now(),
         volumeTargets: volumeTargets,
@@ -170,7 +202,12 @@ class MotorV3Orchestrator {
         daysPerWeek: daysPerWeek,
         userProfile: userProfile,
         clientProfile: clientProfile,
+        cycleStateWrapper: cycleStateWrapper,
       );
+
+      // P1A-8: Al final de generatePlan: actualizar estado
+      final next = _advanceCycleStateNoLog(cycleStateWrapper.state);
+      planConfig = _writeCycleState(planConfig, next);
 
       final generatedWeeks = planConfig.weeks
           .whereType<TrainingWeek>()
@@ -186,29 +223,25 @@ class MotorV3Orchestrator {
         );
       }
 
-      final coverageCheck = _validateExerciseCoverage(
-        planConfig: planConfig,
-        volumeTargets: volumeTargets,
+      // P0: Extract Week 1 structure for validation
+      final Map<int, List<ExercisePrescription>> week1Structure = {};
+      if (generatedWeeks.isNotEmpty) {
+        for (final session in generatedWeeks.first.sessions) {
+          week1Structure[session.dayNumber] = session.exercises;
+        }
+      }
+
+      final coverageResult = _validateExerciseCoverage(
+        targetVolume: volumeTargets,
+        weekStructure: week1Structure,
       );
-      final coverageErrors =
-          (coverageCheck['errors'] as List<dynamic>? ?? const [])
-              .map((e) => e.toString())
-              .toList();
-      final coverageWarnings =
-          (coverageCheck['warnings'] as List<dynamic>? ?? const [])
-              .map((e) => e.toString())
-              .toList();
 
-      errors.addAll(coverageErrors);
-      warnings.addAll(coverageWarnings);
-
-      if (errors.isNotEmpty) {
+      if (!coverageResult.isValid) {
         return {
           'success': false,
-          'errors': errors,
+          'errors': coverageResult.errors,
           'warnings': warnings,
           'planConfig': null,
-          'coverage': coverageCheck['coverage'],
         };
       }
 
@@ -244,7 +277,6 @@ class MotorV3Orchestrator {
         'program': program,
         'planConfig': planConfig,
         'clientProfile': clientProfile,
-        'coverage': coverageCheck['coverage'],
         'optimizations_applied': 0,
       };
     } catch (e) {
@@ -450,6 +482,7 @@ class MotorV3Orchestrator {
     required int daysPerWeek,
     required UserProfile userProfile,
     required ClientProfile clientProfile,
+    required _CycleStateWrapper cycleStateWrapper,
   }) {
     final weeks = _buildWeeks(
       durationWeeks: durationWeeks,
@@ -459,6 +492,7 @@ class MotorV3Orchestrator {
       volumePerMuscle: volumeTargets,
       userProfile: userProfile,
       clientProfile: clientProfile,
+      cycleStateWrapper: cycleStateWrapper,
     );
 
     final clientId = client != null
@@ -502,17 +536,23 @@ class MotorV3Orchestrator {
     required Map<String, int> volumePerMuscle,
     required UserProfile userProfile,
     required ClientProfile clientProfile,
+    required _CycleStateWrapper cycleStateWrapper,
   }) {
     final weeks = <TrainingWeek>[];
 
     // ✅ PASO 10.1: Build BASE WEEK (Frozen Template) using CycleTemplateBuilder
     // This selects exercises ONCE and sets up the split/frequency.
-    final baseSessions = CycleTemplateBuilder.buildBaseWeek(
+    final buildResult = CycleTemplateBuilder.buildBaseWeek(
       userProfile: userProfile,
       clientProfile: clientProfile,
       targetVolumeByMuscle: volumePerMuscle,
       availableDays: daysPerWeek,
     );
+
+    if (!buildResult.success) {
+      throw StateError(buildResult.error ?? 'Unknown Template Build Error');
+    }
+    final baseSessions = buildResult.sessions!;
 
     // Calculate base volumes per muscle (Week 1)
     final baseVolumeMap = <String, int>{};
@@ -520,62 +560,103 @@ class MotorV3Orchestrator {
       for (final ep in s.exercises) {
         final ex = ExerciseCatalogV3.getById(ep.exerciseId);
         if (ex != null) {
-          for (final m in ex.primaryMuscles) {
-            final key = muscle_registry.normalize(m) ?? m;
-            baseVolumeMap[key] = (baseVolumeMap[key] ?? 0) + ep.sets;
-          }
+          // P0: Use directTargetMuscleKey for structural volume
+          baseVolumeMap[ep.directTargetMuscleKey] =
+              (baseVolumeMap[ep.directTargetMuscleKey] ?? 0) + ep.sets;
         }
       }
     }
 
     for (int weekNum = 1; weekNum <= durationWeeks; weekNum++) {
       // ✅ PASO 10.2: Calculate Target Volume for this week (Progression)
-
-      // Recalc landmarks (or pass them in)
-      // For now we scale 'baseVolumeMap' linearly if Accumulation.
-      // Rule 2: In accumulation, ONLY sets increase.
-
       final Map<String, int> targetWeeklyVolume = {};
 
-      if (weekNum == 1) {
-        targetWeeklyVolume.addAll(baseVolumeMap);
-      } else {
-        // Simple linear progression: +X sets/week ?
-        // Or re-use WeeklyVolumePlanner?
-        // WeeklyVolumePlanner calculates based on MEV/MRV.
-        // Let's use logic from WeeklyVolumePlanner but apply it as scaling factor.
+      double volumeFactor;
+      // ignore: unused_local_variable
+      String phaseNameForRir;
 
-        // P0 Requirement: "Recalcular sets por músculo para esa semana (según VolumeEngine / progression existente)"
-        // We will call VolumePlanner to get the 'target' number.
-        final normalizedPriorities = _normalizePriorities(userProfile);
-        final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
-          musclePriorities: normalizedPriorities,
-          trainingLevel: userProfile.trainingLevel,
-          age: userProfile.age,
-        );
-
-        // We assume 'volumePerMuscle' passed to _buildWeeks is the VOP/Start point.
-        // Re-calc weekly volume.
-        final mevByMuscle = <String, int>{};
-        final mrvByMuscle = <String, int>{};
-        allLandmarks.forEach((m, l) {
-          mevByMuscle[m] = l.vme;
-          mrvByMuscle[m] = l.vmr;
-        });
-
-        targetWeeklyVolume.addAll(
-          WeeklyVolumePlanner.buildWeekVolume(
-            baseVop: volumePerMuscle,
-            mevByMuscle: mevByMuscle,
-            mrvByMuscle: mrvByMuscle,
-            priorities: normalizedPriorities,
-            trainingLevel: userProfile.trainingLevel,
-            weekNumber: weekNum,
-            phase: phase.name,
-            feedback: {},
-          ),
-        );
+      switch (cycleStateWrapper.state.phase) {
+        case CyclePhase.adaptation:
+          volumeFactor = 1.0;
+          phaseNameForRir = 'adaptation';
+          break;
+        case CyclePhase.accumulation:
+          volumeFactor = 1.0;
+          phaseNameForRir = 'accumulation';
+          break;
+        case CyclePhase.microDeload:
+          volumeFactor = _microDeloadVolumeFactor; // 0.75
+          phaseNameForRir = 'deload';
+          break;
+        case CyclePhase.maintenance:
+          volumeFactor = 1.0;
+          phaseNameForRir = 'maintenance';
+          break;
+        case CyclePhase.deload:
+          volumeFactor = _deloadVolumeFactor; // 0.65
+          phaseNameForRir = 'deload';
+          break;
       }
+
+      if (weekNum == 1) {
+        targetWeeklyVolume.addAll(volumePerMuscle);
+      } else {
+        if (cycleStateWrapper.state.phase == CyclePhase.adaptation ||
+            cycleStateWrapper.state.phase == CyclePhase.maintenance) {
+          // P1A-7: clonar week anterior SIN aumentar sets
+          targetWeeklyVolume.addAll(volumePerMuscle);
+        } else {
+          // Simple linear progression: +X sets/week ?
+          // Or re-use WeeklyVolumePlanner?
+          // WeeklyVolumePlanner calculates based on MEV/MRV.
+          // Let's use logic from WeeklyVolumePlanner but apply it as scaling factor.
+
+          // P0 Requirement: "Recalcular sets por músculo para esa semana (según VolumeEngine / progression existente)"
+          // We will call VolumePlanner to get the 'target' number.
+          final normalizedPriorities = _normalizePriorities(userProfile);
+          final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
+            musclePriorities: normalizedPriorities,
+            trainingLevel: userProfile.trainingLevel,
+            age: userProfile.age,
+          );
+
+          // We assume 'volumePerMuscle' passed to _buildWeeks is the VOP/Start point.
+          // Re-calc weekly volume.
+          final mevByMuscle = <String, int>{};
+          final mrvByMuscle = <String, int>{};
+          allLandmarks.forEach((m, l) {
+            mevByMuscle[m] = l.vme;
+            mrvByMuscle[m] = l.vmr;
+          });
+
+          targetWeeklyVolume.addAll(
+            WeeklyVolumePlanner.buildWeekVolume(
+              baseVop: volumePerMuscle,
+              mevByMuscle: mevByMuscle,
+              mrvByMuscle: mrvByMuscle,
+              priorities: normalizedPriorities,
+              trainingLevel: userProfile.trainingLevel,
+              weekNumber: weekNum,
+              phase: phase.name,
+              feedback: {},
+            ),
+          );
+        }
+      }
+
+      // Apply volume factor (P1A-6)
+      for (final m in targetWeeklyVolume.keys) {
+        targetWeeklyVolume[m] = (targetWeeklyVolume[m]! * volumeFactor).round();
+      }
+
+      debugPrint(
+        '[V3][P1A][PHASE] week=${cycleStateWrapper.state.cycleWeek} phase=${cycleStateWrapper.state.phase.name} volFactor=$volumeFactor',
+      );
+
+      // P0.1-MVO-1: REMOVED silent cap of 20 sets on weeks > 1.
+      // Volume is taken as-is from WeeklyVolumePlanner. If it yields an
+      // infeasible value, the pre-build _feasibilityErrors check above
+      // will have already hard-failed before reaching this code path.
 
       List<TrainingSession> weekSessions;
 
@@ -610,19 +691,26 @@ class MotorV3Orchestrator {
               'Semana $weekNum - Fase: ${phase.name.capitalize()} - Volumen: $totalSets sets',
         ),
       );
+
+      if (weekNum < durationWeeks) {
+        cycleStateWrapper.state = _advanceCycleStateNoLog(
+          cycleStateWrapper.state,
+        );
+      }
     }
 
     return weeks;
   }
 
-  /// Scales the sets of the base sessions to match the target weekly volume WITHOUT changing exercises.
+  /// [V3][P0] Scales sets of base sessions to match target WITHOUT changing exercises.
+  /// Uses ONLY ep.directTargetMuscleKey (SSOT). Never uses Exercise.primaryMuscles.
   static List<TrainingSession> _cloneWithSetProgression({
     required List<TrainingSession> base,
     required Map<String, int> targetWeeklySetsByMuscle,
     required Map<String, int> baseWeeklySetsByMuscle,
     int maxSetsPerMusclePerSession = 10,
   }) {
-    // 1. Clone structure
+    // ── Step 1: Clone structure (deep copy) ──
     final newSessions = base
         .map(
           (s) => s.copyWith(
@@ -631,120 +719,234 @@ class MotorV3Orchestrator {
         )
         .toList();
 
-    // 2. Calculate scaling factors or delta per muscle
+    // ── Step 2: Flatten all EPs in stable day order ──
+    // Track (sessionIdx, epIdx) for reconstruction
+    final List<ExercisePrescription> allEps = [];
+    final List<int> epSessionIndices = []; // which session each EP belongs to
+    for (int si = 0; si < newSessions.length; si++) {
+      for (final ep in newSessions[si].exercises) {
+        allEps.add(ep);
+        epSessionIndices.add(si);
+      }
+    }
+
+    // ── Step 3: Compute assigned direct volume (SSOT) ──
+    Map<String, int> computeAssigned(List<ExercisePrescription> eps) {
+      final out = <String, int>{};
+      for (final ep in eps) {
+        final m = ep.directTargetMuscleKey;
+        out[m] = (out[m] ?? 0) + ep.sets;
+      }
+      return out;
+    }
+
+    var assigned = computeAssigned(allEps);
+
+    // ── Step 4: Deterministic diff distribution per muscle ──
     final musclesToCheck = targetWeeklySetsByMuscle.keys.toSet();
 
-    // Create a mutable Map of <ExercisePrescription, int> representing NEW sets.
-    final newSetCounts = <ExercisePrescription, int>{};
-
-    // Initialize with current sets
-    for (final s in newSessions) {
-      for (final ep in s.exercises) {
-        newSetCounts[ep] = ep.sets;
-      }
-    }
-
-    // Distribute volume changes
     for (final muscle in musclesToCheck) {
       final target = targetWeeklySetsByMuscle[muscle] ?? 0;
-      final baseVol = baseWeeklySetsByMuscle[muscle] ?? 0;
-      if (target == baseVol) continue;
+      final current = assigned[muscle] ?? 0;
+      var d = target - current;
+      if (d == 0) continue;
 
-      final diff = target - baseVol;
+      // Collect indices of EPs for this muscle (stable order)
+      final idxs = <int>[];
+      for (int i = 0; i < allEps.length; i++) {
+        if (allEps[i].directTargetMuscleKey == muscle) idxs.add(i);
+      }
+      if (idxs.isEmpty) {
+        continue; // No EPs for this muscle; skip (P0: no new EP creation)
+      }
 
-      // Find occurrences
-      final meaningfulOccurrences = <ExercisePrescription>[];
-
-      for (final entry in newSetCounts.entries) {
-        final ep = entry.key;
-        final ex = ExerciseCatalogV3.getById(ep.exerciseId);
-        if (ex != null) {
-          final p = ex.primaryMuscles.map(
-            (m) => muscle_registry.normalize(m) ?? m,
-          );
-          if (p.contains(muscle)) {
-            meaningfulOccurrences.add(ep);
-          }
+      if (d > 0) {
+        // ADD sets: round-robin distribution
+        final per = d ~/ idxs.length;
+        var rem = d % idxs.length;
+        for (final i in idxs) {
+          final extra = per + (rem > 0 ? 1 : 0);
+          if (rem > 0) rem--;
+          allEps[i] = allEps[i].copyWith(sets: allEps[i].sets + extra);
         }
-      }
-
-      if (meaningfulOccurrences.isEmpty) continue;
-
-      // Distribute Diff
-      // We simply add diff/N to each.
-      final addPerOcc = diff ~/ meaningfulOccurrences.length;
-      var remainder = diff % meaningfulOccurrences.length;
-
-      for (final ep in meaningfulOccurrences) {
-        int add = addPerOcc + (remainder > 0 ? 1 : 0);
-        if (remainder > 0) remainder--;
-
-        final current = newSetCounts[ep] ?? ep.sets;
-        int next = current + add;
-        if (next < 1) next = 1;
-        newSetCounts[ep] = next;
-      }
-    }
-
-    // 3. Rebuild Sessions with new set counts & Enforce Daily Cap
-    final finalSessions = <TrainingSession>[];
-
-    for (final s in newSessions) {
-      final updatedExercises = <ExercisePrescription>[];
-
-      // First pass: apply progression
-      for (final ep in s.exercises) {
-        final targetSets = newSetCounts[ep] ?? ep.sets;
-        updatedExercises.add(ep.copyWith(sets: targetSets));
-      }
-
-      // Second pass: Enforce Daily Cap (10 sets)
-      // Calculate totals per muscle in this session
-      final muscleSets = <String, int>{};
-
-      for (final ep in updatedExercises) {
-        final ex = ExerciseCatalogV3.getById(ep.exerciseId);
-        if (ex != null) {
-          for (final pm in ex.primaryMuscles) {
-            final m = muscle_registry.normalize(pm) ?? pm;
-            muscleSets[m] = (muscleSets[m] ?? 0) + ep.sets;
-          }
-        }
-      }
-
-      // Check for violations and reduce if needed
-      muscleSets.forEach((m, total) {
-        if (total > maxSetsPerMusclePerSession) {
-          int excess = total - maxSetsPerMusclePerSession;
-          debugPrint(
-            '[Motor V3] ⚠️ Cap hit for $m on Day ${s.dayNumber}: $total -> 10',
-          );
-
-          // Reduce sets from exercises targeting this muscle, starting from last in session
-          for (int i = updatedExercises.length - 1; i >= 0; i--) {
-            if (excess <= 0) break;
-
-            final ep = updatedExercises[i];
-            final ex = ExerciseCatalogV3.getById(ep.exerciseId);
-            if (ex != null &&
-                ex.primaryMuscles
-                    .map((pm) => muscle_registry.normalize(pm) ?? pm)
-                    .contains(m)) {
-              if (ep.sets > 1) {
-                final allowedReduction = ep.sets - 1;
-                final toCut = min(excess, allowedReduction);
-
-                if (toCut > 0) {
-                  updatedExercises[i] = ep.copyWith(sets: ep.sets - toCut);
-                  excess -= toCut;
-                }
-              }
+      } else {
+        // REMOVE sets: round-robin trim, min 1 per EP
+        var toRemove = -d;
+        var changed = true;
+        while (toRemove > 0 && changed) {
+          changed = false;
+          for (final i in idxs) {
+            if (toRemove <= 0) break;
+            final cur = allEps[i].sets;
+            if (cur > 1) {
+              allEps[i] = allEps[i].copyWith(sets: cur - 1);
+              toRemove--;
+              changed = true;
             }
           }
         }
+      }
+    }
+
+    // Recompute after diff distribution
+    assigned = computeAssigned(allEps);
+
+    // ── Step 5: Log target vs assigned (P0.2-MVO-5) ──
+    for (final m in musclesToCheck) {
+      final t = targetWeeklySetsByMuscle[m] ?? 0;
+      final a = assigned[m] ?? 0;
+      if (t > 0) {
+        debugPrint('[V3][P0.2][VOL] muscle=$m target=$t assigned=$a');
+      }
+    }
+
+    // ── Step 6: Levelling pass by directTargetMuscleKey ──
+    // Build per-session loads by muscle
+    for (final muscle in musclesToCheck) {
+      // sessionIdx -> total sets for this muscle
+      final sessionLoads = <int, int>{};
+      // epGlobalIdx -> sessionIdx
+      final epIdxToSession = <int, int>{};
+
+      for (int gi = 0; gi < allEps.length; gi++) {
+        if (allEps[gi].directTargetMuscleKey == muscle) {
+          final si = epSessionIndices[gi];
+          sessionLoads[si] = (sessionLoads[si] ?? 0) + allEps[gi].sets;
+          epIdxToSession[gi] = si;
+        }
+      }
+
+      bool needsBalancing = sessionLoads.values.any(
+        (v) => v > maxSetsPerMusclePerSession,
+      );
+
+      if (needsBalancing && sessionLoads.length > 1) {
+        final days = sessionLoads.keys.toList()
+          ..sort((a, b) => sessionLoads[b]!.compareTo(sessionLoads[a]!));
+
+        for (final overloadedDay in days) {
+          int excess =
+              sessionLoads[overloadedDay]! - maxSetsPerMusclePerSession;
+          if (excess <= 0) continue;
+
+          for (final receiverDay in days) {
+            if (receiverDay == overloadedDay) continue;
+            int room = maxSetsPerMusclePerSession - sessionLoads[receiverDay]!;
+            if (room <= 0) continue;
+
+            int toMove = min(excess, room);
+
+            // Find source EP (last in overloaded day with sets>1)
+            int? sourceGi;
+            for (int gi = allEps.length - 1; gi >= 0; gi--) {
+              if (epIdxToSession[gi] == overloadedDay &&
+                  allEps[gi].directTargetMuscleKey == muscle &&
+                  allEps[gi].sets > 1) {
+                sourceGi = gi;
+                break;
+              }
+            }
+
+            // Find dest EP (any in receiver day for this muscle)
+            int? destGi;
+            for (int gi = 0; gi < allEps.length; gi++) {
+              if (epIdxToSession[gi] == receiverDay &&
+                  allEps[gi].directTargetMuscleKey == muscle) {
+                destGi = gi;
+                break;
+              }
+            }
+
+            if (sourceGi != null && destGi != null) {
+              int realMove = min(toMove, allEps[sourceGi].sets - 1);
+              if (realMove > 0) {
+                allEps[sourceGi] = allEps[sourceGi].copyWith(
+                  sets: allEps[sourceGi].sets - realMove,
+                );
+                allEps[destGi] = allEps[destGi].copyWith(
+                  sets: allEps[destGi].sets + realMove,
+                );
+                sessionLoads[overloadedDay] =
+                    sessionLoads[overloadedDay]! - realMove;
+                sessionLoads[receiverDay] =
+                    sessionLoads[receiverDay]! + realMove;
+                excess -= realMove;
+                debugPrint(
+                  '[V3][P0] ⚖️ Levelled $muscle: Moved $realMove sets from session $overloadedDay to $receiverDay',
+                );
+              }
+            }
+            if (excess <= 0) break;
+          }
+        }
+      }
+    }
+
+    // ── Step 7: Reconstruct sessions and enforce daily cap ──
+    final finalSessions = <TrainingSession>[];
+
+    // Group EPs back into sessions
+    final sessionEpMap = <int, List<ExercisePrescription>>{};
+    for (int gi = 0; gi < allEps.length; gi++) {
+      final si = epSessionIndices[gi];
+      sessionEpMap.putIfAbsent(si, () => []);
+      sessionEpMap[si]!.add(allEps[gi]);
+    }
+
+    for (int si = 0; si < newSessions.length; si++) {
+      var updatedExercises = sessionEpMap[si] ?? [];
+
+      // Daily Cap enforcement by directTargetMuscleKey (P0-MVO-5)
+      final muscleSets = <String, int>{};
+      for (final ep in updatedExercises) {
+        muscleSets[ep.directTargetMuscleKey] =
+            (muscleSets[ep.directTargetMuscleKey] ?? 0) + ep.sets;
+      }
+
+      muscleSets.forEach((m, total) {
+        if (total > maxSetsPerMusclePerSession) {
+          final before = total;
+          int excess = total - maxSetsPerMusclePerSession;
+
+          // Reduce from last EP matching this muscle, min 1
+          for (int i = updatedExercises.length - 1; i >= 0; i--) {
+            if (excess <= 0) break;
+            final ep = updatedExercises[i];
+            if (ep.directTargetMuscleKey == m && ep.sets > 1) {
+              final allowedReduction = ep.sets - 1;
+              final toCut = min(excess, allowedReduction);
+              if (toCut > 0) {
+                updatedExercises[i] = ep.copyWith(sets: ep.sets - toCut);
+                excess -= toCut;
+              }
+            }
+          }
+
+          debugPrint(
+            '[V3][P0][CAP] day=${newSessions[si].dayNumber} muscle=$m cap=$maxSetsPerMusclePerSession before=$before after=${total - (before > maxSetsPerMusclePerSession ? before - maxSetsPerMusclePerSession - excess : 0)}',
+          );
+        }
       });
 
-      finalSessions.add(s.copyWith(exercises: updatedExercises));
+      finalSessions.add(newSessions[si].copyWith(exercises: updatedExercises));
+    }
+
+    // ── Step 8: Final validation log (P0 — log only, no throw) ──
+    final finalAssigned = <String, int>{};
+    for (final s in finalSessions) {
+      for (final ep in s.exercises) {
+        finalAssigned[ep.directTargetMuscleKey] =
+            (finalAssigned[ep.directTargetMuscleKey] ?? 0) + ep.sets;
+      }
+    }
+    for (final m in targetWeeklySetsByMuscle.keys) {
+      final t = targetWeeklySetsByMuscle[m] ?? 0;
+      final a = finalAssigned[m] ?? 0;
+      if (t > 0 && a != t) {
+        debugPrint(
+          '[V3][P0][ERR] coverage mismatch muscle=$m target=$t assigned=$a',
+        );
+      }
     }
 
     return finalSessions;
@@ -755,12 +957,15 @@ class MotorV3Orchestrator {
     required int availableDays,
   }) {
     final s = (splitId ?? '').toLowerCase().trim();
-    if (s == 'ul_ul' || s == 'upper_lower' || s == 'upperlower')
+    if (s == 'ul_ul' || s == 'upper_lower' || s == 'upperlower') {
       return TrainingSplit.upperLower;
-    if (s == 'fullbody' || s == 'full_body' || s == 'fb' || s == 'fullbody_3')
+    }
+    if (s == 'fullbody' || s == 'full_body' || s == 'fb' || s == 'fullbody_3') {
       return TrainingSplit.fullBody;
-    if (s == 'ppl' || s == 'push_pull_legs' || s == 'pushpulllegs')
+    }
+    if (s == 'ppl' || s == 'push_pull_legs' || s == 'pushpulllegs') {
       return TrainingSplit.pushPullLegs;
+    }
     if (availableDays >= 6) return TrainingSplit.pushPullLegs;
     if (availableDays == 4) return TrainingSplit.upperLower;
     return TrainingSplit.fullBody;
@@ -789,11 +994,37 @@ class MotorV3Orchestrator {
     }
   }
 
-  static Map<String, dynamic> _validateExerciseCoverage({
-    required TrainingPlanConfig planConfig,
-    required Map<String, int> volumeTargets,
+  static CoverageResult _validateExerciseCoverage({
+    required Map<String, int> targetVolume,
+    required Map<int, List<ExercisePrescription>> weekStructure,
   }) {
-    return {'isValid': true, 'errors': [], 'warnings': []};
+    final Map<String, int> directVolume = {};
+
+    for (final day in weekStructure.values) {
+      for (final ex in day) {
+        directVolume[ex.directTargetMuscleKey] =
+            (directVolume[ex.directTargetMuscleKey] ?? 0) + ex.sets;
+      }
+    }
+
+    final List<String> errors = [];
+
+    targetVolume.forEach((muscle, targetSets) {
+      if (targetSets <= 0) return;
+
+      final actual = directVolume[muscle] ?? 0;
+
+      if (actual != targetSets) {
+        errors.add('Muscle "$muscle": target=$targetSets, assigned=$actual');
+      }
+    });
+
+    // P0.2-MVO-4: Log coverage result per muscle
+    if (errors.isNotEmpty) {
+      debugPrint('[V3][P0.2][COVERAGE_FAIL] ${errors.join(' | ')}');
+    }
+
+    return CoverageResult(isValid: errors.isEmpty, errors: errors);
   }
 
   static TrainingProgram _buildProgramFromPlanConfig({
@@ -874,6 +1105,193 @@ class MotorV3Orchestrator {
     });
     return normalized;
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // P0.1-MVO-2: Global feasibility check (pre-build)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  static const int _defaultDailyCapPerMuscle = 10;
+
+  static _CycleState _readCycleState(
+    TrainingPlanConfig? planConfig, {
+    UserProfile? profile,
+  }) {
+    final Map<String, dynamic> meta = planConfig?.extra ?? <String, dynamic>{};
+
+    int cycleWeek = 1;
+    if (meta.containsKey('cycleWeek')) {
+      cycleWeek = meta['cycleWeek'] as int;
+    } else if (profile != null) {
+      cycleWeek = (profile.consecutiveWeeks % 6) + 1;
+    }
+
+    final String phaseStr = (meta['cyclePhase'] as String?) ?? 'adaptation';
+    final int weeksInPhase = (meta['weeksInPhase'] as int?) ?? 1;
+    final int weeksSinceLastMicro = (meta['weeksSinceLastMicro'] as int?) ?? 1;
+
+    CyclePhase phase;
+    switch (phaseStr) {
+      case 'accumulation':
+        phase = CyclePhase.accumulation;
+        break;
+      case 'microDeload':
+        phase = CyclePhase.microDeload;
+        break;
+      case 'maintenance':
+        phase = CyclePhase.maintenance;
+        break;
+      case 'deload':
+        phase = CyclePhase.deload;
+        break;
+      case 'adaptation':
+      default:
+        phase = CyclePhase.adaptation;
+    }
+
+    return _CycleState(
+      cycleWeek: cycleWeek,
+      phase: phase,
+      weeksInPhase: weeksInPhase,
+      weeksSinceLastMicro: weeksSinceLastMicro,
+      maintenanceWeeksPlanned:
+          (meta['maintenanceWeeksPlanned'] as int?) ?? _maintenanceWeeksDefault,
+      deloadWeeksPlanned:
+          (meta['deloadWeeksPlanned'] as int?) ?? _deloadWeeksDefault,
+      adaptationWeeksPlanned:
+          (meta['adaptationWeeksPlanned'] as int?) ?? _adaptationWeeksDefault,
+    );
+  }
+
+  static TrainingPlanConfig _writeCycleState(
+    TrainingPlanConfig planConfig,
+    _CycleState s,
+  ) {
+    debugPrint(
+      '[V3][P1A][WARN] TrainingPlanConfig has no meta/copyWith(meta); using non-persistent defaults',
+    );
+    debugPrint(
+      '[V3][P1A][STATE_WRITE] week=${s.cycleWeek} phase=${s.phase.name} wPhase=${s.weeksInPhase} wMicro=${s.weeksSinceLastMicro}',
+    );
+    return planConfig; // fallback
+  }
+
+  static _CycleState _advanceCycleStateNoLog(_CycleState s) {
+    final nextCycleWeek = s.cycleWeek + 1;
+
+    if (s.phase == CyclePhase.adaptation) {
+      if (s.weeksInPhase >= s.adaptationWeeksPlanned) {
+        return s.copyWith(
+          cycleWeek: nextCycleWeek,
+          phase: CyclePhase.accumulation,
+          weeksInPhase: 1,
+          weeksSinceLastMicro: 1,
+        );
+      }
+      return s.copyWith(
+        cycleWeek: nextCycleWeek,
+        weeksInPhase: s.weeksInPhase + 1,
+        weeksSinceLastMicro: s.weeksSinceLastMicro + 1,
+      );
+    }
+
+    if (s.phase == CyclePhase.microDeload) {
+      return s.copyWith(
+        cycleWeek: nextCycleWeek,
+        phase: CyclePhase.accumulation,
+        weeksInPhase: 1,
+        weeksSinceLastMicro: 1,
+      );
+    }
+
+    if (s.phase == CyclePhase.maintenance) {
+      if (s.weeksInPhase >= s.maintenanceWeeksPlanned) {
+        return s.copyWith(
+          cycleWeek: nextCycleWeek,
+          phase: CyclePhase.deload,
+          weeksInPhase: 1,
+          weeksSinceLastMicro: s.weeksSinceLastMicro + 1,
+        );
+      }
+      return s.copyWith(
+        cycleWeek: nextCycleWeek,
+        weeksInPhase: s.weeksInPhase + 1,
+        weeksSinceLastMicro: s.weeksSinceLastMicro + 1,
+      );
+    }
+
+    if (s.phase == CyclePhase.deload) {
+      if (s.weeksInPhase >= s.deloadWeeksPlanned) {
+        return s.copyWith(
+          cycleWeek: 1,
+          phase: CyclePhase.adaptation,
+          weeksInPhase: 1,
+          weeksSinceLastMicro: 1,
+        );
+      }
+      return s.copyWith(
+        cycleWeek: nextCycleWeek,
+        weeksInPhase: s.weeksInPhase + 1,
+        weeksSinceLastMicro: s.weeksSinceLastMicro + 1,
+      );
+    }
+
+    if (s.phase == CyclePhase.accumulation) {
+      final int w = s.weeksSinceLastMicro + 1;
+      if (w >= _microDeloadWindowMin && w <= _microDeloadWindowMax) {
+        if (w == _microDeloadDefaultAt) {
+          return s.copyWith(
+            cycleWeek: nextCycleWeek,
+            phase: CyclePhase.microDeload,
+            weeksInPhase: 1,
+            weeksSinceLastMicro: w,
+          );
+        }
+      }
+      return s.copyWith(
+        cycleWeek: nextCycleWeek,
+        weeksInPhase: s.weeksInPhase + 1,
+        weeksSinceLastMicro: w,
+      );
+    }
+
+    return s.copyWith(
+      cycleWeek: nextCycleWeek,
+      weeksInPhase: s.weeksInPhase + 1,
+      weeksSinceLastMicro: s.weeksSinceLastMicro + 1,
+    );
+  }
+
+  static List<String> _feasibilityErrors({
+    required Map<String, int> targetVolume,
+    required int daysPerWeek,
+    int dailyCapPerMuscle = _defaultDailyCapPerMuscle,
+  }) {
+    final errors = <String>[];
+
+    targetVolume.forEach((muscle, targetSets) {
+      if (targetSets <= 0) return;
+
+      final int freq;
+      if (targetSets <= 10) {
+        freq = 1;
+      } else if (targetSets <= 20) {
+        freq = 2;
+      } else {
+        freq = 3;
+      }
+
+      final maxAssignable = freq * dailyCapPerMuscle;
+
+      if (targetSets > maxAssignable) {
+        errors.add(
+          '[V3][P0.2][INFEASIBLE] muscle="$muscle" target=$targetSets '
+          'exceeds maxAssignable=$maxAssignable (freq=$freq, dailyCap=$dailyCapPerMuscle, days=$daysPerWeek).',
+        );
+      }
+    });
+
+    return errors;
+  }
 }
 
 enum TrainingSplit { fullBody, upperLower, pushPullLegs }
@@ -917,4 +1335,60 @@ enum CaloricBalance {
 
   /// >200 kcal superávit
   surplus,
+}
+
+class CoverageResult {
+  final bool isValid;
+  final List<String> errors;
+
+  CoverageResult({required this.isValid, required this.errors});
+}
+
+enum CyclePhase { adaptation, accumulation, microDeload, maintenance, deload }
+
+class _CycleState {
+  final int cycleWeek; // 1..N dentro del ciclo
+  final CyclePhase phase;
+  final int weeksInPhase;
+  final int weeksSinceLastMicro;
+  final int maintenanceWeeksPlanned; // default 2 (futuro override)
+  final int deloadWeeksPlanned; // default 2
+  final int adaptationWeeksPlanned; // default 2
+
+  const _CycleState({
+    required this.cycleWeek,
+    required this.phase,
+    required this.weeksInPhase,
+    required this.weeksSinceLastMicro,
+    required this.maintenanceWeeksPlanned,
+    required this.deloadWeeksPlanned,
+    required this.adaptationWeeksPlanned,
+  });
+
+  _CycleState copyWith({
+    int? cycleWeek,
+    CyclePhase? phase,
+    int? weeksInPhase,
+    int? weeksSinceLastMicro,
+    int? maintenanceWeeksPlanned,
+    int? deloadWeeksPlanned,
+    int? adaptationWeeksPlanned,
+  }) {
+    return _CycleState(
+      cycleWeek: cycleWeek ?? this.cycleWeek,
+      phase: phase ?? this.phase,
+      weeksInPhase: weeksInPhase ?? this.weeksInPhase,
+      weeksSinceLastMicro: weeksSinceLastMicro ?? this.weeksSinceLastMicro,
+      maintenanceWeeksPlanned:
+          maintenanceWeeksPlanned ?? this.maintenanceWeeksPlanned,
+      deloadWeeksPlanned: deloadWeeksPlanned ?? this.deloadWeeksPlanned,
+      adaptationWeeksPlanned:
+          adaptationWeeksPlanned ?? this.adaptationWeeksPlanned,
+    );
+  }
+}
+
+class _CycleStateWrapper {
+  _CycleState state;
+  _CycleStateWrapper(this.state);
 }

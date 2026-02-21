@@ -39,7 +39,7 @@ class ExerciseCatalogV3 {
   static Future<void> ensureLoaded() async {
     if (_loaded) return;
 
-    const path = 'assets/data/exercises/exercise_catalog_gym.json';
+    const path = 'assets/data/exercises/exercise_catalog_gym_v4.json';
     try {
       final jsonStr = await rootBundle.loadString(path);
       final decoded = jsonDecode(jsonStr);

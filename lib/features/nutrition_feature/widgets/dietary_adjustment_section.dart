@@ -87,9 +87,9 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
     // Determine strict mode
     // 1 = Deficit, 0 = Maintain, -1 = Surplus
     int mode = 0;
-    if (rawValue > 0.001)
+    if (rawValue > 0.001) {
       mode = 1;
-    else if (rawValue < -0.001)
+    } else if (rawValue < -0.001)
       mode = -1;
 
     bool isMaintenance = mode == 0;

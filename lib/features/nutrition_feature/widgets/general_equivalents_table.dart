@@ -33,7 +33,7 @@ class GeneralEquivalentsTable extends ConsumerWidget {
           .updateEquivalent(id, delta);
     }
 
-    final definitions = EquivalentCatalog.v1Definitions;
+    const definitions = EquivalentCatalog.v1Definitions;
 
     // Calculate Totals
     double sumKcal = 0;
@@ -56,7 +56,6 @@ class GeneralEquivalentsTable extends ConsumerWidget {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: kBorderColor),
       child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Container(

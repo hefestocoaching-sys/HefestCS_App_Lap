@@ -31,8 +31,8 @@ void main() {
         availableDays: 4, // Upper/Lower split
         sessionDuration: 60,
         primaryGoal: 'hypertrophy',
-        musclePriorities: {'chest': 5, 'quads': 5},
-        availableEquipment: ['barbell', 'dumbbell', 'machine'],
+        musclePriorities: const {'chest': 5, 'quads': 5},
+        availableEquipment: const ['barbell', 'dumbbell', 'machine'],
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -52,7 +52,7 @@ void main() {
         // Test 2: CycleTemplateBuilder
         debugPrint('Testing CycleTemplateBuilder...');
         // Correct types: double for recovery/calories
-        final clientProfile = ClientProfile(
+        const clientProfile = ClientProfile(
           age: 30,
           experience: 'intermediate',
           recoveryCapacity: 7.0,
@@ -70,12 +70,19 @@ void main() {
           'abs': 0,
         };
 
-        final sessions = CycleTemplateBuilder.buildBaseWeek(
+        final templateResult = CycleTemplateBuilder.buildBaseWeek(
           userProfile: userProfile,
           clientProfile: clientProfile,
           targetVolumeByMuscle: volumeTargets,
           availableDays: 4,
         );
+
+        if (!templateResult.success) {
+          fail('Template build failed: ${templateResult.error}');
+        }
+
+        final sessions = templateResult.sessions!;
+
         expect(
           sessions.length,
           4,
