@@ -148,6 +148,7 @@ class IntensityEngine {
       case 'heavy':
         return [5, 8]; // Fuerza + hipertrofia
       case 'moderate':
+      case 'medium': // P0.2 Alias safety support
         return [8, 12]; // Hipertrofia óptima
       case 'light':
         return [12, 20]; // Hipertrofia metabólica
@@ -164,6 +165,7 @@ class IntensityEngine {
       case 'heavy':
         return 240; // 4 minutos (180-300s)
       case 'moderate':
+      case 'medium': // P0.2 Alias safety support
         return 120; // 2 minutos (90-180s)
       case 'light':
         return 75; // 75 segundos (60-90s)

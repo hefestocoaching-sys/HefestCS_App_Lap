@@ -56,6 +56,17 @@ class MotorV3Orchestrator {
   static const double _microDeloadVolumeFactor = 0.75; // -25%
   static const double _deloadVolumeFactor = 0.65; // -35%
 
+  static const double _overreachMaxFactor = 1.15;
+  static const int _overreachMaxIncrementPerWeek =
+      2; // Máximo aumento semanal vs base
+
+  static const double _localDeloadFactor = 0.5; // Reduce volumen en un 50%
+  static const int _fatigueThreshold = 4; // escala 1-5
+
+  // P1-E: Intensification Config
+  static const double _intensificationExerciseRatio = 0.30;
+  static const int _minSetsForIntensification = 4;
+
   /// Genera un programa de entrenamiento completo con lógica científica
   ///
   /// **ALGORITMO CIENTÍFICO COMPLETO (10 PASOS):**
@@ -570,6 +581,7 @@ class MotorV3Orchestrator {
     for (int weekNum = 1; weekNum <= durationWeeks; weekNum++) {
       // ✅ PASO 10.2: Calculate Target Volume for this week (Progression)
       final Map<String, int> targetWeeklyVolume = {};
+      final normalizedPriorities = _normalizePriorities(userProfile);
 
       double volumeFactor;
       // ignore: unused_local_variable
@@ -613,7 +625,6 @@ class MotorV3Orchestrator {
 
           // P0 Requirement: "Recalcular sets por músculo para esa semana (según VolumeEngine / progression existente)"
           // We will call VolumePlanner to get the 'target' number.
-          final normalizedPriorities = _normalizePriorities(userProfile);
           final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
             musclePriorities: normalizedPriorities,
             trainingLevel: userProfile.trainingLevel,
@@ -641,6 +652,116 @@ class MotorV3Orchestrator {
               feedback: {},
             ),
           );
+        }
+      }
+
+      // ─────────────────────────────────────────────────────────────────
+      // P1-D & P1-C: GATE PARA LOCAL DELOAD, HOLD / OVERREACH
+      // ─────────────────────────────────────────────────────────────────
+      if (cycleStateWrapper.state.phase == CyclePhase.accumulation) {
+        final normalizedPriorities = _normalizePriorities(userProfile);
+        final allLandmarks = VolumeLandmarksCalculator.calculateForAllMuscles(
+          musclePriorities: normalizedPriorities,
+          trainingLevel: userProfile.trainingLevel,
+          age: userProfile.age,
+        );
+
+        final assigned = _computeAssignedDirectVolume(baseSessions);
+        final Map<String, int> newTargets = Map.of(targetWeeklyVolume);
+
+        // P1D-MARK: Detectar fatiga en la semana actual N
+        final pendingMap = _readPendingLocalDeload(
+          cycleStateWrapper.planConfig,
+        );
+
+        // Primero verificamos fatigas para marcar (MARK) antes de evaluar volumen
+        for (final m in newTargets.keys) {
+          if (_shouldTriggerLocalDeload(
+            muscleKey: m,
+            planConfig: cycleStateWrapper.planConfig,
+          )) {
+            pendingMap[m] = true;
+            debugPrint('[V3][P1D][MARK] muscle=$m fatigue threshold met');
+          }
+        }
+
+        // P1D-APPLY y P1C: Evaluar targets (1. Deload, 2. HOLD/OVERREACH)
+        for (final m in newTargets.keys) {
+          final t = newTargets[m] ?? 0;
+          if (t <= 0) continue;
+
+          // 1) P1D Aplicación de Micro-descarga local en semana N+1
+          if (pendingMap[m] == true) {
+            final a = assigned[m] ?? 0;
+            final reduced = (a * _localDeloadFactor).round();
+
+            newTargets[m] = reduced;
+            debugPrint('[V3][P1D][APPLY] muscle=$m from=$a to=$reduced');
+
+            // limpiar flag después de aplicar para que regrese a la normalidad en N+2
+            pendingMap[m] = false;
+            continue; // NO ejecutar HOLD/OVERREACH esta semana
+          }
+
+          // 2) P1C HOLD / OVERREACH
+          final lm = allLandmarks[m];
+          if (lm == null) continue;
+
+          final vmrTarget = lm.vmrTarget;
+          final vmr = lm.vmr;
+          final a = assigned[m] ?? 0;
+
+          final hasSunday = _hasSundayCheckForMuscle(
+            planConfig: cycleStateWrapper.planConfig,
+            muscleKey: m,
+          );
+
+          // Caso HOLD: en vmrTarget o superior sin evidencia dominical
+          if (a >= vmrTarget && !hasSunday) {
+            debugPrint(
+              '[V3][P1C][HOLD] muscle=$m assigned=$a vmrTarget=$vmrTarget reason=no_sunday_check',
+            );
+            newTargets[m] = a; // Congela en asignado actual (no sube)
+            continue;
+          }
+
+          // Caso HOLD u OVERREACH con evidencia
+          if (a >= vmrTarget && hasSunday) {
+            final ceiling = _softCeilingFromLandmarks(lm);
+
+            if (a >= ceiling) {
+              debugPrint(
+                '[V3][P1C][HOLD] muscle=$m assigned=$a vmr=$vmr ceiling=$ceiling reason=at_ceiling',
+              );
+              newTargets[m] = a; // Congela en el límite permitido
+              continue;
+            }
+
+            final desired = t;
+            final allowed = a + _overreachMaxIncrementPerWeek;
+            final capped = min(allowed, ceiling);
+            final finalTarget = min(desired, capped);
+
+            debugPrint(
+              '[V3][P1C][OVERREACH] muscle=$m assigned=$a vmrTarget=$vmrTarget ceiling=$ceiling desired=$desired finalTarget=$finalTarget',
+            );
+            newTargets[m] = finalTarget;
+            continue;
+          }
+        }
+
+        targetWeeklyVolume.clear();
+        targetWeeklyVolume.addAll(newTargets);
+
+        cycleStateWrapper.planConfig = _writePendingLocalDeload(
+          cycleStateWrapper.planConfig,
+          pendingMap,
+        );
+      } else {
+        // Log compatibility for no meta
+        if (cycleStateWrapper.planConfig == null ||
+            cycleStateWrapper.planConfig?.extra == null) {
+          // Warning already logged during state extraction
         }
       }
 
@@ -675,6 +796,17 @@ class MotorV3Orchestrator {
           base: baseSessions,
           targetWeeklySetsByMuscle: targetWeeklyVolume,
           baseWeeklySetsByMuscle: baseVolumeMap,
+        );
+      }
+
+      // ─────────────────────────────────────────────────────────────────
+      // P1-E: Intensificación Automática en Fase de Mantenimiento
+      // ─────────────────────────────────────────────────────────────────
+      if (cycleStateWrapper.state.phase == CyclePhase.maintenance) {
+        _applyMaintenanceIntensificationAndRir(
+          sessions: weekSessions,
+          planConfig: cycleStateWrapper.planConfig,
+          musclePriorities: normalizedPriorities,
         );
       }
 
@@ -1112,6 +1244,86 @@ class MotorV3Orchestrator {
 
   static const int _defaultDailyCapPerMuscle = 10;
 
+  static Map<String, int> _computeAssignedDirectVolume(
+    List<TrainingSession> sessions,
+  ) {
+    final Map<String, int> out = {};
+    for (final s in sessions) {
+      for (final ep in s.exercises) {
+        final m = ep.directTargetMuscleKey;
+        out[m] = (out[m] ?? 0) + ep.sets;
+      }
+    }
+    return out;
+  }
+
+  static bool _hasSundayCheckForMuscle({
+    required TrainingPlanConfig? planConfig,
+    required String muscleKey,
+  }) {
+    if (planConfig == null) {
+      debugPrint('[V3][P1C][WARN] no meta available -> overreach disabled');
+      return false;
+    }
+
+    final Map<String, dynamic> meta = planConfig.extra;
+    final dynamic raw = meta['weeklySundayCheck'];
+
+    if (raw is Map) {
+      final v = raw[muscleKey];
+      if (v is bool) return v;
+    }
+    return false;
+  }
+
+  static int _softCeilingFromLandmarks(VolumeLandmarks lm) {
+    return (lm.vmr * _overreachMaxFactor).round();
+  }
+
+  static Map<String, bool> _readPendingLocalDeload(
+    TrainingPlanConfig? planConfig,
+  ) {
+    final Map<String, dynamic> meta = planConfig?.extra ?? <String, dynamic>{};
+    final raw = meta['pendingLocalDeload'];
+    if (raw is Map) {
+      return raw.map((k, v) => MapEntry(k.toString(), v == true));
+    }
+    return {};
+  }
+
+  static TrainingPlanConfig? _writePendingLocalDeload(
+    TrainingPlanConfig? planConfig,
+    Map<String, bool> map,
+  ) {
+    if (planConfig == null) return null;
+    debugPrint(
+      '[V3][P1D][WARN] TrainingPlanConfig has no meta/copyWith(meta); tracking locally during build but will not persist globally unless rewritten',
+    );
+    return planConfig; // fallback
+  }
+
+  static bool _shouldTriggerLocalDeload({
+    required String muscleKey,
+    required TrainingPlanConfig? planConfig,
+  }) {
+    final Map<String, dynamic> meta = planConfig?.extra ?? <String, dynamic>{};
+    final raw = meta['weeklyFatigue'];
+
+    // esperado formato:
+    // {
+    //   "chest": 4,
+    //   "lats": 2,
+    // }
+
+    if (raw is Map) {
+      final val = raw[muscleKey];
+      if (val is int && val >= _fatigueThreshold) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   static _CycleState _readCycleState(
     TrainingPlanConfig? planConfig, {
     UserProfile? profile,
@@ -1292,6 +1504,110 @@ class MotorV3Orchestrator {
 
     return errors;
   }
+
+  /// ─────────────────────────────────────────────────────────────────────────
+  /// P1-E: Intensificación Automática en Maintenance
+  /// ─────────────────────────────────────────────────────────────────────────
+  static void _applyMaintenanceIntensificationAndRir({
+    required List<TrainingSession> sessions,
+    required TrainingPlanConfig? planConfig,
+    required Map<String, int> musclePriorities,
+  }) {
+    // 1) Ajustar RIR globalmente en Maintenance
+    for (final s in sessions) {
+      for (int i = 0; i < s.exercises.length; i++) {
+        final ep = s.exercises[i];
+        int targetRir;
+        if (ep.intensityZone == 'heavy') {
+          targetRir = 1;
+        } else {
+          // medium o light
+          targetRir = 2;
+        }
+
+        s.exercises[i] = ep.copyWith(targetRir: targetRir, sets: ep.sets);
+      }
+    }
+
+    // 2) Obtener estado de deloads para evitar intensificar músculos fatigados
+    final pendingMap = _readPendingLocalDeload(planConfig);
+
+    // 3) Aplicar intensificación día por día
+    for (int dayIdx = 0; dayIdx < sessions.length; dayIdx++) {
+      final session = sessions[dayIdx];
+
+      // Agrupar los EPs por directTargetMuscleKey (SSOT) en esta sesión
+      final muscleEps = <String, List<int>>{};
+      for (int i = 0; i < session.exercises.length; i++) {
+        final m = session.exercises[i].directTargetMuscleKey;
+        muscleEps.putIfAbsent(m, () => []).add(i);
+      }
+
+      for (final entry in muscleEps.entries) {
+        final muscle = entry.key;
+        final epIndices = entry.value;
+
+        // P1-E Regla: Skip si la prioridad es menos importante que P2 (prioridad >= P3 = <3 numérico en nuestro index mapping invertido)
+        // Ojo: prioridades numéricas (1=Primary, 2=Secondary, 3=Tertiary).
+        // "priority < P3" implica priority 1 o 2 (Primary/Secondary)
+        final priority = musclePriorities[muscle] ?? 3;
+        if (priority > 2) continue;
+
+        // P1-E Regla: Skip si hay un local deload de la semana pasada
+        if (pendingMap[muscle] == true) continue;
+
+        // Contar volumen (sets) de este músculo en ESTE DÍA
+        int totalSetsToday = 0;
+        int uniqueExercisesToday = epIndices.length;
+        for (final idx in epIndices) {
+          totalSetsToday += session.exercises[idx].sets;
+        }
+
+        // P1-E Regla: Min Sets
+        if (totalSetsToday < _minSetsForIntensification) continue;
+
+        // Limite de ejercicios a intensificar hoy
+        int exercisesToIntensify =
+            (uniqueExercisesToday * _intensificationExerciseRatio).ceil();
+
+        int intensifiedCount = 0;
+
+        for (final idx in epIndices) {
+          if (intensifiedCount >= exercisesToIntensify) break;
+
+          final ep = session.exercises[idx];
+          // Solo heavy o medium (no light), y que no tenga intensificación ya seteada
+          if ((ep.intensityZone == 'heavy' || ep.intensityZone == 'medium') &&
+              (ep.intensificationTechnique == null ||
+                  ep.intensificationTechnique!.isEmpty)) {
+            final ex = ExerciseCatalogV3.getById(ep.exerciseId);
+            if (ex != null) {
+              // Si no existe isCompound, podemos inferirlo vagamente o simplemente asumir myo_reps por defecto
+              // O una mejor heurística: ejercicios con press/squat/deadlift/row suelen ser compuestos.
+              final isCompoundLike =
+                  ex.name.toLowerCase().contains('press') ||
+                  ex.name.toLowerCase().contains('squat') ||
+                  ex.name.toLowerCase().contains('deadlift') ||
+                  ex.name.toLowerCase().contains('row') ||
+                  ex.difficulty.toLowerCase().contains('compound');
+
+              final technique = isCompoundLike ? 'rest_pause' : 'myo_reps';
+
+              session.exercises[idx] = ep.copyWith(
+                intensificationTechnique: technique,
+                sets: ep.sets,
+              );
+
+              intensifiedCount++;
+              debugPrint(
+                '[V3][P1E][INTENSIFY] muscle=$muscle ex=${ex.name} technique=$technique',
+              );
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 enum TrainingSplit { fullBody, upperLower, pushPullLegs }
@@ -1390,5 +1706,6 @@ class _CycleState {
 
 class _CycleStateWrapper {
   _CycleState state;
-  _CycleStateWrapper(this.state);
+  TrainingPlanConfig? planConfig;
+  _CycleStateWrapper(this.state, {this.planConfig});
 }

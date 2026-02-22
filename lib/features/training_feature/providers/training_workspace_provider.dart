@@ -35,22 +35,20 @@ bool _resolvePlanOutdatedFlag(Client? client) {
     return false;
   }
 
-  final activePlanId =
-      client.training.extra[TrainingExtraKeys.activePlanId]?.toString();
+  final activePlanId = client.training.extra[TrainingExtraKeys.activePlanId]
+      ?.toString();
   TrainingPlanConfig? plan;
 
   if (activePlanId != null && activePlanId.isNotEmpty) {
-    try {
-      plan = client.trainingPlans.firstWhere((p) => p.id == activePlanId);
-    } on StateError {
-      plan = null;
-    }
+    plan = client.trainingPlans.where((p) => p.id == activePlanId).firstOrNull;
   }
 
   plan ??=
       (client.trainingPlans.toList()
             ..sort((a, b) => b.startDate.compareTo(a.startDate)))
-          .first;
+          .firstOrNull;
+
+  if (plan == null) return false;
 
   return client.training.hasInterviewChangedSincePlanGeneration(plan);
 }

@@ -265,11 +265,9 @@ class _TrainingWorkspaceScreenState
     // Obtener plan activo o m├ís reciente
     TrainingPlanConfig? plan;
     if (hasAnyPlan && hasActiveId) {
-      try {
-        plan = client.trainingPlans.firstWhere((p) => p.id == activePlanId);
-      } on StateError {
-        plan = null;
-      }
+      plan = client.trainingPlans
+          .where((p) => p.id == activePlanId)
+          .firstOrNull;
     }
 
     if (hasAnyPlan && plan == null) {

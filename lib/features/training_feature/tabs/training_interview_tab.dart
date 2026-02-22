@@ -947,7 +947,9 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       input: TrainingProfileFormInput(
         extra: extra,
         daysPerWeekLabel: daysPerWeek > 0 ? daysPerWeek.toString() : '',
-        timePerSessionLabel: _timePerSession?.label,
+        timePerSessionLabel: derivedSession != null
+            ? '$derivedSession min'
+            : _timePerSession?.label,
         planDurationWeeks: planDurationWeeks,
         priorityMusclesPrimary: primaryMuscles,
         priorityMusclesSecondary: secondaryMuscles,
@@ -973,7 +975,15 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       sessionDurationMinutes: derivedSession ?? 0,
       restBetweenSetsSeconds: derivedRest ?? 0,
       avgSleepHours: derivedSleep ?? 0.0,
+      extra: Map<String, dynamic>.from(updatedTraining.extra)
+        ..addAll({
+          TrainingExtraKeys.timePerSessionMinutes: derivedSession ?? 0,
+          TrainingExtraKeys.restBetweenSetsSeconds: derivedRest ?? 0,
+          TrainingExtraKeys.avgSleepHours: derivedSleep ?? 0.0,
+        }),
     );
+
+    final updatedExtraForV2 = Map<String, dynamic>.from(finalTraining.extra);
 
     // GUARDAR CAMPOS V2 (2025) - MANDATORY
 
@@ -1016,15 +1026,19 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     }
 
     if (_performanceTrend != null) {
-      extra[TrainingInterviewLegacyKeys.performanceTrend] =
+      updatedExtraForV2[TrainingInterviewLegacyKeys.performanceTrend] =
           _performanceTrend!.name;
     }
+
+    // Assign final overrides to finalTraining for propagation downstream
+    finalTraining.extra.addAll(updatedExtraForV2);
 
     // PASO 3B: PERSISTIR SSOT ESTRUCTURADO (trainingSetupV1, trainingEvaluationSnapshotV1, trainingProgressionStateV1)
 
     // 1. Crear TrainingSetupV1 y persistir como Map
     final existingSetupV1Map =
-        extra[TrainingExtraKeys.trainingSetupV1] as Map<String, dynamic>?;
+        finalTraining.extra[TrainingExtraKeys.trainingSetupV1]
+            as Map<String, dynamic>?;
     final resolvedSex =
         _client?.profile.gender?.name ??
         existingSetupV1Map?['sex']?.toString() ??
@@ -1053,16 +1067,18 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         'monthsContinuousCurrent': _monthsTrainingNow,
       });
     trainingSetupV1Map['experience'] = experienceMap;
-    extra[TrainingExtraKeys.trainingSetupV1] = trainingSetupV1Map;
+    finalTraining.extra[TrainingExtraKeys.trainingSetupV1] = trainingSetupV1Map;
 
     // 2. Crear TrainingEvaluationSnapshotV1 y persistir como Map
     final now = DateTime.now();
 
     // E2 GOBERNANZA: Determinar politica de regeneracion segun historial
     final existingSnapshotMap =
-        extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] as Map?;
+        finalTraining.extra[TrainingExtraKeys.trainingEvaluationSnapshotV1]
+            as Map?;
     final existingProgressionMap =
-        extra[TrainingExtraKeys.trainingProgressionStateV1] as Map?;
+        finalTraining.extra[TrainingExtraKeys.trainingProgressionStateV1]
+            as Map?;
     final weeksCompleted =
         (existingProgressionMap?['weeksCompleted'] as num?)?.toInt() ?? 0;
 
@@ -1093,7 +1109,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'rampUpRequired': _deriveRampUpRequired(totalYearsTrainedBefore),
       'peakPhaseWindow': false,
     };
-    extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] =
+    finalTraining.extra[TrainingExtraKeys.trainingEvaluationSnapshotV1] =
         trainingEvaluationSnapshotV1Map;
 
     // 3. Crear TrainingProgressionStateV1 y persistir como Map
@@ -1108,14 +1124,15 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'lastPlanId': '',
       'lastPlanChangeReason': 'initial_evaluation',
     };
-    extra[TrainingExtraKeys.trainingProgressionStateV1] =
+    finalTraining.extra[TrainingExtraKeys.trainingProgressionStateV1] =
         trainingProgressionStateV1Map;
 
     // PASO 3B: Explicitamente persistir daysPerWeek en extra[] (para Motor V3)
-    extra[TrainingExtraKeys.daysPerWeek] = daysPerWeek;
-    extra[TrainingExtraKeys.planDurationInWeeks] = planDurationWeeks;
+    finalTraining.extra[TrainingExtraKeys.daysPerWeek] = daysPerWeek;
+    finalTraining.extra[TrainingExtraKeys.planDurationInWeeks] =
+        planDurationWeeks;
 
-    return client.copyWith(training: finalTraining.copyWith(extra: extra));
+    return client.copyWith(training: finalTraining);
   }
 
   Future<void> _onSavePressed() async {

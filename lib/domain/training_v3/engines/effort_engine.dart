@@ -45,6 +45,7 @@ class EffortEngine {
         case 'heavy':
           return 3; // Conservador (riesgo lesión en compounds pesados)
         case 'moderate':
+        case 'medium': // P0.2 Alias
           return 2; // Óptimo para hipertrofia
         case 'light':
           return 1; // Cerca del fallo
@@ -56,6 +57,7 @@ class EffortEngine {
         case 'heavy':
           return 2; // Moderado (isolation rara vez es heavy)
         case 'moderate':
+        case 'medium': // P0.2 Alias
           return 2; // Óptimo
         case 'light':
           return 0; // Fallo (seguro en isolation)
