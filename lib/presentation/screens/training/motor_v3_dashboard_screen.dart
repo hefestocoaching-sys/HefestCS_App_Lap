@@ -10,6 +10,7 @@ import 'package:hcs_app_lap/presentation/widgets/feedback/hcs_error.dart';
 import 'package:hcs_app_lap/presentation/widgets/cards/stat_card.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/planned_exercise.dart';
 
 /// Dashboard principal del Motor V3
 class MotorV3DashboardScreen extends ConsumerStatefulWidget {
@@ -1210,24 +1211,167 @@ class _MotorV3DashboardScreenState extends ConsumerState<MotorV3DashboardScreen>
   }
 
   Widget _buildSessionsTab(Map<String, dynamic> result) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    final program = result['program'] as TrainingProgram?;
+    if (program == null || program.sessions.isEmpty) {
+      return const Center(
+        child: Text(
+          'No hay sesiones disponibles',
+          style: TextStyle(color: Colors.white54),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: program.sessions.length,
+      itemBuilder: (context, index) {
+        final session = program.sessions[index];
+        return Card(
+          color: const Color(0xFF1A1F2E),
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: Text(
+              'Día ${session.dayNumber} · ${session.name}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: Text(
+              '${session.exercises.length} ejercicios',
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+            childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            children: [
+              for (final exercise in session.exercises) ...[
+                _buildExerciseHeader(exercise.name),
+                const SizedBox(height: 6),
+                for (int i = 0; i < exercise.sets.length; i++)
+                  _buildSetRow(
+                    index: i + 1,
+                    repsMin: exercise.sets[i].repsMin,
+                    repsMax: exercise.sets[i].repsMax,
+                    rir: exercise.sets[i].rir,
+                    intensification: _resolveSetIntensification(
+                      exercise: exercise,
+                      setIndex: i,
+                    ),
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildExerciseHeader(String name) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        name,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSetRow({
+    required int index,
+    required int repsMin,
+    required int repsMax,
+    required int rir,
+    required IntensificationType? intensification,
+  }) {
+    final tag = intensification == null
+        ? null
+        : _intensificationLabel(intensification);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
         children: [
-          Icon(Icons.fitness_center, size: 64, color: Colors.white24),
-          SizedBox(height: 16),
           Text(
-            'Sesiones Detalladas',
-            style: TextStyle(fontSize: 18, color: Colors.white54),
+            'Set $index',
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
-          SizedBox(height: 8),
+          const Spacer(),
           Text(
-            'Programa día a día - Próximamente',
-            style: TextStyle(fontSize: 12, color: Colors.white38),
+            '$repsMin-$repsMax reps · RIR $rir',
+            style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
+          if (tag != null) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00D9FF).withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                tag,
+                style: const TextStyle(
+                  color: Color(0xFF00D9FF),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  IntensificationType? _resolveSetIntensification({
+    required PlannedExercise exercise,
+    required int setIndex,
+  }) {
+    final rule = exercise.intensification;
+    if (rule == null) return null;
+
+    final lastIndex = exercise.sets.length - 1;
+    if (rule.applyToLastTwoSets && setIndex >= lastIndex - 1) {
+      return rule.type;
+    }
+    if (rule.applyToLastSetOnly && setIndex == lastIndex) {
+      return rule.type;
+    }
+    if (!rule.applyToLastSetOnly && !rule.applyToLastTwoSets) {
+      return rule.type;
+    }
+    return null;
+  }
+
+  String _intensificationLabel(IntensificationType type) {
+    switch (type) {
+      case IntensificationType.restPause:
+        return 'REST-PAUSE';
+      case IntensificationType.dropSet:
+        return 'DROP SET';
+      case IntensificationType.myoReps:
+        return 'MYO-REPS';
+      case IntensificationType.cluster:
+        return 'CLUSTER';
+      case IntensificationType.isometricHold:
+        return 'ISO HOLD';
+    }
   }
 
   Widget _buildProgressionTab(Map<String, dynamic> result) {

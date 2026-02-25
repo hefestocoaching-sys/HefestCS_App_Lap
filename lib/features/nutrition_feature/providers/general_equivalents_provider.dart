@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
+import 'package:hcs_app_lap/utils/nutrition_record_helpers.dart';
 
 class GeneralEquivalentsState {
   final Map<String, double> equivalents; // GroupId -> Quantity
@@ -60,6 +61,84 @@ class GeneralEquivalentsNotifier extends Notifier<GeneralEquivalentsState> {
     );
     _loadedClientId = client.id;
   }
+
+  /// Carga la tabla general desde el día con más calorías de la semana (día pico).
+  /// Este método reemplaza el cálculo por promedio que existía antes.
+  ///
+  /// Uso: llamar al abrir la pantalla de equivalentes generales, después de
+  /// que el nutricionista haya completado los macros semanales del cliente.
+  void loadFromPeakDay(Client client) {
+    final extra = client.nutrition.extra;
+    final macroRecords = readNutritionRecordList(
+      extra[NutritionExtraKeys.macrosRecords],
+    );
+    final record = latestNutritionRecordByDate(macroRecords);
+    final weeklyMacros = parseWeeklyMacroSettings(
+      record?['weeklyMacroSettings'],
+    );
+
+    if (weeklyMacros == null || weeklyMacros.isEmpty) return;
+
+    final w = client.lastWeight ?? 70.0;
+
+    // Encontrar el día con más calorías (día pico)
+    String? peakDayKey;
+    double peakKcal = 0;
+
+    weeklyMacros.forEach((dayKey, settings) {
+      final kcal = settings.totalCalories > 0
+          ? settings.totalCalories
+          : (settings.proteinSelected * w * 4) +
+                (settings.carbSelected * w * 4) +
+                (settings.fatSelected * w * 9);
+      if (kcal > peakKcal) {
+        peakKcal = kcal;
+        peakDayKey = dayKey;
+      }
+    });
+
+    if (peakDayKey == null) return;
+
+    // Obtener macros del día pico en gramos absolutos
+    final peak = weeklyMacros[peakDayKey]!;
+    final proteinG = peak.proteinSelected * w;
+    final carbG = peak.carbSelected * w;
+    final fatG = peak.fatSelected * w;
+
+    // Convertir macros a equivalentes SMAE usando proporciones estándar:
+    //   AOA bajo grasa   → proteína  (7g prot / equiv)
+    //   Cereales sin grasa → carb    (15g carb / equiv)
+    //   Grasas sin proteína → grasa  (5g grasa / equiv)
+    //   Vegetales        → fijo 1.5 equiv (base mínima)
+    //   Frutas           → ~15% del carb restante
+    //
+    // NOTA: estos valores son un punto de partida. El nutricionista los ajusta
+    // manualmente en la tabla general antes de guardar.
+    final aoaEquivs = _round1(proteinG / 7.0);
+    final totalCarbEquivs = carbG / 15.0;
+    final fruitEquivs = _round1(
+      totalCarbEquivs * 0.15,
+    ); // 15% de carb en frutas
+    final cerealEquivs = _round1(totalCarbEquivs * 0.85); // 85% en cereales
+    final fatEquivs = _round1(fatG / 5.0);
+
+    final newEquivalents = <String, double>{
+      if (aoaEquivs > 0) 'aoa_bajo': aoaEquivs,
+      if (cerealEquivs > 0) 'cereales_sin_grasa': cerealEquivs,
+      if (fruitEquivs > 0) 'frutas': fruitEquivs,
+      if (fatEquivs > 0) 'grasas_sin_proteina': fatEquivs,
+      'vegetales': 1.5, // mínimo base siempre presente
+    };
+
+    state = state.copyWith(
+      equivalents: newEquivalents,
+      mealEquivalents:
+          const {}, // limpiar distribución por comida — el nutricionista la define
+      isDirty: true,
+    );
+  }
+
+  double _round1(double v) => double.parse(v.toStringAsFixed(1));
 
   void updateEquivalent(String groupId, double delta) {
     final equivalents = Map<String, double>.from(state.equivalents);

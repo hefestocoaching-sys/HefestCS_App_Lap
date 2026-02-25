@@ -20,7 +20,7 @@ class TrainingAuditLogRepositoryImpl implements TrainingAuditLogRepository {
           .doc();
 
       // Asignar ID si no tiene (aunque el modelo no tiene ID, Firestore lo genera)
-      // El modelo TrainingAuditLogEntry suele no tener ID propio, usamos el de Firestore implÃ­cito.
+      // El modelo TrainingAuditLogEntry suele no tener ID propio, usamos el de Firestore implícito.
 
       await docRef.set(entry.toJson());
 

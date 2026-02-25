@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/data/datasources/local/local_client_datasource.dart';
@@ -11,6 +12,7 @@ class ClientRepository {
   final ClientRemoteDataSource _remote;
   final Map<String, Timer> _remotePushDebounce = {};
   final Map<String, Client> _pendingRemotePush = {};
+  bool _remoteSyncTemporarilyDisabled = false;
 
   ClientRepository({
     required LocalClientDataSource local,
@@ -60,22 +62,44 @@ class ClientRepository {
     required Client client,
     required bool deleted,
   }) async {
-    await _remote.upsertClient(
-      coachId: coachId,
-      client: client,
-      deleted: deleted,
-    );
+    try {
+      await _remote.upsertClient(
+        coachId: coachId,
+        client: client,
+        deleted: deleted,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        logger.warning('upsertRemoteClient skipped: permission denied', {
+          'coachId': coachId,
+          'clientId': client.id,
+          'deleted': deleted,
+        });
+        return;
+      }
+      rethrow;
+    }
   }
 
   Future<List<RemoteClientSnapshot>> fetchRemoteClients({
     required String coachId,
     DateTime? since,
   }) {
-    return _remote.fetchClients(coachId: coachId, since: since);
+    return _remote.fetchClients(coachId: coachId, since: since).catchError((e) {
+      if (e is FirebaseException && e.code == 'permission-denied') {
+        logger.warning('fetchRemoteClients skipped: permission denied', {
+          'coachId': coachId,
+        });
+        return <RemoteClientSnapshot>[];
+      }
+      throw e;
+    });
   }
 
   /// Helper privado: push silencioso a Firestore (no rompe flujos locales)
   Future<void> _pushClientRemote(Client client, {required bool deleted}) async {
+    if (_remoteSyncTemporarilyDisabled) return;
+
     User? user;
     try {
       user = FirebaseAuth.instance.currentUser;
@@ -87,14 +111,29 @@ class ClientRepository {
     if (user == null) return; // Sin usuario autenticado, no hay push
 
     try {
+      await user.getIdToken();
       await _remote.upsertClient(
         coachId: user.uid,
         client: client,
         deleted: deleted,
       );
-    } catch (e) {
-      // Ignorar error: Firestore es réplica, no fuente de verdad
-      // El cambio ya está en SQLite (guardado localmente)
+    } on FirebaseException catch (e, st) {
+      if (e.code == 'permission-denied') {
+        _remoteSyncTemporarilyDisabled = true;
+        logger.warning('Remote client sync disabled for this session', {
+          'reason': 'firestore_permission_denied',
+          'clientId': client.id,
+          'coachId': user.uid,
+          'deleted': deleted,
+          'errorCode': e.code,
+          'errorMessage': e.message,
+        });
+        return;
+      }
+
+      logger.error('Remote client sync failed', e, st);
+    } catch (e, st) {
+      logger.error('Remote client sync failed', e, st);
     }
   }
 }

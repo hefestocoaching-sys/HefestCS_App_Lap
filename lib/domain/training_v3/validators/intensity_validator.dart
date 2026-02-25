@@ -1,5 +1,7 @@
 // lib/domain/training_v3/validators/intensity_validator.dart
 
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
+
 /// Validador científico de distribución de intensidad
 ///
 /// Valida que los programas cumplan con:
@@ -80,11 +82,15 @@ class IntensityValidator {
     Map<String, String> intensities,
   ) {
     final total = intensities.length;
-    final heavyCount = intensities.values.where((i) => i == 'heavy').length;
-    final moderateCount = intensities.values
-        .where((i) => i == 'moderate')
+    final heavyCount = intensities.values
+        .where((i) => i == IntensityZone.heavy)
         .length;
-    final lightCount = intensities.values.where((i) => i == 'light').length;
+    final moderateCount = intensities.values
+        .where((i) => i == IntensityZone.medium)
+        .length;
+    final lightCount = intensities.values
+        .where((i) => i == IntensityZone.light)
+        .length;
 
     final heavyPct = heavyCount / total;
     final moderatePct = moderateCount / total;
@@ -96,9 +102,9 @@ class IntensityValidator {
     final lightOk = (lightPct - 0.20).abs() <= 0.15;
 
     final percentages = {
-      'heavy': (heavyPct * 100).toStringAsFixed(1),
-      'moderate': (moderatePct * 100).toStringAsFixed(1),
-      'light': (lightPct * 100).toStringAsFixed(1),
+      IntensityZone.heavy: (heavyPct * 100).toStringAsFixed(1),
+      IntensityZone.medium: (moderatePct * 100).toStringAsFixed(1),
+      IntensityZone.light: (lightPct * 100).toStringAsFixed(1),
     };
 
     if (!heavyOk || !moderateOk || !lightOk) {
@@ -106,7 +112,7 @@ class IntensityValidator {
         'status': 'warning',
         'message':
             'Distribución de intensidad subóptima. '
-            'Actual: ${percentages['heavy']}% heavy / ${percentages['moderate']}% moderate / ${percentages['light']}% light. '
+            'Actual: ${percentages[IntensityZone.heavy]}% heavy / ${percentages[IntensityZone.medium]}% medium / ${percentages[IntensityZone.light]}% light. '
             'Óptimo: 35% / 45% / 20%',
         'percentages': percentages,
       };
@@ -142,7 +148,7 @@ class IntensityValidator {
       final maxReps = repRange[1];
 
       switch (intensity) {
-        case 'heavy':
+        case IntensityZone.heavy:
           if (maxReps > 8) {
             errors.add(
               '$exerciseId: Heavy con $minReps-$maxReps reps. '
@@ -150,7 +156,7 @@ class IntensityValidator {
             );
           }
           break;
-        case 'moderate':
+        case IntensityZone.medium:
           if (maxReps < 8 || minReps > 12) {
             errors.add(
               '$exerciseId: Moderate con $minReps-$maxReps reps. '
@@ -158,7 +164,7 @@ class IntensityValidator {
             );
           }
           break;
-        case 'light':
+        case IntensityZone.light:
           if (minReps < 12) {
             errors.add(
               '$exerciseId: Light con $minReps-$maxReps reps. '
@@ -187,7 +193,7 @@ class IntensityValidator {
       if (restSeconds == null) return;
 
       switch (intensity) {
-        case 'heavy':
+        case IntensityZone.heavy:
           if (restSeconds < 180) {
             warnings.add(
               '$exerciseId: Heavy con solo ${restSeconds}s descanso. '
@@ -195,7 +201,7 @@ class IntensityValidator {
             );
           }
           break;
-        case 'moderate':
+        case IntensityZone.medium:
           if (restSeconds < 90 || restSeconds > 180) {
             warnings.add(
               '$exerciseId: Moderate con ${restSeconds}s descanso. '
@@ -203,7 +209,7 @@ class IntensityValidator {
             );
           }
           break;
-        case 'light':
+        case IntensityZone.light:
           if (restSeconds > 90) {
             warnings.add(
               '$exerciseId: Light con ${restSeconds}s descanso. '

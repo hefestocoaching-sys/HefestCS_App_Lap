@@ -60,7 +60,7 @@ class MacrocycleTemplateService {
         weekNumber: 4,
         phase: MacroPhase.adaptation,
         block: MacroBlock.AA,
-        volumeMultiplier: 0.6,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );
@@ -100,7 +100,7 @@ class MacrocycleTemplateService {
         weekNumber: 8,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF1,
-        volumeMultiplier: 0.7,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );
@@ -140,7 +140,7 @@ class MacrocycleTemplateService {
         weekNumber: 12,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF2,
-        volumeMultiplier: 0.7,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );
@@ -180,7 +180,7 @@ class MacrocycleTemplateService {
         weekNumber: 16,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF3,
-        volumeMultiplier: 0.7,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );
@@ -220,7 +220,7 @@ class MacrocycleTemplateService {
         weekNumber: 20,
         phase: MacroPhase.hypertrophy,
         block: MacroBlock.HF4,
-        volumeMultiplier: 0.6,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );
@@ -282,7 +282,7 @@ class MacrocycleTemplateService {
         weekNumber: 26,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC2,
-        volumeMultiplier: 0.65,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );
@@ -344,7 +344,7 @@ class MacrocycleTemplateService {
         weekNumber: 32,
         phase: MacroPhase.intensification,
         block: MacroBlock.APC4,
-        volumeMultiplier: 0.65,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );
@@ -402,7 +402,7 @@ class MacrocycleTemplateService {
         weekNumber: 42,
         phase: MacroPhase.peaking,
         block: MacroBlock.PC,
-        volumeMultiplier: 0.5,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );
@@ -428,7 +428,7 @@ class MacrocycleTemplateService {
         weekNumber: 52,
         phase: MacroPhase.deload,
         block: MacroBlock.AA, // Reinicia ciclo
-        volumeMultiplier: 0.5,
+        volumeMultiplier: MacrocycleWeek.deloadVolumeMultiplier,
         isDeload: true,
       ),
     );

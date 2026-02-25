@@ -142,7 +142,6 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
   late TrainingProfile _draftTraining;
 
   bool _isDirty = false;
-  bool _justSaved = false;
   bool _controllersReady = false;
 
   bool _hasAllergies = false;
@@ -484,7 +483,6 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
       nutrition: _draftNutrition.copyWith(extra: mergedNutritionExtra),
       training: _draftTraining,
     );
-    _justSaved = true;
     try {
       await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
         final mergedHistoryExtraFromPrev = {
@@ -524,9 +522,7 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      _justSaved = false;
-    }
+    } finally {}
   }
 
   @override
@@ -561,27 +557,24 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    // Solo recargar si cambia el cliente activo (diferente ID = diferente paciente).
+    // NO recargar cuando otra sección guarda datos del mismo cliente.
     ref.listen(clientsProvider, (previous, next) {
+      final prevId = previous?.value?.activeClient?.id;
       final nextClient = next.value?.activeClient;
+      final nextId = nextClient?.id;
       if (nextClient == null) return;
-      final isDifferentClient = _client?.id != nextClient.id;
-      if (_justSaved) return;
-      if (isDifferentClient || !_isDirty) {
+      if (_client == null || prevId != nextId) {
         _client = nextClient;
         _initializeFromClient(nextClient);
-        setState(() {});
+        if (mounted) setState(() {});
       }
     });
 
-    final client = ref.watch(clientsProvider).value?.activeClient;
-    final isDifferentClient = _client?.id != client?.id;
-    // ✅ BUGFIX: No recargar durante/después de guardar (_justSaved=true)
-    if (!_justSaved &&
-        (_client == null ||
-            (isDifferentClient && client != null) ||
-            (!_isDirty && _client != client && client != null))) {
-      _client = client;
+    if (_client == null) {
+      final client = ref.read(clientsProvider).value?.activeClient;
       if (client != null) {
+        _client = client;
         _initializeFromClient(client);
       }
     }

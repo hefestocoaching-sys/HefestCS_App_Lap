@@ -24,7 +24,6 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
   late List<String> _hereditarySelected;
   late List<String> _pathologicalSelected;
   bool _isDirty = false;
-  bool _justSaved = false;
 
   List<String> _safeStringList(dynamic value) =>
       value is List ? value.map((e) => e.toString()).toList() : [];
@@ -131,7 +130,6 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
     final client = _client;
     if (client == null) return;
     final updatedClient = client.copyWith(history: _draftHistory);
-    _justSaved = true;
     try {
       await ref
           .read(clientsProvider.notifier)
@@ -155,35 +153,35 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      _justSaved = false;
-    }
+    } finally {}
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // Solo recargar si cambia el cliente activo (diferente ID = diferente paciente).
+    // NO recargar cuando otra sección (antropometría, nutrición, etc.) guarda datos
+    // del mismo cliente — eso sobreescribiría el borrador de historia clínica.
     ref.listen(clientsProvider, (previous, next) {
+      final prevId = previous?.value?.activeClient?.id;
       final nextClient = next.value?.activeClient;
+      final nextId = nextClient?.id;
       if (nextClient == null) return;
-      final isDifferentClient = _client?.id != nextClient.id;
-      if (_justSaved) return;
-      if (isDifferentClient || !_isDirty) {
+
+      // Solo recargar si cambió el ID del cliente activo o si no hay cliente cargado aún
+      if (_client == null || prevId != nextId) {
         _client = nextClient;
         _loadFromClient(nextClient);
-        setState(() {});
+        if (mounted) setState(() {});
       }
     });
 
-    final client = ref.watch(clientsProvider).value?.activeClient;
-    final isDifferentClient = _client?.id != client?.id;
-    // ✅ BUGFIX: No recargar durante/después de guardar (_justSaved=true)
-    if (!_justSaved &&
-        (_client == null ||
-            (isDifferentClient && client != null) ||
-            (!_isDirty && _client != client && client != null))) {
-      _client = client;
+    // Carga inicial si el widget se construye sin cliente (initState llegó primero sin datos)
+    if (_client == null) {
+      final client = ref.read(clientsProvider).value?.activeClient;
       if (client != null) {
+        _client = client;
         _loadFromClient(client);
       }
     }

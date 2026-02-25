@@ -53,7 +53,7 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
           Container(
             width: 1,
             margin: const EdgeInsets.symmetric(horizontal: 32),
-            color: kTextColor.withOpacity(0.1),
+            color: kTextColor.withValues(alpha: 0.1),
           ),
           Expanded(
             flex: 4,
@@ -89,8 +89,9 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
     int mode = 0;
     if (rawValue > 0.001) {
       mode = 1;
-    } else if (rawValue < -0.001)
+    } else if (rawValue < -0.001) {
       mode = -1;
+    }
 
     bool isMaintenance = mode == 0;
     bool isSurplus = mode == -1;
@@ -158,9 +159,9 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
           margin: const EdgeInsets.only(bottom: 20),
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: kCardColor.withOpacity(0.5),
+            color: kCardColor.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(25),
-            border: Border.all(color: kTextColor.withOpacity(0.1)),
+            border: Border.all(color: kTextColor.withValues(alpha: 0.1)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -202,9 +203,9 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.12),
+            color: statusColor.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: statusColor.withOpacity(0.25)),
+            border: Border.all(color: statusColor.withValues(alpha: 0.25)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -297,8 +298,8 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
               data: SliderTheme.of(context).copyWith(
                 activeTrackColor: statusColor,
                 thumbColor: statusColor,
-                overlayColor: statusColor.withOpacity(0.2),
-                inactiveTrackColor: statusColor.withOpacity(0.2),
+                overlayColor: statusColor.withValues(alpha: 0.2),
+                inactiveTrackColor: statusColor.withValues(alpha: 0.2),
               ),
               child: Slider(
                 value: absPct.clamp(0.05, 0.30),
@@ -388,12 +389,12 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.18) : Colors.transparent,
+          color: selected ? color.withValues(alpha: 0.18) : Colors.transparent,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
-                ? color.withOpacity(0.45)
-                : kTextColor.withOpacity(0.18),
+                ? color.withValues(alpha: 0.45)
+                : kTextColor.withValues(alpha: 0.18),
           ),
         ),
         child: Text(
@@ -412,9 +413,9 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: kCardColor.withOpacity(0.22),
+        color: kCardColor.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: kTextColor.withOpacity(0.10)),
+        border: Border.all(color: kTextColor.withValues(alpha: 0.10)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -452,9 +453,9 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: kCardColor.withOpacity(0.18),
+            color: kCardColor.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: kTextColor.withOpacity(0.10)),
+            border: Border.all(color: kTextColor.withValues(alpha: 0.10)),
           ),
           child: Row(
             children: [
@@ -485,9 +486,9 @@ class _DietaryAdjustmentSectionState extends State<DietaryAdjustmentSection> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.14),
+                      color: color.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: color.withOpacity(0.28)),
+                      border: Border.all(color: color.withValues(alpha: 0.28)),
                     ),
                     child: Text(
                       "${target.toStringAsFixed(0)} kcal",

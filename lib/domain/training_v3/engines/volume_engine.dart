@@ -31,8 +31,16 @@ class VolumeEngine {
     required String muscle,
     required String trainingLevel,
     required int priority,
+    required int age,
     int? currentVolume,
   }) {
+    _validateInputs(
+      muscle: muscle,
+      trainingLevel: trainingLevel,
+      priority: priority,
+      age: age,
+    );
+
     final landmarks = VolumeLandmarks.calculate(
       muscle: muscle,
       priority: priority,
@@ -40,12 +48,46 @@ class VolumeEngine {
       age: 30,
     );
 
+    final double ageMultiplier = _getAgeMultiplier(age);
+    final int ageAdjustedBase = (landmarks.vme * ageMultiplier).round();
+    final int ageAdjustedMav = (landmarks.vop * ageMultiplier).round();
+    final int ageAdjustedMrv = (landmarks.vmr * ageMultiplier).round();
+
+    final optimal = ageAdjustedMav.clamp(ageAdjustedBase, ageAdjustedMrv);
+
     logger.info(
-      'Volume calculated for $muscle: VOP=${landmarks.vop} '
-      '(VME=${landmarks.vme}, VMR=${landmarks.vmr}, Target=${landmarks.vmrTarget})',
+      'Volume calculated for $muscle: VOP=$optimal '
+      '(VME=$ageAdjustedBase, VMR=$ageAdjustedMrv, Target=${landmarks.vmrTarget}, age=$age)',
     );
 
-    return landmarks.vop;
+    return optimal;
+  }
+
+  static void _validateInputs({
+    required String muscle,
+    required String trainingLevel,
+    required int priority,
+    required int age,
+  }) {
+    if (muscle.trim().isEmpty) {
+      throw ArgumentError('muscle no puede estar vacío');
+    }
+    if (priority < 1 || priority > 5) {
+      throw ArgumentError('priority debe estar entre 1 y 5');
+    }
+    if (!{'novice', 'intermediate', 'advanced'}.contains(trainingLevel)) {
+      throw ArgumentError('trainingLevel inválido: $trainingLevel');
+    }
+    if (age < 18 || age > 80) {
+      throw ArgumentError('age debe estar entre 18 y 80');
+    }
+  }
+
+  static double _getAgeMultiplier(int age) {
+    if (age < 25) return 1.10;
+    if (age <= 39) return 1.00;
+    if (age <= 54) return 0.90;
+    return 0.80;
   }
 
   /// Calcula landmarks completos para un músculo

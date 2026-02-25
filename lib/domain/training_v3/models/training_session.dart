@@ -1,7 +1,7 @@
 // lib/domain/training_v3/models/training_session.dart
 
 import 'package:equatable/equatable.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/exercise_prescription.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/planned_exercise.dart';
 
 /// Sesión individual de entrenamiento
 ///
@@ -55,7 +55,7 @@ class TrainingSession extends Equatable {
   /// 2. Compounds auxiliares (rows, overhead press)
   /// 3. Aislamiento primario (curls, extensions)
   /// 4. Aislamiento secundario (calves, abs)
-  final List<ExercisePrescription> exercises;
+  final List<PlannedExercise> exercises;
 
   // ════════════════════════════════════════════════════════════
   // METADATA
@@ -95,7 +95,7 @@ class TrainingSession extends Equatable {
 
   /// Calcular volumen total de la sesión (suma de todas las series)
   int get totalSets {
-    return exercises.fold(0, (sum, ex) => sum + ex.sets);
+    return exercises.fold(0, (sum, ex) => sum + ex.sets.length);
   }
 
   /// Obtener nombre del día de la semana
@@ -120,7 +120,25 @@ class TrainingSession extends Equatable {
       'name': name,
       'primaryMuscles': primaryMuscles,
       'estimatedDurationMinutes': estimatedDurationMinutes,
-      'exercises': exercises.map((e) => e.toJson()).toList(),
+      'exercises': exercises
+          .map(
+            (e) => {
+              'id': e.id,
+              'exerciseId': e.exerciseId,
+              'name': e.name,
+              'muscleKey': e.muscleKey,
+              'sets': e.sets
+                  .map(
+                    (s) => {
+                      'repsMin': s.repsMin,
+                      'repsMax': s.repsMax,
+                      'rir': s.rir,
+                    },
+                  )
+                  .toList(),
+            },
+          )
+          .toList(),
       'notes': notes,
     };
   }
@@ -134,7 +152,23 @@ class TrainingSession extends Equatable {
       primaryMuscles: List<String>.from(json['primaryMuscles'] as List),
       estimatedDurationMinutes: json['estimatedDurationMinutes'] as int,
       exercises: (json['exercises'] as List)
-          .map((e) => ExercisePrescription.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => PlannedExercise(
+              id: e['id'] as String?,
+              exerciseId: e['exerciseId'] as String,
+              name: e['name'] as String,
+              muscleKey: e['muscleKey'] as String,
+              sets: (e['sets'] as List)
+                  .map(
+                    (s) => SetPrescription(
+                      repsMin: s['repsMin'] as int,
+                      repsMax: s['repsMax'] as int,
+                      rir: s['rir'] as int,
+                    ),
+                  )
+                  .toList(),
+            ),
+          )
           .toList(),
       notes: json['notes'] as String?,
     );
@@ -147,7 +181,7 @@ class TrainingSession extends Equatable {
     String? name,
     List<String>? primaryMuscles,
     int? estimatedDurationMinutes,
-    List<ExercisePrescription>? exercises,
+    List<PlannedExercise>? exercises,
     String? notes,
   }) {
     return TrainingSession(

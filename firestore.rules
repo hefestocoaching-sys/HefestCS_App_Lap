@@ -10,7 +10,12 @@ service cloud.firestore {
     }
     
     function isCoach(coachId) {
-      return request.auth.uid == coachId;
+      return isAuthenticated() && request.auth.uid == coachId;
+    }
+
+    function isCoachAccount() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/coaches/$(request.auth.uid));
     }
 
     function isOwner(userId) {
@@ -23,7 +28,7 @@ service cloud.firestore {
     }
 
     function canAccessUserTrainingData(userId) {
-      return isOwner(userId) || isCoachOfClient(userId);
+      return isOwner(userId) || isCoachOfClient(userId) || isCoachAccount();
     }
     
     // ════════════════════════════════════════════════════════════
@@ -31,33 +36,34 @@ service cloud.firestore {
     // ════════════════════════════════════════════════════════════
     
     match /coaches/{coachId} {
-      allow read, write: if isAuthenticated() && isCoach(coachId);
+      allow create: if isCoach(coachId);
+      allow read, update, delete: if isCoach(coachId);
       
       match /appointments/{appointmentId} {
-        allow read, write: if isAuthenticated() && isCoach(coachId);
+        allow read, write: if isCoach(coachId);
       }
       
       match /transactions/{transactionId} {
-        allow read, write: if isAuthenticated() && isCoach(coachId);
+        allow read, write: if isCoach(coachId);
       }
       
       match /clients/{clientId} {
-        allow read, write: if isAuthenticated() && isCoach(coachId);
+        allow read, write: if isCoach(coachId);
         
         match /anthropometry_records/{recordId} {
-          allow read, write: if isAuthenticated() && isCoach(coachId);
+          allow read, write: if isCoach(coachId);
         }
         
         match /biochemistry_records/{recordId} {
-          allow read, write: if isAuthenticated() && isCoach(coachId);
+          allow read, write: if isCoach(coachId);
         }
         
         match /nutrition_records/{recordId} {
-          allow read, write: if isAuthenticated() && isCoach(coachId);
+          allow read, write: if isCoach(coachId);
         }
         
         match /training_records/{recordId} {
-          allow read, write: if isAuthenticated() && isCoach(coachId);
+          allow read, write: if isCoach(coachId);
         }
       }
     }

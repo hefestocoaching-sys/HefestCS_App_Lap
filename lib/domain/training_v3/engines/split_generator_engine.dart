@@ -1,6 +1,7 @@
 // lib/domain/training_v3/engines/split_generator_engine.dart
 
 import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
 
 /// Motor generador de splits de entrenamiento
 ///
@@ -80,9 +81,14 @@ class SplitGeneratorEngine {
       daysPerWeek: 5,
       frequencyPerMuscle: 1.67, // 5/3 = ~1.67x
       muscleDistribution: [
-        ['chest', 'shoulders', 'triceps'], // Push
-        ['back', 'biceps'], // Pull
-        ['quads', 'hamstrings', 'glutes'], // Legs
+        [MuscleKey.chest, 'shoulders', MuscleKey.triceps], // Push
+        [
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          MuscleKey.biceps,
+        ], // Pull
+        [MuscleKey.quadriceps, MuscleKey.hamstrings, MuscleKey.glutes], // Legs
       ],
       description:
           'División Push/Pull/Legs adaptada a 5 días. '
@@ -156,24 +162,55 @@ class SplitGeneratorEngine {
       // Upper/Lower
       final upper = muscles
           .where(
-            (m) =>
-                ['chest', 'back', 'shoulders', 'biceps', 'triceps'].contains(m),
+            (m) => [
+              MuscleKey.chest,
+              MuscleKey.lats,
+              MuscleKey.upperBack,
+              MuscleKey.traps,
+              'shoulders',
+              MuscleKey.biceps,
+              MuscleKey.triceps,
+            ].contains(m),
           )
           .toList();
       final lower = muscles
-          .where((m) => ['quads', 'hamstrings', 'glutes', 'calves'].contains(m))
+          .where(
+            (m) => [
+              MuscleKey.quadriceps,
+              MuscleKey.hamstrings,
+              MuscleKey.glutes,
+              MuscleKey.calves,
+            ].contains(m),
+          )
           .toList();
       distribution.addAll([upper, lower, upper, lower]);
     } else if (daysPerWeek == 6) {
       // Push/Pull/Legs
       final push = muscles
-          .where((m) => ['chest', 'shoulders', 'triceps'].contains(m))
+          .where(
+            (m) =>
+                [MuscleKey.chest, 'shoulders', MuscleKey.triceps].contains(m),
+          )
           .toList();
       final pull = muscles
-          .where((m) => ['back', 'biceps'].contains(m))
+          .where(
+            (m) => [
+              MuscleKey.lats,
+              MuscleKey.upperBack,
+              MuscleKey.traps,
+              MuscleKey.biceps,
+            ].contains(m),
+          )
           .toList();
       final legs = muscles
-          .where((m) => ['quads', 'hamstrings', 'glutes', 'calves'].contains(m))
+          .where(
+            (m) => [
+              MuscleKey.quadriceps,
+              MuscleKey.hamstrings,
+              MuscleKey.glutes,
+              MuscleKey.calves,
+            ].contains(m),
+          )
           .toList();
       distribution.addAll([push, pull, legs, push, pull, legs]);
     }

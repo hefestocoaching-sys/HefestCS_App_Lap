@@ -25,7 +25,6 @@ class GynecoTabState extends ConsumerState<GynecoTab>
   Client? _client;
   late ClinicalHistory _draftHistory;
   bool _isDirty = false;
-  bool _justSaved = false;
   bool _controllersReady = false;
 
   String _safeString(dynamic value) => value?.toString() ?? '';
@@ -129,7 +128,6 @@ class GynecoTabState extends ConsumerState<GynecoTab>
     final client = _client;
     if (client == null) return;
     final updatedClient = client.copyWith(history: _draftHistory);
-    _justSaved = true;
     try {
       await ref
           .read(clientsProvider.notifier)
@@ -153,9 +151,7 @@ class GynecoTabState extends ConsumerState<GynecoTab>
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      _justSaved = false;
-    }
+    } finally {}
   }
 
   @override
@@ -171,32 +167,29 @@ class GynecoTabState extends ConsumerState<GynecoTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    // Solo recargar si cambia el cliente activo (diferente ID = diferente paciente).
+    // NO recargar cuando otra sección guarda datos del mismo cliente.
     ref.listen(clientsProvider, (previous, next) {
+      final prevId = previous?.value?.activeClient?.id;
       final nextClient = next.value?.activeClient;
+      final nextId = nextClient?.id;
       if (nextClient == null) return;
-      final isDifferentClient = _client?.id != nextClient.id;
-      if (_justSaved) return;
-      if (isDifferentClient || !_isDirty) {
+      if (_client == null || prevId != nextId) {
         _client = nextClient;
         _initializeFromClient(nextClient);
-        setState(() {});
+        if (mounted) setState(() {});
       }
     });
 
-    final client = ref.watch(clientsProvider).value?.activeClient;
-    final isDifferentClient = _client?.id != client?.id;
-    // ✅ BUGFIX: No recargar durante/después de guardar (_justSaved=true)
-    if (!_justSaved &&
-        (_client == null ||
-            (isDifferentClient && client != null) ||
-            (!_isDirty && _client != client && client != null))) {
-      _client = client;
+    if (_client == null) {
+      final client = ref.read(clientsProvider).value?.activeClient;
       if (client != null) {
+        _client = client;
         _initializeFromClient(client);
       }
     }
 
-    if (client != null && parseGender(client.gender) == Gender.male) {
+    if (_client != null && parseGender(_client!.gender) == Gender.male) {
       return const Center(
         child: Text('Modulo no aplicable para genero masculino.'),
       );

@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
-import 'package:hcs_app_lap/features/nutrition_feature/providers/general_equivalents_provider.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/widgets/general_equivalents_table.dart';
-import 'package:hcs_app_lap/nutrition_engine/equivalents/adaptive_equivalents_engine.dart';
+import 'package:hcs_app_lap/nutrition_engine/equivalents/smae_distribution_engine.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/providers/equivalents_by_day_provider.dart';
 import 'package:hcs_app_lap/domain/entities/daily_macro_settings.dart';
 import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_definition.dart';
@@ -64,44 +63,68 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       if (!mounted) return;
 
       final state = ref.read(equivalentsByDayProvider);
-      final dayEquivalents = state.dayEquivalents[widget.dayKey];
+      final dayEquivs = state.dayEquivalents[widget.dayKey];
 
-      // If data exists, we assume it's valid (persistence).
-      // However, if it's empty, we generate it from General Baseline (Native Adaptive Logic).
-      if (dayEquivalents != null && dayEquivalents.isNotEmpty) return;
+      // Si ya hay datos guardados para este día, no sobreescribir
+      if (dayEquivs != null && dayEquivs.isNotEmpty) return;
 
-      final generalState = ref.read(generalEquivalentsProvider);
-      if (generalState.equivalents.isEmpty) {
-        // Fallback: Just ensure empty day structure
+      final dayMacros = _getDayMacros();
+      final targetKcal =
+          dayMacros?.kcal ??
+          (widget.planResult?.kcalTargetDay as num?)?.toDouble() ??
+          0.0;
+      final targetProtein =
+          dayMacros?.proteinG ??
+          (widget.planResult?.proteinTargetDay as num?)?.toDouble() ??
+          0.0;
+      final targetCarb =
+          dayMacros?.carbG ??
+          (widget.planResult?.carbTargetDay as num?)?.toDouble() ??
+          0.0;
+      final targetFat =
+          dayMacros?.fatG ??
+          (widget.planResult?.fatTargetDay as num?)?.toDouble() ??
+          0.0;
+
+      final mealsCount = widget.planResult.mealsPerDay ?? 3;
+
+      final initialSmae = widget.planResult?.smaeDistribution;
+      if (dayMacros == null && initialSmae != null) {
+        ref
+            .read(equivalentsByDayProvider.notifier)
+            .setDayData(
+              widget.dayKey,
+              initialSmae.totalsByGroup,
+              initialSmae.mealsByGroup,
+            );
+        return;
+      }
+
+      if (targetKcal <= 0 ||
+          targetProtein <= 0 ||
+          targetCarb <= 0 ||
+          targetFat <= 0) {
         _initializeEmptyDay();
         return;
       }
 
-      // Calculate Target Kcal for this day
-      double targetKcal = _calculateDayTargetKcal();
-      if (targetKcal == 0) targetKcal = 2000; // Safe default
-
-      // Run Adaptive Engine
-      final engine = AdaptiveEquivalentsEngine();
-      final adaptedTotals = engine.adaptToDay(
-        generalState.equivalents,
-        targetKcal,
+      final engine = SmaeDistributionEngine();
+      final distribution = engine.distribute(
+        kcalTarget: targetKcal,
+        proteinTargetG: targetProtein,
+        carbTargetG: targetCarb,
+        fatTargetG: targetFat,
+        mealsPerDay: mealsCount,
+        mealTargets: widget.planResult?.mealTargets,
       );
 
-      final mealsCount = widget.planResult.mealsPerDay ?? 3;
-      final adaptedMeals = engine.adaptMeals(
-        generalState.mealEquivalents,
-        adaptedTotals,
-        mealsCount,
-      );
-
-      // Populate Provider
       ref
           .read(equivalentsByDayProvider.notifier)
-          .setDayData(widget.dayKey, adaptedTotals, adaptedMeals);
-
-      // Notify user purely visual?
-      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Plan Adaptado de General')));
+          .setDayData(
+            widget.dayKey,
+            distribution.totalsByGroup,
+            distribution.mealsByGroup,
+          );
     });
   }
 
@@ -115,10 +138,11 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
         .ensureDay(widget.dayKey, mealsCount, groupIds);
   }
 
-  double _calculateDayTargetKcal() {
-    // Use the same logic as _buildGeneralEquivalentsTab to find target
+  /// Devuelve los macros en gramos absolutos del día según weeklyMacroSettings.
+  /// Retorna null si no hay datos disponibles para ese día.
+  _DayMacros? _getDayMacros() {
     final client = ref.read(clientsProvider).value?.activeClient;
-    if (client == null) return widget.planResult?.kcalTargetDay ?? 0.0;
+    if (client == null) return null;
 
     final activeDateIso = dateIsoFrom(ref.read(globalDateProvider));
     final macroRecords = readNutritionRecordList(
@@ -131,15 +155,20 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       macroRecord?['weeklyMacroSettings'],
     );
 
-    if (activeMacros != null && activeMacros[widget.dayKey] != null) {
-      final daySettings = activeMacros[widget.dayKey]!;
-      if (daySettings.totalCalories > 0) return daySettings.totalCalories;
-      final w = client.lastWeight ?? 70.0;
-      return (daySettings.proteinSelected * w * 4) +
-          (daySettings.carbSelected * w * 4) +
-          (daySettings.fatSelected * w * 9);
-    }
-    return widget.planResult?.kcalTargetDay ?? 0.0;
+    final day = activeMacros?[widget.dayKey];
+    if (day == null) return null;
+
+    final w = client.lastWeight ?? 70.0;
+    return _DayMacros(
+      carbG: day.carbSelected * w,
+      proteinG: day.proteinSelected * w,
+      fatG: day.fatSelected * w,
+      kcal: day.totalCalories > 0
+          ? day.totalCalories
+          : (day.proteinSelected * w * 4) +
+                (day.carbSelected * w * 4) +
+                (day.fatSelected * w * 9),
+    );
   }
 
   @override
@@ -233,8 +262,35 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       'carbs': carbTarget,
     };
 
+    final dayWarnings = _currentSmaeWarnings(
+      kcalTarget: kcalTarget,
+      proteinTarget: proteinTarget,
+      carbTarget: carbTarget,
+      fatTarget: fatTarget,
+      mealsPerDay: widget.planResult.mealsPerDay,
+    );
+
     return Column(
       children: [
+        if (dayWarnings.isNotEmpty)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+            ),
+            child: Text(
+              dayWarnings.join(' | '),
+              style: const TextStyle(
+                fontSize: 11,
+                color: kTextColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         // Table
         Expanded(
           child: GeneralEquivalentsTable(
@@ -691,12 +747,97 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
   }
 
   void _autoDistribute(BuildContext context) {
+    final dayMacros = _getDayMacros();
+    final targetKcal =
+        dayMacros?.kcal ??
+        (widget.planResult?.kcalTargetDay as num?)?.toDouble() ??
+        0.0;
+    final targetProtein =
+        dayMacros?.proteinG ??
+        (widget.planResult?.proteinTargetDay as num?)?.toDouble() ??
+        0.0;
+    final targetCarb =
+        dayMacros?.carbG ??
+        (widget.planResult?.carbTargetDay as num?)?.toDouble() ??
+        0.0;
+    final targetFat =
+        dayMacros?.fatG ??
+        (widget.planResult?.fatTargetDay as num?)?.toDouble() ??
+        0.0;
+
+    if (targetKcal <= 0 ||
+        targetProtein <= 0 ||
+        targetCarb <= 0 ||
+        targetFat <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay macros válidos para distribuir equivalentes.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final engine = SmaeDistributionEngine();
+    final mealsCount = widget.planResult.mealsPerDay ?? 3;
+    final distribution = engine.distribute(
+      kcalTarget: targetKcal,
+      proteinTargetG: targetProtein,
+      carbTargetG: targetCarb,
+      fatTargetG: targetFat,
+      mealsPerDay: mealsCount,
+      mealTargets: widget.planResult?.mealTargets,
+    );
+
+    ref
+        .read(equivalentsByDayProvider.notifier)
+        .setDayData(
+          widget.dayKey,
+          distribution.totalsByGroup,
+          distribution.mealsByGroup,
+        );
+
+    final coverageCount = distribution.coverage.values
+        .where((value) => value)
+        .length;
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Distribucion automatica en desarrollo'),
-        backgroundColor: Colors.orange,
+      SnackBar(
+        content: Text(
+          'SMAE v2 aplicado · Δkcal ${(distribution.deltaKcalPct * 100).toStringAsFixed(1)}% · cobertura $coverageCount/${distribution.coverage.length}',
+        ),
+        backgroundColor: distribution.withinTolerance
+            ? Colors.green
+            : Colors.orange,
       ),
     );
+  }
+
+  List<String> _currentSmaeWarnings({
+    required double kcalTarget,
+    required double proteinTarget,
+    required double carbTarget,
+    required double fatTarget,
+    required int mealsPerDay,
+  }) {
+    if (kcalTarget <= 0 ||
+        proteinTarget <= 0 ||
+        carbTarget <= 0 ||
+        fatTarget <= 0) {
+      return const <String>[];
+    }
+
+    final engine = SmaeDistributionEngine();
+    final result = engine.distribute(
+      kcalTarget: kcalTarget,
+      proteinTargetG: proteinTarget,
+      carbTargetG: carbTarget,
+      fatTargetG: fatTarget,
+      mealsPerDay: mealsPerDay,
+      mealTargets: widget.planResult?.mealTargets,
+    );
+
+    return result.warnings;
   }
 
   void _copyMealToOthers(
@@ -817,4 +958,19 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     };
     return labels[subgroup] ?? subgroup;
   }
+}
+
+/// Macros en gramos absolutos para un día específico.
+class _DayMacros {
+  final double carbG;
+  final double proteinG;
+  final double fatG;
+  final double kcal;
+
+  const _DayMacros({
+    required this.carbG,
+    required this.proteinG,
+    required this.fatG,
+    required this.kcal,
+  });
 }

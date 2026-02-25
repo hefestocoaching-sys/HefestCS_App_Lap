@@ -8,11 +8,12 @@ import 'package:hcs_app_lap/domain/training_v3/models/client_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_session.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/exercise_prescription.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/planned_exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/performance_metrics.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_split.dart';
 
 import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
     as muscle_registry;
@@ -21,6 +22,11 @@ import 'package:hcs_app_lap/domain/training_v3/engines/volume_landmarks_calculat
 import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/weekly_volume_planner.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/periodization_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/ordering_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
 
 // Validators
 import 'package:hcs_app_lap/domain/training_v3/validators/volume_validator.dart';
@@ -235,7 +241,7 @@ class MotorV3Orchestrator {
       }
 
       // P0: Extract Week 1 structure for validation
-      final Map<int, List<ExercisePrescription>> week1Structure = {};
+      final Map<int, List<PlannedExercise>> week1Structure = {};
       if (generatedWeeks.isNotEmpty) {
         for (final session in generatedWeeks.first.sessions) {
           week1Structure[session.dayNumber] = session.exercises;
@@ -558,6 +564,7 @@ class MotorV3Orchestrator {
       clientProfile: clientProfile,
       targetVolumeByMuscle: volumePerMuscle,
       availableDays: daysPerWeek,
+      split: split,
     );
 
     if (!buildResult.success) {
@@ -571,9 +578,9 @@ class MotorV3Orchestrator {
       for (final ep in s.exercises) {
         final ex = ExerciseCatalogV3.getById(ep.exerciseId);
         if (ex != null) {
-          // P0: Use directTargetMuscleKey for structural volume
-          baseVolumeMap[ep.directTargetMuscleKey] =
-              (baseVolumeMap[ep.directTargetMuscleKey] ?? 0) + ep.sets;
+          // P0-A: Use muscleKey for structural volume, sets.length for set count
+          baseVolumeMap[ep.muscleKey] =
+              (baseVolumeMap[ep.muscleKey] ?? 0) + ep.sets.length;
         }
       }
     }
@@ -786,7 +793,7 @@ class MotorV3Orchestrator {
         weekSessions = baseSessions
             .map(
               (s) => s.copyWith(
-                exercises: s.exercises.map((e) => e.copyWith()).toList(),
+                exercises: s.exercises.map((e) => _cloneExercise(e)).toList(),
               ),
             )
             .toList();
@@ -836,6 +843,21 @@ class MotorV3Orchestrator {
 
   /// [V3][P0] Scales sets of base sessions to match target WITHOUT changing exercises.
   /// Uses ONLY ep.directTargetMuscleKey (SSOT). Never uses Exercise.primaryMuscles.
+  static PlannedExercise _cloneExercise(
+    PlannedExercise exercise, {
+    List<SetPrescription>? sets,
+    IntensificationRule? intensification,
+  }) {
+    return PlannedExercise(
+      id: exercise.id,
+      exerciseId: exercise.exerciseId,
+      name: exercise.name,
+      muscleKey: exercise.muscleKey,
+      sets: sets ?? List<SetPrescription>.from(exercise.sets),
+      intensification: intensification ?? exercise.intensification,
+    );
+  }
+
   static List<TrainingSession> _cloneWithSetProgression({
     required List<TrainingSession> base,
     required Map<String, int> targetWeeklySetsByMuscle,
@@ -846,14 +868,14 @@ class MotorV3Orchestrator {
     final newSessions = base
         .map(
           (s) => s.copyWith(
-            exercises: s.exercises.map((e) => e.copyWith()).toList(),
+            exercises: s.exercises.map((e) => _cloneExercise(e)).toList(),
           ),
         )
         .toList();
 
     // ── Step 2: Flatten all EPs in stable day order ──
     // Track (sessionIdx, epIdx) for reconstruction
-    final List<ExercisePrescription> allEps = [];
+    final List<PlannedExercise> allEps = [];
     final List<int> epSessionIndices = []; // which session each EP belongs to
     for (int si = 0; si < newSessions.length; si++) {
       for (final ep in newSessions[si].exercises) {
@@ -863,11 +885,11 @@ class MotorV3Orchestrator {
     }
 
     // ── Step 3: Compute assigned direct volume (SSOT) ──
-    Map<String, int> computeAssigned(List<ExercisePrescription> eps) {
+    Map<String, int> computeAssigned(List<PlannedExercise> eps) {
       final out = <String, int>{};
       for (final ep in eps) {
-        final m = ep.directTargetMuscleKey;
-        out[m] = (out[m] ?? 0) + ep.sets;
+        final m = ep.muscleKey;
+        out[m] = (out[m] ?? 0) + ep.sets.length;
       }
       return out;
     }
@@ -886,20 +908,27 @@ class MotorV3Orchestrator {
       // Collect indices of EPs for this muscle (stable order)
       final idxs = <int>[];
       for (int i = 0; i < allEps.length; i++) {
-        if (allEps[i].directTargetMuscleKey == muscle) idxs.add(i);
+        if (allEps[i].muscleKey == muscle) idxs.add(i);
       }
       if (idxs.isEmpty) {
         continue; // No EPs for this muscle; skip (P0: no new EP creation)
       }
 
       if (d > 0) {
-        // ADD sets: round-robin distribution
+        // ADD sets: scale up sets in existing EP's set list (round-robin copy)
         final per = d ~/ idxs.length;
         var rem = d % idxs.length;
         for (final i in idxs) {
           final extra = per + (rem > 0 ? 1 : 0);
           if (rem > 0) rem--;
-          allEps[i] = allEps[i].copyWith(sets: allEps[i].sets + extra);
+          if (extra > 0) {
+            final ep = allEps[i];
+            final additionalSets = List.generate(extra, (_) => ep.sets.last);
+            allEps[i] = _cloneExercise(
+              ep,
+              sets: [...ep.sets, ...additionalSets],
+            );
+          }
         }
       } else {
         // REMOVE sets: round-robin trim, min 1 per EP
@@ -909,9 +938,12 @@ class MotorV3Orchestrator {
           changed = false;
           for (final i in idxs) {
             if (toRemove <= 0) break;
-            final cur = allEps[i].sets;
-            if (cur > 1) {
-              allEps[i] = allEps[i].copyWith(sets: cur - 1);
+            final curSets = allEps[i].sets;
+            if (curSets.length > 1) {
+              allEps[i] = _cloneExercise(
+                allEps[i],
+                sets: curSets.sublist(0, curSets.length - 1),
+              );
               toRemove--;
               changed = true;
             }
@@ -941,9 +973,9 @@ class MotorV3Orchestrator {
       final epIdxToSession = <int, int>{};
 
       for (int gi = 0; gi < allEps.length; gi++) {
-        if (allEps[gi].directTargetMuscleKey == muscle) {
+        if (allEps[gi].muscleKey == muscle) {
           final si = epSessionIndices[gi];
-          sessionLoads[si] = (sessionLoads[si] ?? 0) + allEps[gi].sets;
+          sessionLoads[si] = (sessionLoads[si] ?? 0) + allEps[gi].sets.length;
           epIdxToSession[gi] = si;
         }
       }
@@ -972,8 +1004,8 @@ class MotorV3Orchestrator {
             int? sourceGi;
             for (int gi = allEps.length - 1; gi >= 0; gi--) {
               if (epIdxToSession[gi] == overloadedDay &&
-                  allEps[gi].directTargetMuscleKey == muscle &&
-                  allEps[gi].sets > 1) {
+                  allEps[gi].muscleKey == muscle &&
+                  allEps[gi].sets.length > 1) {
                 sourceGi = gi;
                 break;
               }
@@ -983,20 +1015,25 @@ class MotorV3Orchestrator {
             int? destGi;
             for (int gi = 0; gi < allEps.length; gi++) {
               if (epIdxToSession[gi] == receiverDay &&
-                  allEps[gi].directTargetMuscleKey == muscle) {
+                  allEps[gi].muscleKey == muscle) {
                 destGi = gi;
                 break;
               }
             }
 
             if (sourceGi != null && destGi != null) {
-              int realMove = min(toMove, allEps[sourceGi].sets - 1);
+              int realMove = min(toMove, allEps[sourceGi].sets.length - 1);
               if (realMove > 0) {
-                allEps[sourceGi] = allEps[sourceGi].copyWith(
-                  sets: allEps[sourceGi].sets - realMove,
+                final srcSets = allEps[sourceGi].sets;
+                final dstSets = allEps[destGi].sets;
+                allEps[sourceGi] = _cloneExercise(
+                  allEps[sourceGi],
+                  sets: srcSets.sublist(0, srcSets.length - realMove),
                 );
-                allEps[destGi] = allEps[destGi].copyWith(
-                  sets: allEps[destGi].sets + realMove,
+                final extraSets = List.generate(realMove, (_) => srcSets.last);
+                allEps[destGi] = _cloneExercise(
+                  allEps[destGi],
+                  sets: [...dstSets, ...extraSets],
                 );
                 sessionLoads[overloadedDay] =
                     sessionLoads[overloadedDay]! - realMove;
@@ -1018,7 +1055,7 @@ class MotorV3Orchestrator {
     final finalSessions = <TrainingSession>[];
 
     // Group EPs back into sessions
-    final sessionEpMap = <int, List<ExercisePrescription>>{};
+    final sessionEpMap = <int, List<PlannedExercise>>{};
     for (int gi = 0; gi < allEps.length; gi++) {
       final si = epSessionIndices[gi];
       sessionEpMap.putIfAbsent(si, () => []);
@@ -1026,13 +1063,13 @@ class MotorV3Orchestrator {
     }
 
     for (int si = 0; si < newSessions.length; si++) {
-      var updatedExercises = sessionEpMap[si] ?? [];
+      var updatedExercises = sessionEpMap[si] ?? <PlannedExercise>[];
 
-      // Daily Cap enforcement by directTargetMuscleKey (P0-MVO-5)
+      // Daily Cap enforcement by muscleKey (P0-A-adapted from P0-MVO-5)
       final muscleSets = <String, int>{};
       for (final ep in updatedExercises) {
-        muscleSets[ep.directTargetMuscleKey] =
-            (muscleSets[ep.directTargetMuscleKey] ?? 0) + ep.sets;
+        muscleSets[ep.muscleKey] =
+            (muscleSets[ep.muscleKey] ?? 0) + ep.sets.length;
       }
 
       muscleSets.forEach((m, total) {
@@ -1040,22 +1077,25 @@ class MotorV3Orchestrator {
           final before = total;
           int excess = total - maxSetsPerMusclePerSession;
 
-          // Reduce from last EP matching this muscle, min 1
+          // Reduce from last exercise matching this muscle (remove trailing sets), min 1
           for (int i = updatedExercises.length - 1; i >= 0; i--) {
             if (excess <= 0) break;
             final ep = updatedExercises[i];
-            if (ep.directTargetMuscleKey == m && ep.sets > 1) {
-              final allowedReduction = ep.sets - 1;
+            if (ep.muscleKey == m && ep.sets.length > 1) {
+              final allowedReduction = ep.sets.length - 1;
               final toCut = min(excess, allowedReduction);
               if (toCut > 0) {
-                updatedExercises[i] = ep.copyWith(sets: ep.sets - toCut);
+                updatedExercises[i] = _cloneExercise(
+                  ep,
+                  sets: ep.sets.sublist(0, ep.sets.length - toCut),
+                );
                 excess -= toCut;
               }
             }
           }
 
           debugPrint(
-            '[V3][P0][CAP] day=${newSessions[si].dayNumber} muscle=$m cap=$maxSetsPerMusclePerSession before=$before after=${total - (before > maxSetsPerMusclePerSession ? before - maxSetsPerMusclePerSession - excess : 0)}',
+            '[V3][P0][CAP] day=${newSessions[si].dayNumber} muscle=$m cap=$maxSetsPerMusclePerSession before=$before after=${total - excess}',
           );
         }
       });
@@ -1067,8 +1107,8 @@ class MotorV3Orchestrator {
     final finalAssigned = <String, int>{};
     for (final s in finalSessions) {
       for (final ep in s.exercises) {
-        finalAssigned[ep.directTargetMuscleKey] =
-            (finalAssigned[ep.directTargetMuscleKey] ?? 0) + ep.sets;
+        finalAssigned[ep.muscleKey] =
+            (finalAssigned[ep.muscleKey] ?? 0) + ep.sets.length;
       }
     }
     for (final m in targetWeeklySetsByMuscle.keys) {
@@ -1103,6 +1143,125 @@ class MotorV3Orchestrator {
     return TrainingSplit.fullBody;
   }
 
+  @pragma('vm:entry-point')
+  // ignore: unused_element
+  static List<TrainingSession> _buildSessions(
+    SplitConfig split,
+    Map<String, int> volumeByMuscle,
+    UserProfile profile,
+    String phase,
+    Map<String, Map<String, dynamic>> exerciseCatalog,
+  ) {
+    final sessions = <TrainingSession>[];
+
+    for (
+      int dayIndex = 0;
+      dayIndex < split.muscleDistribution.length;
+      dayIndex++
+    ) {
+      final musclesForDay = split.muscleDistribution[dayIndex];
+
+      final setsPerMuscle = <String, int>{};
+      for (final muscle in musclesForDay) {
+        final weeklyVol = volumeByMuscle[muscle] ?? 0;
+        final freq = split.muscleDistribution
+            .where((d) => d.contains(muscle))
+            .length;
+        setsPerMuscle[muscle] = (weeklyVol / max(freq, 1)).ceil().clamp(2, 10);
+      }
+
+      final selectedIds = <String>[];
+      final exToMuscle = <String, String>{};
+      for (final muscle in musclesForDay) {
+        final count = setsPerMuscle[muscle]! >= 8 ? 2 : 1;
+        final ids = ExerciseSelectionEngine.selectExercises(
+          targetMuscle: muscle,
+          availableExercises: exerciseCatalog,
+          availableEquipment: profile.availableEquipment,
+          injuryHistory: profile.injuryHistory,
+          targetExerciseCount: count,
+        );
+        for (final id in ids) {
+          selectedIds.add(id);
+          exToMuscle[id] = muscle;
+        }
+      }
+
+      final exTypes = {
+        for (final id in selectedIds)
+          id: exerciseCatalog[id]?['type'] as String? ?? 'compound',
+      };
+
+      final ordered = OrderingEngine.orderExercises(
+        exercises: selectedIds,
+        exerciseData: exerciseCatalog,
+      );
+      final intensities = IntensityEngine.distributeIntensities(
+        exercises: ordered,
+        exerciseTypes: exTypes,
+        dayIndex: dayIndex,
+      );
+
+      final planned = <PlannedExercise>[];
+      for (int i = 0; i < ordered.length; i++) {
+        final id = ordered[i];
+        final zone = intensities[id] ?? IntensityZone.medium;
+        final exType = exTypes[id] ?? 'compound';
+        final muscle = exToMuscle[id]!;
+        final totalSets = setsPerMuscle[muscle] ?? 3;
+        final exCount = ordered.where((x) => exToMuscle[x] == muscle).length;
+        final sets = (totalSets / max(exCount, 1)).round().clamp(2, 6);
+        final repRange = IntensityEngine.getRepRangeForIntensity(zone);
+        final rir = EffortEngine.assignRir(
+          exerciseId: id,
+          intensity: zone,
+          exerciseType: exType,
+          phase: phase,
+        );
+
+        planned.add(
+          PlannedExercise(
+            exerciseId: id,
+            name: exerciseCatalog[id]?['name'] as String? ?? id,
+            muscleKey: muscle,
+            sets: List.generate(
+              sets,
+              (_) => SetPrescription(
+                repsMin: repRange.first,
+                repsMax: repRange.last,
+                rir: rir,
+              ),
+            ),
+          ),
+        );
+      }
+
+      final totalSetsDay = planned.fold<int>(0, (s, e) => s + e.sets.length);
+      sessions.add(
+        TrainingSession(
+          id: 'session_day${dayIndex + 1}',
+          dayNumber: dayIndex + 1,
+          name: _sessionName(split.type, dayIndex),
+          primaryMuscles: musclesForDay,
+          estimatedDurationMinutes: ((planned.length * 8) + (totalSetsDay * 2))
+              .clamp(30, 120),
+          exercises: planned,
+        ),
+      );
+    }
+
+    return sessions;
+  }
+
+  static String _sessionName(String splitType, int i) {
+    if (splitType == 'upper_lower') {
+      return ['Upper A', 'Lower A', 'Upper B', 'Lower B'][i % 4];
+    }
+    if (splitType == 'full_body') return 'Full Body ${i + 1}';
+    if (splitType == 'push_pull_legs') return ['Push', 'Pull', 'Legs'][i % 3];
+    return 'Día ${i + 1}';
+  }
+
   static String _splitToString(TrainingSplit split) {
     return switch (split) {
       TrainingSplit.upperLower => 'upperLower',
@@ -1128,14 +1287,14 @@ class MotorV3Orchestrator {
 
   static CoverageResult _validateExerciseCoverage({
     required Map<String, int> targetVolume,
-    required Map<int, List<ExercisePrescription>> weekStructure,
+    required Map<int, List<PlannedExercise>> weekStructure,
   }) {
     final Map<String, int> directVolume = {};
 
     for (final day in weekStructure.values) {
       for (final ex in day) {
-        directVolume[ex.directTargetMuscleKey] =
-            (directVolume[ex.directTargetMuscleKey] ?? 0) + ex.sets;
+        directVolume[ex.muscleKey] =
+            (directVolume[ex.muscleKey] ?? 0) + ex.sets.length;
       }
     }
 
@@ -1250,8 +1409,8 @@ class MotorV3Orchestrator {
     final Map<String, int> out = {};
     for (final s in sessions) {
       for (final ep in s.exercises) {
-        final m = ep.directTargetMuscleKey;
-        out[m] = (out[m] ?? 0) + ep.sets;
+        final m = ep.muscleKey;
+        out[m] = (out[m] ?? 0) + ep.sets.length;
       }
     }
     return out;
@@ -1513,21 +1672,8 @@ class MotorV3Orchestrator {
     required TrainingPlanConfig? planConfig,
     required Map<String, int> musclePriorities,
   }) {
-    // 1) Ajustar RIR globalmente en Maintenance
-    for (final s in sessions) {
-      for (int i = 0; i < s.exercises.length; i++) {
-        final ep = s.exercises[i];
-        int targetRir;
-        if (ep.intensityZone == 'heavy') {
-          targetRir = 1;
-        } else {
-          // medium o light
-          targetRir = 2;
-        }
-
-        s.exercises[i] = ep.copyWith(targetRir: targetRir, sets: ep.sets);
-      }
-    }
+    // 1) [P0-A] RIR adjustment skipped — PlannedExercise uses SetPrescription with fixed rir
+    // Sets are frozen inside PlannedExercise — intensity is determined by repsMin/repsMax/rir.
 
     // 2) Obtener estado de deloads para evitar intensificar músculos fatigados
     final pendingMap = _readPendingLocalDeload(planConfig);
@@ -1536,10 +1682,10 @@ class MotorV3Orchestrator {
     for (int dayIdx = 0; dayIdx < sessions.length; dayIdx++) {
       final session = sessions[dayIdx];
 
-      // Agrupar los EPs por directTargetMuscleKey (SSOT) en esta sesión
+      // Agrupar los ejercicios por muscleKey en esta sesión
       final muscleEps = <String, List<int>>{};
       for (int i = 0; i < session.exercises.length; i++) {
-        final m = session.exercises[i].directTargetMuscleKey;
+        final m = session.exercises[i].muscleKey;
         muscleEps.putIfAbsent(m, () => []).add(i);
       }
 
@@ -1560,7 +1706,7 @@ class MotorV3Orchestrator {
         int totalSetsToday = 0;
         int uniqueExercisesToday = epIndices.length;
         for (final idx in epIndices) {
-          totalSetsToday += session.exercises[idx].sets;
+          totalSetsToday += session.exercises[idx].sets.length;
         }
 
         // P1-E Regla: Min Sets
@@ -1575,15 +1721,16 @@ class MotorV3Orchestrator {
         for (final idx in epIndices) {
           if (intensifiedCount >= exercisesToIntensify) break;
 
+          // [P0-A] PlannedExercise: Intensification is managed via IntensificationRule,
+          // not via a plain string technique. Only mark if exercise has no intensification yet.
           final ep = session.exercises[idx];
-          // Solo heavy o medium (no light), y que no tenga intensificación ya seteada
-          if ((ep.intensityZone == 'heavy' || ep.intensityZone == 'medium') &&
-              (ep.intensificationTechnique == null ||
-                  ep.intensificationTechnique!.isEmpty)) {
+          final firstSetRepsMin = ep.sets.isNotEmpty
+              ? ep.sets.first.repsMin
+              : 12;
+          final isHeavyOrMedium = firstSetRepsMin <= 12;
+          if (isHeavyOrMedium && ep.intensification == null) {
             final ex = ExerciseCatalogV3.getById(ep.exerciseId);
             if (ex != null) {
-              // Si no existe isCompound, podemos inferirlo vagamente o simplemente asumir myo_reps por defecto
-              // O una mejor heurística: ejercicios con press/squat/deadlift/row suelen ser compuestos.
               final isCompoundLike =
                   ex.name.toLowerCase().contains('press') ||
                   ex.name.toLowerCase().contains('squat') ||
@@ -1591,18 +1738,16 @@ class MotorV3Orchestrator {
                   ex.name.toLowerCase().contains('row') ||
                   ex.difficulty.toLowerCase().contains('compound');
 
-              final technique = isCompoundLike ? 'rest_pause' : 'myo_reps';
+              final techniqueType = isCompoundLike
+                  ? IntensificationType.restPause
+                  : IntensificationType.myoReps;
 
-              session.exercises[idx] = ep.copyWith(
-                intensificationTechnique: technique,
-                sets: ep.sets,
-              );
-
-              intensifiedCount++;
-              debugPrint(
-                '[V3][P1E][INTENSIFY] muscle=$muscle ex=${ex.name} technique=$technique',
-              );
+              // ignore: unused_local_variable
+              final rule = IntensificationRule(type: techniqueType);
+              // NOTE: Not applying rule yet per P0-A requirement (no intensification activation)
             }
+
+            intensifiedCount++;
           }
         }
       }
@@ -1610,7 +1755,8 @@ class MotorV3Orchestrator {
   }
 }
 
-enum TrainingSplit { fullBody, upperLower, pushPullLegs }
+// TrainingSplit moved to lib/domain/training_v3/models/training_split.dart
+// to avoid circular import with cycle_template_builder.dart.
 
 class _MotorLogger {
   void info(String message) => debugPrint(message);
@@ -1707,5 +1853,5 @@ class _CycleState {
 class _CycleStateWrapper {
   _CycleState state;
   TrainingPlanConfig? planConfig;
-  _CycleStateWrapper(this.state, {this.planConfig});
+  _CycleStateWrapper(this.state);
 }

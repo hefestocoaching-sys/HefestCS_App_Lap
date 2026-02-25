@@ -1,5 +1,7 @@
 // lib/domain/training_v3/engines/effort_engine.dart
 
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
+
 /// Motor de asignación de RIR (Reps in Reserve) por ejercicio
 ///
 /// Implementa las reglas científicas de la Semana 4 (43 imágenes):
@@ -36,31 +38,32 @@ class EffortEngine {
     required String exerciseId,
     required String intensity,
     required String exerciseType,
+    String phase = 'accumulation',
   }) {
     // Tabla científica de RIR
     // Semana 4, Imagen 41-43
 
     if (exerciseType == 'compound') {
       switch (intensity) {
-        case 'heavy':
-          return 3; // Conservador (riesgo lesión en compounds pesados)
-        case 'moderate':
-        case 'medium': // P0.2 Alias
-          return 2; // Óptimo para hipertrofia
-        case 'light':
-          return 1; // Cerca del fallo
+        case IntensityZone.heavy:
+          // RIR 1: Robinson et al. Sports Med 2024 + Refalo et al. J Sports Sci 2024
+          // RIR 3 era excesivamente conservador y reducía el estímulo hipertrófico.
+          return adjustRirForPhase(baseRir: 1, phase: phase);
+        case IntensityZone.medium:
+          return adjustRirForPhase(baseRir: 2, phase: phase);
+        case IntensityZone.light:
+          return adjustRirForPhase(baseRir: 1, phase: phase);
         default:
           throw ArgumentError('Intensidad inválida: $intensity');
       }
     } else if (exerciseType == 'isolation') {
       switch (intensity) {
-        case 'heavy':
-          return 2; // Moderado (isolation rara vez es heavy)
-        case 'moderate':
-        case 'medium': // P0.2 Alias
-          return 2; // Óptimo
-        case 'light':
-          return 0; // Fallo (seguro en isolation)
+        case IntensityZone.heavy:
+          return adjustRirForPhase(baseRir: 2, phase: phase);
+        case IntensityZone.medium:
+          return adjustRirForPhase(baseRir: 2, phase: phase);
+        case IntensityZone.light:
+          return adjustRirForPhase(baseRir: 0, phase: phase);
         default:
           throw ArgumentError('Intensidad inválida: $intensity');
       }

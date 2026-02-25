@@ -28,7 +28,123 @@ import 'package:hcs_app_lap/domain/training_v3/utils/muscle_key_adapter_v3.dart'
 /// - Contreras et al. (2020): Exercise variation and muscle activation
 ///
 /// Versión: 2.0.0 - Con normalización de músculos compuestos
+class SelectedExerciseResult {
+  final Exercise exercise;
+  final int sets;
+  final String notes;
+
+  SelectedExerciseResult({
+    required this.exercise,
+    required this.sets,
+    this.notes = '',
+  });
+}
+
 class ExerciseSelectionEngine {
+  // P0.1 SSOT CONSTANTS
+  static const int _maxSetsPerExercise = 5;
+  static const int _maxExercisesPerMusclePerSession = 2;
+
+  /// P0.1 Selection Rule: selects exercises and distributes sets respecting hard caps
+  static List<SelectedExerciseResult> selectExercisesForMuscle({
+    required List<Exercise> pool,
+    required int targetSets,
+  }) {
+    if (pool.isEmpty || targetSets <= 0) return [];
+
+    final exerciseCount = (targetSets / _maxSetsPerExercise)
+        .ceil()
+        .clamp(1, _maxExercisesPerMusclePerSession)
+        .toInt();
+
+    final selected = pool.take(exerciseCount).toList();
+
+    int baseSets = targetSets ~/ selected.length;
+    int extraSets = targetSets % selected.length;
+
+    int totalAssigned = 0;
+    final results = <SelectedExerciseResult>[];
+
+    for (int i = 0; i < selected.length; i++) {
+      int assigned = baseSets + (extraSets > 0 ? 1 : 0);
+      if (extraSets > 0) extraSets--;
+
+      if (assigned > _maxSetsPerExercise) {
+        assigned = _maxSetsPerExercise;
+      }
+
+      totalAssigned += assigned;
+
+      String notes = '';
+      if (i == selected.length - 1) {
+        int unassigned = targetSets - totalAssigned;
+        if (unassigned > 0) {
+          debugPrint(
+            '[V3][P0.1][UNASSIGNED_SETS] target=$targetSets assigned=$totalAssigned unassigned=$unassigned',
+          );
+          notes = 'unassignedSets: $unassigned';
+        }
+      }
+
+      results.add(
+        SelectedExerciseResult(
+          exercise: selected[i],
+          sets: assigned,
+          notes: notes,
+        ),
+      );
+    }
+
+    return results;
+  }
+
+  static List<String> selectExercises({
+    required String targetMuscle,
+    required Map<String, Map<String, dynamic>> availableExercises,
+    required List<String> availableEquipment,
+    required Map<String, String> injuryHistory,
+    required int targetExerciseCount,
+  }) {
+    bool hasEquipmentMatch(Map<String, dynamic> exercise) {
+      final equipment = (exercise['equipment'] as List?)?.cast<String>() ?? [];
+      if (availableEquipment.isEmpty || equipment.isEmpty) return true;
+      return equipment.any(availableEquipment.contains);
+    }
+
+    bool isInjurySafe(Map<String, dynamic> exercise) {
+      if (injuryHistory.isEmpty) return true;
+      final stressed =
+          (exercise['stressed_joints'] as List?)?.cast<String>() ?? [];
+      return !stressed.any(injuryHistory.containsKey);
+    }
+
+    bool targetsMuscle(Map<String, dynamic> exercise) {
+      final primary =
+          (exercise['primary_muscles'] as List?)?.cast<String>() ?? [];
+      return primary.contains(targetMuscle);
+    }
+
+    final candidates = availableExercises.entries.where((entry) {
+      final data = entry.value;
+      return targetsMuscle(data) &&
+          hasEquipmentMatch(data) &&
+          isInjurySafe(data);
+    }).toList();
+
+    candidates.sort((a, b) {
+      final typeA = a.value['type'] as String? ?? 'compound';
+      final typeB = b.value['type'] as String? ?? 'compound';
+      if (typeA == typeB) return 0;
+      return typeA == 'compound' ? -1 : 1;
+    });
+
+    if (candidates.isNotEmpty) {
+      return candidates.take(targetExerciseCount).map((e) => e.key).toList();
+    }
+
+    return availableExercises.keys.take(targetExerciseCount).toList();
+  }
+
   /// Selecciona ejercicios reales del catálogo por grupos musculares
   ///
   /// CONTRATO:

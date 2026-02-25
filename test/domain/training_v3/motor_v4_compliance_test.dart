@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/client_profile.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/exercise_prescription.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/planned_exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_session.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/cycle_template_builder.dart';
@@ -94,7 +94,7 @@ void main() {
       for (final s in sessions) {
         for (final ep in s.exercises) {
           if (ep.exerciseId == 'bench_press' || ep.exerciseId == 'flys') {
-            totalChestSets += ep.sets;
+            totalChestSets += ep.sets.length;
           }
         }
       }
@@ -111,47 +111,43 @@ void main() {
       // Standard distribution: +2 each -> S1: 12 (Over), S2: 7.
       // Levelling: S1 moves 2 to S2 -> S1: 10, S2: 9.
 
-      const ep1 = ExercisePrescription(
+      final ep1 = PlannedExercise(
+        id: 'ep1',
         exerciseId: 'bench_press',
-        exerciseName: 'Bench',
-        sets: 10, // Full
-        orderInSession: 1,
-        repRange: [8, 12],
-        targetRir: 2,
-        intensityZone: 'heavy',
-        restSeconds: 120,
-        notes: '',
-        directTargetMuscleKey: 'pectorals',
+        name: 'Bench',
+        muscleKey: 'pectorals',
+        sets: List.generate(
+          10,
+          (_) => const SetPrescription(repsMin: 8, repsMax: 12, rir: 2),
+        ),
       );
 
-      const ep2 = ExercisePrescription(
+      final ep2 = PlannedExercise(
+        id: 'ep2',
         exerciseId: 'flys',
-        exerciseName: 'Flys',
-        sets: 5, // Room
-        orderInSession: 1,
-        repRange: [10, 15],
-        targetRir: 2,
-        intensityZone: 'medium',
-        restSeconds: 90,
-        notes: '',
-        directTargetMuscleKey: 'pectorals',
+        name: 'Flys',
+        muscleKey: 'pectorals',
+        sets: List.generate(
+          5,
+          (_) => const SetPrescription(repsMin: 10, repsMax: 15, rir: 2),
+        ),
       );
 
-      const s1 = TrainingSession(
+      final s1 = TrainingSession(
         id: 's1',
         dayNumber: 1,
         name: 'Chest 1',
         exercises: [ep1],
-        primaryMuscles: ['pectorals'],
+        primaryMuscles: const ['pectorals'],
         estimatedDurationMinutes: 60,
       );
 
-      const s2 = TrainingSession(
+      final s2 = TrainingSession(
         id: 's2',
         dayNumber: 2,
         name: 'Chest 2',
         exercises: [ep2],
-        primaryMuscles: ['pectorals'],
+        primaryMuscles: const ['pectorals'],
         estimatedDurationMinutes: 60,
       );
 

@@ -1,5 +1,7 @@
 // lib/domain/training_v3/validators/volume_validator.dart
 
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
+
 /// Validador científico de volumen de entrenamiento
 ///
 /// Valida que los programas generados cumplan con:
@@ -75,12 +77,12 @@ class VolumeValidator {
 
     // VALIDACIÓN 4: Músculos principales incluidos (CANÓNICOS MOTOR V3)
     final requiredMuscles = [
-      'chest',
-      'lats', // back superior
-      'upper_back', // back medio
-      'deltoide_anterior', // shoulders frontal
-      'deltoide_lateral', // shoulders lateral
-      'quads',
+      MuscleKey.chest,
+      MuscleKey.lats, // back superior
+      MuscleKey.upperBack, // back medio
+      MuscleKey.deltoidAnterior, // shoulders frontal
+      MuscleKey.deltoidLateral, // shoulders lateral
+      MuscleKey.quadriceps,
     ];
     final missingMuscles = requiredMuscles
         .where((m) => !volumeByMuscle.containsKey(m))

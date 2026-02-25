@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/providers/general_equivalents_provider.dart';
 import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_definition.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/widgets/general_equivalents_table.dart';
@@ -76,23 +77,68 @@ class _GeneralEquivalentsTabState extends ConsumerState<GeneralEquivalentsTab>
         // Save Button Area
         Padding(
           padding: const EdgeInsets.all(16),
-          child: ElevatedButton.icon(
-            onPressed: widget.onSave == null
-                ? null
-                : () async {
-                    final messenger = ScaffoldMessenger.of(context);
-                    await widget.onSave?.call();
-                    ref.read(generalEquivalentsProvider.notifier).markSaved();
-                    messenger.showSnackBar(
-                      const SnackBar(content: Text('Plan General Guardado')),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    final client = ref
+                        .read(clientsProvider)
+                        .value
+                        ?.activeClient;
+                    if (client == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No hay cliente activo.'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                      return;
+                    }
+
+                    ref
+                        .read(generalEquivalentsProvider.notifier)
+                        .loadFromPeakDay(client);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Tabla general calculada desde día pico.',
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
                     );
                   },
-            icon: const Icon(Icons.save),
-            label: const Text('Guardar Plan General'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              minimumSize: const Size(double.infinity, 50),
-            ),
+                  icon: const Icon(Icons.trending_up),
+                  label: const Text('Calcular desde día pico'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: widget.onSave == null
+                      ? null
+                      : () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          await widget.onSave?.call();
+                          ref
+                              .read(generalEquivalentsProvider.notifier)
+                              .markSaved();
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Plan General Guardado'),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Guardar Plan General'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

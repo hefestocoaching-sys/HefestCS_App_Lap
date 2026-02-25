@@ -27,12 +27,14 @@ class PlanDebugPrinter {
 
         for (var i = 0; i < session.exercises.length; i++) {
           final p = session.exercises[i];
-          weekVolume += p.sets;
-          // Note: p.muscleGroup is legacy enum, might need resolving if we want per-muscle detailed breakdown here from prescription
-          // But macro volume is usually tracked via engine content.
-          // Let's print exercise details
+          final setCount = p.sets.length;
+          weekVolume += setCount;
+          final repsDesc = p.sets.isNotEmpty
+              ? '${p.sets.first.repsMin}–${p.sets.last.repsMax}'
+              : 'N/A';
+          final rirDesc = p.sets.isNotEmpty ? '${p.sets.first.rir}' : '?';
           buffer.writeln(
-            '    ${i + 1}. ${p.exerciseName} | Sets: ${p.sets} | Reps: ${p.repRange} | RIR: ${p.targetRir} | ${p.intensityZone}',
+            '    ${i + 1}. ${p.name} | Sets: $setCount | Reps: $repsDesc | RIR: $rirDesc | ${p.muscleKey}',
           );
         }
       }

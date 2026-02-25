@@ -14,8 +14,17 @@ import 'package:hcs_app_lap/utils/date_helpers.dart';
 /// - Los ejercicios base NO cambian durante su vida
 /// - El motor recibe TrainingCycle como input inmutable
 /// - Solo se crea un ciclo por startDate/cliente
+/// - SOLO 1 ciclo con status == "active" por clientId en todo momento
 class TrainingCycle extends Equatable {
+  // ─────────────────────────────────────────────────────────────────────────
+  // Campos originales (NO modificados)
+  // ─────────────────────────────────────────────────────────────────────────
+
   final String cycleId;
+
+  /// ID del cliente propietario del ciclo.
+  final String clientId;
+
   final DateTime startDate;
   final DateTime? endDate;
   final String goal; // ej: hipertrofia_general, gluteo_especializado, fuerza
@@ -28,8 +37,49 @@ class TrainingCycle extends Equatable {
   final int frequency; // 2 o 3, inferida por VMR
   final DateTime createdAt;
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Campos nuevos — Contrato Ciclo Único Activo + Freeze Snapshot
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Estado del ciclo. Valores válidos: "active" | "completed" | "archived".
+  /// REGLA CRÍTICA: Solo 1 ciclo con status == "active" por clientId.
+  final String status;
+
+  /// Volumen Objetivo de Programa por músculo (sets/semana).
+  final Map<String, int> vopByMuscle;
+
+  /// Volumen Mínimo de Retención por músculo (sets/semana).
+  final Map<String, int> vmrByMuscle;
+
+  /// Músculos primarios del ciclo.
+  final List<String> primaryMuscles;
+
+  /// Músculos secundarios del ciclo.
+  final List<String> secondaryMuscles;
+
+  /// Días disponibles para entrenar por semana.
+  final int availableDays;
+
+  /// Duración estimada de sesión en minutos.
+  final int sessionDurationMinutes;
+
+  /// Nivel de entrenamiento del cliente (ej: "principiante", "intermedio", "avanzado").
+  final String trainingLevel;
+
+  /// Snapshot inmutable del plan congelado (Week 1).
+  /// Contiene: split, ejercicios por día, orden, caps, anclas.
+  final Map<String, dynamic> freezePlanSnapshot;
+
+  /// Timestamp de última actualización del ciclo.
+  final DateTime updatedAt;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Constructor
+  // ─────────────────────────────────────────────────────────────────────────
+
   const TrainingCycle({
     required this.cycleId,
+    this.clientId = '',
     required this.startDate,
     this.endDate,
     required this.goal,
@@ -40,12 +90,28 @@ class TrainingCycle extends Equatable {
     required this.currentWeek,
     this.frequency = 2,
     required this.createdAt,
-  });
+    // Nuevos campos con defaults seguros
+    this.status = 'active',
+    this.vopByMuscle = const {},
+    this.vmrByMuscle = const {},
+    this.primaryMuscles = const [],
+    this.secondaryMuscles = const [],
+    this.availableDays = 4,
+    this.sessionDurationMinutes = 60,
+    this.trainingLevel = 'intermedio',
+    this.freezePlanSnapshot = const {},
+    DateTime? updatedAt,
+  }) : updatedAt = updatedAt ?? createdAt;
 
-  /// Convierte a mapa JSON para persistencia
+  // ─────────────────────────────────────────────────────────────────────────
+  // Serialización
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Convierte a mapa JSON para persistencia.
   Map<String, dynamic> toMap() {
     return {
       'cycleId': cycleId,
+      'clientId': clientId,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate?.toIso8601String(),
       'goal': goal,
@@ -56,14 +122,26 @@ class TrainingCycle extends Equatable {
       'currentWeek': currentWeek,
       'frequency': frequency,
       'createdAt': createdAt.toIso8601String(),
+      // Nuevos campos
+      'status': status,
+      'vopByMuscle': vopByMuscle,
+      'vmrByMuscle': vmrByMuscle,
+      'primaryMuscles': primaryMuscles,
+      'secondaryMuscles': secondaryMuscles,
+      'availableDays': availableDays,
+      'sessionDurationMinutes': sessionDurationMinutes,
+      'trainingLevel': trainingLevel,
+      'freezePlanSnapshot': freezePlanSnapshot,
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
-  /// Crea desde mapa JSON
+  /// Crea desde mapa JSON.
   factory TrainingCycle.fromMap(Map<String, dynamic> map) {
     return TrainingCycle(
       cycleId: map['cycleId'] as String? ?? '',
-        startDate: parseDateTimeOrEpoch(map['startDate']?.toString()),
+      clientId: map['clientId'] as String? ?? '',
+      startDate: parseDateTimeOrEpoch(map['startDate']?.toString()),
       endDate: map['endDate'] != null
           ? tryParseDateTime(map['endDate']?.toString())
           : null,
@@ -81,12 +159,34 @@ class TrainingCycle extends Equatable {
       currentWeek: map['currentWeek'] as int? ?? 1,
       frequency: map['frequency'] as int? ?? 2,
       createdAt: parseDateTimeOrEpoch(map['createdAt']?.toString()),
+      // Nuevos campos con defaults seguros para retrocompatibilidad
+      status: map['status'] as String? ?? 'active',
+      vopByMuscle: _parseIntMap(map['vopByMuscle']),
+      vmrByMuscle: _parseIntMap(map['vmrByMuscle']),
+      primaryMuscles: List<String>.from(map['primaryMuscles'] as List? ?? []),
+      secondaryMuscles: List<String>.from(
+        map['secondaryMuscles'] as List? ?? [],
+      ),
+      availableDays: map['availableDays'] as int? ?? 4,
+      sessionDurationMinutes: map['sessionDurationMinutes'] as int? ?? 60,
+      trainingLevel: map['trainingLevel'] as String? ?? 'intermedio',
+      freezePlanSnapshot: Map<String, dynamic>.from(
+        map['freezePlanSnapshot'] as Map? ?? {},
+      ),
+      updatedAt: map['updatedAt'] != null
+          ? tryParseDateTime(map['updatedAt']?.toString())
+          : null,
     );
   }
 
-  /// Copia con cambios selectivos
+  // ─────────────────────────────────────────────────────────────────────────
+  // copyWith
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Copia con cambios selectivos.
   TrainingCycle copyWith({
     String? cycleId,
+    String? clientId,
     DateTime? startDate,
     DateTime? endDate,
     String? goal,
@@ -97,9 +197,21 @@ class TrainingCycle extends Equatable {
     int? currentWeek,
     int? frequency,
     DateTime? createdAt,
+    // Nuevos campos
+    String? status,
+    Map<String, int>? vopByMuscle,
+    Map<String, int>? vmrByMuscle,
+    List<String>? primaryMuscles,
+    List<String>? secondaryMuscles,
+    int? availableDays,
+    int? sessionDurationMinutes,
+    String? trainingLevel,
+    Map<String, dynamic>? freezePlanSnapshot,
+    DateTime? updatedAt,
   }) {
     return TrainingCycle(
       cycleId: cycleId ?? this.cycleId,
+      clientId: clientId ?? this.clientId,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       goal: goal ?? this.goal,
@@ -111,17 +223,46 @@ class TrainingCycle extends Equatable {
       currentWeek: currentWeek ?? this.currentWeek,
       frequency: frequency ?? this.frequency,
       createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+      vopByMuscle: vopByMuscle ?? this.vopByMuscle,
+      vmrByMuscle: vmrByMuscle ?? this.vmrByMuscle,
+      primaryMuscles: primaryMuscles ?? this.primaryMuscles,
+      secondaryMuscles: secondaryMuscles ?? this.secondaryMuscles,
+      availableDays: availableDays ?? this.availableDays,
+      sessionDurationMinutes:
+          sessionDurationMinutes ?? this.sessionDurationMinutes,
+      trainingLevel: trainingLevel ?? this.trainingLevel,
+      freezePlanSnapshot: freezePlanSnapshot ?? this.freezePlanSnapshot,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Helpers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  static Map<String, int> _parseIntMap(dynamic raw) {
+    if (raw == null) return {};
+    if (raw is! Map) return {};
+    return Map<String, int>.from(
+      raw.map((k, v) => MapEntry(k.toString(), (v as num).toInt())),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Equatable / toString
+  // ─────────────────────────────────────────────────────────────────────────
+
   @override
   String toString() {
-    return 'TrainingCycle(id=$cycleId, goal=$goal, split=$splitType, week=$currentWeek)';
+    return 'TrainingCycle(id=$cycleId, goal=$goal, split=$splitType, '
+        'week=$currentWeek, status=$status)';
   }
 
   @override
   List<Object?> get props => [
     cycleId,
+    clientId,
     startDate,
     endDate,
     goal,
@@ -132,5 +273,15 @@ class TrainingCycle extends Equatable {
     currentWeek,
     frequency,
     createdAt,
+    status,
+    vopByMuscle,
+    vmrByMuscle,
+    primaryMuscles,
+    secondaryMuscles,
+    availableDays,
+    sessionDurationMinutes,
+    trainingLevel,
+    freezePlanSnapshot,
+    updatedAt,
   ];
 }

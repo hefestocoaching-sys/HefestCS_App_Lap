@@ -39,7 +39,7 @@ abstract class WeeklyProgressionServiceEnhanced {
   /// 5. Return decisions + audit report
   ///
   /// RETORNA:
-  /// - Map<String, MuscleDecision> con decisiones por músculo
+  /// - `Map<String, MuscleDecision>` con decisiones por músculo
   ///  - Metadata con audit report
   ///
   /// REQUERIMIENTOS:

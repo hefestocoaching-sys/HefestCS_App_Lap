@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
@@ -282,7 +284,7 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       // ✅ OBLIGATORIO: SetOptions(merge: true) para no perder datos en concurrencia
       await ref.set(fullPayload, SetOptions(merge: true));
       logger.info('Client synced to Firestore', {'clientId': client.id});
-    } catch (e, st) {
+    } on FirebaseException catch (e, st) {
       final failInvalidPath = findInvalidFirestorePath(fullPayload);
       final failInvalidPaths = listInvalidFirestorePaths(
         fullPayload,
@@ -302,6 +304,65 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       logger.debug('Firestore payload keys', {
         'keys': fullPayload.keys.toList(),
       });
+
+      if (e.code == 'permission-denied') {
+        final authUser = FirebaseAuth.instance.currentUser;
+        logger.warning('Firestore permission denied during client upsert', {
+          'path': 'coaches/$coachId/clients/${client.id}',
+          'authUid': authUser?.uid,
+          'authEmail': authUser?.email,
+          'isAnonymous': authUser?.isAnonymous,
+          'projectId': _firestore.app.options.projectId,
+          'host': _firestore.settings.host,
+          'sslEnabled': _firestore.settings.sslEnabled,
+        });
+        return;
+      }
+
+      rethrow;
+    } on PlatformException catch (e, st) {
+      final isPermissionDenied =
+          e.code == 'permission-denied' ||
+          (e.message?.toLowerCase().contains('insufficient permissions') ??
+              false);
+
+      if (isPermissionDenied) {
+        final authUser = FirebaseAuth.instance.currentUser;
+        logger.warning('Firestore permission denied during client upsert', {
+          'path': 'coaches/$coachId/clients/${client.id}',
+          'authUid': authUser?.uid,
+          'authEmail': authUser?.email,
+          'isAnonymous': authUser?.isAnonymous,
+          'projectId': _firestore.app.options.projectId,
+          'host': _firestore.settings.host,
+          'sslEnabled': _firestore.settings.sslEnabled,
+          'errorCode': e.code,
+          'errorMessage': e.message,
+        });
+        return;
+      }
+
+      logger.error('Firestore upsert failed', e, st);
+      rethrow;
+    } catch (e, st) {
+      final message = e.toString().toLowerCase();
+      if (message.contains('permission-denied') ||
+          message.contains('insufficient permissions')) {
+        final authUser = FirebaseAuth.instance.currentUser;
+        logger.warning('Firestore permission denied during client upsert', {
+          'path': 'coaches/$coachId/clients/${client.id}',
+          'authUid': authUser?.uid,
+          'authEmail': authUser?.email,
+          'isAnonymous': authUser?.isAnonymous,
+          'projectId': _firestore.app.options.projectId,
+          'host': _firestore.settings.host,
+          'sslEnabled': _firestore.settings.sslEnabled,
+          'errorType': e.runtimeType.toString(),
+        });
+        return;
+      }
+
+      logger.error('Firestore upsert failed', e, st);
       rethrow;
     }
   }

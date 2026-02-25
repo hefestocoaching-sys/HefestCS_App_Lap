@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:hcs_app_lap/features/anthropometry_feature/screen/anthropometry_screen.dart';
 import 'package:hcs_app_lap/features/biochemistry_feature/screen/biochemistry_screen.dart';
 import 'package:hcs_app_lap/features/client_feature/screen/client_overview_screen.dart';
@@ -86,8 +87,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     if (!mounted) return;
     try {
       await _ensureCoachRoot();
-    } catch (_) {
-      // Ignorar errores de conectividad
+    } catch (e) {
+      // No bloquear el arranque por errores remotos; el estado local sigue siendo SSOT.
+      debugPrint('[MainShell] _ensureCoachRootSafe ignored error: $e');
     }
   }
 
@@ -120,9 +122,33 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    await FirebaseFirestore.instance.collection('coaches').doc(user.uid).set({
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    try {
+      await user.getIdToken();
+      await FirebaseFirestore.instance.collection('coaches').doc(user.uid).set({
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        debugPrint(
+          '[MainShell] _ensureCoachRoot permission-denied '
+          '(uid=${user.uid}, project=${FirebaseFirestore.instance.app.options.projectId}, '
+          'host=${FirebaseFirestore.instance.settings.host})',
+        );
+        return;
+      }
+      rethrow;
+    } on PlatformException catch (e) {
+      final msg = (e.message ?? '').toLowerCase();
+      if (e.code == 'permission-denied' ||
+          msg.contains('insufficient permissions')) {
+        debugPrint(
+          '[MainShell] _ensureCoachRoot platform permission-denied '
+          '(uid=${user.uid}, code=${e.code})',
+        );
+        return;
+      }
+      rethrow;
+    }
   }
 
   void _navigateToClientsScreen() {
@@ -134,10 +160,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
   }
 
   SaveableModule? _moduleFromIndex(int index) {
-    final useUnifiedPlan =
-        ref.read(featureFlagServiceProvider).isEnabled(
-              FeatureFlagKey.useUnifiedNutritionPlan,
-            );
+    final useUnifiedPlan = ref
+        .read(featureFlagServiceProvider)
+        .isEnabled(FeatureFlagKey.useUnifiedNutritionPlan);
     switch (index) {
       case 0:
         return null; // Dashboard (no saveable)
@@ -163,10 +188,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
   }
 
   Iterable<SaveableModule> _allModules() sync* {
-    final useUnifiedPlan =
-        ref.read(featureFlagServiceProvider).isEnabled(
-              FeatureFlagKey.useUnifiedNutritionPlan,
-            );
+    final useUnifiedPlan = ref
+        .read(featureFlagServiceProvider)
+        .isEnabled(FeatureFlagKey.useUnifiedNutritionPlan);
     final modules = <SaveableModule?>[
       _historyClinicKey.currentState,
       _anthropometryKey.currentState,
@@ -360,7 +384,8 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                     final useUnifiedPlan = ref
                                         .watch(featureFlagServiceProvider)
                                         .isEnabled(
-                                          FeatureFlagKey.useUnifiedNutritionPlan,
+                                          FeatureFlagKey
+                                              .useUnifiedNutritionPlan,
                                         );
                                     return Column(
                                       children: [
@@ -400,14 +425,18 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                               ), // 4
                                               useUnifiedPlan
                                                   ? UnifiedDayPlanningScreen(
-                                                      key: currentActiveClient != null
+                                                      key:
+                                                          currentActiveClient !=
+                                                              null
                                                           ? ValueKey(
                                                               'unified_plan_${currentActiveClient.id}',
                                                             )
                                                           : _unifiedPlanKey,
                                                     )
                                                   : EquivalentsByDayScreen(
-                                                      key: currentActiveClient != null
+                                                      key:
+                                                          currentActiveClient !=
+                                                              null
                                                           ? ValueKey(
                                                               'equivalents_${currentActiveClient.id}',
                                                             )

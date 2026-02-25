@@ -1,5 +1,7 @@
 // lib/domain/training_v3/engines/intensity_engine.dart
 
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
+
 // [V3][P0] Intensity zone range constants
 const int kHeavyMin = 15;
 const int kHeavyMax = 30;
@@ -30,14 +32,18 @@ const int kLightMax = 30;
 class IntensityEngine {
   // ── P0.2-IE-2: Default split (no log/bitácora) ──
   Map<String, int> defaultSplitNoLog() {
-    return const {'heavy': 20, 'medium': 60, 'light': 20};
+    return const {
+      IntensityZone.heavy: 20,
+      IntensityZone.medium: 60,
+      IntensityZone.light: 20,
+    };
   }
 
   // ── P0.2-IE-3: Validator ──
   Map<String, int> validateOrDefaultSplit(Map<String, int> split) {
-    final heavy = split['heavy'] ?? -1;
-    final medium = split['medium'] ?? -1;
-    final light = split['light'] ?? -1;
+    final heavy = split[IntensityZone.heavy] ?? -1;
+    final medium = split[IntensityZone.medium] ?? -1;
+    final light = split[IntensityZone.light] ?? -1;
     final total = heavy + medium + light;
 
     final ok =
@@ -64,9 +70,9 @@ class IntensityEngine {
     final mediumSets = setsForDay - heavySets - lightSets;
 
     return {
-      'heavy': heavySets < 0 ? 0 : heavySets,
-      'medium': mediumSets < 0 ? 0 : mediumSets,
-      'light': lightSets < 0 ? 0 : lightSets,
+      IntensityZone.heavy: heavySets < 0 ? 0 : heavySets,
+      IntensityZone.medium: mediumSets < 0 ? 0 : mediumSets,
+      IntensityZone.light: lightSets < 0 ? 0 : lightSets,
     };
   }
 
@@ -87,14 +93,28 @@ class IntensityEngine {
   static Map<String, String> distributeIntensities({
     required List<String> exercises,
     required Map<String, String> exerciseTypes,
+    int dayIndex = 0,
   }) {
+    final intensities = <String, String>{};
+
+    if (dayIndex.isOdd) {
+      final medCount = (exercises.length * 0.60).round();
+      int assigned = 0;
+      for (final id in exercises) {
+        intensities[id] = assigned < medCount
+            ? IntensityZone.medium
+            : IntensityZone.light;
+        assigned++;
+      }
+      return intensities;
+    }
+
     final totalExercises = exercises.length;
 
     // PASO 1: Calcular distribución 35/45/20
     // Semana 3, Imagen 27-29
     final heavyCount = (totalExercises * 0.35).round();
     final moderateCount = (totalExercises * 0.45).round();
-    // final lightCount = totalExercises - heavyCount - moderateCount; // No usado aún
 
     // PASO 2: Separar por tipo
     final compounds = exercises
@@ -105,13 +125,11 @@ class IntensityEngine {
         .toList();
 
     // PASO 3: Asignar intensidades
-    final intensities = <String, String>{};
-
     // Heavy: Compounds primero
     int assignedHeavy = 0;
     for (final exerciseId in compounds) {
       if (assignedHeavy < heavyCount) {
-        intensities[exerciseId] = 'heavy';
+        intensities[exerciseId] = IntensityZone.heavy;
         assignedHeavy++;
       } else {
         break;
@@ -123,7 +141,7 @@ class IntensityEngine {
     for (final exerciseId in [...compounds, ...isolation]) {
       if (intensities.containsKey(exerciseId)) continue;
       if (assignedModerate < moderateCount) {
-        intensities[exerciseId] = 'moderate';
+        intensities[exerciseId] = IntensityZone.medium;
         assignedModerate++;
       } else {
         break;
@@ -133,7 +151,7 @@ class IntensityEngine {
     // Light: Lo que queda
     for (final exerciseId in exercises) {
       if (!intensities.containsKey(exerciseId)) {
-        intensities[exerciseId] = 'light';
+        intensities[exerciseId] = IntensityZone.light;
       }
     }
 
@@ -145,12 +163,11 @@ class IntensityEngine {
   /// FUENTE: Semana 3, Imagen 30-35
   static List<int> getRepRangeForIntensity(String intensity) {
     switch (intensity) {
-      case 'heavy':
+      case IntensityZone.heavy:
         return [5, 8]; // Fuerza + hipertrofia
-      case 'moderate':
-      case 'medium': // P0.2 Alias safety support
+      case IntensityZone.medium:
         return [8, 12]; // Hipertrofia óptima
-      case 'light':
+      case IntensityZone.light:
         return [12, 20]; // Hipertrofia metabólica
       default:
         throw ArgumentError('Intensidad inválida: $intensity');
@@ -162,12 +179,11 @@ class IntensityEngine {
   /// FUENTE: Semana 3, complementario
   static int getRestSecondsForIntensity(String intensity) {
     switch (intensity) {
-      case 'heavy':
+      case IntensityZone.heavy:
         return 240; // 4 minutos (180-300s)
-      case 'moderate':
-      case 'medium': // P0.2 Alias safety support
+      case IntensityZone.medium:
         return 120; // 2 minutos (90-180s)
-      case 'light':
+      case IntensityZone.light:
         return 75; // 75 segundos (60-90s)
       default:
         throw ArgumentError('Intensidad inválida: $intensity');
@@ -179,11 +195,15 @@ class IntensityEngine {
     if (intensities.isEmpty) return false;
 
     final total = intensities.length;
-    final heavyCount = intensities.values.where((i) => i == 'heavy').length;
-    final moderateCount = intensities.values
-        .where((i) => i == 'moderate')
+    final heavyCount = intensities.values
+        .where((i) => i == IntensityZone.heavy)
         .length;
-    final lightCount = intensities.values.where((i) => i == 'light').length;
+    final moderateCount = intensities.values
+        .where((i) => i == IntensityZone.medium)
+        .length;
+    final lightCount = intensities.values
+        .where((i) => i == IntensityZone.light)
+        .length;
 
     // Calcular porcentajes
     final heavyPct = heavyCount / total;

@@ -21,6 +21,7 @@ import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
+import 'package:hcs_app_lap/data/repositories/training/training_cycle_repository_impl.dart';
 import 'package:hcs_app_lap/utils/date_helpers.dart';
 // ✅ MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO
 import 'package:hcs_app_lap/domain/training_v3/orchestrator/training_orchestrator_v3.dart';
@@ -30,7 +31,10 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart'
 import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart' as v3;
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/deload_trigger_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
+import 'package:hcs_app_lap/domain/training_v3/repositories/workout_log_repository.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/unified_training_service.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_impl.dart';
@@ -41,6 +45,8 @@ import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 import 'package:hcs_app_lap/domain/training/services/active_cycle_bootstrapper.dart';
+import 'package:hcs_app_lap/domain/training/services/training_week_evaluator.dart';
+import 'package:hcs_app_lap/domain/training/services/weekly_decision.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/muscle_progression_tracker_provider.dart';
 
 /// Estado inmutable para el plan de entrenamiento
@@ -121,7 +127,22 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     // El plan se guarda en client.trainingPlans (persistencia local vía Client.toJson()).
     // Por defecto, exponer el plan más reciente para que el UI muestre el último registro.
     if (client.trainingPlans.isEmpty) {
+      final activeCycle = _findActiveCycle(client);
+      if (activeCycle != null &&
+          activeCycle.status == 'active' &&
+          activeCycle.freezePlanSnapshot.isNotEmpty) {
+        final frozenPlan = _generatedPlanFromCycleSnapshot(activeCycle);
+        return TrainingPlanState(plan: frozenPlan, vopByMuscle: vopByMuscle);
+      }
       return TrainingPlanState(vopByMuscle: vopByMuscle);
+    }
+
+    final activeCycle = _findActiveCycle(client);
+    if (activeCycle != null &&
+        activeCycle.status == 'active' &&
+        activeCycle.freezePlanSnapshot.isNotEmpty) {
+      final frozenPlan = _generatedPlanFromCycleSnapshot(activeCycle);
+      return TrainingPlanState(plan: frozenPlan, vopByMuscle: vopByMuscle);
     }
 
     final active = _findActivePlanConfigById(client);
@@ -211,6 +232,203 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     return plans.reduce((a, b) => a.startDate.isAfter(b.startDate) ? a : b);
   }
 
+  TrainingCycle? _findActiveCycle(Client client) {
+    if (client.activeCycleId != null && client.activeCycleId!.isNotEmpty) {
+      try {
+        return client.trainingCycles.firstWhere(
+          (cycle) => cycle.cycleId == client.activeCycleId,
+        );
+      } on StateError {
+        // fallback por status
+      }
+    }
+
+    try {
+      return client.trainingCycles.firstWhere(
+        (cycle) => cycle.status == 'active',
+      );
+    } on StateError {
+      return null;
+    }
+  }
+
+  GeneratedPlan _generatedPlanFromCycleSnapshot(TrainingCycle cycle) {
+    final snapshot = cycle.freezePlanSnapshot;
+    final rawExerciseMap = snapshot['exerciseMapByDay'];
+
+    final aggregated = <String, double>{};
+    if (rawExerciseMap is Map) {
+      rawExerciseMap.forEach((_, entries) {
+        if (entries is! List) return;
+        for (final item in entries) {
+          if (item is! Map) continue;
+          final muscle = item['muscle']?.toString();
+          final sets = item['sets'];
+          if (muscle == null || muscle.isEmpty || sets is! num) continue;
+          aggregated[muscle] = (aggregated[muscle] ?? 0) + sets.toDouble();
+        }
+      });
+    }
+
+    final volumePlan = <String, dynamic>{};
+    aggregated.forEach((muscle, sets) {
+      volumePlan[muscle] = {
+        'heavySets': 0.0,
+        'mediumSets': sets,
+        'lightSets': 0.0,
+      };
+    });
+
+    return GeneratedPlan.fromMap({
+      'weeks': 4,
+      'volumePlan': volumePlan,
+      'audit': {
+        'engine': 'freezePlanSnapshot',
+        'cycleId': cycle.cycleId,
+        'splitType': snapshot['splitType'] ?? cycle.splitType,
+        'days': snapshot['days'] ?? const [],
+        'exerciseMapByDay': snapshot['exerciseMapByDay'] ?? const {},
+        'anchorExercises': snapshot['anchorExercises'] ?? const {},
+        'caps': snapshot['caps'] ?? const {},
+      },
+    });
+  }
+
+  Map<String, int> _computeVopByMuscleFromPlan(TrainingPlanConfig planConfig) {
+    final week = planConfig.weeks.isNotEmpty ? planConfig.weeks.first : null;
+    final vopByMuscle = <String, int>{};
+    if (week == null) return vopByMuscle;
+
+    for (final session in week.sessions) {
+      for (final prescription in session.prescriptions) {
+        final muscle = prescription.muscleGroup.name;
+        vopByMuscle[muscle] = (vopByMuscle[muscle] ?? 0) + prescription.sets;
+      }
+    }
+
+    return vopByMuscle;
+  }
+
+  Map<String, int> _computeVmrByMuscle({
+    required TrainingPlanConfig planConfig,
+    required Map<String, int> vopByMuscle,
+  }) {
+    final extra = planConfig.trainingProfileSnapshot?.extra;
+    final rawByRole = extra?['vmrByMuscleRole'];
+    final vmr = <String, int>{};
+
+    if (rawByRole is Map) {
+      rawByRole.forEach((key, value) {
+        if (value is num) {
+          vmr[key.toString()] = value.toInt();
+        }
+      });
+    }
+
+    if (vmr.isNotEmpty) return vmr;
+
+    for (final entry in vopByMuscle.entries) {
+      vmr[entry.key] = (entry.value * 0.7).round().clamp(1, 999);
+    }
+    return vmr;
+  }
+
+  Map<String, dynamic> _buildFreezePlanSnapshot({
+    required TrainingPlanConfig planConfig,
+    required Map<String, int> vopByMuscle,
+    required Map<String, int> vmrByMuscle,
+    required int availableDays,
+    required int sessionDurationMinutes,
+  }) {
+    final week = planConfig.weeks.isNotEmpty ? planConfig.weeks.first : null;
+    if (week == null) {
+      return {
+        'schemaVersion': 1,
+        'splitType': planConfig.splitId,
+        'availableDays': availableDays,
+        'sessionDurationMinutes': sessionDurationMinutes,
+        'days': const <String>[],
+        'exerciseMapByDay': const <String, List<Map<String, dynamic>>>{},
+        'anchorExercises': const <String, String>{},
+        'caps': {'maxExercisesPerDay': 12, 'vmrByMuscle': vmrByMuscle},
+        'vopByMuscle': vopByMuscle,
+        'vmrByMuscle': vmrByMuscle,
+      };
+    }
+
+    final days = <String>[];
+    final exerciseMapByDay = <String, List<Map<String, dynamic>>>{};
+    final anchorExercises = <String, String>{};
+
+    final sessions = [...week.sessions]
+      ..sort((a, b) => a.dayNumber.compareTo(b.dayNumber));
+    for (final session in sessions) {
+      final dayKey = session.dayNumber.toString();
+      final seenByDay = <String>{};
+      final entries = <Map<String, dynamic>>[];
+      final orderedPrescriptions = [...session.prescriptions]
+        ..sort((a, b) => a.order.compareTo(b.order));
+
+      for (final p in orderedPrescriptions) {
+        if (!seenByDay.add(p.exerciseCode)) continue;
+
+        entries.add({
+          'exerciseCode': p.exerciseCode,
+          'exerciseName': p.exerciseName,
+          'muscle': p.muscleGroup.name,
+          'order': p.order,
+          'sets': p.sets,
+          'rir': p.rir,
+        });
+
+        anchorExercises.putIfAbsent(p.muscleGroup.name, () => p.exerciseCode);
+      }
+
+      exerciseMapByDay[dayKey] = entries;
+      days.add(session.sessionName.isNotEmpty ? session.sessionName : dayKey);
+    }
+
+    return {
+      'schemaVersion': 1,
+      'splitType': planConfig.splitId,
+      'availableDays': availableDays,
+      'sessionDurationMinutes': sessionDurationMinutes,
+      'days': days,
+      'exerciseMapByDay': exerciseMapByDay,
+      'anchorExercises': anchorExercises,
+      'caps': {'maxExercisesPerDay': 12, 'vmrByMuscle': vmrByMuscle},
+      'vopByMuscle': vopByMuscle,
+      'vmrByMuscle': vmrByMuscle,
+    };
+  }
+
+  Map<String, List<String>> _extractBaseExercisesByMuscleFromSnapshot(
+    Map<String, dynamic> snapshot,
+  ) {
+    final raw = snapshot['exerciseMapByDay'];
+    final byMuscle = <String, List<String>>{};
+
+    if (raw is Map) {
+      raw.forEach((_, entries) {
+        if (entries is! List) return;
+        for (final item in entries) {
+          if (item is! Map) continue;
+          final muscle = item['muscle']?.toString();
+          final exerciseCode = item['exerciseCode']?.toString();
+          if (muscle == null || muscle.isEmpty) continue;
+          if (exerciseCode == null || exerciseCode.isEmpty) continue;
+
+          final list = byMuscle.putIfAbsent(muscle, () => <String>[]);
+          if (!list.contains(exerciseCode)) {
+            list.add(exerciseCode);
+          }
+        }
+      });
+    }
+
+    return byMuscle;
+  }
+
   /// Carga el plan persistido (activePlanId o más reciente) sin generar
   ///
   /// REGLAS:
@@ -230,6 +448,15 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       if (client.trainingPlans.isEmpty) {
+        final frozenCycle = _findActiveCycle(client);
+        if (frozenCycle != null &&
+            frozenCycle.status == 'active' &&
+            frozenCycle.freezePlanSnapshot.isNotEmpty) {
+          state = TrainingPlanState(
+            plan: _generatedPlanFromCycleSnapshot(frozenCycle),
+          );
+          return;
+        }
         state = const TrainingPlanState();
         return;
       }
@@ -239,11 +466,26 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final chosen = activeConfig ?? _findLatestPlan(client.trainingPlans);
 
       if (chosen == null) {
+        final frozenCycle = _findActiveCycle(client);
+        if (frozenCycle != null &&
+            frozenCycle.status == 'active' &&
+            frozenCycle.freezePlanSnapshot.isNotEmpty) {
+          state = TrainingPlanState(
+            plan: _generatedPlanFromCycleSnapshot(frozenCycle),
+          );
+          return;
+        }
         state = const TrainingPlanState();
         return;
       }
 
-      final derived = TrainingPlanMapper.toGeneratedPlan(chosen);
+      final frozenCycle = _findActiveCycle(client);
+      final derived =
+          (frozenCycle != null &&
+              frozenCycle.status == 'active' &&
+              frozenCycle.freezePlanSnapshot.isNotEmpty)
+          ? _generatedPlanFromCycleSnapshot(frozenCycle)
+          : TrainingPlanMapper.toGeneratedPlan(chosen);
       state = TrainingPlanState(plan: derived);
     } catch (e) {
       debugPrint('❌ Error en loadPersistedActivePlanIfAny: $e');
@@ -252,113 +494,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         error: 'Error al cargar plan persistido: $e',
       );
     }
-  }
-
-  /// Obtiene o crea un TrainingCycle activo para el cliente.
-  ///
-  /// REGLAS:
-  /// (A) Si activeCycleId existe y el ciclo está en trainingCycles → usarlo
-  /// (B) Si NO existe → crear uno nuevo basado en perfil + evaluación
-  /// (C) Persistir el ciclo en client.trainingCycles y setear activeCycleId
-  /// (D) Guardar cliente actualizado en repositorio
-  Future<TrainingCycle?> _getOrCreateActiveCycle({
-    required Client client,
-    required TrainingProfile profile,
-    required DateTime startDate,
-  }) async {
-    try {
-      // (A) Buscar ciclo activo existente
-      if (client.activeCycleId != null && client.activeCycleId!.isNotEmpty) {
-        try {
-          final existing = client.trainingCycles.firstWhere(
-            (c) => c.cycleId == client.activeCycleId,
-          );
-          debugPrint(
-            '[TrainingPlanProvider] Usando ciclo activo existente: ${client.activeCycleId}',
-          );
-          return existing;
-        } on StateError {
-          // activeCycleId no coincide con ningún ciclo existente
-          debugPrint(
-            '[TrainingPlanProvider] activeCycleId="${client.activeCycleId}" no encontrado en trainingCycles',
-          );
-        } catch (e) {
-          // Ciclo no encontrado, crear uno nuevo
-          debugPrint(
-            '[TrainingPlanProvider] Ciclo activo no encontrado, creando nuevo',
-          );
-        }
-      }
-
-      // (B) Crear nuevo ciclo
-      final cycleId =
-          'tc_${client.id}_${startDate.year}${startDate.month.toString().padLeft(2, '0')}${startDate.day.toString().padLeft(2, '0')}';
-
-      // Obtener goal y músculos prioritarios del perfil
-      final goal = profile.extra['goal'] as String? ?? 'hipertrofia_general';
-      final priorityMuscles = _extractPriorityMuscles(profile);
-      final splitType =
-          profile.extra['splitType'] as String? ?? 'torso_pierna_4d';
-
-      // Construir mapa base de ejercicios (vacío por ahora, se completará después)
-      final baseExercises = <String, List<String>>{};
-      for (final muscle in priorityMuscles) {
-        baseExercises[muscle] = [];
-      }
-
-      final newCycle = TrainingCycle(
-        cycleId: cycleId,
-        startDate: startDate,
-        goal: goal,
-        priorityMuscles: priorityMuscles,
-        splitType: splitType,
-        baseExercisesByMuscle: baseExercises,
-        phaseState: 'VME',
-        currentWeek: 1,
-        createdAt: DateTime.now(),
-      );
-
-      // (C) Persistir ciclo
-      final updatedCycles = List<TrainingCycle>.from(client.trainingCycles)
-        ..add(newCycle);
-      final updatedClient = client.copyWith(
-        trainingCycles: updatedCycles,
-        activeCycleId: cycleId,
-      );
-
-      // (D) Guardar en repositorio
-      await ref.read(clientRepositoryProvider).saveClient(updatedClient);
-
-      debugPrint('[TrainingPlanProvider] Nuevo ciclo creado: $cycleId');
-      return newCycle;
-    } catch (e) {
-      debugPrint('❌ Error en _getOrCreateActiveCycle: $e');
-      return null;
-    }
-  }
-
-  /// Extrae músculos prioritarios del perfil
-  List<String> _extractPriorityMuscles(TrainingProfile profile) {
-    final extra = profile.extra;
-    final primary = (extra['priorityMusclesPrimary'] as String? ?? '')
-        .split(',')
-        .where((m) => m.trim().isNotEmpty)
-        .toList();
-    final secondary = (extra['priorityMusclesSecondary'] as String? ?? '')
-        .split(',')
-        .where((m) => m.trim().isNotEmpty)
-        .toList();
-    final tertiary = (extra['priorityMusclesTertiary'] as String? ?? '')
-        .split(',')
-        .where((m) => m.trim().isNotEmpty)
-        .toList();
-
-    final all = <String>{};
-    all.addAll(primary);
-    all.addAll(secondary);
-    all.addAll(tertiary);
-
-    return all.toList();
   }
 
   /// Genera un plan basado en MusclePriorities (SSOT) para Motor V3.
@@ -398,9 +533,22 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         updatedAt: now,
       );
 
+      final recentLogs = await WorkoutLogRepository.getLogsByUser(
+        userId: clientId,
+        startDate: now.subtract(const Duration(days: 14)),
+        endDate: now,
+        limit: 100,
+      );
+      const plannedPhase = 'accumulation';
+      final resolvedPhase = await _resolvePhase(
+        profile: userProfile,
+        recentLogs: recentLogs,
+        plannedPhase: plannedPhase,
+      );
+
       final result = await MotorV3Orchestrator.generateProgram(
         userProfile: userProfile,
-        phase: 'accumulation',
+        phase: resolvedPhase,
         durationWeeks: evaluation.planDurationInWeeks,
         trainingDaysPerWeek: evaluation.daysPerWeek,
       );
@@ -443,6 +591,28 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       debugPrint('StackTrace: $stackTrace');
       rethrow;
     }
+  }
+
+  Future<String> _resolvePhase({
+    required UserProfile profile,
+    required List<WorkoutLog> recentLogs,
+    required String plannedPhase,
+  }) async {
+    if (recentLogs.isEmpty) return plannedPhase;
+    final eval = DeloadTriggerEngine.evaluateDeloadNeed(
+      recentLogs: recentLogs,
+      weeksInProgram: profile.consecutiveWeeks,
+    );
+    final needs = eval['needs_deload'] as bool;
+    final urgency = (eval['urgency'] as String?) ?? '';
+    if (needs &&
+        (urgency == 'high' ||
+            urgency == 'moderate' ||
+            urgency == 'urgent' ||
+            urgency == 'recommended')) {
+      return 'deload';
+    }
+    return plannedPhase;
   }
 
   Future<void> _saveEvaluationSnapshot({
@@ -558,7 +728,13 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // ═══════════════════════════════════════════════════════════════
       final activeConfig = _findActivePlanConfigById(freshClient);
       if (activeConfig != null) {
-        final derived = TrainingPlanMapper.toGeneratedPlan(activeConfig);
+        final frozenCycle = _findActiveCycle(freshClient);
+        final derived =
+            (frozenCycle != null &&
+                frozenCycle.status == 'active' &&
+                frozenCycle.freezePlanSnapshot.isNotEmpty)
+            ? _generatedPlanFromCycleSnapshot(frozenCycle)
+            : TrainingPlanMapper.toGeneratedPlan(activeConfig);
         debugPrint(
           '[TrainingPlanProvider] activePlanId encontrado -> skip regen',
         );
@@ -634,18 +810,29 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final exercises = await ExerciseCatalogLoader.load();
 
       // ═══════════════════════════════════════════════════════════════════════
-      // PASO 1: Obtener o crear TrainingCycle activo
+      // PASO 1: Freeze-first real (ciclo activo → no recalcular estructura)
       // ═══════════════════════════════════════════════════════════════════════
-      final activeCycle = await _getOrCreateActiveCycle(
-        client: freshClient,
-        profile: trainingProfile,
-        startDate: startDate,
-      );
+      final cycleRepo = ref.read(trainingCycleRepositoryProvider);
+      final activeCycle = await cycleRepo.getActiveCycle(freshClient.id);
 
-      if (activeCycle == null) {
+      if (activeCycle != null) {
+        if (activeCycle.freezePlanSnapshot.isEmpty) {
+          state = state.copyWith(
+            isLoading: false,
+            error:
+                'Ciclo activo sin freezePlanSnapshot. Cierra el ciclo y genera uno nuevo.',
+          );
+          return;
+        }
+
+        debugPrint(
+          '[TrainingPlanProvider] Ciclo activo detectado -> usar freezePlanSnapshot (sin recalcular estructura)',
+        );
+
         state = state.copyWith(
           isLoading: false,
-          error: 'No se pudo crear el ciclo de entrenamiento',
+          plan: _generatedPlanFromCycleSnapshot(activeCycle),
+          missingFields: const [],
         );
         return;
       }
@@ -689,9 +876,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       if (resultV3.isBlocked) {
-        debugPrint(
-          '[Motor V3 Unified] Plan blocked: ${resultV3.blockReason}',
-        );
+        debugPrint('[Motor V3 Unified] Plan blocked: ${resultV3.blockReason}');
 
         state = state.copyWith(
           isLoading: false,
@@ -703,6 +888,62 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       final planConfig = resultV3.initialWeekPlan!;
+
+      final vopByMuscle = _computeVopByMuscleFromPlan(planConfig);
+      final vmrByMuscle = _computeVmrByMuscle(
+        planConfig: planConfig,
+        vopByMuscle: vopByMuscle,
+      );
+      final freezePlanSnapshot = _buildFreezePlanSnapshot(
+        planConfig: planConfig,
+        vopByMuscle: vopByMuscle,
+        vmrByMuscle: vmrByMuscle,
+        availableDays: freshClient.training.daysPerWeek > 0
+            ? freshClient.training.daysPerWeek
+            : 4,
+        sessionDurationMinutes: freshClient.training.timePerSessionMinutes > 0
+            ? freshClient.training.timePerSessionMinutes
+            : 60,
+      );
+
+      final nowCycle = DateTime.now();
+      final cycleId =
+          'cycle_${freshClient.id}_${startDate.millisecondsSinceEpoch}';
+      final cycleForFreeze = TrainingCycle(
+        cycleId: cycleId,
+        clientId: freshClient.id,
+        startDate: nowCycle,
+        goal: freshClient.training.globalGoal.name,
+        priorityMuscles: [
+          ...freshClient.training.priorityMusclesPrimary,
+          ...freshClient.training.priorityMusclesSecondary,
+        ],
+        splitType: planConfig.splitId,
+        baseExercisesByMuscle: _extractBaseExercisesByMuscleFromSnapshot(
+          freezePlanSnapshot,
+        ),
+        phaseState: 'VME',
+        currentWeek: 1,
+        frequency: freshClient.training.daysPerWeek > 0
+            ? freshClient.training.daysPerWeek
+            : 4,
+        createdAt: nowCycle,
+        vopByMuscle: vopByMuscle,
+        vmrByMuscle: vmrByMuscle,
+        primaryMuscles: freshClient.training.priorityMusclesPrimary,
+        secondaryMuscles: freshClient.training.priorityMusclesSecondary,
+        availableDays: freshClient.training.daysPerWeek > 0
+            ? freshClient.training.daysPerWeek
+            : 4,
+        sessionDurationMinutes: freshClient.training.timePerSessionMinutes > 0
+            ? freshClient.training.timePerSessionMinutes
+            : 60,
+        trainingLevel:
+            freshClient.training.trainingLevel?.name ?? 'intermediate',
+        freezePlanSnapshot: freezePlanSnapshot,
+      );
+
+      await cycleRepo.createCycle(cycleForFreeze);
 
       debugPrint(
         '[Motor V3 Unified] Plan generated: ${planConfig.weeks.length} weeks, '
@@ -760,7 +1001,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // ═══════════════════════════════════════════════════════════════════════
 
       // Mapper de compatibilidad para UI legacy (GeneratedPlan derivado)
-      final plan = TrainingPlanMapper.toGeneratedPlan(planConfig);
+      final plan = _generatedPlanFromCycleSnapshot(cycleForFreeze);
 
       // Recargar cliente después de persistencia
       final client = await ref
@@ -997,7 +1238,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         );
       });
 
-        final warningMessages = resultV3.suggestions ?? const <String>[];
+      final warningMessages = resultV3.suggestions ?? const <String>[];
 
       state = state.copyWith(
         isLoading: false,
@@ -1032,6 +1273,54 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       setsByMuscle: setsByMuscle,
       updatedAt: DateTime.now(),
       source: source,
+    );
+  }
+
+  String _resolvePhaseForWeek({required int weekNumber}) {
+    if (weekNumber <= 3) return 'adaptation';
+    if (weekNumber % 5 == 0) return 'deload';
+    return 'accumulation';
+  }
+
+  Future<void> _persistWeeklyDecisionArtifact({
+    required String clientId,
+    required TrainingCycle cycle,
+    required int weekNumber,
+    required String phase,
+    WeeklyLogSnapshot? logSnapshot,
+  }) async {
+    const evaluator = TrainingWeekEvaluator();
+    final WeeklyDecision decision = evaluator.evaluate(
+      cycle: cycle,
+      log: logSnapshot,
+      weekNumber: weekNumber,
+      phase: phase,
+    );
+
+    final repo = ref.read(clientRepositoryProvider);
+    final client = await repo.getClientById(clientId);
+    if (client == null) return;
+
+    final extra = Map<String, dynamic>.from(client.training.extra);
+    final existing = Map<String, dynamic>.from(
+      extra['weeklyDecisionArtifactsV1'] as Map? ?? const {},
+    );
+
+    existing['week_$weekNumber'] = {
+      'weekNumber': decision.weekNumber,
+      'phase': phase,
+      'actionByMuscle': decision.actionByMuscle,
+      'newDirectSetsByMuscle': decision.newDirectSetsByMuscle,
+      'stimulusSetsByMuscle': decision.stimulusSetsByMuscle,
+      'rirTargetsByMuscle': decision.rirTargetsByMuscle,
+      'insightByMuscle': decision.insightByMuscle,
+      'updatedAtIso': DateTime.now().toIso8601String(),
+    };
+
+    extra['weeklyDecisionArtifactsV1'] = existing;
+
+    await repo.saveClient(
+      client.copyWith(training: client.training.copyWith(extra: extra)),
     );
   }
 
@@ -1099,6 +1388,39 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
           error: 'Cliente no encontrado',
         );
         return null;
+      }
+
+      final cycleRepo = ref.read(trainingCycleRepositoryProvider);
+      final persistedActiveCycle = await cycleRepo.getActiveCycle(clientId);
+      if (persistedActiveCycle != null) {
+        if (persistedActiveCycle.freezePlanSnapshot.isEmpty) {
+          state = state.copyWith(
+            isLoading: false,
+            error:
+                'Ciclo activo sin freezePlanSnapshot. Cierra el ciclo y regenera para congelar estructura.',
+          );
+          return null;
+        }
+
+        final currentWeek = persistedActiveCycle.currentWeek <= 0
+            ? 1
+            : persistedActiveCycle.currentWeek;
+        final phase = _resolvePhaseForWeek(weekNumber: currentWeek);
+        await _persistWeeklyDecisionArtifact(
+          clientId: clientId,
+          cycle: persistedActiveCycle,
+          weekNumber: currentWeek,
+          phase: phase,
+        );
+
+        state = TrainingPlanState(
+          plan: _generatedPlanFromCycleSnapshot(persistedActiveCycle),
+          vopByMuscle: state.vopByMuscle,
+        );
+
+        await ref.read(clientsProvider.notifier).refresh();
+        return _findActivePlanConfigById(client) ??
+            _findLatestPlan(client.trainingPlans);
       }
 
       // 2. Cargar catálogo de ejercicios (necesario para bootstrap Y Motor V3)
@@ -1349,6 +1671,48 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       // Extraer plan generado
       final planConfig = resultV3.plan!;
 
+      final vopByMuscle = _computeVopByMuscleFromPlan(planConfig);
+      final vmrByMuscle = _computeVmrByMuscle(
+        planConfig: planConfig,
+        vopByMuscle: vopByMuscle,
+      );
+      final freezePlanSnapshot = _buildFreezePlanSnapshot(
+        planConfig: planConfig,
+        vopByMuscle: vopByMuscle,
+        vmrByMuscle: vmrByMuscle,
+        availableDays: workingClient.training.daysPerWeek > 0
+            ? workingClient.training.daysPerWeek
+            : 4,
+        sessionDurationMinutes: workingClient.training.timePerSessionMinutes > 0
+            ? workingClient.training.timePerSessionMinutes
+            : 60,
+      );
+
+      final cycleForFreeze = activeCycle.copyWith(
+        status: 'active',
+        splitType: planConfig.splitId,
+        vopByMuscle: vopByMuscle,
+        vmrByMuscle: vmrByMuscle,
+        baseExercisesByMuscle: _extractBaseExercisesByMuscleFromSnapshot(
+          freezePlanSnapshot,
+        ),
+        freezePlanSnapshot: freezePlanSnapshot,
+        updatedAt: DateTime.now(),
+      );
+
+      await cycleRepo.upsertCycle(cycleForFreeze);
+
+      final decisionWeek = cycleForFreeze.currentWeek <= 0
+          ? 1
+          : cycleForFreeze.currentWeek;
+      final phaseForDecision = _resolvePhaseForWeek(weekNumber: decisionWeek);
+      await _persistWeeklyDecisionArtifact(
+        clientId: clientId,
+        cycle: cycleForFreeze,
+        weekNumber: decisionWeek,
+        phase: phaseForDecision,
+      );
+
       debugPrint(
         '✅ [Motor V3] Plan generado: ${planConfig.weeks.length} semanas, '
         '${planConfig.weeks.fold<int>(0, (sum, w) => sum + w.sessions.length)} sesiones',
@@ -1545,6 +1909,8 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
               muscle: muscle,
               trainingLevel: resolvedTrainingLevel,
               priority: priority,
+              age:
+                  workingClient.training.age ?? workingClient.profile.age ?? 30,
             );
 
             directVopByMuscle[muscle] = optimalVolume.toDouble();

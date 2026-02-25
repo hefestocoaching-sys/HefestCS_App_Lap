@@ -11,6 +11,7 @@ void main() {
           muscle: 'pectorals',
           trainingLevel: 'novice',
           priority: 1,
+          age: 30,
         );
 
         expect(volume, equals(10));
@@ -21,11 +22,13 @@ void main() {
           muscle: 'pectorals',
           trainingLevel: 'novice',
           priority: 1,
+          age: 30,
         );
         final volumeHigh = VolumeEngine.calculateOptimalVolume(
           muscle: 'pectorals',
           trainingLevel: 'novice',
           priority: 5,
+          age: 30,
         );
 
         expect(volumeLow, equals(volumeHigh));

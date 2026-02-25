@@ -40,6 +40,10 @@ enum MacroBlock {
 /// El volumen entrenable (VOP) viene de Tab 1 y se modula por [volumeMultiplier].
 /// El reparto de intensidades (Pesadas/Medias/Ligeras) viene de Tab 2 y no cambia.
 class MacrocycleWeek {
+  // Deload activo: -20%. Fuente: Androulakis-Korakakis et al. Sports Med Open 2024.
+  // Cese total (0.0) impacta negativamente la fuerza — Coleman et al. PeerJ 2024.
+  static const double deloadVolumeMultiplier = 0.80;
+
   /// Número de semana (1–52)
   final int weekNumber;
 
@@ -54,7 +58,7 @@ class MacrocycleWeek {
   /// Ejemplo:
   /// - AA (semana 1): 1.0 (100% del VOP)
   /// - HF1 (semana 5): 1.15 (115% del VOP)
-  /// - Deload (semana 4): 0.6 (60% del VOP)
+  /// - Deload (semana 4): 0.8 (80% del VOP)
   final double volumeMultiplier;
 
   /// Indica si la semana es de descarga

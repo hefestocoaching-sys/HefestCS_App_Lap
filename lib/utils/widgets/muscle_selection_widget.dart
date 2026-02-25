@@ -109,6 +109,8 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
     _primary = _expandLegacyKeys(widget.selectedPrimary.toList()).toSet();
     _secondary = _expandLegacyKeys(widget.selectedSecondary.toList()).toSet();
     _tertiary = _expandLegacyKeys(widget.selectedTertiary.toList()).toSet();
+    // Enforce strict mutual exclusion from the start
+    _sanitizeTiers();
   }
 
   @override
@@ -118,14 +120,17 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
     // ✅ Resincronizar estado si cambiaron las props (al cargar cliente, guardar, etc.)
     // Esto previene "chips fantasma" duplicados
     if (widget.selectedPrimary != oldWidget.selectedPrimary ||
-      widget.selectedSecondary != oldWidget.selectedSecondary ||
-      widget.selectedTertiary != oldWidget.selectedTertiary) {
-      final newPrimary =
-        _expandLegacyKeys(widget.selectedPrimary.toList()).toSet();
-      final newSecondary =
-        _expandLegacyKeys(widget.selectedSecondary.toList()).toSet();
-      final newTertiary =
-        _expandLegacyKeys(widget.selectedTertiary.toList()).toSet();
+        widget.selectedSecondary != oldWidget.selectedSecondary ||
+        widget.selectedTertiary != oldWidget.selectedTertiary) {
+      final newPrimary = _expandLegacyKeys(
+        widget.selectedPrimary.toList(),
+      ).toSet();
+      final newSecondary = _expandLegacyKeys(
+        widget.selectedSecondary.toList(),
+      ).toSet();
+      final newTertiary = _expandLegacyKeys(
+        widget.selectedTertiary.toList(),
+      ).toSet();
 
       // Solo setState si realmente cambió
       if (_setsDiffer(_primary, newPrimary) ||
@@ -135,9 +140,19 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
           _primary = newPrimary;
           _secondary = newSecondary;
           _tertiary = newTertiary;
+          _sanitizeTiers(); // enforce mutual exclusion on new data
         });
       }
     }
+  }
+
+  /// Ensures a muscle can only belong to ONE tier.
+  /// Priority order: Primary > Secondary > Tertiary.
+  /// If a muscle appears in a higher tier, it is removed from all lower tiers.
+  void _sanitizeTiers() {
+    _secondary.removeAll(_primary);
+    _tertiary.removeAll(_primary);
+    _tertiary.removeAll(_secondary);
   }
 
   bool _setsDiffer(Set<String> a, Set<String> b) {
@@ -155,23 +170,19 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
   ) {
     setState(() {
       if (isSelected) {
-        if (currentSet != _primary) {
-          _primary.remove(muscleKey);
-        }
-        if (currentSet != _secondary) {
-          _secondary.remove(muscleKey);
-        }
-        if (currentSet != _tertiary) {
-          _tertiary.remove(muscleKey);
-        }
+        // Remove from all OTHER tiers first (strict mutual exclusion)
+        if (currentSet != _primary) _primary.remove(muscleKey);
+        if (currentSet != _secondary) _secondary.remove(muscleKey);
+        if (currentSet != _tertiary) _tertiary.remove(muscleKey);
         currentSet.add(muscleKey);
       } else {
         currentSet.remove(muscleKey);
       }
-      widget.onChanged('primary', _primary);
-      widget.onChanged('secondary', _secondary);
-      widget.onChanged('tertiary', _tertiary);
     });
+    // Notify AFTER setState to avoid calling callbacks inside build cycle
+    widget.onChanged('primary', Set<String>.from(_primary));
+    widget.onChanged('secondary', Set<String>.from(_secondary));
+    widget.onChanged('tertiary', Set<String>.from(_tertiary));
   }
 
   @override

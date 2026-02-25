@@ -100,33 +100,40 @@ class DietaryTabState extends ConsumerState<DietaryTab>
     // Si no, inicia en modo view
     _mode = widget.activeDateIso.isEmpty ? _TabMode.idle : _TabMode.view;
 
-    if (initialClient != null && widget.activeDateIso.isNotEmpty) {
-      // Initialize the provider with the client's data first.
+    if (initialClient != null) {
+      // Siempre inicializar el provider con el cliente activo para que las
+      // fórmulas TMB estén disponibles aunque no haya fecha activa.
+      // Si no hay activeDateIso, el provider usará el último registro antropométrico.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref
             .read(dietaryProvider.notifier)
             .initialize(
               initialClient,
               forceReset: true,
-              activeDateIso: widget.activeDateIso,
+              activeDateIso: widget.activeDateIso.isNotEmpty
+                  ? widget.activeDateIso
+                  : null,
             );
-        // Now, load the local UI data (controllers) which depends on the provider's calculations.
-        _loadClientData(initialClient);
+        if (widget.activeDateIso.isNotEmpty) {
+          _loadClientData(initialClient);
+        }
       });
     }
 
-    // Centralizamos la escucha de cambios del cliente aquí.
     ref.listenManual(clientsProvider, (previous, next) {
       final prevClient = previous?.value?.activeClient;
       final newClient = next.value?.activeClient;
       if (newClient != null && newClient != prevClient) {
+        // Re-inicializar siempre que cambie el cliente, con o sin fecha activa.
+        ref
+            .read(dietaryProvider.notifier)
+            .initialize(
+              newClient,
+              activeDateIso: widget.activeDateIso.isNotEmpty
+                  ? widget.activeDateIso
+                  : null,
+            );
         if (widget.activeDateIso.isNotEmpty) {
-          // 1. Re-initialize the provider with the new client's data.
-          // No forzamos reset para mantener la selección del usuario si es posible
-          ref
-              .read(dietaryProvider.notifier)
-              .initialize(newClient, activeDateIso: widget.activeDateIso);
-          // 2. Then, update the local state and controllers.
           setState(() {
             _loadClientData(newClient);
           });

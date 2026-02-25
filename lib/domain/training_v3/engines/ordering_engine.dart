@@ -1,5 +1,10 @@
 // lib/domain/training_v3/engines/ordering_engine.dart
 
+import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/exercise_prescription.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/planned_exercise.dart';
+
 /// Motor de ordenamiento científico de ejercicios
 ///
 /// Implementa las reglas científicas de la Semana 5 (Imagen 60-63):
@@ -19,6 +24,82 @@
 ///
 /// Versión: 1.0.0
 class OrderingEngine {
+  // P0.1 Rule E Constants
+  static const Set<String> _majorMuscles = {
+    'pectorals',
+    'lats',
+    'upper_back',
+    'traps',
+    'glutes',
+    'quadriceps',
+    'hamstrings',
+  };
+
+  /// P0.1 Table mapping logic
+  static int _pdfOrderIndex({
+    required String muscleKey,
+    required String exerciseId,
+    required String zone,
+  }) {
+    final type = ExerciseCatalogV3.getTypeById(exerciseId);
+    final isCompound = (type == 'compound');
+    final isMajor = _majorMuscles.contains(muscleKey);
+
+    if (isMajor && isCompound) {
+      if (zone == IntensityZone.heavy) return 1;
+      if (zone == IntensityZone.medium) return 2;
+      return 5;
+    } else if (isMajor && !isCompound) {
+      if (zone == IntensityZone.heavy) return 7;
+      if (zone == IntensityZone.medium) return 8;
+      return 11;
+    } else if (!isMajor && isCompound) {
+      if (zone == IntensityZone.heavy) return 3;
+      if (zone == IntensityZone.medium) return 4;
+      return 6;
+    } else {
+      if (zone == IntensityZone.heavy) return 9;
+      if (zone == IntensityZone.medium) return 10;
+      return 12;
+    }
+  }
+
+  /// P0.1 Evaluates Rule E index directly on prescriptions
+  static void orderSessionExercises(
+    List<ExercisePrescription> sessionExercises,
+  ) {
+    sessionExercises.sort((a, b) {
+      final indexA = _pdfOrderIndex(
+        muscleKey: a.directTargetMuscleKey,
+        exerciseId: a.exerciseId,
+        zone: a.intensityZone,
+      );
+      final indexB = _pdfOrderIndex(
+        muscleKey: b.directTargetMuscleKey,
+        exerciseId: b.exerciseId,
+        zone: b.intensityZone,
+      );
+      return indexA.compareTo(indexB);
+    });
+  }
+
+  /// P0-A Evaluates Rule E index directly on planned exercises
+  static void orderPlannedExercises(List<PlannedExercise> sessionExercises) {
+    sessionExercises.sort((a, b) {
+      final indexA = _pdfOrderIndex(
+        muscleKey: a.muscleKey,
+        exerciseId: a.exerciseId,
+        zone: IntensityZone.medium, // Falta zona individual, usamos fallback
+      );
+      final indexB = _pdfOrderIndex(
+        muscleKey: b.muscleKey,
+        exerciseId: b.exerciseId,
+        zone: IntensityZone.medium,
+      );
+      return indexA.compareTo(indexB);
+    });
+  }
+
   /// Ordena ejercicios científicamente
   ///
   /// ALGORITMO:

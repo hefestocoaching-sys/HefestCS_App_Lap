@@ -609,10 +609,16 @@ class TrainingOrchestratorV3 {
           muscleGroupFromString(primary) ?? MuscleGroup.fullBody;
 
       final prescriptions = <v2.ExercisePrescription>[];
-      for (final ex in session.exercises) {
-        final order = ex.orderInSession;
-        final repsMin = ex.repRange.isNotEmpty ? ex.repRange.first : 8;
-        final repsMax = ex.repRange.length > 1 ? ex.repRange[1] : 12;
+      for (int idx = 0; idx < session.exercises.length; idx++) {
+        final ex = session.exercises[idx];
+        final order = idx + 1;
+        // PlannedExercise: derive reps from set prescriptions
+        final firstSet = ex.sets.isNotEmpty ? ex.sets.first : null;
+        final lastSet = ex.sets.isNotEmpty ? ex.sets.last : null;
+        final repsMin = firstSet?.repsMin ?? 8;
+        final repsMax = lastSet?.repsMax ?? 12;
+        final rir = firstSet?.rir ?? 2;
+        final totalSets = ex.sets.length;
 
         prescriptions.add(
           v2.ExercisePrescription(
@@ -621,12 +627,12 @@ class TrainingOrchestratorV3 {
             muscleGroup: muscleGroup,
             exerciseCode: ex.exerciseId,
             label: _labelForOrder(order),
-            exerciseName: ex.exerciseName,
-            sets: ex.sets,
+            exerciseName: ex.name,
+            sets: totalSets,
             repRange: RepRange(repsMin, repsMax),
-            rir: ex.targetRir.toString(),
-            restMinutes: (ex.restSeconds / 60).round().clamp(1, 10),
-            notes: ex.notes,
+            rir: rir.toString(),
+            restMinutes: 2,
+            notes: '',
             order: order,
           ),
         );

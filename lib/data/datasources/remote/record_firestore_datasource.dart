@@ -199,17 +199,14 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
         .collection(domain.collectionName)
         .doc(dateKey);
 
-    // Verificar si el documento existe antes de actualizar
-    final snapshot = await ref.get();
-    if (!snapshot.exists) {
-      // El documento no existe, no hay nada que borrar
-      return;
-    }
-
-    await ref.update({
+    // OFFLINE-SAFE: usar set() con merge en lugar de get()+update().
+    // ref.get() fuerza una lectura de red y falla sin internet.
+    // ref.set() con merge escribe en la caché local de Firestore y se
+    // sincroniza automáticamente cuando vuelve la conectividad.
+    await ref.set({
       'deleted': true,
       'updatedAt': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
   }
 
   /// Helper: Convierte DateTime a dateKey (yyyy-MM-dd).

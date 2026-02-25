@@ -1,6 +1,7 @@
 // lib/domain/training_v3/models/split_config.dart
 
 import 'package:equatable/equatable.dart';
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
 
 /// Configuración del split de entrenamiento
 ///
@@ -124,13 +125,15 @@ class SplitConfig extends Equatable {
       frequencyPerMuscle: 3.0,
       muscleDistribution: [
         [
-          'chest',
-          'back',
-          'quads',
-          'hamstrings',
+          MuscleKey.chest,
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          MuscleKey.quadriceps,
+          MuscleKey.hamstrings,
           'shoulders',
-          'biceps',
-          'triceps',
+          MuscleKey.biceps,
+          MuscleKey.triceps,
         ],
       ],
       description:
@@ -148,13 +151,15 @@ class SplitConfig extends Equatable {
       frequencyPerMuscle: 2.0, // Alta frecuencia, se gestiona con volumen
       muscleDistribution: [
         [
-          'chest',
-          'back',
-          'quads',
-          'hamstrings',
+          MuscleKey.chest,
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          MuscleKey.quadriceps,
+          MuscleKey.hamstrings,
           'shoulders',
-          'biceps',
-          'triceps',
+          MuscleKey.biceps,
+          MuscleKey.triceps,
         ],
       ],
       description:
@@ -171,13 +176,15 @@ class SplitConfig extends Equatable {
       frequencyPerMuscle: 2.0, // Muy alta frecuencia
       muscleDistribution: [
         [
-          'chest',
-          'back',
-          'quads',
-          'hamstrings',
+          MuscleKey.chest,
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          MuscleKey.quadriceps,
+          MuscleKey.hamstrings,
           'shoulders',
-          'biceps',
-          'triceps',
+          MuscleKey.biceps,
+          MuscleKey.triceps,
         ],
       ],
       description:
@@ -195,8 +202,21 @@ class SplitConfig extends Equatable {
       daysPerWeek: 4,
       frequencyPerMuscle: 2.0,
       muscleDistribution: [
-        ['chest', 'back', 'shoulders', 'biceps', 'triceps'], // Upper
-        ['quads', 'hamstrings', 'glutes', 'calves'], // Lower
+        [
+          MuscleKey.chest,
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          'shoulders',
+          MuscleKey.biceps,
+          MuscleKey.triceps,
+        ], // Upper
+        [
+          MuscleKey.quadriceps,
+          MuscleKey.hamstrings,
+          MuscleKey.glutes,
+          MuscleKey.calves,
+        ], // Lower
       ],
       description:
           'División tren superior/inferior 4 días por semana. '
@@ -214,9 +234,14 @@ class SplitConfig extends Equatable {
       daysPerWeek: 6,
       frequencyPerMuscle: 2.0,
       muscleDistribution: [
-        ['chest', 'shoulders', 'triceps'], // Push
-        ['back', 'biceps'], // Pull
-        ['quads', 'hamstrings', 'glutes'], // Legs
+        [MuscleKey.chest, 'shoulders', MuscleKey.triceps], // Push
+        [
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          MuscleKey.biceps,
+        ], // Pull
+        [MuscleKey.quadriceps, MuscleKey.hamstrings, MuscleKey.glutes], // Legs
       ],
       description:
           'División Push/Pull/Legs 6 días por semana (2 ciclos completos). '
@@ -234,9 +259,14 @@ class SplitConfig extends Equatable {
       daysPerWeek: 3,
       frequencyPerMuscle: 1.0,
       muscleDistribution: [
-        ['chest', 'shoulders', 'triceps'], // Push
-        ['back', 'biceps'], // Pull
-        ['quads', 'hamstrings', 'glutes'], // Legs
+        [MuscleKey.chest, 'shoulders', MuscleKey.triceps], // Push
+        [
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          MuscleKey.biceps,
+        ], // Pull
+        [MuscleKey.quadriceps, MuscleKey.hamstrings, MuscleKey.glutes], // Legs
       ],
       description:
           'División Push/Pull/Legs 3 días por semana (1 ciclo). '

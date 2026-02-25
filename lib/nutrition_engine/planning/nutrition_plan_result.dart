@@ -1,5 +1,6 @@
 import 'meal_targets.dart';
 import '../equivalents/equivalent_calculator.dart';
+import '../equivalents/smae_distribution_engine.dart';
 
 class NutritionPlanResult {
   final double kcalTargetDay;
@@ -16,6 +17,7 @@ class NutritionPlanResult {
 
   final List<MealTargets> mealTargets;
   final List<MealEquivalents>? mealEquivalents;
+  final SmaeDistributionResult? smaeDistribution;
 
   const NutritionPlanResult({
     required this.kcalTargetDay,
@@ -30,5 +32,6 @@ class NutritionPlanResult {
     required this.note,
     required this.mealTargets,
     this.mealEquivalents,
+    this.smaeDistribution,
   });
 }

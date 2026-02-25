@@ -1,6 +1,7 @@
 // lib/domain/training_v3/engines/load_progression_engine.dart
 
 import 'package:hcs_app_lap/domain/training_v3/models/exercise_log.dart';
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
 
 /// Motor de progresión de carga
 ///
@@ -191,10 +192,10 @@ class LoadProgressionEngine {
     final strategies = <String>[];
 
     // Estrategia 1: Cambiar zona de intensidad
-    if (currentIntensity == 'heavy') {
-      strategies.add('Cambiar a moderate (8-12 reps) por 2-3 semanas');
-    } else if (currentIntensity == 'moderate') {
-      strategies.add('Alternar: 1 semana heavy (5-8 reps), 1 semana moderate');
+    if (currentIntensity == IntensityZone.heavy) {
+      strategies.add('Cambiar a medium (8-12 reps) por 2-3 semanas');
+    } else if (currentIntensity == IntensityZone.medium) {
+      strategies.add('Alternar: 1 semana heavy (5-8 reps), 1 semana medium');
     }
 
     // Estrategia 2: Variación de ejercicio

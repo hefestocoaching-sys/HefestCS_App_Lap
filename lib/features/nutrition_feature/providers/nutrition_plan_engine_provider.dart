@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/providers/dietary_provider.dart';
+import 'package:hcs_app_lap/core/utils/app_logger.dart';
+import 'package:hcs_app_lap/nutrition_engine/equivalents/smae_distribution_engine.dart';
 import 'package:hcs_app_lap/nutrition_engine/planning/meal_distribution_service.dart';
 import 'package:hcs_app_lap/nutrition_engine/planning/nutrition_plan_engine.dart';
 import 'package:hcs_app_lap/nutrition_engine/planning/nutrition_plan_result.dart';
@@ -96,6 +98,45 @@ final nutritionPlanResultProvider = Provider<NutritionPlanResult?>((ref) {
     clinicalProfile: clinicalProfile,
   );
 
+  final excludedIds = <String>{};
+  final excludedGroups = <String>{};
+
+  final rawExcludedIds = client.nutrition.extra['smaeExcludedEquivalentIds'];
+  if (rawExcludedIds is List) {
+    excludedIds.addAll(rawExcludedIds.map((e) => e.toString()));
+  }
+
+  final rawExcludedGroups = client.nutrition.extra['smaeExcludedGroups'];
+  if (rawExcludedGroups is List) {
+    excludedGroups.addAll(rawExcludedGroups.map((e) => e.toString()));
+  }
+
+  final dietaryPattern = clinicalProfile.dietaryPattern;
+  if (dietaryPattern == 'vegan') {
+    excludedGroups.add('aoa');
+    excludedGroups.add('leches');
+  } else if (dietaryPattern == 'vegetarian') {
+    excludedGroups.add('aoa');
+  }
+
+  final smaeEngine = SmaeDistributionEngine();
+  final smaeDistribution = smaeEngine.distribute(
+    kcalTarget: kcalTarget,
+    proteinTargetG: proteinTarget,
+    carbTargetG: carbTarget,
+    fatTargetG: fatTarget,
+    mealsPerDay: mealsPerDay,
+    mealTargets: result.mealTargets,
+    excludedEquivalentIds: excludedIds,
+    excludedGroups: excludedGroups,
+  );
+
+  logger.info('NutritionPlan provider generated SMAE v2', {
+    'withinTolerance': smaeDistribution.withinTolerance,
+    'deltaPct': smaeDistribution.deltaKcalPct,
+    'warnings': smaeDistribution.warnings.length,
+  });
+
   final noteParts = <String>[];
   if (usedFallback) {
     noteParts.add(
@@ -119,6 +160,7 @@ final nutritionPlanResultProvider = Provider<NutritionPlanResult?>((ref) {
     note: noteParts.isEmpty ? null : noteParts.join(' | '),
     mealTargets: result.mealTargets,
     mealEquivalents: result.mealEquivalents,
+    smaeDistribution: smaeDistribution,
   );
 });
 

@@ -1,8 +1,16 @@
 import 'meal_distribution_config.dart';
 import 'meal_targets.dart';
 
+/// Servicio de distribución de macros entre comidas del día.
+///
+/// Cada macro tiene su propio perfil de distribución:
+/// - Proteína : distribución uniforme (cumplir umbral 1.2–1.6 g/kg por comida).
+/// - Carbos   : "front-loaded" → más en desayuno y almuerzo, mínimo en cena.
+/// - Grasas   : "front-loaded" → más en desayuno y almuerzo, mínimo en cena.
+///
+/// La última comida absorbe los residuos de redondeo para cerrar sumas exactas.
 class MealDistributionService {
-  static const double _percentTolerance = 0.01; // ±1%
+  static const double _percentTolerance = 0.01;
 
   List<MealTargets> distributeDay({
     required double kcalTarget,
@@ -14,21 +22,26 @@ class MealDistributionService {
   }) {
     _validateConfig(config);
 
-    final percents = _resolvePercents(config);
+    final proteinPcts = _resolveProteinPercents(config);
+    final carbPcts = _resolveCarbPercents(config);
+    final fatPcts = _resolveFatPercents(config);
 
-    // Distribución inicial por porcentajes
-    final meals = List<_MealAllocation>.generate(config.mealsPerDay, (index) {
-      final pct = percents[index];
+    // Distribución inicial — cada macro con su propio perfil
+    final meals = List<_MealAllocation>.generate(config.mealsPerDay, (i) {
+      final prot = _round1(proteinTargetG * proteinPcts[i]);
+      final carb = _round1(carbTargetG * carbPcts[i]);
+      final fat = _round1(fatTargetG * fatPcts[i]);
+      final kcal = _round0((prot * 4) + (carb * 4) + (fat * 9));
       return _MealAllocation(
-        mealIndex: index,
-        kcal: _round0(kcalTarget * pct),
-        protein: _round1(proteinTargetG * pct),
-        carbs: _round1(carbTargetG * pct),
-        fat: _round1(fatTargetG * pct),
+        mealIndex: i,
+        kcal: kcal,
+        protein: prot,
+        carbs: carb,
+        fat: fat,
       );
     });
 
-    // Ajustar residuos para cerrar sumas exactas (última comida absorbe)
+    // Cerrar residuos de redondeo (la última comida absorbe)
     _reconcileTotals(
       meals,
       kcalTarget: kcalTarget,
@@ -37,25 +50,25 @@ class MealDistributionService {
       fatTargetG: fatTargetG,
     );
 
-    final minProteinPerMeal =
+    // Umbral mínimo de proteína por comida
+    // Clamp entre 20 g (mínimo absoluto) y 50 g (techo para no sobrecargar)
+    final minProtein =
         config.minProteinPerMealAbsolute ??
-        bodyWeightKg * config.minProteinPerMealPerKg;
+        (bodyWeightKg * config.minProteinPerMealPerKg).clamp(20.0, 50.0);
 
-    // Umbral de proteína por comida (hipertrofia)
-    bool redistributionOk = true;
+    bool ok = true;
     if (config.enforceProteinThreshold) {
-      redistributionOk = _enforceProteinThreshold(meals, minProteinPerMeal);
-
-      if (!redistributionOk) {
-        final note =
-            'Proteína diaria insuficiente para cumplir umbral por comida con ${config.mealsPerDay} comidas';
+      ok = _enforceProteinThreshold(meals, minProtein);
+      if (!ok) {
+        const note =
+            'Proteína diaria insuficiente para alcanzar el mínimo por comida. '
+            'Aumentar proteína total o reducir número de comidas.';
         return meals
             .map((m) => m.toMealTargets(needsReview: true, note: note))
             .toList();
       }
     }
 
-    // Re-redondear y reconciliar tras redistribución
     _reconcileTotals(
       meals,
       kcalTarget: kcalTarget,
@@ -64,50 +77,80 @@ class MealDistributionService {
       fatTargetG: fatTargetG,
     );
 
-    return meals
-        .map((m) => m.toMealTargets(needsReview: !redistributionOk))
-        .toList();
+    return meals.map((m) => m.toMealTargets(needsReview: !ok)).toList();
   }
 
-  void _validateConfig(MealDistributionConfig config) {
-    if (config.mealsPerDay < 3 || config.mealsPerDay > 6) {
-      throw ArgumentError('mealsPerDay debe estar entre 3 y 6');
+  // ─── PROTEÍNA — distribución uniforme ─────────────────────────────────
+  //
+  // Siempre uniforme. El mecanismo _enforceProteinThreshold se encarga
+  // de garantizar el piso de 1.2–1.6 g/kg por comida redistribuyendo
+  // desde comidas con excedente hacia las deficitarias.
+  List<double> _resolveProteinPercents(MealDistributionConfig config) {
+    if (config.proteinPercentsOverride != null) {
+      return config.proteinPercentsOverride!;
     }
-
-    if (config.kcalPercentsOverride != null) {
-      if (config.kcalPercentsOverride!.length != config.mealsPerDay) {
-        throw ArgumentError(
-          'kcalPercentsOverride debe tener ${config.mealsPerDay} valores',
-        );
-      }
-      final sum = config.kcalPercentsOverride!.reduce((a, b) => a + b);
-      if ((sum - 1.0).abs() > _percentTolerance) {
-        throw ArgumentError(
-          'kcalPercentsOverride debe sumar aproximadamente 1.0',
-        );
-      }
-    }
+    final eq = 1.0 / config.mealsPerDay;
+    return List.filled(config.mealsPerDay, eq);
   }
 
-  List<double> _resolvePercents(MealDistributionConfig config) {
-    if (config.kcalPercentsOverride != null) {
-      return config.kcalPercentsOverride!;
+  // ─── CARBOHIDRATOS — front-loaded ─────────────────────────────────────
+  //
+  // Principio: la energía de carb se necesita durante la actividad diurna.
+  // Las primeras 2/3 comidas reciben la mayor parte.
+  // La cena recibe el mínimo (8–10%).
+  //
+  // Con 3 comidas : [40%, 35%, 25%]
+  // Con 4 comidas : [35%, 30%, 25%, 10%]
+  // Con 5 comidas : [30%, 25%, 22%, 15%, 8%]
+  // Con 6 comidas : [25%, 22%, 20%, 18%, 10%, 5%]
+  List<double> _resolveCarbPercents(MealDistributionConfig config) {
+    if (config.carbPercentsOverride != null) {
+      return config.carbPercentsOverride!;
     }
-
     switch (config.mealsPerDay) {
       case 3:
-        return const [0.33, 0.34, 0.33];
+        return const [0.40, 0.35, 0.25];
       case 4:
-        return const [0.25, 0.30, 0.25, 0.20];
+        return const [0.35, 0.30, 0.25, 0.10];
       case 5:
-        return const [0.20, 0.20, 0.25, 0.20, 0.15];
+        return const [0.30, 0.25, 0.22, 0.15, 0.08];
       case 6:
-        return const [0.18, 0.18, 0.18, 0.18, 0.16, 0.12];
+        return const [0.25, 0.22, 0.20, 0.18, 0.10, 0.05];
       default:
-        return const [];
+        final eq = 1.0 / config.mealsPerDay;
+        return List.filled(config.mealsPerDay, eq);
     }
   }
 
+  // ─── GRASAS — front-loaded ────────────────────────────────────────────
+  //
+  // Principio: las grasas aportan saciedad y acompañan la actividad diurna.
+  // La cena recibe mínimo de grasa para facilitar digestión nocturna.
+  //
+  // Con 3 comidas : [40%, 35%, 25%]
+  // Con 4 comidas : [35%, 30%, 25%, 10%]
+  // Con 5 comidas : [30%, 25%, 22%, 15%, 8%]
+  // Con 6 comidas : [25%, 22%, 20%, 18%, 10%, 5%]
+  List<double> _resolveFatPercents(MealDistributionConfig config) {
+    if (config.fatPercentsOverride != null) {
+      return config.fatPercentsOverride!;
+    }
+    switch (config.mealsPerDay) {
+      case 3:
+        return const [0.40, 0.35, 0.25];
+      case 4:
+        return const [0.35, 0.30, 0.25, 0.10];
+      case 5:
+        return const [0.30, 0.25, 0.22, 0.15, 0.08];
+      case 6:
+        return const [0.25, 0.22, 0.20, 0.18, 0.10, 0.05];
+      default:
+        final eq = 1.0 / config.mealsPerDay;
+        return List.filled(config.mealsPerDay, eq);
+    }
+  }
+
+  // ─── UMBRAL MÍNIMO DE PROTEÍNA ─────────────────────────────────────────
   bool _enforceProteinThreshold(
     List<_MealAllocation> meals,
     double minProteinPerMeal,
@@ -119,6 +162,8 @@ class MealDistributionService {
       }
     }
 
+    if (totalDeficit == 0) return true;
+
     double totalSurplus = 0;
     for (final meal in meals) {
       if (meal.protein > minProteinPerMeal) {
@@ -126,15 +171,9 @@ class MealDistributionService {
       }
     }
 
-    if (totalDeficit == 0) {
-      return true; // todos cumplen
-    }
+    if (totalSurplus + 1e-6 < totalDeficit) return false;
 
-    if (totalSurplus + 1e-6 < totalDeficit) {
-      return false; // proteína diaria insuficiente
-    }
-
-    // Redistribuir proteína: mover de excedentes a deficitarias
+    // Redistribuir proteína: mover excedente a comidas deficitarias
     for (final meal in meals) {
       if (meal.protein < minProteinPerMeal) {
         double needed = minProteinPerMeal - meal.protein;
@@ -143,13 +182,10 @@ class MealDistributionService {
           final available = donor.protein - minProteinPerMeal;
           if (available <= 0) continue;
           final transfer = available >= needed ? needed : available;
-
           donor.protein -= transfer;
           meal.protein += transfer;
-
-          donor.kcal -= transfer * 4; // proteína kcal
+          donor.kcal -= transfer * 4;
           meal.kcal += transfer * 4;
-
           needed -= transfer;
           if (needed <= 0) break;
         }
@@ -159,6 +195,7 @@ class MealDistributionService {
     return true;
   }
 
+  // ─── RECONCILIACIÓN DE RESIDUOS ────────────────────────────────────────
   void _reconcileTotals(
     List<_MealAllocation> meals, {
     required double kcalTarget,
@@ -166,7 +203,6 @@ class MealDistributionService {
     required double carbTargetG,
     required double fatTargetG,
   }) {
-    // Redondear a 1 decimal proteínas/carbs/fat y 0 decimales kcal
     for (final m in meals) {
       m.protein = _round1(m.protein);
       m.carbs = _round1(m.carbs);
@@ -174,18 +210,60 @@ class MealDistributionService {
       m.kcal = _round0(m.kcal);
     }
 
-    double proteinResidual =
-        proteinTargetG - meals.fold(0, (p, m) => p + m.protein);
-    double carbResidual = carbTargetG - meals.fold(0, (p, m) => p + m.carbs);
-    double fatResidual = fatTargetG - meals.fold(0, (p, m) => p + m.fat);
-    double kcalResidual = kcalTarget - meals.fold(0, (p, m) => p + m.kcal);
+    if (meals.isEmpty) return;
+    final last = meals.last;
+    last.protein = _round1(
+      last.protein +
+          (proteinTargetG - meals.fold(0.0, (p, m) => p + m.protein)),
+    );
+    last.carbs = _round1(
+      last.carbs + (carbTargetG - meals.fold(0.0, (p, m) => p + m.carbs)),
+    );
+    last.fat = _round1(
+      last.fat + (fatTargetG - meals.fold(0.0, (p, m) => p + m.fat)),
+    );
+    last.kcal = _round0(
+      last.kcal + (kcalTarget - meals.fold(0.0, (p, m) => p + m.kcal)),
+    );
+  }
 
-    if (meals.isNotEmpty) {
-      final last = meals.last;
-      last.protein = _round1(last.protein + proteinResidual);
-      last.carbs = _round1(last.carbs + carbResidual);
-      last.fat = _round1(last.fat + fatResidual);
-      last.kcal = _round0(last.kcal + kcalResidual);
+  // ─── VALIDACIÓN ───────────────────────────────────────────────────────
+  void _validateConfig(MealDistributionConfig config) {
+    if (config.mealsPerDay < 3 || config.mealsPerDay > 6) {
+      throw ArgumentError('mealsPerDay debe estar entre 3 y 6');
+    }
+    _validatePercents(
+      config.kcalPercentsOverride,
+      'kcalPercentsOverride',
+      config.mealsPerDay,
+    );
+    _validatePercents(
+      config.proteinPercentsOverride,
+      'proteinPercentsOverride',
+      config.mealsPerDay,
+    );
+    _validatePercents(
+      config.carbPercentsOverride,
+      'carbPercentsOverride',
+      config.mealsPerDay,
+    );
+    _validatePercents(
+      config.fatPercentsOverride,
+      'fatPercentsOverride',
+      config.mealsPerDay,
+    );
+  }
+
+  void _validatePercents(List<double>? percents, String name, int mealsPerDay) {
+    if (percents == null) return;
+    if (percents.length != mealsPerDay) {
+      throw ArgumentError('$name debe tener $mealsPerDay valores');
+    }
+    final sum = percents.reduce((a, b) => a + b);
+    if ((sum - 1.0).abs() > _percentTolerance) {
+      throw ArgumentError(
+        '$name debe sumar aproximadamente 1.0 (suma actual: $sum)',
+      );
     }
   }
 

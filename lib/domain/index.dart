@@ -54,7 +54,7 @@ export 'services/anthropometry_analyzer.dart';
 export 'services/athlete_context_resolver.dart';
 export 'services/clinical_restriction_validator.dart';
 
-export 'services/deterministic_session_composer.dart';
+export 'services/deterministic_session_composer.dart' hide TrainingSplit;
 export 'services/exercise_selector.dart';
 export 'services/failure_policy_service.dart';
 export 'services/latest_record_resolver.dart';
@@ -92,6 +92,7 @@ export 'training/vop_snapshot.dart';
 export 'training_engine/phases/phase4_priority_cap_service.dart';
 
 // Training V3 - Motor Nuevo
-export 'training_v3/services/motor_v3_orchestrator.dart' hide TrainingSplit;
+export 'training_v3/services/motor_v3_orchestrator.dart';
+export 'training_v3/models/training_split.dart';
 export 'training_v3/converters/v3_to_v2_converter.dart';
 export 'entities/training_plan.dart';

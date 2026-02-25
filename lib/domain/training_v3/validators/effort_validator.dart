@@ -1,5 +1,7 @@
 // lib/domain/training_v3/validators/effort_validator.dart
 
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
+
 /// Validador científico de esfuerzo (RIR/RPE)
 ///
 /// Valida que:
@@ -120,7 +122,7 @@ class EffortValidator {
     required String intensity,
   }) {
     // Compound heavy
-    if (type == 'compound' && intensity == 'heavy') {
+    if (type == 'compound' && intensity == IntensityZone.heavy) {
       if (rir < 3) {
         return {
           'status': 'warning',
@@ -132,7 +134,7 @@ class EffortValidator {
     }
 
     // Compound moderate
-    if (type == 'compound' && intensity == 'moderate') {
+    if (type == 'compound' && intensity == IntensityZone.medium) {
       if (rir < 2) {
         return {
           'status': 'warning',
@@ -144,7 +146,7 @@ class EffortValidator {
     }
 
     // Isolation light con RIR alto
-    if (type == 'isolation' && intensity == 'light') {
+    if (type == 'isolation' && intensity == IntensityZone.light) {
       if (rir > 2) {
         return {
           'status': 'warning',

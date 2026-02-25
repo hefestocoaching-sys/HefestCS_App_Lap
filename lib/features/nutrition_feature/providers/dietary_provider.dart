@@ -130,8 +130,6 @@ class DietaryNotifier extends Notifier<DietaryState> {
     double bodyFat = 0.0;
     bool isObese = false;
 
-    final hasMeasuredComp =
-        record != null && _hasMeasuredBodyComposition(record);
     if (record != null) {
       final analysis = _analyzer.analyze(
         record: record,
@@ -141,6 +139,16 @@ class DietaryNotifier extends Notifier<DietaryState> {
       leanMass = analysis.leanMassKg ?? 0.0;
       bodyFat = analysis.bodyFatPercentage ?? 0.0;
 
+      // Fallback: si el analyzer tiene %GC pero no pudo calcular MLG (ej.
+      // Yuhasz requiere 6 pliegues completos pero J&P4 sí funcionó con 4),
+      // derivamos MLG directamente: MLG = peso × (1 - %GC/100)
+      if (leanMass <= 0 && bodyFat > 0 && (record.weightKg ?? 0) > 0) {
+        leanMass = record.weightKg! * (1.0 - bodyFat / 100.0);
+        debugPrint(
+          '[DietaryProvider] MLG derivada desde %GC: $leanMass kg (BF=$bodyFat%)',
+        );
+      }
+
       final isMale = parseGender(genderNormalized) == Gender.male;
       final weight = record.weightKg;
       final height = record.heightCm;
@@ -149,7 +157,8 @@ class DietaryNotifier extends Notifier<DietaryState> {
           : null;
 
       // Obesidad basada en dato disponible
-      isObese = hasMeasuredComp
+      final hasMeasuredBF = bodyFat > 0;
+      isObese = hasMeasuredBF
           ? ((isMale && bodyFat > 30) || (!isMale && bodyFat > 35))
           : ((bmi ?? 0) >= 30);
     }
@@ -213,7 +222,9 @@ class DietaryNotifier extends Notifier<DietaryState> {
     debugPrint('  - leanMass: $leanMass kg');
     debugPrint('  - bodyFat: $bodyFat%');
 
-    final bool hasValidLBM = hasMeasuredComp && leanMass > 0;
+    // MLG es válida si viene de pliegues cutáneos (composición medida) O
+    // si se registró leanBodyMassKg directamente en el record antropométrico.
+    final bool hasValidLBM = leanMass > 0;
 
     final tmbState = _calculateTMBs(
       weight: weight,
@@ -409,21 +420,6 @@ class DietaryNotifier extends Notifier<DietaryState> {
     final targetDate = DateTime(year, month, day);
     return client.latestAnthropometryAtOrBefore(targetDate) ??
         client.latestAnthropometryRecord;
-  }
-
-  // Composición corporal medida (ISAK / pliegues reales)
-  bool _hasMeasuredBodyComposition(AnthropometryRecord r) {
-    final folds = [
-      r.tricipitalFold,
-      r.subscapularFold,
-      r.suprailiacFold,
-      r.supraspinalFold,
-      r.abdominalFold,
-      r.thighFold,
-      r.calfFold,
-    ];
-
-    return folds.where((v) => v != null && v > 0).length >= 4;
   }
 
   // ignore: unused_element
