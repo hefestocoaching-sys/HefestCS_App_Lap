@@ -59,8 +59,13 @@ class MotorV3Orchestrator {
   static const int _microDeloadWindowMax = 6;
   static const int _microDeloadDefaultAt = 5; // si no hay bitácora
 
-  static const double _microDeloadVolumeFactor = 0.75; // -25%
-  static const double _deloadVolumeFactor = 0.65; // -35%
+  static const double _microDeloadVolumeFactor =
+      0.85; // -15% (micro-deload activo)
+  static const double _deloadVolumeFactor =
+      0.80; // -20% (deload activo estándar)
+  // Fuente: Androulakis-Korakakis et al. Sports Med Open 2024
+  // Cese total (0.0) afecta negativamente la fuerza — Coleman et al. PeerJ 2024
+  // Rango práctico consenso: -15% a -25%
 
   static const double _overreachMaxFactor = 1.15;
   static const int _overreachMaxIncrementPerWeek =
@@ -604,7 +609,8 @@ class MotorV3Orchestrator {
           phaseNameForRir = 'accumulation';
           break;
         case CyclePhase.microDeload:
-          volumeFactor = _microDeloadVolumeFactor; // 0.75
+          volumeFactor =
+              _microDeloadVolumeFactor; // 0.85 (Androulakis-Korakakis et al. 2024)
           phaseNameForRir = 'deload';
           break;
         case CyclePhase.maintenance:
@@ -612,7 +618,8 @@ class MotorV3Orchestrator {
           phaseNameForRir = 'maintenance';
           break;
         case CyclePhase.deload:
-          volumeFactor = _deloadVolumeFactor; // 0.65
+          volumeFactor =
+              _deloadVolumeFactor; // 0.80 (Coleman et al. PeerJ 2024)
           phaseNameForRir = 'deload';
           break;
       }

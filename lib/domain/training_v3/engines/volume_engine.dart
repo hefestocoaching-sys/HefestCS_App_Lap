@@ -45,7 +45,7 @@ class VolumeEngine {
       muscle: muscle,
       priority: priority,
       trainingLevel: trainingLevel,
-      age: 30,
+      age: age,
     );
 
     final double ageMultiplier = _getAgeMultiplier(age);

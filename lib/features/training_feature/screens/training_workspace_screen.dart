@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
+import 'package:hcs_app_lap/core/constants/muscle_labels_es.dart';
 import 'package:hcs_app_lap/core/design/workspace_scaffold.dart';
+import 'package:hcs_app_lap/core/enums/training_phase.dart';
+import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/domain/entities/training_session.dart';
 import 'package:hcs_app_lap/domain/training/split_templates.dart';
 import 'package:hcs_app_lap/domain/training_domain/pain_rule.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_migration_service.dart';
@@ -15,6 +19,7 @@ import 'package:hcs_app_lap/domain/training_domain/training_progression_state_v1
 import 'package:hcs_app_lap/domain/training_domain/training_setup_v1.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
+import 'package:hcs_app_lap/features/training_feature/providers/training_plan_v3_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_workspace_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/domain/training_interview_status.dart';
 import 'package:hcs_app_lap/features/training_feature/tabs/training_interview_tab.dart';
@@ -277,6 +282,16 @@ class _TrainingWorkspaceScreenState
               .first;
     }
 
+    // Leer estado del motor para mostrar errores
+    final motorState = ref.watch(trainingPlanProvider);
+    final motorError = motorState.error;
+    final motorBlocked = motorState.blockReason;
+    final motorSuggestions = motorState.suggestions ?? [];
+    final motorLoading = motorState.isLoading;
+    final deloadAlert = ref.watch(
+      trainingPlanV3Provider.select((s) => s.deloadAlert),
+    );
+
     if (interviewStatus != TrainingInterviewStatus.valid && plan == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -293,6 +308,240 @@ class _TrainingWorkspaceScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // ── Banner de carga del motor ──────────────────────────
+        if (motorLoading)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            color: kPrimaryColor.withAlpha(20),
+            child: const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: kPrimaryColor,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Generando plan Motor V3…',
+                  style: TextStyle(color: kPrimaryColor, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+
+        // ── Banner de error del motor ──────────────────────────
+        if (!motorLoading && motorError != null)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: kErrorColor.withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: kErrorColor.withAlpha(80)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: kErrorColor,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Error en el motor',
+                      style: TextStyle(
+                        color: kErrorColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () =>
+                          ref.read(trainingPlanProvider.notifier).clearError(),
+                      child: const Icon(
+                        Icons.close,
+                        color: kErrorColor,
+                        size: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  motorError,
+                  style: const TextStyle(
+                    color: kTextColorSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // ── Banner de plan bloqueado ───────────────────────────
+        if (!motorLoading && motorBlocked != null)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: kWarningColor.withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: kWarningColor.withAlpha(80)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.lock_outline, color: kWarningColor, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Plan bloqueado',
+                      style: TextStyle(
+                        color: kWarningColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  motorBlocked,
+                  style: const TextStyle(
+                    color: kTextColorSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                if (motorSuggestions.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  ...motorSuggestions.map(
+                    (s) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '• ',
+                            style: TextStyle(
+                              color: kWarningColor,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              s,
+                              style: const TextStyle(
+                                color: kTextColorSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+        // ── Banner de recomendación de deload ─────────────────────
+        if (deloadAlert != null)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.orange.withAlpha(25),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.orange.withAlpha(100)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.orange,
+                      size: 18,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Deload recomendado',
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  deloadAlert,
+                  style: const TextStyle(
+                    color: kTextColorSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _generarPlan(),
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text(
+                          'Regenerar sin deload',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: kTextColorSecondary,
+                          side: BorderSide(
+                            color: kTextColorSecondary.withAlpha(80),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final now = DateTime.now();
+                          await ref
+                              .read(trainingPlanProvider.notifier)
+                              .generatePlanFromActiveCycle(now);
+                          await _updateProgressionAfterPlanAction('deload');
+                        },
+                        icon: const Icon(Icons.spa, size: 16),
+                        label: const Text(
+                          'Generar con deload',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
         if (plan != null && interviewStatus != TrainingInterviewStatus.valid)
           Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -469,7 +718,7 @@ class _TrainingWorkspaceScreenState
                           ),
                     // Tab 4: Ejercicios (placeholder)
                     plan != null
-                        ? _buildExercisesTabPlaceholder(plan)
+                        ? _buildExercisesTabPlaceholder(plan, client)
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
@@ -499,7 +748,7 @@ class _TrainingWorkspaceScreenState
                           ),
                     // Tab 7: Decisiones (placeholder)
                     plan != null
-                        ? _buildDecisionsTabPlaceholder(plan)
+                        ? _buildDecisionsTabPlaceholder(plan, client)
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
@@ -507,7 +756,7 @@ class _TrainingWorkspaceScreenState
                           ),
                     // Tab 8: Monitoreo (placeholder)
                     plan != null
-                        ? _buildMonitoringTabPlaceholder(plan)
+                        ? _buildMonitoringTabPlaceholder(plan, client)
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
@@ -524,74 +773,1155 @@ class _TrainingWorkspaceScreenState
   }
 
   Widget _buildOverviewTabPlaceholder(TrainingPlanConfig plan) {
+    final totalSessions = plan.weeks.fold<int>(
+      0,
+      (s, w) => s + w.sessions.length,
+    );
+    final splitId = plan.splitId.toUpperCase();
+    final startDate = plan.startDate;
+    final endDate = startDate.add(
+      Duration(days: plan.microcycleLengthInWeeks * plan.weeks.length * 7),
+    );
+
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Plan ID: ${plan.id}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          // Card principal
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: kCardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kPrimaryColor.withAlpha(60)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.assignment, color: kPrimaryColor, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Resumen del plan',
+                      style: TextStyle(
+                        color: kTextColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 20, color: Colors.white12),
+                _ws_row('Split', splitId),
+                _ws_row('Semanas', '${plan.weeks.length}'),
+                _ws_row('Sesiones totales', '$totalSessions'),
+                _ws_row(
+                  'Inicio',
+                  '${startDate.day}/${startDate.month}/${startDate.year}',
+                ),
+                _ws_row(
+                  'Fin estimado',
+                  '${endDate.day}/${endDate.month}/${endDate.year}',
+                ),
+                _ws_row(
+                  'Duración microciclo',
+                  '${plan.microcycleLengthInWeeks} sem',
+                ),
+                _ws_row('ID', plan.id.substring(0, 12)),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text('Semanas: ${plan.weeks.length}'),
-          const SizedBox(height: 8),
-          Text(
-            '${plan.weeks.fold(0, (sum, week) => sum + week.sessions.length)} sesiones totales',
+          const SizedBox(height: 16),
+          // Distribución de fases
+          const Text(
+            'Fases',
+            style: TextStyle(
+              color: kTextColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
+          const SizedBox(height: 10),
+          ...() {
+            final accum = plan.weeks
+                .where((w) => w.phase.isAccumulation)
+                .length;
+            final intens = plan.weeks
+                .where((w) => w.phase.isIntensification)
+                .length;
+            final deload = plan.weeks.where((w) => w.phase.isDeload).length;
+            final total = plan.weeks.length;
+            return [
+              _ws_phase(
+                'Acumulación',
+                accum,
+                total,
+                kInfoColor,
+                Icons.trending_up,
+              ),
+              const SizedBox(height: 8),
+              _ws_phase(
+                'Intensificación',
+                intens,
+                total,
+                kWarningColor,
+                Icons.bolt,
+              ),
+              const SizedBox(height: 8),
+              _ws_phase('Deload', deload, total, kSuccessColor, Icons.spa),
+            ];
+          }(),
+          // Volumen por músculo (si existe)
+          if (plan.volumePerMuscle != null &&
+              plan.volumePerMuscle!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Volumen programado (sets/semana)',
+              style: TextStyle(
+                color: kTextColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...() {
+              final vol = plan.volumePerMuscle!;
+              final maxV = vol.values.reduce((a, b) => a > b ? a : b);
+              final sorted = vol.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value));
+              return sorted.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 110,
+                        child: Text(
+                          muscleLabelEs(e.key),
+                          style: const TextStyle(
+                            color: kTextColorSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: e.value / maxV,
+                            backgroundColor: Colors.white.withAlpha(15),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              kPrimaryColor.withAlpha(200),
+                            ),
+                            minHeight: 8,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 36,
+                        child: Text(
+                          '${e.value}',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            color: kTextColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }(),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildExercisesTabPlaceholder(TrainingPlanConfig plan) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.fitness_center, size: 48, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Tab de ejercicios (pendiente)'),
-        ],
-      ),
+  Widget _buildExercisesTabPlaceholder(TrainingPlanConfig plan, Client client) {
+    // Semana activa desde ciclo (o semana 1 como fallback)
+    final activeCycle = client.trainingCycles
+        .where((c) => c.status == 'active')
+        .firstOrNull;
+    final currentWeekNumber = activeCycle?.currentWeek ?? 1;
+    final weekIndex = (currentWeekNumber - 1)
+        .clamp(0, plan.weeks.length - 1)
+        .toInt();
+
+    final currentWeek = plan.weeks.isNotEmpty ? plan.weeks[weekIndex] : null;
+    final sessions = currentWeek?.sessions ?? <TrainingSession>[];
+
+    if (sessions.isEmpty) {
+      return const Center(
+        child: Text(
+          'Sin sesiones',
+          style: TextStyle(color: kTextColorSecondary),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Chip de semana activa
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: kPrimaryColor.withAlpha(25),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kPrimaryColor.withAlpha(80)),
+                ),
+                child: Text(
+                  'Semana $currentWeekNumber de ${plan.weeks.length}',
+                  style: const TextStyle(
+                    color: kPrimaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              // Botón cerrar semana
+              TextButton.icon(
+                onPressed: () => _cerrarSemana(
+                  client: client,
+                  weekNumber: currentWeekNumber,
+                ),
+                icon: const Icon(
+                  Icons.check_circle,
+                  size: 15,
+                  color: kSuccessColor,
+                ),
+                label: const Text(
+                  'Cerrar semana',
+                  style: TextStyle(color: kSuccessColor, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Lista de sesiones
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: sessions.map((session) {
+              return Card(
+                color: kCardColor,
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ExpansionTile(
+                  tilePadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  title: Text(
+                    session.sessionName,
+                    style: const TextStyle(
+                      color: kTextColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${session.prescriptions.length} ejercicios • Día ${session.dayNumber}',
+                    style: const TextStyle(
+                      color: kTextColorSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  leading: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: kPrimaryColor.withAlpha(30),
+                      border: Border.all(color: kPrimaryColor.withAlpha(80)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${session.dayNumber}',
+                        style: const TextStyle(
+                          color: kPrimaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  children: session.prescriptions.map((p) {
+                    return ListTile(
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 2,
+                      ),
+                      leading: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: kPrimaryColor.withAlpha(25),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Center(
+                          child: Text(
+                            p.label,
+                            style: const TextStyle(
+                              color: kPrimaryColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        p.exerciseName,
+                        style: const TextStyle(color: kTextColor, fontSize: 13),
+                      ),
+                      subtitle: Text(
+                        '${p.sets} × ${p.repRange} reps  •  RIR ${p.rir}  •  ${muscleLabelEs(p.muscleGroup.canonicalKey)}',
+                        style: const TextStyle(
+                          color: kTextColorSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildProgressionTabPlaceholder(TrainingPlanConfig plan) {
-    return const Center(
+    final weeks = plan.weeks;
+    if (weeks.isEmpty) {
+      return const Center(
+        child: Text(
+          'Sin semanas',
+          style: TextStyle(color: kTextColorSecondary),
+        ),
+      );
+    }
+    final split = plan.state?['split']?.toString() ?? plan.splitId;
+    final totalSesiones = weeks.fold<int>(0, (s, w) => s + w.sessions.length);
+    final totalEjercicios = weeks.fold<int>(
+      0,
+      (s, w) =>
+          s +
+          w.sessions.fold<int>(0, (s2, sess) => s2 + sess.prescriptions.length),
+    );
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.trending_up, size: 48, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Tab de progresión (pendiente)'),
+          // Resumen
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: kCardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kPrimaryColor.withAlpha(60)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.timeline, color: kPrimaryColor, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Macrociclo Motor V3',
+                      style: TextStyle(
+                        color: kTextColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _ws_stat('${weeks.length}', 'Semanas', kInfoColor),
+                    const SizedBox(width: 8),
+                    _ws_stat('$totalSesiones', 'Sesiones', kSuccessColor),
+                    const SizedBox(width: 8),
+                    _ws_stat('$totalEjercicios', 'Ejercicios', kWarningColor),
+                    const SizedBox(width: 8),
+                    _ws_stat(split.toUpperCase(), 'Split', kPrimaryColor),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Timeline',
+            style: TextStyle(
+              color: kTextColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...weeks.map((week) {
+            final Color phaseColor;
+            final String phaseLabel;
+            final IconData phaseIcon;
+            switch (week.phase) {
+              case TrainingPhase.accumulation:
+                phaseColor = kInfoColor;
+                phaseLabel = 'ACUMULACIÓN';
+                phaseIcon = Icons.trending_up;
+                break;
+              case TrainingPhase.intensification:
+                phaseColor = kWarningColor;
+                phaseLabel = 'INTENSIFICACIÓN';
+                phaseIcon = Icons.bolt;
+                break;
+              case TrainingPhase.deload:
+                phaseColor = kSuccessColor;
+                phaseLabel = 'DELOAD';
+                phaseIcon = Icons.spa;
+                break;
+            }
+            final totalSets = week.sessions.fold<int>(
+              0,
+              (s, sess) =>
+                  s + sess.prescriptions.fold<int>(0, (s2, p) => s2 + p.sets),
+            );
+            final maxSets = weeks
+                .map(
+                  (w) => w.sessions.fold<int>(
+                    0,
+                    (s, sess) =>
+                        s +
+                        sess.prescriptions.fold<int>(0, (s2, p) => s2 + p.sets),
+                  ),
+                )
+                .reduce((a, b) => a > b ? a : b);
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: kCardColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: phaseColor.withAlpha(80)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: phaseColor.withAlpha(40),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${week.weekNumber}',
+                        style: TextStyle(
+                          color: phaseColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(phaseIcon, color: phaseColor, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              phaseLabel,
+                              style: TextStyle(
+                                color: phaseColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${week.sessions.length} sesiones • $totalSets sets',
+                          style: const TextStyle(
+                            color: kTextColorSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '$totalSets',
+                        style: TextStyle(
+                          color: phaseColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        width: 80,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(3),
+                          color: Colors.white.withAlpha(15),
+                        ),
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: maxSets > 0
+                              ? (totalSets / maxSets).clamp(0.05, 1.0)
+                              : 0.1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(3),
+                              color: phaseColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+          if (plan.volumePerMuscle != null &&
+              plan.volumePerMuscle!.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            const Text(
+              'Volumen por músculo',
+              style: TextStyle(
+                color: kTextColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...() {
+              final vol = plan.volumePerMuscle!;
+              final maxV = vol.values.reduce((a, b) => a > b ? a : b);
+              final sorted = vol.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value));
+              return sorted.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 110,
+                        child: Text(
+                          muscleLabelEs(e.key),
+                          style: const TextStyle(
+                            color: kTextColorSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: e.value / maxV,
+                            backgroundColor: Colors.white.withAlpha(15),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              kPrimaryColor.withAlpha(200),
+                            ),
+                            minHeight: 8,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 36,
+                        child: Text(
+                          '${e.value}',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            color: kTextColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }(),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildDecisionsTabPlaceholder(TrainingPlanConfig plan) {
-    return const Center(
+  Widget _ws_stat(String value, String label, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: color.withAlpha(20),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withAlpha(60)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(color: kTextColorSecondary, fontSize: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDecisionsTabPlaceholder(TrainingPlanConfig plan, Client client) {
+    final extra = client.training.extra;
+    final rawArtifacts = extra['weeklyDecisionArtifactsV1'] as Map? ?? {};
+    final generatedBy = plan.state?['generated_by']?.toString() ?? 'motor_v3';
+    final version = plan.state?['scientific_version']?.toString() ?? '2.0.0';
+    final model =
+        plan.state?['periodization_model']?.toString() ?? 'linear_progressive';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.description, size: 48, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Tab de decisiones (pendiente)'),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: kCardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kPrimaryColor.withAlpha(60)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.memory, color: kPrimaryColor, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Motor V3 — Trazabilidad',
+                      style: TextStyle(
+                        color: kTextColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _ws_row('Motor', generatedBy),
+                _ws_row('Versión', version),
+                _ws_row('Modelo', model),
+                _ws_row('Fase', plan.phase.name.toUpperCase()),
+                _ws_row('Split', plan.splitId),
+                _ws_row('Semanas', '${plan.microcycleLengthInWeeks}'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Decisiones por semana',
+            style: TextStyle(
+              color: kTextColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (rawArtifacts.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: kCardColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white.withAlpha(20)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, color: kInfoColor, size: 18),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Las decisiones se generan al cerrar cada semana de entrenamiento.',
+                      style: TextStyle(
+                        color: kTextColorSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ...rawArtifacts.entries.map((entry) {
+              final weekData = entry.value as Map? ?? {};
+              final weekNum = weekData['weekNumber'] as int? ?? 0;
+              final phase = weekData['phase']?.toString() ?? 'accumulation';
+              final actionByMuscle = weekData['actionByMuscle'] as Map? ?? {};
+              final insightByMuscle = weekData['insightByMuscle'] as Map? ?? {};
+              final newSets = weekData['newDirectSetsByMuscle'] as Map? ?? {};
+
+              final phaseColor = phase == 'deload'
+                  ? kSuccessColor
+                  : phase == 'intensification'
+                  ? kWarningColor
+                  : kInfoColor;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: kCardColor,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: phaseColor.withAlpha(60)),
+                ),
+                child: ExpansionTile(
+                  tilePadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 4,
+                  ),
+                  leading: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: phaseColor.withAlpha(30),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$weekNum',
+                        style: TextStyle(
+                          color: phaseColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    'Semana $weekNum',
+                    style: const TextStyle(
+                      color: kTextColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    phase.toUpperCase(),
+                    style: TextStyle(color: phaseColor, fontSize: 11),
+                  ),
+                  children: actionByMuscle.entries.map((e) {
+                    final muscle = e.key.toString();
+                    final action = e.value.toString();
+                    final insight = insightByMuscle[muscle]?.toString() ?? '';
+                    final sets = newSets[muscle]?.toString() ?? '-';
+                    final actionColor = action == 'increase'
+                        ? kSuccessColor
+                        : action == 'deload'
+                        ? kInfoColor
+                        : kWarningColor;
+                    final actionIcon = action == 'increase'
+                        ? Icons.arrow_upward
+                        : action == 'deload'
+                        ? Icons.spa
+                        : Icons.remove;
+
+                    return Container(
+                      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: actionColor.withAlpha(15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: actionColor.withAlpha(50)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(actionIcon, size: 14, color: actionColor),
+                              const SizedBox(width: 6),
+                              Text(
+                                muscleLabelEs(muscle),
+                                style: const TextStyle(
+                                  color: kTextColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '$sets sets',
+                                style: TextStyle(
+                                  color: actionColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (insight.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              insight,
+                              style: const TextStyle(
+                                color: kTextColorSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              );
+            }),
         ],
       ),
     );
   }
 
-  Widget _buildMonitoringTabPlaceholder(TrainingPlanConfig plan) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  Widget _ws_row(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
         children: [
-          Icon(Icons.assessment, size: 48, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Tab de monitoreo (pendiente)'),
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(color: kTextColorSecondary, fontSize: 12),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: kTextColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMonitoringTabPlaceholder(
+    TrainingPlanConfig plan,
+    Client client,
+  ) {
+    final extra = client.training.extra;
+    final progressionMap =
+        extra[TrainingExtraKeys.trainingProgressionStateV1] as Map? ?? {};
+    final weeksCompleted =
+        (progressionMap['weeksCompleted'] as num?)?.toInt() ?? 0;
+    final sessionsCompleted =
+        (progressionMap['sessionsCompleted'] as num?)?.toInt() ?? 0;
+    final avgRir = (progressionMap['averageRIR'] as num?)?.toDouble() ?? 2.0;
+    final avgRpe =
+        (progressionMap['averageSessionRPE'] as num?)?.toDouble() ?? 7.0;
+    final recovery =
+        (progressionMap['perceivedRecovery'] as num?)?.toDouble() ?? 7.0;
+
+    final totalWeeks = plan.weeks.length;
+    final totalSessions = plan.weeks.fold<int>(
+      0,
+      (s, w) => s + w.sessions.length,
+    );
+    final progressPct = totalWeeks > 0
+        ? (weeksCompleted / totalWeeks).clamp(0.0, 1.0)
+        : 0.0;
+
+    final accumWeeks = plan.weeks.where((w) => w.phase.isAccumulation).length;
+    final intensWeeks = plan.weeks
+        .where((w) => w.phase.isIntensification)
+        .length;
+    final deloadWeeks = plan.weeks.where((w) => w.phase.isDeload).length;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Barra de progreso del ciclo
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: kCardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kPrimaryColor.withAlpha(60)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Progreso del ciclo',
+                      style: TextStyle(
+                        color: kTextColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    Text(
+                      '$weeksCompleted/$totalWeeks sem',
+                      style: const TextStyle(
+                        color: kPrimaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: progressPct,
+                    backgroundColor: Colors.white.withAlpha(20),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      kPrimaryColor,
+                    ),
+                    minHeight: 10,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${(progressPct * 100).toStringAsFixed(0)}% completado',
+                  style: const TextStyle(
+                    color: kTextColorSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Métricas
+          Row(
+            children: [
+              _ws_metric(
+                '$sessionsCompleted',
+                'Sesiones\nregistradas',
+                kSuccessColor,
+                Icons.check_circle_outline,
+              ),
+              const SizedBox(width: 8),
+              _ws_metric(
+                '$totalSessions',
+                'Sesiones\ndel plan',
+                kInfoColor,
+                Icons.calendar_today,
+              ),
+              const SizedBox(width: 8),
+              _ws_metric(
+                avgRir.toStringAsFixed(1),
+                'RIR\npromedio',
+                avgRir <= 1.5 ? kWarningColor : kSuccessColor,
+                Icons.fitness_center,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _ws_metric(
+                '${avgRpe.toStringAsFixed(1)}/10',
+                'RPE\npromedio',
+                avgRpe >= 8.5 ? kErrorColor : kWarningColor,
+                Icons.speed,
+              ),
+              const SizedBox(width: 8),
+              _ws_metric(
+                '${recovery.toStringAsFixed(1)}/10',
+                'Recuperación',
+                recovery >= 7 ? kSuccessColor : kErrorColor,
+                Icons.battery_charging_full,
+              ),
+              const SizedBox(width: 8),
+              _ws_metric(
+                '$totalWeeks',
+                'Duración\n(semanas)',
+                kTextColorSecondary,
+                Icons.event,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Fases del plan',
+            style: TextStyle(
+              color: kTextColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _ws_phase(
+            'Acumulación',
+            accumWeeks,
+            totalWeeks,
+            kInfoColor,
+            Icons.trending_up,
+          ),
+          const SizedBox(height: 8),
+          _ws_phase(
+            'Intensificación',
+            intensWeeks,
+            totalWeeks,
+            kWarningColor,
+            Icons.bolt,
+          ),
+          const SizedBox(height: 8),
+          _ws_phase(
+            'Deload',
+            deloadWeeks,
+            totalWeeks,
+            kSuccessColor,
+            Icons.spa,
+          ),
+          const SizedBox(height: 20),
+          // Nota científica
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: kInfoColor.withAlpha(15),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: kInfoColor.withAlpha(60)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.science, color: kInfoColor, size: 16),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'RIR < 1.5 sostenido indica fatiga acumulada. '
+                    'RPE > 8.5 por 2+ semanas sin deload aumenta riesgo de lesión '
+                    '(Zourdos et al. 2016; Androulakis-Korakakis et al. 2024).',
+                    style: TextStyle(color: kTextColorSecondary, fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ws_metric(String value, String label, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: kCardColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withAlpha(60)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: kTextColorSecondary, fontSize: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _ws_phase(
+    String label,
+    int count,
+    int total,
+    Color color,
+    IconData icon,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 14),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 100,
+          child: Text(
+            label,
+            style: const TextStyle(color: kTextColorSecondary, fontSize: 12),
+          ),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: total > 0 ? count / total : 0.0,
+              backgroundColor: Colors.white.withAlpha(15),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 8,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$count',
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1488,6 +2818,63 @@ class _TrainingWorkspaceScreenState
         );
       }
       return false;
+    }
+  }
+
+  Future<void> _cerrarSemana({
+    required Client client,
+    required int weekNumber,
+  }) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kCardColor,
+        title: const Text('Cerrar semana'),
+        content: Text(
+          '¿Deseas cerrar la semana $weekNumber y avanzar a la siguiente?',
+          style: const TextStyle(color: kTextColorSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: kSuccessColor),
+            child: const Text('Cerrar semana'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await ref
+          .read(trainingPlanProvider.notifier)
+          .closeWeekExplicit(client.id, weekNumber);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Semana $weekNumber cerrada correctamente'),
+            backgroundColor: kSuccessColor,
+          ),
+        );
+      }
+
+      await _updateProgressionAfterPlanAction('week_closed');
+      ref.invalidate(clientsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error cerrando semana: $e'),
+            backgroundColor: kErrorColor,
+          ),
+        );
+      }
     }
   }
 

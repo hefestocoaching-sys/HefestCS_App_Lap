@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/data/datasources/local/local_client_datasource.dart';

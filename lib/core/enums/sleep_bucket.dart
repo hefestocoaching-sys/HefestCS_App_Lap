@@ -21,6 +21,12 @@ SleepBucket? parseSleepBucket(String? value) {
   if (value == null) return null;
   final normalized = value.toLowerCase().trim();
 
+  for (final bucket in SleepBucket.values) {
+    if (bucket.name.toLowerCase() == normalized) {
+      return bucket;
+    }
+  }
+
   if (normalized.contains('menos') ||
       normalized.contains('< 6') ||
       normalized.contains('less than 6')) {

@@ -148,10 +148,31 @@ class DatabaseHelper {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_clients_updated ON clients(updatedAt)',
     );
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS workout_logs (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        programId TEXT,
+        plannedSessionId TEXT,
+        startTime TEXT NOT NULL,
+        json TEXT NOT NULL
+      )
+    ''');
   }
 
   // Non-destructive upgrade: keep table to avoid data loss.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS workout_logs (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        programId TEXT,
+        plannedSessionId TEXT,
+        startTime TEXT NOT NULL,
+        json TEXT NOT NULL
+      )
+    ''');
+
     if (oldVersion < 5) {
       await _ensureTrainingInterviewsTable(db);
     }

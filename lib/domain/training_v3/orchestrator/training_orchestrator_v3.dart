@@ -107,13 +107,19 @@ class TrainingOrchestratorV3 {
     // ═══════════════════════════════════════════════════════════════
 
     // Validar que el cliente tenga datos mínimos
-    final age = client.training.age ?? client.profile.age;
+    final age =
+        client.training.age ??
+        client.profile.age ??
+        _parseAgeFromExtra(client.training.extra) ??
+        _calculateAgeFromBirthdate(client.profile);
     final gender = client.training.gender ?? client.profile.gender;
 
     if (age == null) {
       return TrainingProgramV3Result.blocked(
         reason: 'Edad no disponible',
-        suggestions: ['Completa la edad en Personal Data'],
+        suggestions: [
+          'Completa la edad en la ficha del cliente o en la entrevista (campo Años de entrenamiento)',
+        ],
       );
     }
 
@@ -350,7 +356,12 @@ class TrainingOrchestratorV3 {
       id: client.id,
       name: profile.fullName,
       email: profile.email,
-      age: training.age ?? profile.age ?? _defaultAge,
+      age:
+          training.age ??
+          profile.age ??
+          _parseAgeFromExtra(training.extra) ??
+          _calculateAgeFromBirthdate(profile) ??
+          _defaultAge,
       gender: normalizedGender,
       heightCm: heightCm,
       weightKg: weightKg,
@@ -365,6 +376,25 @@ class TrainingOrchestratorV3 {
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
+  }
+
+  int? _parseAgeFromExtra(Map<String, dynamic> extra) {
+    final raw = extra['ageYears'];
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '');
+  }
+
+  int? _calculateAgeFromBirthdate(dynamic profile) {
+    final birthDate = profile?.birthDate as DateTime?;
+    if (birthDate == null) return null;
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month ||
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age > 0 ? age : null;
   }
 
   /// Convierte nivel de entrenamiento (string) a valor normalizado

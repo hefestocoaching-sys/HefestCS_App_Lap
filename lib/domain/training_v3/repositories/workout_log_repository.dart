@@ -1,143 +1,157 @@
+// ignore_for_file: unused_import
+
 // lib/domain/training_v3/repositories/workout_log_repository.dart
 
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/exercise_log.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/set_log.dart';
+import 'package:hcs_app_lap/data/datasources/local/database_helper.dart';
+import 'package:sqflite/sqflite.dart' show ConflictAlgorithm;
+import 'dart:convert';
 
-/// Repositorio de persistencia de logs de entrenamiento
+/// Repositorio de logs de entrenamiento — implementación SQLite.
 ///
-/// Proporciona CRUD completo para WorkoutLog:
-/// - Create: Guardar nuevo log
-/// - Read: Obtener logs por usuario, programa, fecha
-/// - Update: Actualizar log existente
-/// - Delete: Eliminar log
+/// Persiste WorkoutLog como JSON en la tabla `workout_logs` de SQLite.
+/// Esta tabla se crea en database_helper.dart si no existe.
 ///
-/// BACKEND: Firestore (colección 'workout_logs')
-///
-/// Versión: 1.0.0
+/// SSOT de verdad: SQLite local, sin dependencia de Firestore.
 class WorkoutLogRepository {
-  // PLACEHOLDER: En producción, inyectar FirebaseFirestore
+  static const _table = 'workout_logs';
 
-  /// Guarda un nuevo log de entrenamiento
-  ///
-  /// PARÁMETROS:
-  /// - [log]: WorkoutLog a guardar
-  ///
-  /// RETORNA:
-  /// - String: ID del log guardado
+  /// Guarda un WorkoutLog en SQLite.
   static Future<String> saveLog(WorkoutLog log) async {
-    // PLACEHOLDER: Guardar en Firestore
-    // await _firestore.collection('workout_logs').doc(log.id).set(log.toJson());
-
-    logger.debug('Saving workout log (MOCK)', {'logId': log.id});
-    return log.id;
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.insert(_table, {
+        'id': log.id,
+        'userId': log.userId,
+        'programId': log.programId,
+        'plannedSessionId': log.plannedSessionId,
+        'startTime': log.startTime.toIso8601String(),
+        'json': jsonEncode(log.toJson()),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      logger.debug('WorkoutLog saved', {'logId': log.id});
+      return log.id;
+    } catch (e) {
+      logger.error('WorkoutLog save failed', {'error': e.toString()});
+      rethrow;
+    }
   }
 
-  /// Obtiene logs de un usuario específico
-  ///
-  /// PARÁMETROS:
-  /// - [userId]: ID del usuario
-  /// - [limit]: Número máximo de logs (default: 50)
-  /// - [startDate]: Fecha de inicio (opcional)
-  /// - [endDate]: Fecha de fin (opcional)
-  ///
-  /// RETORNA:
-  /// - List&lt;WorkoutLog&gt;: Logs ordenados por fecha (más reciente primero)
+  /// Obtiene logs de un usuario, ordenados por fecha desc.
   static Future<List<WorkoutLog>> getLogsByUser({
     required String userId,
     int limit = 50,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    // PLACEHOLDER: Consultar Firestore
-    /*
-    var query = _firestore
-        .collection('workout_logs')
-        .where('userId', isEqualTo: userId)
-        .orderBy('startTime', descending: true)
-        .limit(limit);
-    
-    if (startDate != null) {
-      query = query.where('startTime', isGreaterThanOrEqualTo: startDate);
-    }
-    
-    if (endDate != null) {
-      query = query.where('startTime', isLessThanOrEqualTo: endDate);
-    }
-    
-    final snapshot = await query.get();
-    return snapshot.docs.map((doc) => WorkoutLog.fromJson(doc.data())).toList();
-    */
+    try {
+      final db = await DatabaseHelper.instance.database;
 
-    logger.debug('Fetching user workout logs (MOCK)', {'userId': userId});
-    return []; // Mock vacío
+      String where = 'userId = ?';
+      final args = <dynamic>[userId];
+
+      if (startDate != null) {
+        where += ' AND startTime >= ?';
+        args.add(startDate.toIso8601String());
+      }
+      if (endDate != null) {
+        where += ' AND startTime <= ?';
+        args.add(endDate.toIso8601String());
+      }
+
+      final rows = await db.query(
+        _table,
+        where: where,
+        whereArgs: args,
+        orderBy: 'startTime DESC',
+        limit: limit,
+      );
+
+      return rows
+          .map((row) {
+            try {
+              final json =
+                  jsonDecode(row['json'] as String) as Map<String, dynamic>;
+              return WorkoutLog.fromJson(json);
+            } catch (e) {
+              logger.error('WorkoutLog parse error', {'row': row});
+              return null;
+            }
+          })
+          .whereType<WorkoutLog>()
+          .toList();
+    } catch (e) {
+      logger.error('WorkoutLog query failed', {'error': e.toString()});
+      return [];
+    }
   }
 
-  /// Obtiene logs de un programa específico
   static Future<List<WorkoutLog>> getLogsByProgram({
     required String programId,
   }) async {
-    // PLACEHOLDER: Consultar Firestore
-    logger.debug('Fetching program workout logs (MOCK)', {
-      'programId': programId,
-    });
-    return [];
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query(
+        _table,
+        where: 'programId = ?',
+        whereArgs: [programId],
+        orderBy: 'startTime DESC',
+      );
+      return rows
+          .map((row) {
+            try {
+              return WorkoutLog.fromJson(
+                jsonDecode(row['json'] as String) as Map<String, dynamic>,
+              );
+            } catch (_) {
+              return null;
+            }
+          })
+          .whereType<WorkoutLog>()
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
-  /// Obtiene logs de una semana específica
-  ///
-  /// ÚTIL PARA: Reportes semanales
   static Future<List<WorkoutLog>> getWeekLogs({
     required String userId,
     required DateTime weekStart,
   }) async {
     final weekEnd = weekStart.add(const Duration(days: 7));
-
-    return await getLogsByUser(
+    return getLogsByUser(
       userId: userId,
       startDate: weekStart,
       endDate: weekEnd,
     );
   }
 
-  /// Obtiene logs del último mes
-  ///
-  /// ÚTIL PARA: Reportes mensuales, análisis de tendencias
   static Future<List<WorkoutLog>> getMonthLogs({required String userId}) async {
     final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month - 1, now.day);
-
-    return await getLogsByUser(
-      userId: userId,
-      startDate: monthStart,
-      endDate: now,
-    );
+    final monthStart = now.subtract(const Duration(days: 30));
+    return getLogsByUser(userId: userId, startDate: monthStart, endDate: now);
   }
 
-  /// Obtiene el último log de un usuario
   static Future<WorkoutLog?> getLastLog({required String userId}) async {
     final logs = await getLogsByUser(userId: userId, limit: 1);
     return logs.isNotEmpty ? logs.first : null;
   }
 
-  /// Actualiza un log existente
   static Future<void> updateLog(WorkoutLog log) async {
-    // PLACEHOLDER: Actualizar en Firestore
-    // await _firestore.collection('workout_logs').doc(log.id).update(log.toJson());
-
-    logger.debug('Updating workout log (MOCK)', {'logId': log.id});
+    await saveLog(log); // upsert
   }
 
-  /// Elimina un log
   static Future<void> deleteLog(String logId) async {
-    // PLACEHOLDER: Eliminar de Firestore
-    // await _firestore.collection('workout_logs').doc(logId).delete();
-
-    logger.debug('Deleting workout log (MOCK)', {'logId': logId});
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.delete(_table, where: 'id = ?', whereArgs: [logId]);
+    } catch (e) {
+      logger.error('WorkoutLog delete failed', {'error': e.toString()});
+    }
   }
 
-  /// Cuenta logs de un usuario
-  ///
-  /// ÚTIL PARA: Estadísticas, gamificación
   static Future<int> countLogs({
     required String userId,
     DateTime? startDate,
@@ -149,25 +163,23 @@ class WorkoutLogRepository {
       startDate: startDate,
       endDate: endDate,
     );
-
     return logs.length;
   }
 
-  /// Verifica si existe un log para una sesión planeada
   static Future<bool> hasLogForSession({
     required String plannedSessionId,
   }) async {
-    // PLACEHOLDER: Consultar Firestore
-    /*
-    final snapshot = await _firestore
-        .collection('workout_logs')
-        .where('plannedSessionId', isEqualTo: plannedSessionId)
-        .limit(1)
-        .get();
-    
-    return snapshot.docs.isNotEmpty;
-    */
-
-    return false;
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query(
+        _table,
+        where: 'plannedSessionId = ?',
+        whereArgs: [plannedSessionId],
+        limit: 1,
+      );
+      return rows.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
   }
 }

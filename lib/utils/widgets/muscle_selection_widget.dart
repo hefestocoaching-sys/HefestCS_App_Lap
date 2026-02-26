@@ -98,6 +98,9 @@ class MuscleSelectionGroup extends StatefulWidget {
 }
 
 class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
+  static const int _maxPrimary = 4;
+  static const int _maxSecondary = 3;
+
   late Set<String> _primary;
   late Set<String> _secondary;
   late Set<String> _tertiary;
@@ -109,8 +112,7 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
     _primary = _expandLegacyKeys(widget.selectedPrimary.toList()).toSet();
     _secondary = _expandLegacyKeys(widget.selectedSecondary.toList()).toSet();
     _tertiary = _expandLegacyKeys(widget.selectedTertiary.toList()).toSet();
-    // Enforce strict mutual exclusion from the start
-    _sanitizeTiers();
+    _applyTierRules();
   }
 
   @override
@@ -140,16 +142,46 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
           _primary = newPrimary;
           _secondary = newSecondary;
           _tertiary = newTertiary;
-          _sanitizeTiers(); // enforce mutual exclusion on new data
+          _applyTierRules();
         });
       }
     }
   }
 
-  /// Ensures a muscle can only belong to ONE tier.
-  /// Priority order: Primary > Secondary > Tertiary.
-  /// If a muscle appears in a higher tier, it is removed from all lower tiers.
-  void _sanitizeTiers() {
+  List<String> _ordered(List<String> keys) {
+    final order = allMuscles.map((m) => m.key).toList();
+    return order.where(keys.contains).toList();
+  }
+
+  /// Reglas globales:
+  /// 1) Exclusión estricta entre tiers (Primary > Secondary > Tertiary)
+  /// 2) Máximo 4 primarios y 3 secundarios
+  /// 3) Overflow de primary/secondary se mueve a tertiary
+  void _applyTierRules() {
+    // Exclusión estricta
+    _secondary.removeAll(_primary);
+    _tertiary.removeAll(_primary);
+    _tertiary.removeAll(_secondary);
+
+    // Límite primarios (overflow -> tertiary)
+    if (_primary.length > _maxPrimary) {
+      final orderedPrimary = _ordered(_primary.toList());
+      final keep = orderedPrimary.take(_maxPrimary).toSet();
+      final overflow = orderedPrimary.skip(_maxPrimary).toSet();
+      _primary = keep;
+      _tertiary.addAll(overflow);
+    }
+
+    // Límite secundarios (overflow -> tertiary)
+    if (_secondary.length > _maxSecondary) {
+      final orderedSecondary = _ordered(_secondary.toList());
+      final keep = orderedSecondary.take(_maxSecondary).toSet();
+      final overflow = orderedSecondary.skip(_maxSecondary).toSet();
+      _secondary = keep;
+      _tertiary.addAll(overflow);
+    }
+
+    // Reaplicar exclusión por si hubo movimientos
     _secondary.removeAll(_primary);
     _tertiary.removeAll(_primary);
     _tertiary.removeAll(_secondary);
@@ -168,6 +200,22 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
     bool isSelected,
     Set<String> currentSet,
   ) {
+    final willAddPrimary =
+        isSelected &&
+        currentSet == _primary &&
+        !_primary.contains(muscleKey) &&
+        _primary.length >= _maxPrimary;
+
+    final willAddSecondary =
+        isSelected &&
+        currentSet == _secondary &&
+        !_secondary.contains(muscleKey) &&
+        _secondary.length >= _maxSecondary;
+
+    if (willAddPrimary || willAddSecondary) {
+      return;
+    }
+
     setState(() {
       if (isSelected) {
         // Remove from all OTHER tiers first (strict mutual exclusion)
@@ -178,6 +226,8 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
       } else {
         currentSet.remove(muscleKey);
       }
+
+      _applyTierRules();
     });
     // Notify AFTER setState to avoid calling callbacks inside build cycle
     widget.onChanged('primary', Set<String>.from(_primary));
@@ -188,15 +238,15 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
   @override
   Widget build(BuildContext context) {
     final allKeys = allMuscles.map((m) => m.key).toSet();
-    final primaryOptions = allKeys;
-    final secondaryOptions = allKeys.difference(_primary);
+    final primaryOptions = allKeys.difference(_secondary).difference(_tertiary);
+    final secondaryOptions = allKeys.difference(_primary).difference(_tertiary);
     final tertiaryOptions = allKeys.difference(_primary).difference(_secondary);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _MuscleChecklist(
-          title: 'Músculos Primarios',
+          title: 'Músculos Primarios (máx. 4)',
           allOptionKeys: primaryOptions.toList(),
           selectedKeys: _primary.toList(),
           onChanged: (muscleKey, isSelected) =>
@@ -204,7 +254,7 @@ class MuscleSelectionGroupState extends State<MuscleSelectionGroup> {
         ),
         const SizedBox(height: 24),
         _MuscleChecklist(
-          title: 'Músculos Secundarios',
+          title: 'Músculos Secundarios (máx. 3)',
           allOptionKeys: secondaryOptions.toList(),
           selectedKeys: _secondary.toList(),
           onChanged: (muscleKey, isSelected) =>

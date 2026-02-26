@@ -11,10 +11,13 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/orchestrator/training_orchestrator_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/deload_trigger_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/repositories/workout_log_repository.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_v3_state.dart';
 
 /// Provider Notifier para planes V3
@@ -53,9 +56,27 @@ class TrainingPlanV3Notifier extends Notifier<TrainingPlanV3State> {
 
     try {
       // 1) Validar inputs mínimos
-      final age = client.training.age ?? client.profile.age;
+      final age = _resolveAge(client);
       if (age == null || age <= 0) {
-        throw ArgumentError('Client: edad inválida');
+        throw ArgumentError(
+          'Client: edad inválida. Completa la edad en la entrevista o en datos personales.',
+        );
+      }
+
+      const plannedPhase = 'accumulation';
+      final resolvedPhase = await _resolvePhase(
+        clientId: client.id,
+        consecutiveWeeks: _resolveConsecutiveWeeks(client),
+        plannedPhase: plannedPhase,
+      );
+
+      if (resolvedPhase == 'deload') {
+        state = state.copyWith(
+          isLoading: false,
+          deloadAlert:
+              'Se detectó fatiga acumulada. Se recomienda semana de descarga antes de generar el nuevo plan.',
+        );
+        return;
       }
 
       // 2) Crear orquestador y llamar Motor V3
@@ -92,6 +113,65 @@ class TrainingPlanV3Notifier extends Notifier<TrainingPlanV3State> {
         error: 'Error generando plan V3: ${e.toString()}',
       );
     }
+  }
+
+  Future<String> _resolvePhase({
+    required String clientId,
+    required int consecutiveWeeks,
+    required String plannedPhase,
+  }) async {
+    final recentLogs = await WorkoutLogRepository.getLogsByUser(
+      userId: clientId,
+      limit: 14,
+      startDate: DateTime.now().subtract(const Duration(days: 14)),
+    );
+
+    if (recentLogs.isEmpty) return plannedPhase;
+
+    try {
+      final eval = DeloadTriggerEngine.evaluateDeloadNeed(
+        recentLogs: recentLogs,
+        weeksInProgram: consecutiveWeeks,
+      );
+
+      final needsDeload = eval['needs_deload'] as bool? ?? false;
+      final urgency = eval['urgency'] as String? ?? 'none';
+      final reasoning = eval['reasoning'] as String? ?? '';
+
+      if (needsDeload && (urgency == 'urgent' || urgency == 'recommended')) {
+        debugPrint('🔄 [DeloadTrigger] Override → deload. Reason: $reasoning');
+        return 'deload';
+      }
+    } catch (e) {
+      debugPrint(
+        '⚠️ [DeloadTrigger] Error evaluando: $e. Usando fase planeada.',
+      );
+    }
+
+    return plannedPhase;
+  }
+
+  int _resolveConsecutiveWeeks(Client client) {
+    final raw =
+        client.training.extra['consecutiveWeeks'] ??
+        client.training.extra['weeksCompleted'] ??
+        client.training.currentWeekIndex;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '') ?? 0;
+  }
+
+  int? _resolveAge(Client client) {
+    if (client.training.age != null && client.training.age! > 0) {
+      return client.training.age;
+    }
+    if (client.profile.age != null && client.profile.age! > 0) {
+      return client.profile.age;
+    }
+    final raw = client.training.extra['ageYears'];
+    if (raw is int && raw > 0) return raw;
+    if (raw is num && raw > 0) return raw.toInt();
+    return int.tryParse(raw?.toString() ?? '');
   }
 
   /// Limpiar estado

@@ -26,6 +26,12 @@ TimePerSessionBucket? parseTimePerSessionBucket(String? value) {
   if (value == null) return null;
   final normalized = value.toLowerCase().trim();
 
+  for (final bucket in TimePerSessionBucket.values) {
+    if (bucket.name.toLowerCase() == normalized) {
+      return bucket;
+    }
+  }
+
   if (normalized.contains('< 45') ||
       normalized.contains('menos de 45') ||
       normalized.contains('30') ||

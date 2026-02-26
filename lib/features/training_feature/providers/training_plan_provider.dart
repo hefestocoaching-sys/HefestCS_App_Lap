@@ -39,6 +39,7 @@ import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.da
 import 'package:hcs_app_lap/domain/training_v3/services/unified_training_service.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_impl.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_snapshot_v1.dart';
+import 'package:hcs_app_lap/domain/training_domain/training_progression_state_v1.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_ssot_v1_service.dart';
 // VopSnapshot SSOT
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
@@ -507,6 +508,10 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       );
 
       final priorities = evaluation.musclePriorities;
+      final client = await ref
+          .read(clientRepositoryProvider)
+          .getClientById(clientId);
+      final resolvedAge = _resolveAgeForGenerateTrainingPlan(client);
 
       debugPrint('[TrainingPlanProvider] Muscle Priorities:');
       for (final muscle in MusclePriorities.canonicalMuscles) {
@@ -518,7 +523,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         id: clientId,
         name: 'client_$clientId',
         email: 'unknown_$clientId@example.com',
-        age: 30,
+        age: resolvedAge,
         gender: 'other',
         heightCm: 170.0,
         weightKg: 75.0,
@@ -591,6 +596,21 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       debugPrint('StackTrace: $stackTrace');
       rethrow;
     }
+  }
+
+  int _resolveAgeForGenerateTrainingPlan(Client? client) {
+    if (client?.training.age != null && client!.training.age! > 0) {
+      return client.training.age!;
+    }
+    if (client?.profile.age != null && client!.profile.age! > 0) {
+      return client.profile.age!;
+    }
+    final raw = client?.training.extra['ageYears'];
+    if (raw is int && raw > 0) return raw;
+    if (raw is num && raw > 0) return raw.toInt();
+    final parsed = int.tryParse(raw?.toString() ?? '');
+    if (parsed != null && parsed > 0) return parsed;
+    return 30;
   }
 
   Future<String> _resolvePhase({
@@ -815,20 +835,11 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       final cycleRepo = ref.read(trainingCycleRepositoryProvider);
       final activeCycle = await cycleRepo.getActiveCycle(freshClient.id);
 
-      if (activeCycle != null) {
-        if (activeCycle.freezePlanSnapshot.isEmpty) {
-          state = state.copyWith(
-            isLoading: false,
-            error:
-                'Ciclo activo sin freezePlanSnapshot. Cierra el ciclo y genera uno nuevo.',
-          );
-          return;
-        }
-
+      // Solo cargar desde freeze si el snapshot existe
+      if (activeCycle != null && activeCycle.freezePlanSnapshot.isNotEmpty) {
         debugPrint(
-          '[TrainingPlanProvider] Ciclo activo detectado -> usar freezePlanSnapshot (sin recalcular estructura)',
+          '[TrainingPlanProvider] Ciclo activo con freeze → usando snapshot',
         );
-
         state = state.copyWith(
           isLoading: false,
           plan: _generatedPlanFromCycleSnapshot(activeCycle),
@@ -836,6 +847,11 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         );
         return;
       }
+
+      // Ciclo sin freeze o sin ciclo → continuar generación
+      debugPrint(
+        '[TrainingPlanProvider] ${activeCycle != null ? "Ciclo sin freeze → generando" : "Sin ciclo → generando"}',
+      );
 
       // =====================================================================
       // MOTOR V3 UNIFICADO - PIPELINE COMPLETO + WEEKLY PROGRESSION
@@ -1392,16 +1408,12 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
       final cycleRepo = ref.read(trainingCycleRepositoryProvider);
       final persistedActiveCycle = await cycleRepo.getActiveCycle(clientId);
-      if (persistedActiveCycle != null) {
-        if (persistedActiveCycle.freezePlanSnapshot.isEmpty) {
-          state = state.copyWith(
-            isLoading: false,
-            error:
-                'Ciclo activo sin freezePlanSnapshot. Cierra el ciclo y regenera para congelar estructura.',
-          );
-          return null;
-        }
-
+      // Si hay ciclo activo CON freeze → cargar plan existente (no regenerar)
+      if (persistedActiveCycle != null &&
+          persistedActiveCycle.freezePlanSnapshot.isNotEmpty) {
+        debugPrint(
+          '📦 [Motor V3] Ciclo con freeze detectado → cargando desde snapshot',
+        );
         final currentWeek = persistedActiveCycle.currentWeek <= 0
             ? 1
             : persistedActiveCycle.currentWeek;
@@ -1422,6 +1434,12 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         return _findActivePlanConfigById(client) ??
             _findLatestPlan(client.trainingPlans);
       }
+
+      // Si hay ciclo SIN freeze (bootstrap/ciclo nuevo) o no hay ciclo →
+      // caer al flujo de generación normal (bootstrap + Motor V3)
+      debugPrint(
+        '🔄 [Motor V3] ${persistedActiveCycle != null ? "Ciclo sin freeze → generando plan nuevo" : "Sin ciclo activo → bootstrap"}',
+      );
 
       // 2. Cargar catálogo de ejercicios (necesario para bootstrap Y Motor V3)
       debugPrint('🧭 [Motor V3][Step] 2.5/6 loading exercise catalog...');
@@ -2412,6 +2430,231 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         error: 'Error al limpiar plan: $e',
       );
     }
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null, blockReason: null, suggestions: null);
+  }
+
+  Future<void> closeWeekExplicit(String clientId, int weekNumber) async {
+    final client = await ref
+        .read(clientRepositoryProvider)
+        .getClientById(clientId);
+    if (client == null) return;
+
+    final extra = Map<String, dynamic>.from(client.training.extra);
+    final progressionRaw = extra[TrainingExtraKeys.trainingProgressionStateV1];
+
+    final progression = progressionRaw is Map
+        ? TrainingProgressionStateV1.fromJson(
+            Map<String, dynamic>.from(progressionRaw),
+          )
+        : TrainingProgressionStateV1(
+            weeksCompleted: 0,
+            sessionsCompleted: 0,
+            consecutiveWeeksTraining: 0,
+            averageRIR: 3.0,
+            averageSessionRPE: 7.0,
+            perceivedRecovery: 3.0,
+            lastPlanId: extra[TrainingExtraKeys.activePlanId]?.toString() ?? '',
+            lastPlanChangeReason: 'week_closed_explicit',
+          );
+
+    final targetWeeksCompleted = weekNumber > progression.weeksCompleted
+        ? weekNumber
+        : progression.weeksCompleted;
+
+    final updatedProgression = TrainingProgressionStateV1(
+      weeksCompleted: targetWeeksCompleted,
+      sessionsCompleted: progression.sessionsCompleted,
+      consecutiveWeeksTraining:
+          progression.consecutiveWeeksTraining < targetWeeksCompleted
+          ? targetWeeksCompleted
+          : progression.consecutiveWeeksTraining,
+      averageRIR: progression.averageRIR,
+      averageSessionRPE: progression.averageSessionRPE,
+      perceivedRecovery: progression.perceivedRecovery,
+      lastPlanId: progression.lastPlanId,
+      lastPlanChangeReason: 'week_closed_explicit',
+    );
+    extra[TrainingExtraKeys.trainingProgressionStateV1] = updatedProgression
+        .toJson();
+
+    final cycles = client.trainingCycles;
+    final activeIndex = cycles.indexWhere((c) => c.status == 'active');
+    List<TrainingCycle> updatedCycles = cycles;
+    if (activeIndex != -1) {
+      final activeCycle = cycles[activeIndex];
+      final nextWeek = activeCycle.currentWeek + 1;
+
+      final replacement = activeCycle.copyWith(
+        currentWeek: nextWeek,
+        updatedAt: DateTime.now(),
+      );
+
+      updatedCycles = List<TrainingCycle>.from(cycles);
+      updatedCycles[activeIndex] = replacement;
+    }
+
+    final updatedClient = client.copyWith(
+      training: client.training.copyWith(extra: extra),
+      trainingCycles: updatedCycles,
+    );
+
+    await ref.read(clientRepositoryProvider).saveClient(updatedClient);
+    await ref.read(clientsProvider.notifier).refresh();
+  }
+
+  /// Registra una sesión completada y actualiza weeklyVolumeHistory.
+  ///
+  /// Llama este método después de guardar un WorkoutLog.
+  /// Actualiza en extra:
+  ///   - 'weeklyVolumeHistory': List de {muscle, sets, weekNumber, dateIso}
+  ///   - 'trainingProgressionStateV1'.sessionsCompleted ++
+  Future<void> recordCompletedSession({
+    required String clientId,
+    required int weekNumber,
+    required Map<String, int> setsByMuscle,
+    required double sessionRpe,
+    required double sessionRir,
+    required double perceivedRecovery,
+  }) async {
+    final client = await ref
+        .read(clientRepositoryProvider)
+        .getClientById(clientId);
+    if (client == null) return;
+
+    final extra = Map<String, dynamic>.from(client.training.extra);
+
+    // 1. Actualizar weeklyVolumeHistory
+    final historyRaw = extra[TrainingExtraKeys.weeklyVolumeHistory];
+    final history = historyRaw is List
+        ? List<Map<String, dynamic>>.from(
+            historyRaw.map((e) => Map<String, dynamic>.from(e as Map)),
+          )
+        : <Map<String, dynamic>>[];
+
+    for (final entry in setsByMuscle.entries) {
+      history.add({
+        'muscle': entry.key,
+        'sets': entry.value,
+        'weekNumber': weekNumber,
+        'dateIso': DateTime.now().toIso8601String(),
+        'rpe': sessionRpe,
+        'rir': sessionRir,
+      });
+    }
+    extra[TrainingExtraKeys.weeklyVolumeHistory] = history;
+
+    // 2. Actualizar trainingProgressionStateV1
+    final progressionRaw = extra[TrainingExtraKeys.trainingProgressionStateV1];
+    final progression = progressionRaw is Map
+        ? TrainingProgressionStateV1.fromJson(
+            Map<String, dynamic>.from(progressionRaw),
+          )
+        : TrainingProgressionStateV1(
+            weeksCompleted: 0,
+            sessionsCompleted: 0,
+            consecutiveWeeksTraining: 0,
+            averageRIR: sessionRir,
+            averageSessionRPE: sessionRpe,
+            perceivedRecovery: perceivedRecovery,
+            lastPlanId: '',
+            lastPlanChangeReason: 'session_logged',
+          );
+
+    final totalSessions = progression.sessionsCompleted + 1;
+    // Media móvil simple de RPE/RIR/recovery
+    final n = totalSessions.toDouble();
+    final updatedProgression = TrainingProgressionStateV1(
+      weeksCompleted: progression.weeksCompleted,
+      sessionsCompleted: totalSessions,
+      consecutiveWeeksTraining: progression.consecutiveWeeksTraining,
+      averageRIR: ((progression.averageRIR * (n - 1)) + sessionRir) / n,
+      averageSessionRPE:
+          ((progression.averageSessionRPE * (n - 1)) + sessionRpe) / n,
+      perceivedRecovery:
+          ((progression.perceivedRecovery * (n - 1)) + perceivedRecovery) / n,
+      lastPlanId: progression.lastPlanId,
+      lastPlanChangeReason: progression.lastPlanChangeReason,
+    );
+
+    // 3a. Escribir WorkoutLog en workout_logs para DeloadTriggerEngine
+    // Construimos un log agregado de la sesión con los datos que tenemos
+    final workoutLogId =
+        'wl_${clientId}_${DateTime.now().millisecondsSinceEpoch}';
+    final workoutLog = WorkoutLog(
+      id: workoutLogId,
+      userId: clientId,
+      programId:
+          client.training.extra[TrainingExtraKeys.activePlanId]?.toString() ??
+          '',
+      plannedSessionId: 'week_${weekNumber}_manual',
+      startTime: DateTime.now().subtract(const Duration(minutes: 60)),
+      endTime: DateTime.now(),
+      exerciseLogs: const [], // Agregado, no por ejercicio
+      sessionRpe: sessionRpe,
+      perceivedRecoveryStatus: perceivedRecovery,
+      muscleSoreness: 3.0, // Default conservador
+      adherencePercentage: 100.0,
+      completed: true,
+      createdAt: DateTime.now(),
+    );
+    try {
+      await WorkoutLogRepository.saveLog(workoutLog);
+    } catch (e) {
+      debugPrint('⚠️ [Bitácora] No se pudo guardar WorkoutLog: $e');
+    }
+
+    // 3b. Auto-incrementar weeksCompleted si sessionsCompleted alcanza
+    //     el umbral de sesiones por semana (daysPerWeek)
+    final daysPerWeek =
+        (client.training.extra[TrainingExtraKeys.daysPerWeek] as num?)
+            ?.toInt() ??
+        4;
+    final newSessionsCompleted = updatedProgression.sessionsCompleted;
+    final expectedSessionsForNextWeek =
+        (updatedProgression.weeksCompleted + 1) * daysPerWeek;
+
+    final shouldIncrementWeek =
+        newSessionsCompleted >= expectedSessionsForNextWeek;
+
+    final finalProgression = shouldIncrementWeek
+        ? TrainingProgressionStateV1(
+            weeksCompleted: updatedProgression.weeksCompleted + 1,
+            sessionsCompleted: newSessionsCompleted,
+            consecutiveWeeksTraining:
+                updatedProgression.consecutiveWeeksTraining + 1,
+            averageRIR: updatedProgression.averageRIR,
+            averageSessionRPE: updatedProgression.averageSessionRPE,
+            perceivedRecovery: updatedProgression.perceivedRecovery,
+            lastPlanId: updatedProgression.lastPlanId,
+            lastPlanChangeReason: 'auto_week_advance',
+          )
+        : updatedProgression;
+
+    extra[TrainingExtraKeys.trainingProgressionStateV1] = finalProgression
+        .toJson();
+
+    if (shouldIncrementWeek) {
+      debugPrint(
+        '📅 [Bitácora] Semana ${finalProgression.weeksCompleted} completada automáticamente',
+      );
+    }
+
+    // 3. Persistir en SQLite
+    await ref
+        .read(clientRepositoryProvider)
+        .saveClient(
+          client.copyWith(training: client.training.copyWith(extra: extra)),
+        );
+    await ref.read(clientsProvider.notifier).refresh();
+
+    debugPrint(
+      '✅ [Bitácora] Semana $weekNumber registrada. '
+      'Músculos: ${setsByMuscle.keys.join(", ")}. '
+      'Sesiones totales: $totalSessions',
+    );
   }
 }
 

@@ -21,6 +21,12 @@ RestProfile? parseRestProfile(String? value) {
   if (value == null) return null;
   final normalized = value.toLowerCase().trim();
 
+  for (final profile in RestProfile.values) {
+    if (profile.name.toLowerCase() == normalized) {
+      return profile;
+    }
+  }
+
   if (normalized.contains('< 60') ||
       normalized.contains('menos de 60') ||
       normalized.contains('30 segundos') ||

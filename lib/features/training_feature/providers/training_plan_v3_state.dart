@@ -19,6 +19,9 @@ class TrainingPlanV3State {
   /// Mensaje de error si falla la generación o persistencia
   final String? error;
 
+  /// Alerta de recomendación de deload antes de generar
+  final String? deloadAlert;
+
   /// Resultado completo del Motor V3 (semanas/sesiones/ejercicios)
   /// SSOT para la UI: contiene plan (TrainingPlanConfig) y metadata
   final TrainingProgramV3Result? result;
@@ -31,6 +34,7 @@ class TrainingPlanV3State {
   const TrainingPlanV3State({
     this.isLoading = false,
     this.error,
+    this.deloadAlert,
     this.result,
     this.plan,
   });
@@ -58,12 +62,14 @@ class TrainingPlanV3State {
   TrainingPlanV3State copyWith({
     bool? isLoading,
     String? error,
+    String? deloadAlert,
     TrainingProgramV3Result? result,
     TrainingPlanConfig? plan,
   }) {
     return TrainingPlanV3State(
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      deloadAlert: deloadAlert,
       result: result ?? this.result,
       plan: plan ?? this.plan,
     );
@@ -71,5 +77,5 @@ class TrainingPlanV3State {
 
   @override
   String toString() =>
-      'TrainingPlanV3State(isLoading: $isLoading, error: $error, weeks: ${plan?.weeks.length}, sessions: $totalSessions)';
+      'TrainingPlanV3State(isLoading: $isLoading, error: $error, deloadAlert: $deloadAlert, weeks: ${plan?.weeks.length}, sessions: $totalSessions)';
 }

@@ -135,7 +135,16 @@ class WorkoutLog extends Equatable {
     }
 
     // Validar que tenga al menos 1 ejercicio
-    if (exerciseLogs.isEmpty) return false;
+    final isAggregatedManual =
+        exerciseLogs.isEmpty &&
+        sessionRpe > 0 &&
+        sessionRpe <= 10 &&
+        perceivedRecoveryStatus >= 1 &&
+        perceivedRecoveryStatus <= 5 &&
+        adherencePercentage >= 0 &&
+        adherencePercentage <= 100;
+
+    if (exerciseLogs.isEmpty && !isAggregatedManual) return false;
 
     return true;
   }

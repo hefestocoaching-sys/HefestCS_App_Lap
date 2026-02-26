@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -50,8 +48,6 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
 
   final _selectedIndexNotifier = ValueNotifier<int>(0);
   final _showClientsScreenNotifier = ValueNotifier<bool>(false);
-  Timer? _saveDebounceTimer;
-
   bool get isHomeContext => _selectedIndexNotifier.value == _homeIndex;
 
   bool _isSaving = false;
@@ -77,7 +73,6 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
 
   @override
   void dispose() {
-    _saveDebounceTimer?.cancel();
     _selectedIndexNotifier.dispose();
     _showClientsScreenNotifier.dispose();
     super.dispose();
@@ -209,7 +204,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     }
   }
 
-  Future<void> _saveActiveModuleIfNeeded() async {
+  Future<void> _saveActiveModuleIfNeeded({int? moduleIndex}) async {
     if (_isSaving) return;
     _isSaving = true;
 
@@ -221,7 +216,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     ref.read(saveIndicatorProvider.notifier).setSaving();
 
     try {
-      final index = _selectedIndexNotifier.value;
+      final index = moduleIndex ?? _selectedIndexNotifier.value;
       final module = _moduleFromIndex(index);
       if (module != null) {
         await module.saveIfDirty();
@@ -237,13 +232,6 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     } finally {
       _isSaving = false;
     }
-  }
-
-  void _scheduleSaveActiveModuleIfNeeded() {
-    _saveDebounceTimer?.cancel();
-    _saveDebounceTimer = Timer(const Duration(milliseconds: 600), () {
-      unawaited(_saveActiveModuleIfNeeded());
-    });
   }
 
   void _resetAllDrafts() {
@@ -509,7 +497,11 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                 return;
                               }
 
-                              _scheduleSaveActiveModuleIfNeeded();
+                              final previousIndex =
+                                  _selectedIndexNotifier.value;
+                              await _saveActiveModuleIfNeeded(
+                                moduleIndex: previousIndex,
+                              );
                               if (!mounted) return;
 
                               // Cambiar índice y forzar rebuild
@@ -530,8 +522,11 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                               debugPrint(
                                 'DEBUG: Shell onClientsPressed handler called',
                               );
-                              await _clearActiveClientSelection();
-                              _scheduleSaveActiveModuleIfNeeded();
+                              final previousIndex =
+                                  _selectedIndexNotifier.value;
+                              await _saveActiveModuleIfNeeded(
+                                moduleIndex: previousIndex,
+                              );
                               if (!mounted) {
                                 debugPrint(
                                   'DEBUG: Widget not mounted, returning',
