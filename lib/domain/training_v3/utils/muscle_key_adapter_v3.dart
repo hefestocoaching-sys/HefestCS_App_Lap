@@ -1,46 +1,76 @@
-/// Motor V3 ↔ Catálogo V3 (exercise_catalog_gym.json)
-/// Source of truth: las keys que EXISTEN en el JSON.
-/// El catálogo V3 actual se normaliza a 14 claves canónicas.
-/// Este adaptador mantiene compatibilidad con aliases legacy.
+﻿/// Motor V3 <-> Catalogo V3 (exercise_catalog_gym.json)
+/// 
+/// MAPEO DE SINGLE SOURCE OF TRUTH (SSOT):
+/// Las 14 claves canonicas del motor se mapean a las claves REALES del JSON.
+///
+/// MAPEOS CRITICOS (mismatch de motor -> catalog):
+/// - traps (motor) -> ['traps_upper'] (catalog)
+/// - calves (motor) -> ['gastrocnemio', 'soleo'] (catalog, granular)
+///
+/// MAPEOS DIRECTOS (1:1):
+/// - pectorals -> ['pectorals']
+/// - lats -> ['lats']
+/// - upper_back -> ['upper_back']
+/// - deltoide_anterior -> ['deltoide_anterior']
+/// - deltoide_lateral -> ['deltoide_lateral']
+/// - deltoide_posterior -> ['deltoide_posterior']
+/// - biceps -> ['biceps']
+/// - triceps -> ['triceps']
+/// - quadriceps -> ['quadriceps']
+/// - hamstrings -> ['hamstrings']
+/// - glutes -> ['glutes']
+/// - abs -> ['abs']
 class MuscleKeyAdapterV3 {
   /// Normaliza input: trim + lower
   static String norm(String k) => k.trim().toLowerCase();
 
-  /// Dado un muscleKey “macro” del motor, devuelve las keys reales del catálogo
-  /// que deben consultarse.
+  /// Dado un muscleKey "canonico" del motor (una de las 14 claves), devuelve
+  /// las keys REALES del catalogo JSON que deben consultarse.
+  ///
+  /// GARANTIA: Siempre retorna keys que existen en exercise_catalog_gym.json
+  /// bajo el campo primaryMuscles.
   static List<String> toCatalogKeys(String motorKey) {
     final k = norm(motorKey);
 
-    // Catálogo V3 actual (normalizado a canónicas):
-    // calves, upper_back y traps existen como claves directas.
-    switch (k) {
-      case 'calves':
-      case 'pantorrillas':
-      case 'gemelos':
-        return const ['calves'];
+    return switch (k) {
+      // === MAPEOS DIRECTOS (1:1) ===
+      'pectorals' => const ['pectorals'],
+      'lats' => const ['lats'],
+      'upper_back' => const ['upper_back'],
+      'deltoide_anterior' => const ['deltoide_anterior'],
+      'deltoide_lateral' => const ['deltoide_lateral'],
+      'deltoide_posterior' => const ['deltoide_posterior'],
+      'biceps' => const ['biceps'],
+      'triceps' => const ['triceps'],
+      'quadriceps' => const ['quadriceps'],
+      'hamstrings' => const ['hamstrings'],
+      'glutes' => const ['glutes'],
+      'abs' => const ['abs'],
 
-      case 'upper_back':
-        return const ['upper_back'];
+      // === MAPEOS ESPECIALES (motor -> catalog con transformacion) ===
+      // Trapecio: motor solo usa 'traps', pero JSON tiene 'traps_upper/middle/lower'
+      'traps' => const ['traps_upper'],
 
-      case 'traps':
-      case 'trapecios':
-      case 'trapecio':
-      case 'trapezius':
-        return const ['traps'];
+      // Pantorrillas: motor usa 'calves', JSON tiene 'gastrocnemio' y 'soleo'
+      'calves' => const ['gastrocnemio', 'soleo'],
 
-      // Mantener directo cuando ya coincide con el catálogo
-      // (según logs: chest, lats, deltoide_*, biceps, triceps, quads, hamstrings, glutes, abs)
-      default:
-        return [k];
-    }
+      // === FALLBACK ===
+      _ => [k],
+    };
   }
 
-  /// Para logs/debug: agrupa keys granulares hacia una macro “amigable”
-  /// (solo donde aplica). NO es obligatorio para funcionalidad, pero ayuda.
+  /// Para logs/debug: agrupa keys granulares hacia un nombre "macro" amigable.
+  /// Nota: NO es obligatorio para funcionalidad, solo para debugging.
   static String toMacroKey(String catalogKey) {
     final k = norm(catalogKey);
-    if (k == 'gastrocnemio' || k == 'soleo') return 'calves';
-    if (k.startsWith('traps_')) return 'traps';
+
+    if (k == 'gastrocnemio' || k == 'soleo') {
+      return 'calves';
+    }
+    if (k.startsWith('traps_')) {
+      return 'traps';
+    }
+
     return k;
   }
 }

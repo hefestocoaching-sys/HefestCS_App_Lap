@@ -105,6 +105,14 @@ class ExerciseSelectionEngine {
     required Map<String, String> injuryHistory,
     required int targetExerciseCount,
   }) {
+    // P0.2: NORMALIZACIÓN CANÓNICA
+    // Convertir la clave canónica del motor a las claves REALES del catálogo
+    final catalogKeys = MuscleKeyAdapterV3.toCatalogKeys(targetMuscle);
+
+    debugPrint(
+      '[ExerciseSelection][selectExercises] motor_muscle="$targetMuscle" → catalogKeys=$catalogKeys',
+    );
+
     bool hasEquipmentMatch(Map<String, dynamic> exercise) {
       final equipment = (exercise['equipment'] as List?)?.cast<String>() ?? [];
       if (availableEquipment.isEmpty || equipment.isEmpty) return true;
@@ -118,10 +126,13 @@ class ExerciseSelectionEngine {
       return !stressed.any(injuryHistory.containsKey);
     }
 
+    // P0.2: COMPARACIÓN POR CATÁLOGO (no por motor)
     bool targetsMuscle(Map<String, dynamic> exercise) {
       final primary =
           (exercise['primary_muscles'] as List?)?.cast<String>() ?? [];
-      return primary.contains(targetMuscle);
+      // Verificar si alguno de los primaryMuscles coincide con alguno de los catalogKeys
+      final matches = primary.where((p) => catalogKeys.contains(p)).toList();
+      return matches.isNotEmpty;
     }
 
     final candidates = availableExercises.entries.where((entry) {
@@ -131,6 +142,10 @@ class ExerciseSelectionEngine {
           isInjurySafe(data);
     }).toList();
 
+    debugPrint(
+      '[ExerciseSelection][selectExercises] catalogKeys=$catalogKeys found=${candidates.length} candidates',
+    );
+
     candidates.sort((a, b) {
       final typeA = a.value['type'] as String? ?? 'compound';
       final typeB = b.value['type'] as String? ?? 'compound';
@@ -139,8 +154,19 @@ class ExerciseSelectionEngine {
     });
 
     if (candidates.isNotEmpty) {
-      return candidates.take(targetExerciseCount).map((e) => e.key).toList();
+      final selected = candidates
+          .take(targetExerciseCount)
+          .map((e) => e.key)
+          .toList();
+      debugPrint(
+        '[ExerciseSelection][selectExercises] selected=${selected.length}/$targetExerciseCount exercises for muscle="$targetMuscle"',
+      );
+      return selected;
     }
+
+    debugPrint(
+      '[ExerciseSelection][selectExercises] ⚠️ NO candidates found for muscle="$targetMuscle" (catalogs=$catalogKeys). Using fallback.',
+    );
 
     return availableExercises.keys.take(targetExerciseCount).toList();
   }
