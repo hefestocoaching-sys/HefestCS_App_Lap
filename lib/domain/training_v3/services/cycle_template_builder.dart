@@ -29,6 +29,7 @@ class CycleTemplateBuilder {
 
   static const int _maxSetsPerExercise = 5;
   static const int _defaultDailyCapPerMuscle = 10;
+  static const int _upperLowerHardCapMusclesPerDay = 12;
 
   /// Hard cap on unique exercises per session, keyed by availableDays.
   static int _sessionCapForDays(int days) {
@@ -359,7 +360,11 @@ class CycleTemplateBuilder {
   }) {
     // Sort all muscles by priority desc
     final sorted = config.keys.toList()
-      ..sort((a, b) => (priorities[b] ?? 0).compareTo(priorities[a] ?? 0));
+      ..sort((a, b) {
+        final byPriority = (priorities[b] ?? 0).compareTo(priorities[a] ?? 0);
+        if (byPriority != 0) return byPriority;
+        return a.compareTo(b);
+      });
 
     // Upper and lower subsets from the requested muscles
     final upperPool = sorted.where((m) => _upperMuscles.contains(m)).toList();
@@ -368,23 +373,89 @@ class CycleTemplateBuilder {
         .toList();
     // 'abs' is in both — already included in upperPool; don't double-add to lower
 
+    final upperDays = <int>[];
+    final lowerDays = <int>[];
     for (int dayIdx = 0; dayIdx < availableDays; dayIdx++) {
-      final isUpper = dayIdx % 2 == 0; // 0-indexed: 0=upper, 1=lower
-      final pool = isUpper ? upperPool : lowerPool;
+      if (dayIdx % 2 == 0) {
+        upperDays.add(dayIdx);
+      } else {
+        lowerDays.add(dayIdx);
+      }
+    }
 
-      // Pick top maxMusclesPerDay from the pool
-      final musclesToday = pool.take(maxMusclesPerDay).toList();
+    _assignUpperLowerGroupCoverageFirst(
+      groupName: 'upper',
+      groupMuscles: upperPool,
+      groupDays: upperDays,
+      baseCap: maxMusclesPerDay,
+      config: config,
+      priorities: priorities,
+      allocation: allocation,
+    );
+
+    _assignUpperLowerGroupCoverageFirst(
+      groupName: 'lower',
+      groupMuscles: lowerPool,
+      groupDays: lowerDays,
+      baseCap: maxMusclesPerDay,
+      config: config,
+      priorities: priorities,
+      allocation: allocation,
+    );
+
+    debugPrint(
+      '[CycleTemplateBuilder][B4][UpperLower] '
+      'upper=${upperPool.length} lower=${lowerPool.length}',
+    );
+  }
+
+  static void _assignUpperLowerGroupCoverageFirst({
+    required String groupName,
+    required List<String> groupMuscles,
+    required List<int> groupDays,
+    required int baseCap,
+    required Map<String, _MuscleFreqConfig> config,
+    required Map<String, int> priorities,
+    required List<Map<String, int>> allocation,
+  }) {
+    if (groupMuscles.isEmpty || groupDays.isEmpty) return;
+
+    int cap = baseCap;
+
+    if (groupMuscles.length > cap) {
+      var totalSlots = groupDays.length * cap;
+      if (totalSlots < groupMuscles.length) {
+        final neededCap = (groupMuscles.length / groupDays.length).ceil();
+        cap = min(
+          _upperLowerHardCapMusclesPerDay,
+          max(cap, min(groupMuscles.length, neededCap)),
+        );
+        totalSlots = groupDays.length * cap;
+      }
+
+      if (totalSlots < groupMuscles.length) {
+        debugPrint(
+          '[CycleTemplateBuilder][B4][UpperLower][$groupName] '
+          'WARNING coverage impossible: muscles=${groupMuscles.length} '
+          'days=${groupDays.length} cap=$cap slots=$totalSlots',
+        );
+      }
+    }
+
+    for (int groupDayIdx = 0; groupDayIdx < groupDays.length; groupDayIdx++) {
+      final dayIdx = groupDays[groupDayIdx];
+      final musclesToday = groupMuscles.length <= cap
+          ? List<String>.from(groupMuscles)
+          : _selectRotatingWindow(
+              pool: groupMuscles,
+              cap: cap,
+              dayIndex: groupDayIdx,
+            );
 
       for (final muscle in musclesToday) {
         final cfg = config[muscle];
         if (cfg == null) continue;
-
-        // distribute sets evenly across the days this muscle appears
-        // For UL: muscle appears in all "upper" or all "lower" days
-        final muscleFreq = cfg.frequency;
-        final setsPerAppearance = (cfg.weeklySets / muscleFreq).round();
-
-        // Cap to daily muscle cap
+        final setsPerAppearance = (cfg.weeklySets / cfg.frequency).round();
         allocation[dayIdx][muscle] = min(
           setsPerAppearance,
           _defaultDailyCapPerMuscle,
@@ -392,10 +463,115 @@ class CycleTemplateBuilder {
       }
     }
 
-    debugPrint(
-      '[CycleTemplateBuilder][B4][UpperLower] '
-      'upper=${upperPool.length} lower=${lowerPool.length}',
+    _applyUpperLowerCoverageFallback(
+      groupName: groupName,
+      groupMuscles: groupMuscles,
+      groupDays: groupDays,
+      cap: cap,
+      config: config,
+      priorities: priorities,
+      allocation: allocation,
     );
+  }
+
+  static List<String> _selectRotatingWindow({
+    required List<String> pool,
+    required int cap,
+    required int dayIndex,
+  }) {
+    if (pool.isEmpty || cap <= 0) return const [];
+    if (pool.length <= cap) return List<String>.from(pool);
+
+    final start = (dayIndex * cap) % pool.length;
+    final selected = <String>[];
+    for (int i = 0; i < cap; i++) {
+      selected.add(pool[(start + i) % pool.length]);
+    }
+    return selected;
+  }
+
+  static void _applyUpperLowerCoverageFallback({
+    required String groupName,
+    required List<String> groupMuscles,
+    required List<int> groupDays,
+    required int cap,
+    required Map<String, _MuscleFreqConfig> config,
+    required Map<String, int> priorities,
+    required List<Map<String, int>> allocation,
+  }) {
+    if (groupMuscles.isEmpty || groupDays.isEmpty) return;
+
+    final covered = <String>{};
+    for (final dayIdx in groupDays) {
+      covered.addAll(allocation[dayIdx].keys);
+    }
+
+    final uncovered = groupMuscles.where((m) => !covered.contains(m)).toList();
+    if (uncovered.isEmpty) return;
+
+    for (final muscle in uncovered) {
+      int targetDay = groupDays.first;
+      int minLoad = allocation[targetDay].length;
+      for (final dayIdx in groupDays) {
+        final load = allocation[dayIdx].length;
+        if (load < minLoad) {
+          minLoad = load;
+          targetDay = dayIdx;
+        }
+      }
+
+      if (allocation[targetDay].length < cap) {
+        final cfg = config[muscle];
+        if (cfg != null) {
+          allocation[targetDay][muscle] = min(
+            (cfg.weeklySets / cfg.frequency).round(),
+            _defaultDailyCapPerMuscle,
+          );
+        }
+        continue;
+      }
+
+      final dayMuscles = allocation[targetDay].keys.toList()
+        ..sort((a, b) {
+          final byPriority = (priorities[a] ?? 0).compareTo(priorities[b] ?? 0);
+          if (byPriority != 0) return byPriority;
+          return a.compareTo(b);
+        });
+
+      if (dayMuscles.isEmpty) continue;
+
+      final protectedTop = dayMuscles.length > 1 ? dayMuscles.last : null;
+
+      String replaceMuscle = dayMuscles.first;
+      if (protectedTop != null && replaceMuscle == protectedTop) {
+        replaceMuscle = dayMuscles.length > 1
+            ? dayMuscles[1]
+            : dayMuscles.first;
+      }
+
+      allocation[targetDay].remove(replaceMuscle);
+      final cfg = config[muscle];
+      if (cfg != null) {
+        allocation[targetDay][muscle] = min(
+          (cfg.weeklySets / cfg.frequency).round(),
+          _defaultDailyCapPerMuscle,
+        );
+      }
+    }
+
+    final coveredAfter = <String>{};
+    for (final dayIdx in groupDays) {
+      coveredAfter.addAll(allocation[dayIdx].keys);
+    }
+    final stillUncovered = groupMuscles
+        .where((m) => !coveredAfter.contains(m))
+        .length;
+    if (stillUncovered > 0) {
+      debugPrint(
+        '[CycleTemplateBuilder][B4][UpperLower][$groupName] '
+        'WARNING uncoveredAfterFallback=$stillUncovered',
+      );
+    }
   }
 
   /// Full-body rotating distribution for 3 days.

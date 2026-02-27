@@ -70,8 +70,6 @@ export 'services/training_log_aggregator.dart';
 export 'services/training_plan_mapper.dart';
 export 'services/volume_by_muscle_derivation_service.dart';
 
-// Services - V2 (estratégicos/inactivos)
-export 'services/v2/longitudinal_state_update_service.dart';
 // Training - Core
 export 'training/intensity_split_utils.dart';
 export 'training/macrocycle_calculator.dart';
@@ -84,7 +82,6 @@ export 'training/services/initial_volume_target_service.dart';
 export 'training/services/volume_budget_balancer.dart';
 export 'training/services/volume_swap_service.dart';
 
-export 'training/training_plan_generator.dart';
 export 'training/training_plan_model.dart' hide TrainingPlan;
 export 'training/vop_snapshot.dart';
 
@@ -94,5 +91,4 @@ export 'training_engine/phases/phase4_priority_cap_service.dart';
 // Training V3 - Motor Nuevo
 export 'training_v3/services/motor_v3_orchestrator.dart';
 export 'training_v3/models/training_split.dart';
-export 'training_v3/converters/v3_to_v2_converter.dart';
 export 'entities/training_plan.dart';
