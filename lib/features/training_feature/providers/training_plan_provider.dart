@@ -2433,7 +2433,12 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   }
 
   void clearError() {
-    state = state.copyWith(error: null, blockReason: null, suggestions: null);
+    state = TrainingPlanState(
+      isLoading: state.isLoading,
+      plan: state.plan,
+      missingFields: state.missingFields,
+      vopByMuscle: state.vopByMuscle,
+    );
   }
 
   Future<void> closeWeekExplicit(String clientId, int weekNumber) async {

@@ -1,5 +1,5 @@
-ERROR: type 'Null' is not a subtype of type 'TrainingPlanConfig' in type cast
-STACK: #0      main.<anonymous closure>.<anonymous closure> (file:///C:/Users/pedro/StudioProjects/hcs_app_lap/test/domain/training_v3/p0_verification_test.dart:97:41)
+ERROR: Exception: Generation Failed: [Error generando programa: Bad state: [B4] No exercises available for muscle "pectorals". Catalog does not cover requested volume.]
+STACK: #0      main.<anonymous closure>.<anonymous closure> (file:///C:/Users/pedro/StudioProjects/hcs_app_lap/test/domain/training_v3/p0_verification_test.dart:102:11)
 <asynchronous suspension>
 #1      Declarer.test.<anonymous closure>.<anonymous closure> (package:test_api/src/backend/declarer.dart:242:9)
 <asynchronous suspension>

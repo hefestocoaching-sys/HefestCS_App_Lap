@@ -105,6 +105,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
   List<String> _primaryMuscles = [];
   List<String> _secondaryMuscles = [];
   List<String> _tertiaryMuscles = [];
+  String _backFocus = 'upper_back';
 
   // Historia de entrenamiento (SSOT)
   bool? _hasTrainedBefore;
@@ -143,6 +144,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       'priorityMusclesPrimary',
       'priorityMusclesSecondary',
       'priorityMusclesTertiary',
+      TrainingExtraKeys.backFocus,
     ];
 
     for (final k in keys) {
@@ -232,6 +234,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       _primaryMuscles = [];
       _secondaryMuscles = [];
       _tertiaryMuscles = [];
+      _backFocus = 'upper_back';
       _knowsPRs = false;
       _prSquatCtrl.clear();
       _prBenchCtrl.clear();
@@ -398,19 +401,25 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     // Cargar prioridades musculares
     _primaryMuscles = _parseMuscleList(
       t.priorityMusclesPrimary.isNotEmpty
-          ? t.priorityMusclesPrimary.join(',')
-          : extra[TrainingExtraKeys.priorityMusclesPrimary]?.toString(),
+          ? t.priorityMusclesPrimary
+          : extra[TrainingExtraKeys.priorityMusclesPrimary],
     );
     _secondaryMuscles = _parseMuscleList(
       t.priorityMusclesSecondary.isNotEmpty
-          ? t.priorityMusclesSecondary.join(',')
-          : extra[TrainingExtraKeys.priorityMusclesSecondary]?.toString(),
+          ? t.priorityMusclesSecondary
+          : extra[TrainingExtraKeys.priorityMusclesSecondary],
     );
     _tertiaryMuscles = _parseMuscleList(
       t.priorityMusclesTertiary.isNotEmpty
-          ? t.priorityMusclesTertiary.join(',')
-          : extra[TrainingExtraKeys.priorityMusclesTertiary]?.toString(),
+          ? t.priorityMusclesTertiary
+          : extra[TrainingExtraKeys.priorityMusclesTertiary],
     );
+    final loadedBackFocus = extra[TrainingExtraKeys.backFocus]
+        ?.toString()
+        .toLowerCase();
+    _backFocus = (loadedBackFocus == 'lats' || loadedBackFocus == 'upper_back')
+        ? loadedBackFocus!
+        : 'upper_back';
 
     // Cargar PRs
     _knowsPRs = extra[TrainingExtraKeys.knowsPRs] as bool? ?? false;
@@ -584,13 +593,54 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     _isDirty = false;
   }
 
-  List<String> _parseMuscleList(String? value) {
-    if (value == null || value.trim().isEmpty) return [];
-    return value
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
+  List<String> _parseMuscleList(dynamic rawValue) {
+    final values = <String>[];
+
+    if (rawValue == null) return values;
+
+    if (rawValue is List) {
+      values.addAll(
+        rawValue
+            .map((entry) => entry.toString().trim())
+            .where((e) => e.isNotEmpty),
+      );
+    } else {
+      final value = rawValue.toString().trim();
+      if (value.isEmpty) return values;
+
+      if (value.startsWith('[') && value.endsWith(']')) {
+        final trimmed = value.substring(1, value.length - 1);
+        values.addAll(
+          trimmed
+              .split(',')
+              .map((entry) => entry.trim())
+              .where((entry) => entry.isNotEmpty),
+        );
+      } else {
+        values.addAll(
+          value
+              .split(',')
+              .map((entry) => entry.trim())
+              .where((entry) => entry.isNotEmpty),
+        );
+      }
+    }
+
+    return _normalizeBackSelectionList(values);
+  }
+
+  List<String> _normalizeBackSelectionList(List<String> source) {
+    final normalized = <String>{};
+    for (final raw in source) {
+      final value = raw.trim();
+      if (value.isEmpty) continue;
+      if (value == 'lats' || value == 'upper_back') {
+        normalized.add('back');
+      } else {
+        normalized.add(value);
+      }
+    }
+    return normalized.toList();
   }
 
   void _markDirty() {
@@ -934,9 +984,29 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     final daysPerWeek = _daysPerWeek ?? 0;
     final planDurationWeeks = _planDurationInWeeks ?? 8;
 
-    final primaryMuscles = List<String>.from(_primaryMuscles);
-    final secondaryMuscles = List<String>.from(_secondaryMuscles);
-    final tertiaryMuscles = List<String>.from(_tertiaryMuscles);
+    final primaryMuscles = _normalizeBackSelectionList(
+      List<String>.from(_primaryMuscles),
+    );
+    final secondaryMuscles = _normalizeBackSelectionList(
+      List<String>.from(_secondaryMuscles),
+    );
+    final tertiaryMuscles = _normalizeBackSelectionList(
+      List<String>.from(_tertiaryMuscles),
+    );
+
+    final hasBackSelected =
+        primaryMuscles.contains('back') ||
+        secondaryMuscles.contains('back') ||
+        tertiaryMuscles.contains('back');
+    final selectedBackFocus =
+        (_backFocus == 'lats' || _backFocus == 'upper_back')
+        ? _backFocus
+        : 'upper_back';
+    if (hasBackSelected) {
+      extra[TrainingExtraKeys.backFocus] = selectedBackFocus;
+    } else {
+      extra[TrainingExtraKeys.backFocus] = selectedBackFocus;
+    }
 
     extra[TrainingExtraKeys.priorityMusclesPrimary] = primaryMuscles;
     extra[TrainingExtraKeys.priorityMusclesSecondary] = secondaryMuscles;
@@ -2138,6 +2208,29 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         const Text(
           'Seleccione los musculos por prioridad',
           style: TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: 380,
+          child: DropdownButtonFormField<String>(
+            initialValue: _backFocus,
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(value: 'lats', child: Text('Lats')),
+              DropdownMenuItem(value: 'upper_back', child: Text('Upper back')),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _backFocus = value);
+              _markDirty();
+            },
+            dropdownColor: kBackgroundColor,
+            iconEnabledColor: kTextColor,
+            style: const TextStyle(color: kTextColor),
+            decoration: const InputDecoration(
+              labelText: 'Back focus (pesado de espalda)',
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         MuscleSelectionGroup(

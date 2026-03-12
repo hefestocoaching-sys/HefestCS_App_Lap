@@ -814,22 +814,22 @@ class _TrainingWorkspaceScreenState
                   ],
                 ),
                 const Divider(height: 20, color: Colors.white12),
-                _ws_row('Split', splitId),
-                _ws_row('Semanas', '${plan.weeks.length}'),
-                _ws_row('Sesiones totales', '$totalSessions'),
-                _ws_row(
+                _wsRow('Split', splitId),
+                _wsRow('Semanas', '${plan.weeks.length}'),
+                _wsRow('Sesiones totales', '$totalSessions'),
+                _wsRow(
                   'Inicio',
                   '${startDate.day}/${startDate.month}/${startDate.year}',
                 ),
-                _ws_row(
+                _wsRow(
                   'Fin estimado',
                   '${endDate.day}/${endDate.month}/${endDate.year}',
                 ),
-                _ws_row(
+                _wsRow(
                   'Duración microciclo',
                   '${plan.microcycleLengthInWeeks} sem',
                 ),
-                _ws_row('ID', plan.id.substring(0, 12)),
+                _wsRow('ID', plan.id.substring(0, 12)),
               ],
             ),
           ),
@@ -854,7 +854,7 @@ class _TrainingWorkspaceScreenState
             final deload = plan.weeks.where((w) => w.phase.isDeload).length;
             final total = plan.weeks.length;
             return [
-              _ws_phase(
+              _wsPhase(
                 'Acumulación',
                 accum,
                 total,
@@ -862,7 +862,7 @@ class _TrainingWorkspaceScreenState
                 Icons.trending_up,
               ),
               const SizedBox(height: 8),
-              _ws_phase(
+              _wsPhase(
                 'Intensificación',
                 intens,
                 total,
@@ -870,7 +870,7 @@ class _TrainingWorkspaceScreenState
                 Icons.bolt,
               ),
               const SizedBox(height: 8),
-              _ws_phase('Deload', deload, total, kSuccessColor, Icons.spa),
+              _wsPhase('Deload', deload, total, kSuccessColor, Icons.spa),
             ];
           }(),
           // Volumen por músculo (si existe)
@@ -1156,13 +1156,13 @@ class _TrainingWorkspaceScreenState
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _ws_stat('${weeks.length}', 'Semanas', kInfoColor),
+                    _wsStat('${weeks.length}', 'Semanas', kInfoColor),
                     const SizedBox(width: 8),
-                    _ws_stat('$totalSesiones', 'Sesiones', kSuccessColor),
+                    _wsStat('$totalSesiones', 'Sesiones', kSuccessColor),
                     const SizedBox(width: 8),
-                    _ws_stat('$totalEjercicios', 'Ejercicios', kWarningColor),
+                    _wsStat('$totalEjercicios', 'Ejercicios', kWarningColor),
                     const SizedBox(width: 8),
-                    _ws_stat(split.toUpperCase(), 'Split', kPrimaryColor),
+                    _wsStat(split.toUpperCase(), 'Split', kPrimaryColor),
                   ],
                 ),
               ],
@@ -1380,7 +1380,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  Widget _ws_stat(String value, String label, Color color) {
+  Widget _wsStat(String value, String label, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -1447,12 +1447,12 @@ class _TrainingWorkspaceScreenState
                   ],
                 ),
                 const SizedBox(height: 12),
-                _ws_row('Motor', generatedBy),
-                _ws_row('Versión', version),
-                _ws_row('Modelo', model),
-                _ws_row('Fase', plan.phase.name.toUpperCase()),
-                _ws_row('Split', plan.splitId),
-                _ws_row('Semanas', '${plan.microcycleLengthInWeeks}'),
+                _wsRow('Motor', generatedBy),
+                _wsRow('Versión', version),
+                _wsRow('Modelo', model),
+                _wsRow('Fase', plan.phase.name.toUpperCase()),
+                _wsRow('Split', plan.splitId),
+                _wsRow('Semanas', '${plan.microcycleLengthInWeeks}'),
               ],
             ),
           ),
@@ -1618,7 +1618,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  Widget _ws_row(String label, String value) {
+  Widget _wsRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -1741,21 +1741,21 @@ class _TrainingWorkspaceScreenState
           // Métricas
           Row(
             children: [
-              _ws_metric(
+              _wsMetric(
                 '$sessionsCompleted',
                 'Sesiones\nregistradas',
                 kSuccessColor,
                 Icons.check_circle_outline,
               ),
               const SizedBox(width: 8),
-              _ws_metric(
+              _wsMetric(
                 '$totalSessions',
                 'Sesiones\ndel plan',
                 kInfoColor,
                 Icons.calendar_today,
               ),
               const SizedBox(width: 8),
-              _ws_metric(
+              _wsMetric(
                 avgRir.toStringAsFixed(1),
                 'RIR\npromedio',
                 avgRir <= 1.5 ? kWarningColor : kSuccessColor,
@@ -1766,21 +1766,21 @@ class _TrainingWorkspaceScreenState
           const SizedBox(height: 8),
           Row(
             children: [
-              _ws_metric(
+              _wsMetric(
                 '${avgRpe.toStringAsFixed(1)}/10',
                 'RPE\npromedio',
                 avgRpe >= 8.5 ? kErrorColor : kWarningColor,
                 Icons.speed,
               ),
               const SizedBox(width: 8),
-              _ws_metric(
+              _wsMetric(
                 '${recovery.toStringAsFixed(1)}/10',
                 'Recuperación',
                 recovery >= 7 ? kSuccessColor : kErrorColor,
                 Icons.battery_charging_full,
               ),
               const SizedBox(width: 8),
-              _ws_metric(
+              _wsMetric(
                 '$totalWeeks',
                 'Duración\n(semanas)',
                 kTextColorSecondary,
@@ -1798,7 +1798,7 @@ class _TrainingWorkspaceScreenState
             ),
           ),
           const SizedBox(height: 10),
-          _ws_phase(
+          _wsPhase(
             'Acumulación',
             accumWeeks,
             totalWeeks,
@@ -1806,7 +1806,7 @@ class _TrainingWorkspaceScreenState
             Icons.trending_up,
           ),
           const SizedBox(height: 8),
-          _ws_phase(
+          _wsPhase(
             'Intensificación',
             intensWeeks,
             totalWeeks,
@@ -1814,13 +1814,7 @@ class _TrainingWorkspaceScreenState
             Icons.bolt,
           ),
           const SizedBox(height: 8),
-          _ws_phase(
-            'Deload',
-            deloadWeeks,
-            totalWeeks,
-            kSuccessColor,
-            Icons.spa,
-          ),
+          _wsPhase('Deload', deloadWeeks, totalWeeks, kSuccessColor, Icons.spa),
           const SizedBox(height: 20),
           // Nota científica
           Container(
@@ -1851,7 +1845,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  Widget _ws_metric(String value, String label, Color color, IconData icon) {
+  Widget _wsMetric(String value, String label, Color color, IconData icon) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
@@ -1883,7 +1877,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  Widget _ws_phase(
+  Widget _wsPhase(
     String label,
     int count,
     int total,

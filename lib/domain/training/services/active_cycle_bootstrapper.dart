@@ -104,6 +104,7 @@ class ActiveCycleBootstrapper {
 
     return TrainingCycle(
       cycleId: cycleId,
+      clientId: clientId,
       startDate: now,
       goal: 'hipertrofia_general',
       priorityMuscles: const [],

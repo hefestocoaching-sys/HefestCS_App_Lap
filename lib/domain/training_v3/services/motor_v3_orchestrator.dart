@@ -137,8 +137,13 @@ class MotorV3Orchestrator {
       debugPrint('   - Experience: ${clientProfile.experience}');
       debugPrint('   - Recovery: ${clientProfile.recoveryCapacity}');
 
+      final resolvedBackFocus = _resolveBackFocus(client) ?? 'upper_back';
+
       // ✅ PASO 4: Calcular volumen INICIAL con nuevo sistema
-      final volumeTargets = _calculateVolumeByMuscleV2(userProfile);
+      final volumeTargets = expandBackMuscle(
+        _calculateVolumeByMuscleV2(userProfile),
+        backFocus: resolvedBackFocus,
+      );
       debugPrint(
         '📊 Volumen INICIAL por músculo (VOP): ${volumeTargets.length} grupos',
       );
@@ -197,6 +202,7 @@ class MotorV3Orchestrator {
       final feasErrors = _feasibilityErrors(
         targetVolume: volumeTargets,
         daysPerWeek: daysPerWeek,
+        split: resolvedSplit,
       );
       if (feasErrors.isNotEmpty) {
         for (final e in feasErrors) {
@@ -213,6 +219,7 @@ class MotorV3Orchestrator {
       var cycleStateWrapper = _CycleStateWrapper(
         _readCycleState(null, profile: userProfile),
       );
+      final backFocus = resolvedBackFocus;
 
       var planConfig = _buildRealTrainingPlan(
         client: client,
@@ -225,6 +232,7 @@ class MotorV3Orchestrator {
         userProfile: userProfile,
         clientProfile: clientProfile,
         cycleStateWrapper: cycleStateWrapper,
+        backFocus: backFocus,
       );
 
       // P1A-8: Al final de generatePlan: actualizar estado
@@ -256,9 +264,10 @@ class MotorV3Orchestrator {
       final coverageResult = _validateExerciseCoverage(
         targetVolume: volumeTargets,
         weekStructure: week1Structure,
+        feasibilityPassed: feasErrors.isEmpty,
       );
 
-      if (!coverageResult.isValid) {
+      if (feasErrors.isEmpty && !coverageResult.isValid) {
         return {
           'success': false,
           'errors': coverageResult.errors,
@@ -329,26 +338,53 @@ class MotorV3Orchestrator {
     // ═══════════════════════════════════════════════════════════════
 
     final normalizedPriorities = <String, int>{};
+    bool hasBackGroupPriority = false;
+    bool hasExplicitLats = false;
+    bool hasExplicitUpperBack = false;
+    int? backGroupPriority;
 
     profile.musclePriorities.forEach((muscle, priority) {
       final normalized = muscle_registry.normalize(muscle);
 
-      if (normalized == null) {
-        debugPrint(
-          '[Motor V3] ⚠️ Músculo desconocido: "$muscle" - será ignorado',
-        );
-        return; // Skip unknown muscles
+      if (normalized != null) {
+        if (normalized == 'lats') hasExplicitLats = true;
+        if (normalized == 'upper_back') hasExplicitUpperBack = true;
+
+        if (normalizedPriorities.containsKey(normalized)) {
+          normalizedPriorities[normalized] = max(
+            normalizedPriorities[normalized]!,
+            priority,
+          );
+        } else {
+          normalizedPriorities[normalized] = priority;
+        }
+        return;
       }
 
-      // Si ya existe, tomar la prioridad más alta
-      if (normalizedPriorities.containsKey(normalized)) {
-        normalizedPriorities[normalized] = max(
-          normalizedPriorities[normalized]!,
-          priority,
-        );
-      } else {
-        normalizedPriorities[normalized] = priority;
+      final expandedGroup = muscle_registry.expandGroup(muscle);
+      if (expandedGroup.isNotEmpty) {
+        for (final expandedMuscle in expandedGroup) {
+          if (normalizedPriorities.containsKey(expandedMuscle)) {
+            normalizedPriorities[expandedMuscle] = max(
+              normalizedPriorities[expandedMuscle]!,
+              priority,
+            );
+          } else {
+            normalizedPriorities[expandedMuscle] = priority;
+          }
+        }
+
+        if (expandedGroup.contains('lats') &&
+            expandedGroup.contains('upper_back')) {
+          hasBackGroupPriority = true;
+          backGroupPriority = max(backGroupPriority ?? priority, priority);
+        }
+        return;
       }
+
+      debugPrint(
+        '[Motor V3] ⚠️ Músculo desconocido: "$muscle" - será ignorado',
+      );
     });
 
     debugPrint('[Motor V3] ═══════════════════════════════════════');
@@ -394,6 +430,26 @@ class MotorV3Orchestrator {
           '[Motor V3] 📌 $muscle sin prioridad → asignado P3 (${fallbackLandmarks.vop} sets)',
         );
       }
+    }
+
+    if (hasBackGroupPriority && !hasExplicitLats && !hasExplicitUpperBack) {
+      final resolvedPriority = (backGroupPriority ?? 3).clamp(1, 5).toInt();
+      final backLandmarks = VolumeLandmarks.calculate(
+        muscle: 'upper_back',
+        priority: resolvedPriority,
+        trainingLevel: profile.trainingLevel,
+        age: profile.age,
+      );
+      final totalBackTarget = max(backLandmarks.vop, 2);
+      final latsTarget = (totalBackTarget / 2).ceil();
+      final upperBackTarget = totalBackTarget - latsTarget;
+
+      volumeByMuscle['lats'] = latsTarget;
+      volumeByMuscle['upper_back'] = upperBackTarget;
+
+      debugPrint(
+        '[Motor V3][BackMap] back -> lats=$latsTarget upper_back=$upperBackTarget (total=$totalBackTarget, priority=$resolvedPriority)',
+      );
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -505,6 +561,7 @@ class MotorV3Orchestrator {
     required UserProfile userProfile,
     required ClientProfile clientProfile,
     required _CycleStateWrapper cycleStateWrapper,
+    required String? backFocus,
   }) {
     final weeks = _buildWeeks(
       durationWeeks: durationWeeks,
@@ -515,6 +572,7 @@ class MotorV3Orchestrator {
       userProfile: userProfile,
       clientProfile: clientProfile,
       cycleStateWrapper: cycleStateWrapper,
+      backFocus: backFocus,
     );
 
     final clientId = client != null
@@ -546,6 +604,7 @@ class MotorV3Orchestrator {
         'volume_targets': volumeTargets,
         'scientific_version': '2.0.0',
         'periodization_model': 'linear_progressive',
+        if (backFocus != null) 'backFocus': backFocus,
       },
     );
   }
@@ -559,17 +618,27 @@ class MotorV3Orchestrator {
     required UserProfile userProfile,
     required ClientProfile clientProfile,
     required _CycleStateWrapper cycleStateWrapper,
+    required String? backFocus,
   }) {
     final weeks = <TrainingWeek>[];
+    final resolvedBackFocus = (backFocus == 'lats' || backFocus == 'upper_back')
+        ? backFocus!
+        : 'upper_back';
+    final expandedBaseVolume = expandBackMuscle(
+      volumePerMuscle,
+      backFocus: resolvedBackFocus,
+    );
 
     // ✅ PASO 10.1: Build BASE WEEK (Frozen Template) using CycleTemplateBuilder
     // This selects exercises ONCE and sets up the split/frequency.
+
     final buildResult = CycleTemplateBuilder.buildBaseWeek(
       userProfile: userProfile,
       clientProfile: clientProfile,
-      targetVolumeByMuscle: volumePerMuscle,
+      targetVolumeByMuscle: expandedBaseVolume,
       availableDays: daysPerWeek,
       split: split,
+      backFocus: resolvedBackFocus,
     );
 
     if (!buildResult.success) {
@@ -625,12 +694,12 @@ class MotorV3Orchestrator {
       }
 
       if (weekNum == 1) {
-        targetWeeklyVolume.addAll(volumePerMuscle);
+        targetWeeklyVolume.addAll(expandedBaseVolume);
       } else {
         if (cycleStateWrapper.state.phase == CyclePhase.adaptation ||
             cycleStateWrapper.state.phase == CyclePhase.maintenance) {
           // P1A-7: clonar week anterior SIN aumentar sets
-          targetWeeklyVolume.addAll(volumePerMuscle);
+          targetWeeklyVolume.addAll(expandedBaseVolume);
         } else {
           // Simple linear progression: +X sets/week ?
           // Or re-use WeeklyVolumePlanner?
@@ -668,6 +737,14 @@ class MotorV3Orchestrator {
           );
         }
       }
+
+      final expandedWeekVolume = expandBackMuscle(
+        targetWeeklyVolume,
+        backFocus: resolvedBackFocus,
+      );
+      targetWeeklyVolume
+        ..clear()
+        ..addAll(expandedWeekVolume);
 
       // ─────────────────────────────────────────────────────────────────
       // P1-D & P1-C: GATE PARA LOCAL DELOAD, HOLD / OVERREACH
@@ -1111,6 +1188,13 @@ class MotorV3Orchestrator {
     }
 
     // ── Step 8: Final validation log (P0 — log only, no throw) ──
+    _rebalanceToTargetWithoutNewExercises(
+      sessions: finalSessions,
+      targetWeeklySetsByMuscle: targetWeeklySetsByMuscle,
+      maxSetsPerMusclePerSession: maxSetsPerMusclePerSession,
+    );
+
+    // ── Step 9: Final validation log (P0 — log only, no throw) ──
     final finalAssigned = <String, int>{};
     for (final s in finalSessions) {
       for (final ep in s.exercises) {
@@ -1129,6 +1213,116 @@ class MotorV3Orchestrator {
     }
 
     return finalSessions;
+  }
+
+  static void _rebalanceToTargetWithoutNewExercises({
+    required List<TrainingSession> sessions,
+    required Map<String, int> targetWeeklySetsByMuscle,
+    required int maxSetsPerMusclePerSession,
+  }) {
+    int assignedForMuscle(String muscle) {
+      var total = 0;
+      for (final session in sessions) {
+        for (final exercise in session.exercises) {
+          if (exercise.muscleKey == muscle) {
+            total += exercise.sets.length;
+          }
+        }
+      }
+      return total;
+    }
+
+    for (final entry in targetWeeklySetsByMuscle.entries) {
+      final muscle = entry.key;
+      final target = entry.value;
+      if (target <= 0) continue;
+
+      final assignedBefore = assignedForMuscle(muscle);
+      var delta = target - assignedBefore;
+      if (delta <= 0) {
+        debugPrint(
+          '[RebalanceCapAware] muscle=$muscle target=$target assignedFinal=$assignedBefore deltaApplied=0',
+        );
+        continue;
+      }
+
+      final sessionIndexesWithMuscle = <int>[];
+      for (
+        var sessionIndex = 0;
+        sessionIndex < sessions.length;
+        sessionIndex++
+      ) {
+        if (sessions[sessionIndex].exercises.any(
+          (ep) => ep.muscleKey == muscle,
+        )) {
+          sessionIndexesWithMuscle.add(sessionIndex);
+        }
+      }
+
+      if (sessionIndexesWithMuscle.isEmpty) {
+        throw StateError(
+          'UNSATISFIABLE_DAILY_CAP muscle=$muscle delta=$delta sessions=0',
+        );
+      }
+
+      for (final sessionIndex in sessionIndexesWithMuscle) {
+        if (delta <= 0) break;
+
+        final session = sessions[sessionIndex];
+        int? targetExerciseIndex;
+        var currentForMuscleInSession = 0;
+
+        for (
+          var exerciseIndex = 0;
+          exerciseIndex < session.exercises.length;
+          exerciseIndex++
+        ) {
+          final exercise = session.exercises[exerciseIndex];
+          if (exercise.muscleKey != muscle) continue;
+          targetExerciseIndex ??= exerciseIndex;
+          currentForMuscleInSession += exercise.sets.length;
+        }
+
+        if (targetExerciseIndex == null) continue;
+
+        final availableSpace =
+            maxSetsPerMusclePerSession - currentForMuscleInSession;
+        if (availableSpace <= 0) continue;
+
+        final setsToAdd = min(delta, availableSpace);
+        if (setsToAdd <= 0) continue;
+
+        final targetExercise = session.exercises[targetExerciseIndex];
+        final templateSet = targetExercise.sets.isNotEmpty
+            ? targetExercise.sets.last
+            : const SetPrescription(repsMin: 8, repsMax: 12, rir: 2);
+        final additionalSets = List<SetPrescription>.generate(
+          setsToAdd,
+          (_) => templateSet,
+        );
+
+        final updatedExercises = List<PlannedExercise>.from(session.exercises);
+        updatedExercises[targetExerciseIndex] = _cloneExercise(
+          targetExercise,
+          sets: [...targetExercise.sets, ...additionalSets],
+        );
+        sessions[sessionIndex] = session.copyWith(exercises: updatedExercises);
+
+        delta -= setsToAdd;
+      }
+
+      if (delta > 0) {
+        throw StateError(
+          'UNSATISFIABLE_DAILY_CAP muscle=$muscle delta=$delta sessions=${sessionIndexesWithMuscle.length}',
+        );
+      }
+
+      final assignedFinal = assignedForMuscle(muscle);
+      final deltaApplied = assignedFinal - assignedBefore;
+      debugPrint(
+        '[RebalanceCapAware] muscle=$muscle target=$target assignedFinal=$assignedFinal deltaApplied=$deltaApplied',
+      );
+    }
   }
 
   static TrainingSplit _resolveSplit({
@@ -1174,7 +1368,16 @@ class MotorV3Orchestrator {
         final freq = split.muscleDistribution
             .where((d) => d.contains(muscle))
             .length;
-        setsPerMuscle[muscle] = (weeklyVol / max(freq, 1)).ceil().clamp(2, 10);
+        final sets = (weeklyVol / max(freq, 1)).ceil();
+        if (sets > 10) {
+          debugPrint(
+            '[V3][P0][FEASIBILITY_FAIL] muscle=$muscle weeklyVol=$weeklyVol freq=$freq setsPerSession=$sets',
+          );
+        }
+        setsPerMuscle[muscle] = sets;
+        debugPrint(
+          '[V3][P0][SESSION_DISTRIB] day=${dayIndex + 1} muscle=$muscle weeklyVol=$weeklyVol freq=$freq setsPerSession=$sets',
+        );
       }
 
       final selectedIds = <String>[];
@@ -1295,34 +1498,89 @@ class MotorV3Orchestrator {
   static CoverageResult _validateExerciseCoverage({
     required Map<String, int> targetVolume,
     required Map<int, List<PlannedExercise>> weekStructure,
+    required bool feasibilityPassed,
   }) {
-    final Map<String, int> directVolume = {};
+    final Map<String, int> assignedTotals = {};
+    final Map<int, Map<String, int>> muscleSetsByDay = {};
 
-    for (final day in weekStructure.values) {
-      for (final ex in day) {
-        directVolume[ex.muscleKey] =
-            (directVolume[ex.muscleKey] ?? 0) + ex.sets.length;
+    for (final entry in weekStructure.entries) {
+      final dayNumber = entry.key;
+      final dayExercises = entry.value;
+      final dayTotals = <String, int>{};
+
+      for (final plannedExercise in dayExercises) {
+        final setsCount = plannedExercise.sets.length;
+        assignedTotals[plannedExercise.muscleKey] =
+            (assignedTotals[plannedExercise.muscleKey] ?? 0) + setsCount;
+        dayTotals[plannedExercise.muscleKey] =
+            (dayTotals[plannedExercise.muscleKey] ?? 0) + setsCount;
       }
+
+      muscleSetsByDay[dayNumber] = dayTotals;
     }
+
+    debugPrint('[Coverage] assignedTotals reales por músculo: $assignedTotals');
 
     final List<String> errors = [];
 
     targetVolume.forEach((muscle, targetSets) {
       if (targetSets <= 0) return;
-
-      final actual = directVolume[muscle] ?? 0;
-
+      final actual = assignedTotals[muscle] ?? 0;
       if (actual != targetSets) {
         errors.add('Muscle "$muscle": target=$targetSets, assigned=$actual');
       }
     });
 
-    // P0.2-MVO-4: Log coverage result per muscle
     if (errors.isNotEmpty) {
       debugPrint('[V3][P0.2][COVERAGE_FAIL] ${errors.join(' | ')}');
     }
 
     return CoverageResult(isValid: errors.isEmpty, errors: errors);
+  }
+
+  static String? _resolveBackFocus(dynamic client) {
+    if (client == null) return null;
+    try {
+      final dynamic training = (client as dynamic).training;
+      final dynamic extra = training?.extra;
+      if (extra is Map && extra['backFocus'] is String) {
+        final raw = (extra['backFocus'] as String).trim().toLowerCase();
+        if (raw == 'lats' || raw == 'upper_back') {
+          return raw;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static Map<String, int> expandBackMuscle(
+    Map<String, int> targetSetsByMuscle, {
+    required String backFocus,
+  }) {
+    final expanded = Map<String, int>.from(targetSetsByMuscle);
+    final totalBackSets = expanded['back'];
+    if (totalBackSets == null || totalBackSets <= 0) {
+      return expanded;
+    }
+
+    final focus = (backFocus == 'lats' || backFocus == 'upper_back')
+        ? backFocus
+        : 'upper_back';
+    final a = (totalBackSets * 0.5).ceil();
+    final b = totalBackSets - a;
+
+    final latsSets = focus == 'lats' ? a : b;
+    final upperBackSets = totalBackSets - latsSets;
+
+    expanded.remove('back');
+    expanded['lats'] = (expanded['lats'] ?? 0) + latsSets;
+    expanded['upper_back'] = (expanded['upper_back'] ?? 0) + upperBackSets;
+
+    debugPrint(
+      '[BackFocus] totalBackSets=$totalBackSets latsSets=$latsSets upperBackSets=$upperBackSets focus=$focus',
+    );
+
+    return expanded;
   }
 
   static TrainingProgram _buildProgramFromPlanConfig({
@@ -1409,6 +1667,26 @@ class MotorV3Orchestrator {
   // ─────────────────────────────────────────────────────────────────────────
 
   static const int _defaultDailyCapPerMuscle = 10;
+
+  static const Set<String> _upperMusclesForFeasibility = {
+    'pectorals',
+    'lats',
+    'upper_back',
+    'traps',
+    'biceps',
+    'triceps',
+    'abs',
+  };
+
+  static const Set<String> _lowerMusclesForFeasibility = {
+    'quadriceps',
+    'hamstrings',
+    'glutes',
+    'calves',
+    'deltoide_anterior',
+    'deltoide_lateral',
+    'deltoide_posterior',
+  };
 
   static Map<String, int> _computeAssignedDirectVolume(
     List<TrainingSession> sessions,
@@ -1642,6 +1920,7 @@ class MotorV3Orchestrator {
   static List<String> _feasibilityErrors({
     required Map<String, int> targetVolume,
     required int daysPerWeek,
+    required TrainingSplit split,
     int dailyCapPerMuscle = _defaultDailyCapPerMuscle,
   }) {
     final errors = <String>[];
@@ -1658,17 +1937,52 @@ class MotorV3Orchestrator {
         freq = 3;
       }
 
-      final maxAssignable = freq * dailyCapPerMuscle;
+      final effectiveFreq = _effectiveFrequencyForSplit(
+        muscle: muscle,
+        baseFrequency: freq,
+        split: split,
+        daysPerWeek: daysPerWeek,
+      );
+
+      final maxAssignable = effectiveFreq * dailyCapPerMuscle;
 
       if (targetSets > maxAssignable) {
         errors.add(
           '[V3][P0.2][INFEASIBLE] muscle="$muscle" target=$targetSets '
-          'exceeds maxAssignable=$maxAssignable (freq=$freq, dailyCap=$dailyCapPerMuscle, days=$daysPerWeek).',
+          'exceeds maxAssignable=$maxAssignable '
+          '(baseFreq=$freq, effectiveFreq=$effectiveFreq, split=${split.name}, dailyCap=$dailyCapPerMuscle, days=$daysPerWeek).',
         );
       }
     });
 
     return errors;
+  }
+
+  static int _effectiveFrequencyForSplit({
+    required String muscle,
+    required int baseFrequency,
+    required TrainingSplit split,
+    required int daysPerWeek,
+  }) {
+    final normalized = muscle_registry.normalize(muscle) ?? muscle;
+    final boundedByDays = min(baseFrequency, max(daysPerWeek, 1));
+
+    switch (split) {
+      case TrainingSplit.upperLower:
+        final upperDays = (daysPerWeek / 2).ceil();
+        final lowerDays = daysPerWeek ~/ 2;
+
+        if (_upperMusclesForFeasibility.contains(normalized)) {
+          return min(boundedByDays, max(upperDays, 1));
+        }
+        if (_lowerMusclesForFeasibility.contains(normalized)) {
+          return min(boundedByDays, max(lowerDays, 1));
+        }
+        return boundedByDays;
+      case TrainingSplit.fullBody:
+      case TrainingSplit.pushPullLegs:
+        return boundedByDays;
+    }
   }
 
   /// ─────────────────────────────────────────────────────────────────────────

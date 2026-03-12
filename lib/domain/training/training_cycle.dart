@@ -79,7 +79,7 @@ class TrainingCycle extends Equatable {
 
   const TrainingCycle({
     required this.cycleId,
-    this.clientId = '',
+    required this.clientId,
     required this.startDate,
     this.endDate,
     required this.goal,

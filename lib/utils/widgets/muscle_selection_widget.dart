@@ -3,17 +3,17 @@ import 'package:hcs_app_lap/utils/theme.dart';
 
 /// Mapeo de keys canónicas Motor V3 → Labels UI en español
 class MuscleOption {
-  final String key; // Key canónica para el motor (p.ej. 'lats', 'upper_back')
+  final String key; // Key persistida por UI (p.ej. 'back', 'chest')
   final String label; // Label en español para UI
 
   const MuscleOption(this.key, this.label);
 }
 
-/// Lista completa de músculos con keys canónicas V3 (14 músculos SSOT)
+/// Lista completa de músculos visibles en UI de entrevista.
+/// Nota: 'Espalda' se maneja como key unificada 'back'.
 const List<MuscleOption> allMuscles = [
   MuscleOption('chest', 'Pecho'),
-  MuscleOption('lats', 'Dorsal ancho (Lats)'),
-  MuscleOption('upper_back', 'Espalda alta / Escápulas (Upper back)'),
+  MuscleOption('back', 'Espalda'),
   MuscleOption('traps', 'Trapecios'),
   MuscleOption('deltoide_anterior', 'Deltoide Anterior'),
   MuscleOption('deltoide_lateral', 'Deltoide Lateral'),
@@ -32,12 +32,13 @@ const List<MuscleOption> allMuscles = [
 String _normalizeToCanonicalKey(String raw) {
   const labelToKeyMap = {
     'Pecho': 'chest',
-    'Dorsal ancho': 'lats',
-    'Dorsal ancho (Lats)': 'lats',
-    'Espalda alta': 'upper_back',
-    'Espalda alta / Escápulas': 'upper_back',
-    'Espalda alta / Escápulas (Upper back)': 'upper_back',
-    'Upper back': 'upper_back',
+    'Espalda': 'back',
+    'Dorsal ancho': 'back',
+    'Dorsal ancho (Lats)': 'back',
+    'Espalda alta': 'back',
+    'Espalda alta / Escápulas': 'back',
+    'Espalda alta / Escápulas (Upper back)': 'back',
+    'Upper back': 'back',
     'Trapecios': 'traps',
     'Deltoide Anterior': 'deltoide_anterior',
     'Deltoide anterior': 'deltoide_anterior',
@@ -58,20 +59,22 @@ String _normalizeToCanonicalKey(String raw) {
   return labelToKeyMap[trimmed] ?? trimmed;
 }
 
-/// Helper: Expand legacy 'back' → ['lats', 'upper_back', 'traps']
+/// Helper: colapsa legacy ('lats'/'upper_back') y 'back' a la key UI 'back'.
 /// Mantiene backward compatibility con datos viejos de entrevista.
 List<String> _expandLegacyKeys(List<String> keys) {
   final expanded = <String>[];
   for (final k in keys) {
     final normalized = _normalizeToCanonicalKey(k);
-    if (normalized == 'back') {
-      // COMPAT LEGACY: back → lats/upper_back/traps
-      expanded.addAll(['lats', 'upper_back', 'traps']);
+    if (normalized == 'back' ||
+        normalized == 'lats' ||
+        normalized == 'upper_back') {
+      // UI unificada: cualquier variante de espalda se representa como 'back'
+      expanded.add('back');
     } else {
       expanded.add(normalized);
     }
   }
-  // Filtrar contra keys canónicas SOLO (14 músculos)
+  // Filtrar contra keys visibles en UI
   final canonicalKeys = allMuscles.map((m) => m.key).toSet();
   return expanded
       .where((k) => canonicalKeys.contains(k))
