@@ -1,0 +1,1 @@
+enum MechanicProfile { compound, isolation }

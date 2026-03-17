@@ -1,0 +1,164 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hcs_app_lap/core/enums/training_level.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/volume_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/training_phase.dart';
+
+void main() {
+  group('Volume Engine - Motor V3', () {
+    late VolumeEngine volumeEngine;
+
+    setUp(() {
+      volumeEngine = VolumeEngine();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: CÁLCULO DE VOLUMEN POR NIVEL
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Beginner receives lower weekly volume than advanced', () {
+      // GIVEN
+      const beginnerLevel = TrainingLevel.beginner;
+      const advancedLevel = TrainingLevel.advanced;
+      const phase = TrainingPhase.accumulation;
+      const weekNumber = 1;
+
+      // WHEN
+      final beginnerVolume = volumeEngine.calculateWeeklyVolume(
+        phase,
+        1000, // baseline
+        weekNumber,
+        beginnerLevel,
+      );
+
+      final advancedVolume = volumeEngine.calculateWeeklyVolume(
+        phase,
+        1000, // same baseline
+        weekNumber,
+        advancedLevel,
+      );
+
+      // THEN
+      expect(
+        beginnerVolume,
+        lessThan(advancedVolume),
+        reason:
+            'Principiante debe recibir menos volumen que avanzado en baseline',
+      );
+    });
+
+    test('Volume increases during accumulation phase', () {
+      // GIVEN
+      const phase = TrainingPhase.accumulation;
+      const level = TrainingLevel.intermediate;
+
+      // WHEN: Calculamos volumen para semanas progresivas
+      final week1Vol = volumeEngine.calculateWeeklyVolume(
+        phase,
+        1000,
+        1,
+        level,
+      );
+      final week2Vol = volumeEngine.calculateWeeklyVolume(
+        phase,
+        1000,
+        2,
+        level,
+      );
+      final week3Vol = volumeEngine.calculateWeeklyVolume(
+        phase,
+        1000,
+        3,
+        level,
+      );
+
+      // THEN: Volumen debe aumentar progresivamente
+      expect(week2Vol, greaterThanOrEqualTo(week1Vol));
+      expect(week3Vol, greaterThanOrEqualTo(week2Vol));
+    });
+
+    test('Volume decreases during deload phase', () {
+      // GIVEN
+      const phase = TrainingPhase.deload;
+      const level = TrainingLevel.intermediate;
+
+      // WHEN: Comparamos volumen de acumulación vs deload
+      final accumulationVolume = volumeEngine.calculateWeeklyVolume(
+        TrainingPhase.accumulation,
+        1000,
+        1,
+        level,
+      );
+      final deloadVolume = volumeEngine.calculateWeeklyVolume(
+        phase,
+        1000,
+        1,
+        level,
+      );
+
+      // THEN: Deload debe tener ~50% del volumen
+      expect(
+        deloadVolume,
+        lessThan(accumulationVolume),
+        reason: 'Deload debe reducir volumen',
+      );
+    });
+
+    test('Volume returned is always positive and non-zero', () {
+      // GIVEN & WHEN
+      final volume = volumeEngine.calculateWeeklyVolume(
+        TrainingPhase.accumulation,
+        1000,
+        1,
+        TrainingLevel.beginner,
+      );
+
+      // THEN
+      expect(volume, greaterThan(0));
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // TEST: DISTRIBUCIÓN DE VOLUMEN POR MÚSCULO
+    // ═══════════════════════════════════════════════════════════════════════
+
+    test('Volume distribution respects muscle priorities', () {
+      // GIVEN
+      final musclePriorities = {
+        'chest': 5, // Alta prioridad
+        'back': 4,
+        'shoulders': 2, // Baja prioridad
+      };
+      const totalVolume = 100;
+
+      // WHEN
+      final distribution = volumeEngine.distributeVolumeByMuscle(
+        totalVolume,
+        musclePriorities,
+      );
+
+      // THEN
+      expect(distribution['chest'], greaterThan(distribution['shoulders']!));
+      expect(distribution['back'], greaterThan(distribution['shoulders']!));
+    });
+
+    test('Distributed volume sums to total volume', () {
+      // GIVEN
+      final musclePriorities = {
+        'chest': 4,
+        'back': 4,
+        'shoulders': 2,
+        'biceps': 2,
+      };
+      const totalVolume = 100;
+
+      // WHEN
+      final distribution = volumeEngine.distributeVolumeByMuscle(
+        totalVolume,
+        musclePriorities,
+      );
+
+      // THEN
+      final sum = distribution.values.fold<int>(0, (a, b) => a + b);
+      expect(sum, equals(totalVolume));
+    });
+  });
+}

@@ -1,0 +1,1 @@
+enum ClientOpenOrigin { home, clients }
