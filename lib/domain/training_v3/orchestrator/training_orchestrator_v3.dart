@@ -120,7 +120,7 @@ class TrainingOrchestratorV3 {
         client.training.age ??
         client.profile.age ??
         _parseAgeFromExtra(client.training.extra) ??
-        _calculateAgeFromBirthdate(client.profile);
+        _calculateAgeFromBirthdate(client.profile, asOfDate: asOfDate);
     final gender = client.training.gender ?? client.profile.gender;
 
     if (age == null) {
@@ -143,7 +143,10 @@ class TrainingOrchestratorV3 {
     // PASO 2: CONVERTIR Client → UserProfile
     // ═══════════════════════════════════════════════════════════════
 
-    final userProfile = _convertClientToUserProfile(client);
+    final userProfile = _convertClientToUserProfile(
+      client,
+      referenceDate: asOfDate,
+    );
 
     // ═══════════════════════════════════════════════════════════════
     // PASO 3: DELEGAR A MotorV3Orchestrator (CIENTÍFICO PURO)
@@ -220,7 +223,10 @@ class TrainingOrchestratorV3 {
   /// - Client.training → UserProfile con características técnicas
   /// - Client.profile → Datos demográficos
   /// - Client.trainingHistory → Logs históricos
-  UserProfile _convertClientToUserProfile(Client client) {
+  UserProfile _convertClientToUserProfile(
+    Client client, {
+    required DateTime referenceDate,
+  }) {
     // Extraer datos de entrenamiento
     final training = client.training;
     final profile = client.profile;
@@ -382,7 +388,7 @@ class TrainingOrchestratorV3 {
           training.age ??
           profile.age ??
           _parseAgeFromExtra(training.extra) ??
-          _calculateAgeFromBirthdate(profile) ??
+          _calculateAgeFromBirthdate(profile, asOfDate: referenceDate) ??
           _defaultAge,
       gender: normalizedGender,
       heightCm: heightCm,
@@ -395,8 +401,8 @@ class TrainingOrchestratorV3 {
       musclePriorities: clampedMusclePrioritiesMap,
       availableEquipment: _getAvailableEquipment(training.extra),
       injuryHistory: injuryHistory,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: referenceDate,
+      updatedAt: referenceDate,
     );
   }
 
@@ -407,10 +413,10 @@ class TrainingOrchestratorV3 {
     return int.tryParse(raw?.toString() ?? '');
   }
 
-  int? _calculateAgeFromBirthdate(dynamic profile) {
+  int? _calculateAgeFromBirthdate(dynamic profile, {DateTime? asOfDate}) {
     final birthDate = profile?.birthDate as DateTime?;
     if (birthDate == null) return null;
-    final now = DateTime.now();
+    final now = asOfDate ?? DateTime.now();
     int age = now.year - birthDate.year;
     if (now.month < birthDate.month ||
         (now.month == birthDate.month && now.day < birthDate.day)) {

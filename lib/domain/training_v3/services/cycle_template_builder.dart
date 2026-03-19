@@ -13,7 +13,6 @@ import 'package:hcs_app_lap/domain/training_v3/engines/session_intensity_set_all
 import 'package:hcs_app_lap/domain/training_v3/engines/session_time_estimator.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_ordering_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_role_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/intensity_split_allocator.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/intensity_distribution_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/mesocycle_exercise_pool.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_set_allocator.dart';
@@ -73,9 +72,11 @@ class CycleTemplateBuilder {
     'lats',
     'upper_back',
     'traps',
+    'delts_front',
+    'delts_lateral',
+    'delts_rear',
     'biceps',
     'triceps',
-    'abs',
   };
 
   static const Set<String> _lowerMuscles = {
@@ -83,9 +84,7 @@ class CycleTemplateBuilder {
     'hamstrings',
     'glutes',
     'calves',
-    'delts_front',
-    'delts_lateral',
-    'delts_rear',
+    'abs',
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -171,7 +170,6 @@ class CycleTemplateBuilder {
     final repStructureEngine = RepStructureEngine();
     final sessionTimeEstimator = SessionTimeEstimator();
     final roleEngine = ExerciseRoleEngine();
-    final intensityAllocator = IntensitySplitAllocator();
     final muscleOccurrenceCount = <String, int>{};
     final lastPairByMuscle = <String, List<String>>{};
     final lockedAnchorByMuscle = <String, String>{};
@@ -327,32 +325,14 @@ class CycleTemplateBuilder {
           );
           final dayIntensity =
               intensityByAppearancePerMuscle[normalizedMuscle]?[occurrence + 1];
-          final (primaryZone, secondaryZone) = dayIntensity != null
-              ? IntensityDistributionEngine.zonesForDay(dayIntensity)
-              : (
-                  intensityAllocator
-                      .allocateForSession(
-                        muscle: normalizedMuscle,
-                        weeklySetsForMuscle:
-                            muscleConfig[normalizedMuscle]?.weeklySets ?? 0,
-                        sessionSetsForMuscle: setsForDay,
-                        frequency: frequency,
-                        sessionIndex: occurrence,
-                        intensitySplitPercent: intensityProfilePercentSplit,
-                      )
-                      .primaryZone,
-                  intensityAllocator
-                      .allocateForSession(
-                        muscle: normalizedMuscle,
-                        weeklySetsForMuscle:
-                            muscleConfig[normalizedMuscle]?.weeklySets ?? 0,
-                        sessionSetsForMuscle: setsForDay,
-                        frequency: frequency,
-                        sessionIndex: occurrence,
-                        intensitySplitPercent: intensityProfilePercentSplit,
-                      )
-                      .secondaryZone,
-                );
+          final resolvedDayIntensity =
+              dayIntensity ??
+              IntensityDistributionEngine.splitWeeklySets(
+                weeklySets: setsForDay,
+                intensitySplitPercent: intensityProfilePercentSplit,
+              );
+          final (primaryZone, secondaryZone) =
+              IntensityDistributionEngine.zonesForDay(resolvedDayIntensity);
           final rolePlan = _resolveSessionRolePlan(
             frequency: frequency,
             sessionIndex: occurrence,
@@ -489,18 +469,6 @@ class CycleTemplateBuilder {
         }
       }
 
-      // Validación estricta post-build: cada músculo debe tener sets exactos
-      for (final muscle in dayAlloc.keys) {
-        final normalized = normalizeMuscleKey(muscle);
-        final assigned = setsByMuscle[normalized] ?? 0;
-        final target = dayAlloc[muscle] ?? 0;
-        if (assigned != target) {
-          throw StateError(
-            '[P0 COVERAGE FAIL] muscle=$normalized target=$target assigned=$assigned',
-          );
-        }
-      }
-
       final sessionExercises = _buildStructuredSessionFromSeeds(
         seeds: daySeedExercises,
         dayAlloc: dayAlloc,
@@ -510,6 +478,11 @@ class CycleTemplateBuilder {
       if (sessionExercises.length > maxPerSession) {
         _applySessionCap(sessionExercises, maxPerSession, priorities);
       }
+
+      _validateSessionCoverage(
+        dayAlloc: dayAlloc,
+        sessionExercises: sessionExercises,
+      );
 
       // Refinador: solo completa metadata faltante, nunca sobreescribe
       // una estructura A/B/C/D que ya venga construida desde el builder.
@@ -928,11 +901,34 @@ class CycleTemplateBuilder {
       'pectorals',
       'lats',
       'upper_back',
-      'quadriceps',
+      'quads',
       'hamstrings',
       'glutes',
     };
     return largeMuscles.contains(normalized) ? 1 : 0;
+  }
+
+  static void _validateSessionCoverage({
+    required Map<String, int> dayAlloc,
+    required List<PlannedExercise> sessionExercises,
+  }) {
+    final assignedByMuscle = <String, int>{};
+    for (final exercise in sessionExercises) {
+      final muscle = normalizeMuscleKey(exercise.muscleKey);
+      assignedByMuscle[muscle] =
+          (assignedByMuscle[muscle] ?? 0) + exercise.sets.length;
+    }
+
+    for (final entry in dayAlloc.entries) {
+      final normalized = normalizeMuscleKey(entry.key);
+      final target = entry.value;
+      final assigned = assignedByMuscle[normalized] ?? 0;
+      if (assigned != target) {
+        throw StateError(
+          '[P0 COVERAGE FAIL] muscle=$normalized target=$target assigned=$assigned',
+        );
+      }
+    }
   }
 
   static String normalizeMuscleKey(String k) {
@@ -1778,32 +1774,42 @@ class CycleTemplateBuilder {
   ) {
     if (exercises.isEmpty) return;
 
-    // Global block-first distribution: prevents per-muscle pre-allocation from
-    // neutralizing A/B/C/D priority within the session.
-    final totalSessionSets = max(
-      1,
-      dayAlloc.values.fold<int>(0, (sum, sets) => sum + sets),
-    );
-    final blockLabels = exercises
-        .map((exercise) => exercise.blockLabel)
-        .toList();
-    final allocation = ExerciseSetAllocator.allocateSets(
-      totalSessionSets,
-      exercises.length,
-      blockLabelsByIndex: blockLabels,
-    );
+    // Keep volume SSOT per muscle and distribute only inside each muscle.
+    final indexesByMuscle = <String, List<int>>{};
+    for (var index = 0; index < exercises.length; index++) {
+      final muscle = normalizeMuscleKey(exercises[index].muscleKey);
+      indexesByMuscle.putIfAbsent(muscle, () => <int>[]).add(index);
+    }
 
-    for (var i = 0; i < exercises.length; i++) {
-      final current = exercises[i];
-      final targetSets = max(1, allocation['ex$i'] ?? current.sets.length);
-      if (targetSets == current.sets.length) continue;
+    for (final entry in dayAlloc.entries) {
+      final muscle = normalizeMuscleKey(entry.key);
+      final targetSetsForMuscle = entry.value;
+      final indexes = indexesByMuscle[muscle] ?? const <int>[];
+      if (indexes.isEmpty || targetSetsForMuscle <= 0) continue;
 
-      final template = current.sets.isNotEmpty
-          ? current.sets.first
-          : const SetPrescription(repsMin: 8, repsMax: 12, rir: 2);
-      exercises[i] = current.copyWith(
-        sets: List.generate(targetSets, (_) => template),
+      final blockLabels = indexes.map((i) => exercises[i].blockLabel).toList();
+      final allocation = ExerciseSetAllocator.allocateSets(
+        targetSetsForMuscle,
+        indexes.length,
+        blockLabelsByIndex: blockLabels,
       );
+
+      for (var localIndex = 0; localIndex < indexes.length; localIndex++) {
+        final exerciseIndex = indexes[localIndex];
+        final current = exercises[exerciseIndex];
+        final targetSets = max(
+          1,
+          allocation['ex$localIndex'] ?? current.sets.length,
+        );
+        if (targetSets == current.sets.length) continue;
+
+        final template = current.sets.isNotEmpty
+            ? current.sets.first
+            : const SetPrescription(repsMin: 8, repsMax: 12, rir: 2);
+        exercises[exerciseIndex] = current.copyWith(
+          sets: List.generate(targetSets, (_) => template),
+        );
+      }
     }
   }
 

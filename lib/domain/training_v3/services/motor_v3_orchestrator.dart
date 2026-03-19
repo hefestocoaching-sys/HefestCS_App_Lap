@@ -139,7 +139,7 @@ class MotorV3Orchestrator {
     final warnings = <String>[];
 
     try {
-      final effectiveAsOfDate = asOfDate ?? DateTime.now();
+      final effectiveAsOfDate = asOfDate ?? userProfile.updatedAt;
 
       // ✅ PASO 2: Conversión Client → UserProfile
       // (El UserProfile ya está proporcionado)
@@ -1328,7 +1328,54 @@ class MotorV3Orchestrator {
 
       final assignedBefore = assignedForMuscle(muscle);
       var delta = target - assignedBefore;
-      if (delta <= 0) {
+      if (delta < 0) {
+        var toRemove = -delta;
+        for (
+          var sessionIndex = sessions.length - 1;
+          sessionIndex >= 0;
+          sessionIndex--
+        ) {
+          if (toRemove <= 0) break;
+          final session = sessions[sessionIndex];
+          final updatedExercises = List<PlannedExercise>.from(
+            session.exercises,
+          );
+
+          for (
+            var exerciseIndex = updatedExercises.length - 1;
+            exerciseIndex >= 0;
+            exerciseIndex--
+          ) {
+            if (toRemove <= 0) break;
+            final exercise = updatedExercises[exerciseIndex];
+            if (exercise.muscleKey != muscle || exercise.sets.length <= 1) {
+              continue;
+            }
+
+            final removable = exercise.sets.length - 1;
+            final cut = min(removable, toRemove);
+            if (cut <= 0) continue;
+
+            updatedExercises[exerciseIndex] = _cloneExercise(
+              exercise,
+              sets: exercise.sets.sublist(0, exercise.sets.length - cut),
+            );
+            toRemove -= cut;
+          }
+
+          sessions[sessionIndex] = session.copyWith(
+            exercises: updatedExercises,
+          );
+        }
+
+        final assignedFinal = assignedForMuscle(muscle);
+        debugPrint(
+          '[RebalanceCapAware] muscle=$muscle target=$target assignedFinal=$assignedFinal deltaApplied=${assignedFinal - assignedBefore}',
+        );
+        continue;
+      }
+
+      if (delta == 0) {
         debugPrint(
           '[RebalanceCapAware] muscle=$muscle target=$target assignedFinal=$assignedBefore deltaApplied=0',
         );
@@ -2014,6 +2061,7 @@ class MotorV3Orchestrator {
         _defaultIntensityProfilePercentSplit['heavy']!;
     final medium =
         (raw['medium'] as num?)?.toDouble() ??
+        (raw['moderate'] as num?)?.toDouble() ??
         _defaultIntensityProfilePercentSplit['medium']!;
     final light =
         (raw['light'] as num?)?.toDouble() ??
