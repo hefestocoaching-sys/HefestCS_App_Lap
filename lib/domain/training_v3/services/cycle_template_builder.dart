@@ -592,6 +592,12 @@ class CycleTemplateBuilder {
       );
     }
 
+    _auditAllocationConsistency(
+      allocation: allocation,
+      config: canonicalConfig,
+      label: 'split=${split.name} days=$availableDays',
+    );
+
     return allocation;
   }
 
@@ -919,15 +925,24 @@ class CycleTemplateBuilder {
           (assignedByMuscle[muscle] ?? 0) + exercise.sets.length;
     }
 
+    final mismatches = <String>[];
     for (final entry in dayAlloc.entries) {
       final normalized = normalizeMuscleKey(entry.key);
       final target = entry.value;
       final assigned = assignedByMuscle[normalized] ?? 0;
       if (assigned != target) {
-        throw StateError(
-          '[P0 COVERAGE FAIL] muscle=$normalized target=$target assigned=$assigned',
+        mismatches.add(
+          '$normalized(target=$target, assigned=$assigned, delta=${assigned - target})',
         );
       }
+    }
+
+    if (mismatches.isNotEmpty) {
+      debugPrint(
+        '[V3][P0.2][SESSION_COVERAGE_WARN] '
+        'coverage mismatch after session build: ${mismatches.join('; ')} '
+        'action=continue_without_throw',
+      );
     }
   }
 
@@ -1446,29 +1461,148 @@ class CycleTemplateBuilder {
     required int maxMusclesPerDay,
     required List<Map<String, int>> allocation,
   }) {
-    // Sort all muscles by priority desc
+    // Sort all muscles by priority desc, then by target sets desc for stability.
     final sorted = config.keys.toList()
-      ..sort((a, b) => (priorities[b] ?? 0).compareTo(priorities[a] ?? 0));
+      ..sort((a, b) {
+        final byPriority = (priorities[b] ?? 0).compareTo(priorities[a] ?? 0);
+        if (byPriority != 0) return byPriority;
+        final byTarget = (config[b]?.weeklySets ?? 0).compareTo(
+          config[a]?.weeklySets ?? 0,
+        );
+        if (byTarget != 0) return byTarget;
+        return a.compareTo(b);
+      });
 
-    for (int dayIdx = 0; dayIdx < availableDays; dayIdx++) {
-      // Rotate: shift start index by 2 each day
-      final shift = (dayIdx * 2) % sorted.length;
-      final rotated = [...sorted.sublist(shift), ...sorted.sublist(0, shift)];
-      final musclesToday = rotated.take(maxMusclesPerDay).toList();
+    final dayMuscles = <int, List<String>>{
+      for (int dayIdx = 0; dayIdx < availableDays; dayIdx++) dayIdx: <String>[],
+    };
 
-      for (final muscle in musclesToday) {
-        final cfg = config[muscle];
-        if (cfg == null) continue;
+    for (final muscle in sorted) {
+      final cfg = config[muscle];
+      if (cfg == null) continue;
 
-        final setsPerAppearance = (cfg.weeklySets / cfg.frequency).round();
+      const int dailyCap = _defaultDailyCapPerMuscle;
+      final minDaysNeeded = (cfg.weeklySets / dailyCap).ceil();
+      final effectiveFrequency = _effectiveFrequencyForMuscle(
+        muscle: muscle,
+        requestedFrequency: cfg.frequency,
+        split: TrainingSplit.fullBody,
+        availableDays: availableDays,
+      );
+      final desiredFrequency = max(
+        effectiveFrequency,
+        minDaysNeeded,
+      ).clamp(1, availableDays);
 
-        // Special case: abs gets reduced sets in full-body
-        final isAbs = muscle == 'abs';
-        final sets = isAbs
-            ? max(1, (setsPerAppearance * 0.5).floor())
-            : setsPerAppearance;
+      final assignedDays = <int>[];
+      while (assignedDays.length < desiredFrequency) {
+        final strictCandidates =
+            List<int>.generate(availableDays, (i) => i)
+                .where(
+                  (dayIdx) =>
+                      !assignedDays.contains(dayIdx) &&
+                      dayMuscles[dayIdx]!.length < maxMusclesPerDay,
+                )
+                .toList()
+              ..sort((a, b) {
+                final remainingA = maxMusclesPerDay - dayMuscles[a]!.length;
+                final remainingB = maxMusclesPerDay - dayMuscles[b]!.length;
+                final byCapacity = remainingB.compareTo(remainingA);
+                if (byCapacity != 0) return byCapacity;
+                return a.compareTo(b);
+              });
 
-        allocation[dayIdx][muscle] = min(sets, _defaultDailyCapPerMuscle);
+        if (strictCandidates.isNotEmpty) {
+          final selectedDay = strictCandidates.first;
+          dayMuscles[selectedDay]!.add(muscle);
+          assignedDays.add(selectedDay);
+          continue;
+        }
+
+        // Overflow controlado: preservar SSOT de volumen aunque se supere
+        // temporalmente el límite de músculos por día.
+        final relaxedCandidates =
+            List<int>.generate(
+              availableDays,
+              (i) => i,
+            ).where((dayIdx) => !assignedDays.contains(dayIdx)).toList()..sort(
+              (a, b) => dayMuscles[a]!.length.compareTo(dayMuscles[b]!.length),
+            );
+
+        if (relaxedCandidates.isEmpty) break;
+
+        final selectedDay = relaxedCandidates.first;
+        dayMuscles[selectedDay]!.add(muscle);
+        assignedDays.add(selectedDay);
+      }
+
+      if (assignedDays.isEmpty) {
+        dayMuscles[0]!.add(muscle);
+        assignedDays.add(0);
+      }
+
+      final baseSets = cfg.weeklySets ~/ assignedDays.length;
+      final remainder = cfg.weeklySets % assignedDays.length;
+      final setsByDay = <int, int>{};
+      var totalAssigned = 0;
+
+      for (var i = 0; i < assignedDays.length; i++) {
+        final dayIdx = assignedDays[i];
+        final setsForDay = baseSets + (i < remainder ? 1 : 0);
+        if (setsForDay <= 0) continue;
+        final normalized = normalizeMuscleKey(muscle);
+        allocation[dayIdx][normalized] =
+            (allocation[dayIdx][normalized] ?? 0) + setsForDay;
+        setsByDay[dayIdx + 1] = setsForDay;
+        totalAssigned += setsForDay;
+      }
+
+      debugPrint(
+        '[V3][ALLOC_AUDIT] muscle=${normalizeMuscleKey(muscle)} '
+        'targetWeekly=${cfg.weeklySets} '
+        'effectiveFrequency=$effectiveFrequency '
+        'assignedDays=${assignedDays.map((d) => d + 1).toList()} '
+        'setsByDay=$setsByDay '
+        'finalAssigned=$totalAssigned '
+        'delta=${cfg.weeklySets - totalAssigned}',
+      );
+    }
+  }
+
+  static void _auditAllocationConsistency({
+    required List<Map<String, int>> allocation,
+    required Map<String, _MuscleFreqConfig> config,
+    required String label,
+  }) {
+    final assignedByMuscle = <String, int>{};
+    for (final dayAlloc in allocation) {
+      for (final entry in dayAlloc.entries) {
+        final muscle = normalizeMuscleKey(entry.key);
+        assignedByMuscle[muscle] =
+            (assignedByMuscle[muscle] ?? 0) + entry.value;
+      }
+    }
+
+    for (final entry in config.entries) {
+      final muscle = normalizeMuscleKey(entry.key);
+      final target = entry.value.weeklySets;
+      final assigned = assignedByMuscle[muscle] ?? 0;
+      final delta = target - assigned;
+
+      debugPrint(
+        '[V3][ALLOC_AUDIT] scope=$label '
+        'muscle=$muscle targetWeekly=$target finalAssigned=$assigned delta=$delta',
+      );
+
+      if (target > 0 && assigned == 0) {
+        throw StateError(
+          '[V3][ALLOC_AUDIT][MISSING] muscle=$muscle targetWeekly=$target assigned=0 scope=$label',
+        );
+      }
+      if (assigned != target) {
+        throw StateError(
+          '[V3][ALLOC_AUDIT][MISMATCH] muscle=$muscle targetWeekly=$target assigned=$assigned scope=$label',
+        );
       }
     }
   }

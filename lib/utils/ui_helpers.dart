@@ -23,6 +23,7 @@ Future<DateTime?> showCustomDatePicker(
   required DateTime initialDate,
   DateTime? firstDate,
   DateTime? lastDate,
+  bool calendarOnly = false,
   List<DateTime>? highlightedDates, // Fechas con registros
 }) async {
   return await showDatePicker(
@@ -30,6 +31,9 @@ Future<DateTime?> showCustomDatePicker(
     initialDate: initialDate,
     firstDate: firstDate ?? DateTime(1920),
     lastDate: lastDate ?? DateTime.now().add(const Duration(days: 365)),
+    initialEntryMode: calendarOnly
+        ? DatePickerEntryMode.calendarOnly
+        : DatePickerEntryMode.calendar,
     locale: const Locale('es', 'ES'), // Asegura el idioma español
     selectableDayPredicate: highlightedDates != null
         ? (DateTime day) {

@@ -386,6 +386,7 @@ class AnthropometryMeasuresTabState
       initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 1)),
+      calendarOnly: true,
       highlightedDates: highlightedDates,
     );
     if (!context.mounted) return;
@@ -585,10 +586,7 @@ class AnthropometryMeasuresTabState
     } catch (e) {
       debugPrint('Error al guardar mediciones: $e');
       if (mounted) {
-        showErrorSnackbar(
-          context,
-          'Error al guardar: ${e.toString()}',
-        );
+        showErrorSnackbar(context, 'Error al guardar: ${e.toString()}');
       }
     }
   }

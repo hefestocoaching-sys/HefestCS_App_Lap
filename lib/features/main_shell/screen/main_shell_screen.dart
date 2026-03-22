@@ -216,9 +216,10 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     ref.read(saveIndicatorProvider.notifier).setSaving();
 
     try {
-      final index = moduleIndex ?? _selectedIndexNotifier.value;
-      final module = _moduleFromIndex(index);
-      if (module != null) {
+      // ✅ CRITICAL: Guardar TODOS los módulos sucios primero,
+      // especialmente Historia Clínica que contiene datos necesarios por Antropometría
+      debugPrint('[MainShell][Save] Sincronizando todos los módulos...');
+      for (final module in _allModules()) {
         await module.saveIfDirty();
       }
 
@@ -291,7 +292,10 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                       heroTag: null,
                       onPressed: () async {
                         await _saveActiveModuleIfNeeded();
-                        final clientToSave = currentActiveClient;
+                        final clientToSave = ref
+                            .read(clientsProvider)
+                            .value
+                            ?.activeClient;
                         if (clientToSave != null) {
                           final client = clientToSave;
                           await ref
@@ -384,57 +388,27 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                             children: [
                                               const WorkspaceHomeScreen(), // 0
                                               HistoryClinicScreen(
-                                                key: currentActiveClient != null
-                                                    ? ValueKey(
-                                                        'history_${currentActiveClient.id}',
-                                                      )
-                                                    : _historyClinicKey,
+                                                key: _historyClinicKey,
                                               ), // 1
                                               AnthropometryScreen(
-                                                key: currentActiveClient != null
-                                                    ? ValueKey(
-                                                        'anthropometry_${currentActiveClient.id}',
-                                                      )
-                                                    : _anthropometryKey,
+                                                key: _anthropometryKey,
                                               ), // 2
                                               NutritionScreen(
-                                                key: currentActiveClient != null
-                                                    ? ValueKey(
-                                                        'nutrition_${currentActiveClient.id}',
-                                                      )
-                                                    : _nutritionKey,
+                                                key: _nutritionKey,
                                               ), // 3
                                               MacrosScreen(
-                                                key: currentActiveClient != null
-                                                    ? ValueKey(
-                                                        'macros_${currentActiveClient.id}',
-                                                      )
-                                                    : _macrosKey,
+                                                key: _macrosKey,
                                               ), // 4
                                               useUnifiedPlan
                                                   ? UnifiedDayPlanningScreen(
-                                                      key:
-                                                          currentActiveClient !=
-                                                              null
-                                                          ? ValueKey(
-                                                              'unified_plan_${currentActiveClient.id}',
-                                                            )
-                                                          : _unifiedPlanKey,
+                                                      key: _unifiedPlanKey,
                                                     )
                                                   : EquivalentsByDayScreen(
-                                                      key:
-                                                          currentActiveClient !=
-                                                              null
-                                                          ? ValueKey(
-                                                              'equivalents_${currentActiveClient.id}',
-                                                            )
-                                                          : _equivalentsKey,
+                                                      key: _equivalentsKey,
                                                     ), // 5
                                               currentActiveClient != null
                                                   ? MealPlanScreen(
-                                                      key: ValueKey(
-                                                        'mealplan_${currentActiveClient.id}',
-                                                      ),
+                                                      key: _mealPlanKey,
                                                       client:
                                                           currentActiveClient,
                                                       onClientUpdated:
@@ -459,11 +433,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                                       ),
                                               ), // 7
                                               BiochemistryScreen(
-                                                key: currentActiveClient != null
-                                                    ? ValueKey(
-                                                        'biochemistry_${currentActiveClient.id}',
-                                                      )
-                                                    : _biochemistryKey,
+                                                key: _biochemistryKey,
                                               ), // 8
                                               const SettingsScreen(), // 9
                                               const ClientOverviewScreen(), // 10

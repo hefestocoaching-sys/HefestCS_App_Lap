@@ -247,6 +247,7 @@ class _BiochemistryTabState extends ConsumerState<BiochemistryTab>
       initialDate: initialDate,
       firstDate: firstDate,
       lastDate: lastDate,
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
       locale: const Locale('es', 'ES'),
       builder: (context, child) => Theme(
         data: ThemeData.dark().copyWith(

@@ -405,6 +405,7 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
       initialDate: initialCandidate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 1)),
+      calendarOnly: true,
     );
 
     if (picked != null) {
