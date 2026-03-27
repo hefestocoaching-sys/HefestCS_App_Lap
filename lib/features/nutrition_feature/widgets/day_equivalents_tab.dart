@@ -68,63 +68,9 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       // Si ya hay datos guardados para este día, no sobreescribir
       if (dayEquivs != null && dayEquivs.isNotEmpty) return;
 
-      final dayMacros = _getDayMacros();
-      final targetKcal =
-          dayMacros?.kcal ??
-          (widget.planResult?.kcalTargetDay as num?)?.toDouble() ??
-          0.0;
-      final targetProtein =
-          dayMacros?.proteinG ??
-          (widget.planResult?.proteinTargetDay as num?)?.toDouble() ??
-          0.0;
-      final targetCarb =
-          dayMacros?.carbG ??
-          (widget.planResult?.carbTargetDay as num?)?.toDouble() ??
-          0.0;
-      final targetFat =
-          dayMacros?.fatG ??
-          (widget.planResult?.fatTargetDay as num?)?.toDouble() ??
-          0.0;
-
-      final mealsCount = widget.planResult.mealsPerDay ?? 3;
-
-      final initialSmae = widget.planResult?.smaeDistribution;
-      if (dayMacros == null && initialSmae != null) {
-        ref
-            .read(equivalentsByDayProvider.notifier)
-            .setDayData(
-              widget.dayKey,
-              initialSmae.totalsByGroup,
-              initialSmae.mealsByGroup,
-            );
-        return;
-      }
-
-      if (targetKcal <= 0 ||
-          targetProtein <= 0 ||
-          targetCarb <= 0 ||
-          targetFat <= 0) {
-        _initializeEmptyDay();
-        return;
-      }
-
-      final engine = SmaeDistributionEngine();
-      final distribution = engine.distribute(
-        kcalTarget: targetKcal,
-        proteinTargetG: targetProtein,
-        carbTargetG: targetCarb,
-        fatTargetG: targetFat,
-        mealsPerDay: mealsCount,
-        mealTargets: widget.planResult?.mealTargets,
-      );
-
-      ref
-          .read(equivalentsByDayProvider.notifier)
-          .setDayData(
-            widget.dayKey,
-            distribution.totalsByGroup,
-            distribution.mealsByGroup,
-          );
+      // Regla de negocio: nunca prellenar automáticamente equivalentes.
+      // Si no hay datos guardados para el día, inicializar todo en 0.
+      _initializeEmptyDay();
     });
   }
 
@@ -140,7 +86,7 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
 
   /// Devuelve los macros en gramos absolutos del día según weeklyMacroSettings.
   /// Retorna null si no hay datos disponibles para ese día.
-  _DayMacros? _getDayMacros() {
+  _DayMacros? _getDayMacrosFor(String dayKey) {
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return null;
 
@@ -148,14 +94,17 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     final macroRecords = readNutritionRecordList(
       client.nutrition.extra[NutritionExtraKeys.macrosRecords],
     );
+
+    final targetWeekday = _weekdayFromDayKey(dayKey);
     final macroRecord =
+        _latestMacroRecordForWeekday(macroRecords, targetWeekday) ??
         nutritionRecordForDate(macroRecords, activeDateIso) ??
         latestNutritionRecordByDate(macroRecords);
     final activeMacros = parseWeeklyMacroSettings(
       macroRecord?['weeklyMacroSettings'],
     );
 
-    final day = activeMacros?[widget.dayKey];
+    final day = _resolveDaySettings(activeMacros, dayKey);
     if (day == null) return null;
 
     final w = client.lastWeight ?? 70.0;
@@ -169,6 +118,89 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
                 (day.carbSelected * w * 4) +
                 (day.fatSelected * w * 9),
     );
+  }
+
+  DailyMacroSettings? _resolveDaySettings(
+    Map<String, DailyMacroSettings>? weekly,
+    String dayKey,
+  ) {
+    if (weekly == null || weekly.isEmpty) return null;
+
+    final normalizedTarget = _normalizeDayKey(dayKey);
+    for (final entry in weekly.entries) {
+      if (_normalizeDayKey(entry.key) == normalizedTarget) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? _latestMacroRecordForWeekday(
+    List<Map<String, dynamic>> records,
+    int weekday,
+  ) {
+    Map<String, dynamic>? latest;
+    String? latestIso;
+
+    for (final record in records) {
+      final iso = _normalizeDateIso(record['dateIso']);
+      if (iso == null) continue;
+      final parsed = DateTime.tryParse(iso);
+      if (parsed == null || parsed.weekday != weekday) continue;
+
+      if (latestIso == null || iso.compareTo(latestIso) > 0) {
+        latest = record;
+        latestIso = iso;
+      }
+    }
+
+    return latest;
+  }
+
+  int _weekdayFromDayKey(String dayKey) {
+    switch (_normalizeDayKey(dayKey)) {
+      case 'lunes':
+        return DateTime.monday;
+      case 'martes':
+        return DateTime.tuesday;
+      case 'miercoles':
+        return DateTime.wednesday;
+      case 'jueves':
+        return DateTime.thursday;
+      case 'viernes':
+        return DateTime.friday;
+      case 'sabado':
+        return DateTime.saturday;
+      case 'domingo':
+        return DateTime.sunday;
+      default:
+        return DateTime.monday;
+    }
+  }
+
+  String _normalizeDayKey(String raw) {
+    return raw
+        .toLowerCase()
+        .trim()
+        .replaceAll('á', 'a')
+        .replaceAll('é', 'e')
+        .replaceAll('í', 'i')
+        .replaceAll('ó', 'o')
+        .replaceAll('ú', 'u');
+  }
+
+  String? _normalizeDateIso(dynamic raw) {
+    if (raw == null) return null;
+    final s = raw.toString().trim();
+    if (s.isEmpty) return null;
+    final dt = DateTime.tryParse(s);
+    if (dt != null) return dateIsoFrom(dt);
+    final match = RegExp(r'^(\d{4}-\d{2}-\d{2})').firstMatch(s);
+    if (match != null) {
+      final parsed = DateTime.tryParse(match.group(1)!);
+      if (parsed != null) return dateIsoFrom(parsed);
+    }
+    return null;
   }
 
   @override
@@ -248,13 +280,6 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
       }
     }
 
-    if (kcalTarget == 0 && widget.planResult != null) {
-      kcalTarget = widget.planResult.kcalTargetDay ?? 0.0;
-      proteinTarget = widget.planResult.proteinTargetDay ?? 0.0;
-      fatTarget = widget.planResult.fatTargetDay ?? 0.0;
-      carbTarget = widget.planResult.carbTargetDay ?? 0.0;
-    }
-
     final targets = {
       'kcal': kcalTarget,
       'protein': proteinTarget,
@@ -306,51 +331,68 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
         // Action Buttons (Copy/Auto)
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _showCopyDayDialog(context),
-                  icon: const Icon(Icons.copy, size: 18),
-                  label: const Text('Copiar Dia'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showCopyDayDialog(context),
+                      icon: const Icon(Icons.copy, size: 18),
+                      label: const Text('Copiar Dia'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _autoDistribute(context),
+                      icon: const Icon(Icons.auto_awesome, size: 18),
+                      label: const Text('Auto Dist'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: widget.onSave == null
+                          ? null
+                          : () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              await widget.onSave?.call();
+                              if (!mounted) return;
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Cambios guardados'),
+                                ),
+                              );
+                            },
+                      icon: const Icon(Icons.save, size: 18),
+                      label: const Text('Guardar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (widget.dayKey == 'lunes') ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => _copyMondayToWeekAdjusted(context),
+                    icon: const Icon(Icons.event_repeat, size: 18),
+                    label: const Text('Copiar lunes a toda la semana'),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _autoDistribute(context),
-                  icon: const Icon(Icons.auto_awesome, size: 18),
-                  label: const Text('Auto Dist'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: widget.onSave == null
-                      ? null
-                      : () async {
-                          final messenger = ScaffoldMessenger.of(context);
-                          await widget.onSave?.call();
-                          if (!mounted) return;
-                          messenger.showSnackBar(
-                            const SnackBar(content: Text('Cambios guardados')),
-                          );
-                        },
-                  icon: const Icon(Icons.save, size: 18),
-                  label: const Text('Guardar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
         ),
@@ -727,13 +769,22 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
                 title: Text(label, style: const TextStyle(color: kTextColor)),
                 trailing: const Icon(Icons.arrow_forward, color: kPrimaryColor),
                 onTap: () {
+                  final sourceMacros = _getDayMacrosFor(day);
+                  final targetMacros = _getDayMacrosFor(widget.dayKey);
+                  final scale = _scaleFromDayMacros(
+                    source: sourceMacros,
+                    target: targetMacros,
+                  );
+
                   ref
                       .read(equivalentsByDayProvider.notifier)
-                      .copyDay(day, widget.dayKey);
+                      .copyDayScaled(day, widget.dayKey, scale);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Equivalentes copiados de $label'),
+                      content: Text(
+                        'Equivalentes copiados de $label (escala ${scale.toStringAsFixed(2)}x)',
+                      ),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -747,23 +798,11 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
   }
 
   void _autoDistribute(BuildContext context) {
-    final dayMacros = _getDayMacros();
-    final targetKcal =
-        dayMacros?.kcal ??
-        (widget.planResult?.kcalTargetDay as num?)?.toDouble() ??
-        0.0;
-    final targetProtein =
-        dayMacros?.proteinG ??
-        (widget.planResult?.proteinTargetDay as num?)?.toDouble() ??
-        0.0;
-    final targetCarb =
-        dayMacros?.carbG ??
-        (widget.planResult?.carbTargetDay as num?)?.toDouble() ??
-        0.0;
-    final targetFat =
-        dayMacros?.fatG ??
-        (widget.planResult?.fatTargetDay as num?)?.toDouble() ??
-        0.0;
+    final dayMacros = _getDayMacrosFor(widget.dayKey);
+    final targetKcal = dayMacros?.kcal ?? 0.0;
+    final targetProtein = dayMacros?.proteinG ?? 0.0;
+    final targetCarb = dayMacros?.carbG ?? 0.0;
+    final targetFat = dayMacros?.fatG ?? 0.0;
 
     if (targetKcal <= 0 ||
         targetProtein <= 0 ||
@@ -891,12 +930,102 @@ class _DayEquivalentsTabState extends ConsumerState<DayEquivalentsTab>
     if (mealsCount <= 0) {
       return {'kcal': 0, 'protein': 0, 'fat': 0, 'carb': 0};
     }
-    return {
-      'kcal': (widget.planResult.kcalTargetDay ?? 0) / mealsCount,
-      'protein': (widget.planResult.proteinTargetDay ?? 0) / mealsCount,
-      'fat': (widget.planResult.fatTargetDay ?? 0) / mealsCount,
-      'carb': (widget.planResult.carbTargetDay ?? 0) / mealsCount,
-    };
+
+    final dayMacros = _getDayMacrosFor(widget.dayKey);
+    if (dayMacros != null) {
+      return {
+        'kcal': dayMacros.kcal / mealsCount,
+        'protein': dayMacros.proteinG / mealsCount,
+        'fat': dayMacros.fatG / mealsCount,
+        'carb': dayMacros.carbG / mealsCount,
+      };
+    }
+
+    // Sin macros guardados para ese día => targets en 0 (sin promedios/fallback).
+    return {'kcal': 0, 'protein': 0, 'fat': 0, 'carb': 0};
+  }
+
+  double _scaleFromDayMacros({
+    required _DayMacros? source,
+    required _DayMacros? target,
+  }) {
+    if (source == null || target == null) return 1.0;
+
+    // Escala basada SIEMPRE en macros (P/C/F).
+    // Mantiene la distribución relativa y ajusta magnitud diaria.
+    final weightedRatios = <MapEntry<double, double>>[];
+
+    final proteinRatio = _safeRatio(source.proteinG, target.proteinG);
+    if (proteinRatio != null) {
+      weightedRatios.add(MapEntry(proteinRatio, 0.40));
+    }
+
+    final carbRatio = _safeRatio(source.carbG, target.carbG);
+    if (carbRatio != null) {
+      weightedRatios.add(MapEntry(carbRatio, 0.35));
+    }
+
+    final fatRatio = _safeRatio(source.fatG, target.fatG);
+    if (fatRatio != null) {
+      weightedRatios.add(MapEntry(fatRatio, 0.25));
+    }
+
+    if (weightedRatios.isEmpty) return 1.0;
+
+    var weightedSum = 0.0;
+    var totalWeight = 0.0;
+    for (final entry in weightedRatios) {
+      weightedSum += entry.key * entry.value;
+      totalWeight += entry.value;
+    }
+
+    if (totalWeight <= 0) return 1.0;
+    final scale = weightedSum / totalWeight;
+    if (!scale.isFinite || scale <= 0) return 1.0;
+    return scale;
+  }
+
+  double? _safeRatio(double sourceValue, double targetValue) {
+    if (!sourceValue.isFinite || !targetValue.isFinite) return null;
+    if (sourceValue <= 0 || targetValue <= 0) return null;
+    final ratio = targetValue / sourceValue;
+    if (!ratio.isFinite || ratio <= 0) return null;
+    return ratio;
+  }
+
+  void _copyMondayToWeekAdjusted(BuildContext context) {
+    const mondayKey = 'lunes';
+    const allDays = [
+      'lunes',
+      'martes',
+      'miercoles',
+      'jueves',
+      'viernes',
+      'sabado',
+      'domingo',
+    ];
+
+    final sourceMacros = _getDayMacrosFor(mondayKey);
+    final notifier = ref.read(equivalentsByDayProvider.notifier);
+
+    for (final dayKey in allDays) {
+      if (dayKey == mondayKey) continue;
+      final targetMacros = _getDayMacrosFor(dayKey);
+      final scale = _scaleFromDayMacros(
+        source: sourceMacros,
+        target: targetMacros,
+      );
+      notifier.copyDayScaled(mondayKey, dayKey, scale);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Lunes copiado a la semana con ajuste automático por macros diarios',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   int _getGroupOrder(String groupId) {

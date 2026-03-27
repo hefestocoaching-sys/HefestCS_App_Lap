@@ -2523,7 +2523,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   ///
   /// WORKFLOW:
   /// 1. Obtener cliente activo
-  /// 2. Limpiar activePlanId y activeCycleId de training.extra
+  /// 2. Limpiar activePlanId (training.extra) y activeCycleId (top-level)
   /// 3. Limpiar trainingPlans Y trainingCycles (regeneración completa)
   /// 4. Guardar cliente actualizado
   /// 5. Resetear state del provider
@@ -2545,10 +2545,9 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
       debugPrint('🗑️ Limpiando plan activo, ciclos y ejercicios base...');
 
-      // Limpiar activePlanId Y activeCycleId
+      // Limpiar activePlanId (extra)
       final updatedExtra = Map<String, dynamic>.from(client.training.extra);
       updatedExtra.remove(TrainingExtraKeys.activePlanId);
-      updatedExtra.remove('activeCycleId');
 
       // CRÍTICO: También limpiar cualquier snapshot de ejercicios base
       updatedExtra.remove('baseExercisesByMuscle');
@@ -2561,6 +2560,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         training: updatedTraining,
         trainingPlans: const [],
         trainingCycles: const [],
+        activeCycleId: null,
       );
 
       // Guardar en repositorio
@@ -2585,9 +2585,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       debugPrint(
         '   trainingCycles.length: ${verifyClient?.trainingCycles.length ?? 0}',
       );
-      debugPrint(
-        '   activeCycleId: ${verifyClient?.training.extra['activeCycleId']}',
-      );
+      debugPrint('   activeCycleId(top-level): ${verifyClient?.activeCycleId}');
 
       if (verifyClient?.trainingCycles.isNotEmpty ?? false) {
         debugPrint(

@@ -49,9 +49,6 @@ class TrainingOrchestratorV3 {
   // CONFIGURACIÓN POR DEFECTO
   // ════════════════════════════════════════════════════════════════
 
-  /// Fase de periodización por defecto
-  static const String _defaultPhase = 'accumulation';
-
   /// Duración en semanas por defecto
   static const int _defaultDurationWeeks = 4;
 

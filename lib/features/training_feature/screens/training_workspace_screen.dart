@@ -3087,23 +3087,14 @@ class _TrainingWorkspaceScreenState
     }
 
     try {
-      final landmarksByMuscle = LandmarkEngine.parseByCanonicalKey(
-        client.training.extra[TrainingExtraKeys.muscleLandmarks],
-      );
-      final intensitySplit = IntensitySplit.fromMap(
-        (client.training.extra[TrainingExtraKeys.seriesTypePercentSplit]
-                    as Map?)
-                ?.map((key, value) => MapEntry(key.toString(), value)) ??
-            const {'heavy': 20, 'medium': 60, 'light': 20},
-      );
-
-      await ref
+      final generated = await ref
           .read(trainingPlanProvider.notifier)
-          .generatePlan(
-            profile: client.training,
-            muscleLandmarks: landmarksByMuscle,
-            intensitySplit: intensitySplit,
-          );
+          .generatePlanFromActiveCycle(DateTime.now());
+
+      if (generated == null) {
+        final error = ref.read(trainingPlanProvider).error;
+        throw Exception(error ?? 'No se pudo generar el plan');
+      }
 
       await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
         final extra = Map<String, dynamic>.from(prev.training.extra);

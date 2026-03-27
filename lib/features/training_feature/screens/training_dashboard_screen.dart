@@ -110,7 +110,7 @@ class _TrainingDashboardScreenState
             return _buildNoClientState();
           }
 
-          // ✅ ACT-001: SSOT - Plan activo por activePlanId (con fallback a más reciente)
+          // ✅ ACT-001: SSOT estricto - Plan activo solo por activePlanId
           if (client.trainingPlans.isEmpty) {
             debugPrint('❌ TrainingDashboard: No hay planes Motor V3');
             return _buildNoPlanState(client);
@@ -123,7 +123,7 @@ class _TrainingDashboardScreenState
           final activePlanId =
               client.training.extra[TrainingExtraKeys.activePlanId] as String?;
 
-          if (activePlanId != null) {
+          if (activePlanId != null && activePlanId.isNotEmpty) {
             try {
               plan = plans.firstWhere((p) => p.id == activePlanId);
               debugPrint(
@@ -131,24 +131,21 @@ class _TrainingDashboardScreenState
               );
             } on StateError {
               debugPrint(
-                '⚠️ TrainingDashboard: activePlanId no coincide con ningún plan, usando fallback',
+                '❌ TrainingDashboard: activePlanId no coincide con ningún plan',
               );
             }
           }
 
-          // 2) Fallback: plan más reciente por startDate
-          plan ??=
-              (plans.toList()
-                    ..sort((a, b) => b.startDate.compareTo(a.startDate)))
-                  .first;
+          if (plan == null) {
+            debugPrint('❌ TrainingDashboard: plan activo inválido o ausente');
+            return _buildNoPlanState(client);
+          }
 
           debugPrint('✅ TrainingDashboard: Renderizando plan Motor V3:');
           debugPrint('   ID: ${plan.id}');
           debugPrint('   Inicio: ${plan.startDate}');
           debugPrint('   Semanas: ${plan.weeks.length}');
-          debugPrint(
-            '   Fuente: ${activePlanId != null ? "activePlanId (SSOT)" : "fallback (más reciente)"}',
-          );
+          debugPrint('   Fuente: activePlanId (SSOT)');
 
           // ✅ activePlanId es SSOT del plan activo (post FASE B)
           // ✅ Usar plan.id directamente (ya tenemos objeto completo)

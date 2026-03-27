@@ -70,11 +70,6 @@ bool _resolvePlanOutdatedFlag(Client? client) {
     plan = client.trainingPlans.where((p) => p.id == activePlanId).firstOrNull;
   }
 
-  plan ??=
-      (client.trainingPlans.toList()
-            ..sort((a, b) => b.startDate.compareTo(a.startDate)))
-          .firstOrNull;
-
   if (plan == null) return false;
 
   return client.training.hasInterviewChangedSincePlanGeneration(plan);

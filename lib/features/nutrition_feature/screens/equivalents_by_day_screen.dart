@@ -62,10 +62,10 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final client = ref.read(clientsProvider).value?.activeClient;
       if (client == null || !mounted) return;
-      final persisted =
-          client.nutrition.extra[
-              NutritionExtraKeys.selectedEquivalentsRecordDateIso]
-              ?.toString();
+      final persisted = client
+          .nutrition
+          .extra[NutritionExtraKeys.selectedEquivalentsRecordDateIso]
+          ?.toString();
       if (persisted != null) {
         setState(() {
           _selectedRecordDateIso = persisted;
@@ -108,8 +108,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
         mergedExtra[NutritionExtraKeys.equivalentsRecords],
       );
       updatedRecords.removeWhere(
-        (record) =>
-            _normalizeDateIso(record['dateIso']) == displayedDateIso,
+        (record) => _normalizeDateIso(record['dateIso']) == displayedDateIso,
       );
       updatedRecords.add({
         'dateIso': displayedDateIso,
@@ -235,10 +234,8 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
   ) {
     final sortedRecords = [...records]
       ..sort((a, b) {
-        final dateAStr =
-            _normalizeDateIso(a['dateIso']) ?? activeDateIso;
-        final dateBStr =
-            _normalizeDateIso(b['dateIso']) ?? activeDateIso;
+        final dateAStr = _normalizeDateIso(a['dateIso']) ?? activeDateIso;
+        final dateBStr = _normalizeDateIso(b['dateIso']) ?? activeDateIso;
         final dateA = DateTime.tryParse(dateAStr) ?? DateTime.now();
         final dateB = DateTime.tryParse(dateBStr) ?? DateTime.now();
         return dateB.compareTo(dateA);
@@ -299,9 +296,13 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
         final iso = _normalizeDateIso(record['dateIso']) ?? activeDateIso;
         final recordDate = DateTime.tryParse(iso) ?? DateTime.now();
         final isSelected =
-            selectedDate != null && DateUtils.isSameDay(selectedDate, recordDate);
+            selectedDate != null &&
+            DateUtils.isSameDay(selectedDate, recordDate);
         final day = DateFormat('d').format(recordDate);
-        final monthYear = DateFormat('MMM yyyy', 'es').format(recordDate).toUpperCase();
+        final monthYear = DateFormat(
+          'MMM yyyy',
+          'es',
+        ).format(recordDate).toUpperCase();
 
         return InkWell(
           onTap: () => _selectRecord(dateIsoFrom(recordDate)),
@@ -397,7 +398,9 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     ref.read(clientsProvider.notifier).updateActiveClient((current) {
       final extra = Map<String, dynamic>.from(current.nutrition.extra);
       extra[NutritionExtraKeys.selectedEquivalentsRecordDateIso] = dateIso;
-      return current.copyWith(nutrition: current.nutrition.copyWith(extra: extra));
+      return current.copyWith(
+        nutrition: current.nutrition.copyWith(extra: extra),
+      );
     });
 
     setState(() {
@@ -410,7 +413,14 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
-    final payload = ref.read(equivalentsByDayProvider.notifier).toJson();
+    // Nuevo registro: iniciar tabla vacía (sin preselección automática).
+    final notifier = ref.read(equivalentsByDayProvider.notifier);
+    notifier.loadFromPayload(const {
+      'version': 1,
+      'dayEquivalents': <String, dynamic>{},
+      'dayMealEquivalents': <String, dynamic>{},
+    });
+    final payload = notifier.toJson();
 
     ref.read(clientsProvider.notifier).updateActiveClient((current) {
       final extra = Map<String, dynamic>.from(current.nutrition.extra);
@@ -424,7 +434,9 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
       sortNutritionRecordsByDate(records);
       extra[NutritionExtraKeys.equivalentsRecords] = records;
       extra[NutritionExtraKeys.selectedEquivalentsRecordDateIso] = dateIso;
-      return current.copyWith(nutrition: current.nutrition.copyWith(extra: extra));
+      return current.copyWith(
+        nutrition: current.nutrition.copyWith(extra: extra),
+      );
     });
 
     if (!mounted) return;
@@ -456,7 +468,9 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
         extra.remove(NutritionExtraKeys.equivalentsByDay);
       }
       extra.remove(NutritionExtraKeys.selectedEquivalentsRecordDateIso);
-      return current.copyWith(nutrition: current.nutrition.copyWith(extra: extra));
+      return current.copyWith(
+        nutrition: current.nutrition.copyWith(extra: extra),
+      );
     });
 
     if (!mounted) return;
@@ -515,8 +529,6 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
       ),
     );
   }
-
-  
 }
 
 typedef EquivalentsByDayScreenState = _EquivalentsByDayScreenState;

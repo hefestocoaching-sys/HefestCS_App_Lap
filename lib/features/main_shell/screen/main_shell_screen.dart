@@ -154,34 +154,6 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     _showClientsScreenNotifier.value = false;
   }
 
-  SaveableModule? _moduleFromIndex(int index) {
-    final useUnifiedPlan = ref
-        .read(featureFlagServiceProvider)
-        .isEnabled(FeatureFlagKey.useUnifiedNutritionPlan);
-    switch (index) {
-      case 0:
-        return null; // Dashboard (no saveable)
-      case 1:
-        return _historyClinicKey.currentState;
-      case 2:
-        return _anthropometryKey.currentState;
-      case 3:
-        return _nutritionKey.currentState;
-      case 4:
-        return _macrosKey.currentState;
-      case 5:
-        return useUnifiedPlan
-            ? _unifiedPlanKey.currentState
-            : _equivalentsKey.currentState;
-      case 6:
-        return _mealPlanKey.currentState;
-      case 8:
-        return _biochemistryKey.currentState;
-      default:
-        return null;
-    }
-  }
-
   Iterable<SaveableModule> _allModules() sync* {
     final useUnifiedPlan = ref
         .read(featureFlagServiceProvider)
@@ -204,8 +176,41 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     }
   }
 
+  Iterable<SaveableModule> _modulesForIndex(int index) sync* {
+    final useUnifiedPlan = ref
+        .read(featureFlagServiceProvider)
+        .isEnabled(FeatureFlagKey.useUnifiedNutritionPlan);
+
+    final SaveableModule? module = switch (index) {
+      1 => _historyClinicKey.currentState,
+      2 => _anthropometryKey.currentState,
+      3 => _nutritionKey.currentState,
+      4 => _macrosKey.currentState,
+      5 =>
+        useUnifiedPlan
+            ? _unifiedPlanKey.currentState
+            : _equivalentsKey.currentState,
+      6 => _mealPlanKey.currentState,
+      8 => _biochemistryKey.currentState,
+      _ => null,
+    };
+
+    if (module != null) {
+      yield module;
+    }
+  }
+
   Future<void> _saveActiveModuleIfNeeded({int? moduleIndex}) async {
     if (_isSaving) return;
+
+    final modulesToSave = moduleIndex == null
+        ? _allModules().toList(growable: false)
+        : _modulesForIndex(moduleIndex).toList(growable: false);
+
+    if (modulesToSave.isEmpty) {
+      return;
+    }
+
     _isSaving = true;
 
     if (!mounted) {
@@ -216,10 +221,10 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     ref.read(saveIndicatorProvider.notifier).setSaving();
 
     try {
-      // ✅ CRITICAL: Guardar TODOS los módulos sucios primero,
-      // especialmente Historia Clínica que contiene datos necesarios por Antropometría
-      debugPrint('[MainShell][Save] Sincronizando todos los módulos...');
-      for (final module in _allModules()) {
+      debugPrint(
+        '[MainShell][Save] Sincronizando ${modulesToSave.length} módulo(s)...',
+      );
+      for (final module in modulesToSave) {
         await module.saveIfDirty();
       }
 
@@ -462,13 +467,22 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                               // Cerrar pantalla de clientes al navegar
                               _closeClientsScreen();
 
+                              final previousIndex =
+                                  _selectedIndexNotifier.value;
+
+                              if (index == previousIndex) {
+                                return;
+                              }
+
                               if (index == _homeIndex) {
+                                await _saveActiveModuleIfNeeded(
+                                  moduleIndex: previousIndex,
+                                );
+                                if (!mounted) return;
                                 _selectedIndexNotifier.value = _homeIndex;
                                 return;
                               }
 
-                              final previousIndex =
-                                  _selectedIndexNotifier.value;
                               await _saveActiveModuleIfNeeded(
                                 moduleIndex: previousIndex,
                               );

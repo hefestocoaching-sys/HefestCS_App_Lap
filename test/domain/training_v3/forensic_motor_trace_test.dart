@@ -596,39 +596,39 @@ String _renderScenarioReport(Map<String, dynamic> run) {
   buffer.writeln('SUCCESS: ${run['success']}');
   buffer.writeln('INPUT:');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['input']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('ETAPA A - entrada del motor');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['stageA']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('ETAPA B - _resolveVolumeTargets');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['stageB']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('ETAPA C - expandBackMuscle');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['stageC']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('ETAPA D - split/frecuencia/state');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['stageD']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('ETAPA E - catalogo/pool');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['stageE']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('ETAPA F - weeklyIntensityTargetsByMuscle');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['stageF']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('ETAPA G - buildBaseWeek');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['stageG']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('ETAPA H - assignedTotals y diferencias');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['stageH']));
-  buffer.writeln('');
+  buffer.writeln();
 
   buffer.writeln('PRIMER PUNTO DE FALLA: ${run['firstFailurePoint']}');
   buffer.writeln('ERRORS: ${run['errors']}');
@@ -640,7 +640,7 @@ String _renderScenarioReport(Map<String, dynamic> run) {
     buffer.writeln(stackTrace);
   }
 
-  buffer.writeln('');
+  buffer.writeln();
   buffer.writeln('TRAZAS CLAVE POR ETAPA (extraidas de ejecucion real):');
   buffer.writeln(const JsonEncoder.withIndent('  ').convert(run['flowLogs']));
 
@@ -657,7 +657,7 @@ String _renderSummaryReport(List<Map<String, dynamic>> runs) {
   buffer.writeln(
     'DEPENDENCIAS MINIMAS: UserProfile valido, phase, durationWeeks, splitId/trainingDays, exercises o catalogo cargado, client opcional para cycle state/backFocus/intensity split.',
   );
-  buffer.writeln('');
+  buffer.writeln();
 
   for (final run in runs) {
     final stageH = run['stageH'] as Map<String, dynamic>? ?? {};
@@ -670,7 +670,7 @@ String _renderSummaryReport(List<Map<String, dynamic>> runs) {
     if ((run['errors'] as List).isNotEmpty) {
       buffer.writeln('ERRORS: ${run['errors']}');
     }
-    buffer.writeln('');
+    buffer.writeln();
   }
 
   return buffer.toString();
@@ -878,17 +878,10 @@ class _FakeTraining {
 }
 
 class _FakeClient {
-  _FakeClient({
-    required this.id,
-    required this.training,
-    this.activeCycleId,
-    this.trainingCycles = const [],
-  });
+  _FakeClient({required this.id, required this.training});
 
   final String id;
   final _FakeTraining training;
-  final String? activeCycleId;
-  final List<dynamic> trainingCycles;
 }
 
 List<Exercise> _getMockExercises() {

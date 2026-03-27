@@ -1,0 +1,51 @@
+AUDITORIA FORENSE TOTAL - INVENTARIO EVIDENCIADO
+
+Alcance auditado (codigo real inspeccionado)
+- lib/features/training_feature/providers/training_plan_provider.dart
+- lib/features/training_feature/providers/training_plan_v3_provider.dart
+- lib/features/training_feature/providers/training_workspace_provider.dart
+- lib/features/training_feature/screens/training_workspace_screen.dart
+- lib/features/training_feature/screens/training_workspace_root.dart
+- lib/features/training_feature/screens/training_dashboard_screen.dart
+- lib/features/training_feature/training_screen.dart
+- lib/domain/training_v3/orchestrator/training_orchestrator_v3.dart
+- lib/domain/training_v3/services/motor_v3_orchestrator.dart
+- lib/domain/training_v3/services/unified_training_service.dart
+- lib/domain/training_v3/services/cycle_template_builder.dart
+- lib/domain/training_v3/engines/exercise_selection_engine.dart
+- lib/domain/training_v3/engines/intensity_distribution_engine.dart
+- lib/domain/training_v3/engines/intensity_split_allocator.dart
+- lib/domain/training_v3/engines/split_generator_engine.dart
+- lib/domain/training_v3/data/exercise_catalog_v3.dart
+- lib/domain/training/services/active_cycle_bootstrapper.dart
+- lib/domain/training_domain/training_ssot_v1_service.dart
+- lib/core/constants/training_extra_keys.dart
+- lib/domain/entities/client.dart
+- lib/data/repositories/client_repository.dart
+- lib/data/repositories/training/training_cycle_repository_impl.dart
+- lib/data/repositories/clinical_records_repository.dart
+- lib/core/services/sync_service.dart
+- lib/data/datasources/local/database_helper.dart
+- lib/data/datasources/local/local_client_datasource_impl.dart
+- lib/data/datasources/remote/client_firestore_datasource.dart
+- lib/features/main_shell/screen/main_shell_screen.dart
+
+Assets inspeccionados
+- assets/data/exercises/exercise_catalog_gym.json (via cargador en ExerciseCatalogV3)
+
+Tests inventariados (training)
+- test/domain/training_v3/**
+- test/training_persistence_test.dart
+- test/training_audit_persistence_test.dart
+- test/training_v3_ml_test.dart
+- test/training_v3/motor_v3_smoke_test.dart
+
+Componentes presentes con indicios de no operatividad runtime
+- lib/domain/training_v3/engines/intensity_split_allocator.dart (solo declaracion)
+- lib/domain/training_v3/engines/split_generator_engine.dart (sin invocacion real; solo mencionado en comentario)
+- lib/features/training_feature/providers/unified_training_provider.dart (sin consumidores)
+- lib/features/training_feature/screens/training_dashboard_screen.dart (sin uso en entrada principal de TrainingScreen)
+
+Entrypoint real de UI training
+- lib/features/training_feature/training_screen.dart -> TrainingWorkspaceRoot
+- lib/features/training_feature/screens/training_workspace_root.dart -> TrainingWorkspaceScreen

@@ -49,10 +49,9 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      logger.warning(
-        'No authenticated user, skipping Firestore sync',
-        {'clientId': clientId},
-      );
+      logger.warning('No authenticated user, skipping Firestore sync', {
+        'clientId': clientId,
+      });
       return;
     }
 
@@ -112,11 +111,7 @@ class ClinicalRecordsRepository {
     } catch (e, st) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      logger.error(
-        'Firestore sync failed (local save succeeded)',
-        e,
-        st,
-      );
+      logger.error('Firestore sync failed (local save succeeded)', e, st);
     }
   }
 
@@ -135,10 +130,9 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      logger.warning(
-        'No authenticated user, skipping Firestore sync',
-        {'clientId': clientId},
-      );
+      logger.warning('No authenticated user, skipping Firestore sync', {
+        'clientId': clientId,
+      });
       return;
     }
 
@@ -205,11 +199,7 @@ class ClinicalRecordsRepository {
     } catch (e, st) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      logger.error(
-        'Firestore sync failed (local save succeeded)',
-        e,
-        st,
-      );
+      logger.error('Firestore sync failed (local save succeeded)', e, st);
     }
   }
 
@@ -233,10 +223,9 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      logger.warning(
-        'No authenticated user, skipping Firestore sync',
-        {'clientId': clientId},
-      );
+      logger.warning('No authenticated user, skipping Firestore sync', {
+        'clientId': clientId,
+      });
       return;
     }
 
@@ -294,11 +283,7 @@ class ClinicalRecordsRepository {
     } catch (e, st) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      logger.error(
-        'Firestore sync failed (local save succeeded)',
-        e,
-        st,
-      );
+      logger.error('Firestore sync failed (local save succeeded)', e, st);
     }
   }
 
@@ -312,9 +297,7 @@ class ClinicalRecordsRepository {
     Map<String, dynamic> recordJson,
     DateTime date,
   ) {
-    // Temporal: no se sincroniza entrenamiento a Firestore para evitar errores de payload.
-    // La persistencia local sigue siendo fuente de verdad.
-    return;
+    _pushInBackground(() => _doPushTrainingRecord(clientId, recordJson, date));
   }
 
   // ignore: unused_element
@@ -325,10 +308,9 @@ class ClinicalRecordsRepository {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      logger.warning(
-        'No authenticated user, skipping Firestore sync',
-        {'clientId': clientId},
-      );
+      logger.warning('No authenticated user, skipping Firestore sync', {
+        'clientId': clientId,
+      });
       return;
     }
 
@@ -386,11 +368,7 @@ class ClinicalRecordsRepository {
     } catch (e, st) {
       // Fire-and-forget: Log the error but don't fail
       // The local save already succeeded, Firestore is just a bonus
-      logger.error(
-        'Firestore sync failed (local save succeeded)',
-        e,
-        st,
-      );
+      logger.error('Firestore sync failed (local save succeeded)', e, st);
     }
   }
 

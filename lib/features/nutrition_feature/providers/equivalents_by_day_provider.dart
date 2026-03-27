@@ -183,6 +183,53 @@ class EquivalentsByDayNotifier extends Notifier<EquivalentsByDayState> {
     );
   }
 
+  /// Copia un dia a otro respetando la distribucion de equivalentes y comidas,
+  /// aplicando un factor de escala para ajustar a los macros/kcal del dia destino.
+  ///
+  /// La escala se aplica de forma proporcional a todas las celdas para
+  /// preservar la estructura de la tabla ya elaborada.
+  void copyDayScaled(String sourceDay, String targetDay, double scale) {
+    if (sourceDay == targetDay) return;
+
+    final safeScale = scale.isFinite && scale > 0 ? scale : 1.0;
+
+    final dayEquivalents = Map<String, Map<String, double>>.from(
+      state.dayEquivalents,
+    );
+    final sourceEquivalents = dayEquivalents[sourceDay];
+    if (sourceEquivalents != null) {
+      dayEquivalents[targetDay] = sourceEquivalents.map(
+        (groupId, value) => MapEntry(groupId, _roundToHalf(value * safeScale)),
+      );
+    }
+
+    final dayMeals = Map<String, Map<String, Map<int, double>>>.from(
+      state.dayMealEquivalents,
+    );
+    final sourceMeals = dayMeals[sourceDay];
+    if (sourceMeals != null) {
+      final copiedMeals = <String, Map<int, double>>{};
+      for (final entry in sourceMeals.entries) {
+        copiedMeals[entry.key] = entry.value.map(
+          (mealIdx, value) =>
+              MapEntry(mealIdx, _roundToHalf(value * safeScale)),
+        );
+      }
+      dayMeals[targetDay] = copiedMeals;
+    }
+
+    state = state.copyWith(
+      dayEquivalents: dayEquivalents,
+      dayMealEquivalents: dayMeals,
+      isDirty: true,
+    );
+  }
+
+  double _roundToHalf(double value) {
+    if (!value.isFinite || value <= 0) return 0.0;
+    return (value * 2).roundToDouble() / 2;
+  }
+
   Map<String, dynamic> toJson() {
     final dayEquivalents = state.dayEquivalents.map(
       (day, groups) => MapEntry(day, Map<String, dynamic>.from(groups)),

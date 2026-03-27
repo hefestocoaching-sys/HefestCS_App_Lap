@@ -168,7 +168,9 @@ class MacrosContentState extends ConsumerState<MacrosContent>
   }
 
   Future<void> saveIfDirty() async {
-    await _saveTabIfNeeded(_tabController.index);
+    // Este módulo ya persiste en tiempo real vía _updateClientWeek en onChanged.
+    // Evitar reescritura redundante durante "guardar todo" global.
+    return;
   }
 
   void resetDrafts() {
@@ -1346,10 +1348,7 @@ class _MacroTableRow extends StatelessWidget {
                   children: [
                     const Text(
                       'Total',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 9,
-                      ),
+                      style: TextStyle(color: Colors.white54, fontSize: 9),
                     ),
                     Text(
                       '${data.gramsTotal.toStringAsFixed(0)} g',
@@ -1369,10 +1368,7 @@ class _MacroTableRow extends StatelessWidget {
                   children: [
                     const Text(
                       'kcal',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 9,
-                      ),
+                      style: TextStyle(color: Colors.white54, fontSize: 9),
                     ),
                     Text(
                       data.kcal.toStringAsFixed(0),
@@ -1590,9 +1586,7 @@ class _MacroChartLegend extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withAlpha(40),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Row(
         children: [
@@ -2160,9 +2154,7 @@ class _ClinicalMetricRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: statusConfig.color.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: statusConfig.color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
