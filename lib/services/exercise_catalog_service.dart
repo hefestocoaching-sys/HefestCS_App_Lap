@@ -6,6 +6,9 @@ import 'package:hcs_app_lap/core/constants/muscle_keys.dart';
 import 'package:hcs_app_lap/domain/entities/exercise_entity.dart';
 
 class ExerciseCatalogService {
+  @Deprecated(
+    'Legacy service. Runtime Motor V3 uses ExerciseCatalogV3 runtime assets in assets/data/training_v3/catalog/.',
+  )
   static final ExerciseCatalogService _instance = ExerciseCatalogService._();
   ExerciseCatalogService._();
   factory ExerciseCatalogService() => _instance;

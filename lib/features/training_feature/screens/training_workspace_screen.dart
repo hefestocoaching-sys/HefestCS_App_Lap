@@ -3,16 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/constants/muscle_labels_es.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
 import 'package:hcs_app_lap/core/design/workspace_scaffold.dart';
 import 'package:hcs_app_lap/core/enums/training_phase.dart';
-import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/landmark_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/intensity_split.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_flow_stage.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
-import 'package:hcs_app_lap/domain/entities/training_session.dart';
-import 'package:hcs_app_lap/domain/training/split_templates.dart';
 import 'package:hcs_app_lap/domain/training_domain/pain_rule.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_migration_service.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_snapshot_v1.dart';
@@ -22,10 +20,11 @@ import 'package:hcs_app_lap/domain/training_domain/training_progression_state_v1
 import 'package:hcs_app_lap/domain/training_domain/training_setup_v1.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
-import 'package:hcs_app_lap/features/training_feature/providers/training_plan_v3_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_workspace_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/domain/training_interview_status.dart';
+import 'package:hcs_app_lap/features/training_feature/domain/training_pipeline_guard.dart';
 import 'package:hcs_app_lap/features/training_feature/tabs/training_interview_tab.dart';
+import 'package:hcs_app_lap/features/training_feature/screens/gym_exercises_stage_screen.dart';
 import 'package:hcs_app_lap/features/training_feature/widgets/intensity_split_table.dart';
 import 'package:hcs_app_lap/features/training_feature/widgets/volume_capacity_scientific_view.dart';
 import 'package:hcs_app_lap/features/training_feature/widgets/weekly_plan_detail_view.dart';
@@ -46,6 +45,7 @@ class _TrainingWorkspaceScreenState
   String? _lastClientId;
   String? _lastSeedSignature;
   bool _migrationQueued = false;
+  String? _dismissedDeloadSnapshotAt;
   late TabController _v3TabController;
   final _interviewTabKey = GlobalKey<TrainingInterviewTabState>();
 
@@ -75,7 +75,8 @@ class _TrainingWorkspaceScreenState
   @override
   void initState() {
     super.initState();
-    _v3TabController = TabController(length: 9, vsync: this);
+    // 6 tabs principales: Entrevista, Landmarks, Intensidad, Preferencias de ejercicios, Plan, Monitoreo
+    _v3TabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -138,6 +139,9 @@ class _TrainingWorkspaceScreenState
             progression,
             workspaceState.interviewStatus,
             workspaceState.flowStage,
+            workspaceState.canAccessLandmarks,
+            workspaceState.landmarksAreCurrent,
+            workspaceState.canAccessIntensity,
             workspaceState.isIntensitySplitValid,
             workspaceState.canGeneratePlan,
             workspaceState.isPlanOutdated,
@@ -191,68 +195,6 @@ class _TrainingWorkspaceScreenState
   // El workspace ahora muestra directamente el Motor V3 con sus 9 tabs
 
   // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
-  // E2 GOBERNANZA: Verificar acción permitida
-  // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
-  TrainingPlanAction _checkPlanActionAllowed(Client client) {
-    // Leer SSOT desde extra
-    final setupMap =
-        client.training.extra[TrainingExtraKeys.trainingSetupV1]
-            as Map<String, dynamic>?;
-    final snapshotMap =
-        client.training.extra[TrainingExtraKeys.trainingEvaluationSnapshotV1]
-            as Map<String, dynamic>?;
-    final progressionMap =
-        client.training.extra[TrainingExtraKeys.trainingProgressionStateV1]
-            as Map<String, dynamic>?;
-
-    // Si no hay SSOT, permitir generar
-    if (setupMap == null || snapshotMap == null || progressionMap == null) {
-      return TrainingPlanAction.generate;
-    }
-
-    try {
-      final setup = TrainingSetupV1.fromJson(setupMap);
-      final snapshot = TrainingEvaluationSnapshotV1.fromJson(snapshotMap);
-      final progression = TrainingProgressionStateV1.fromJson(progressionMap);
-
-      return TrainingPlanGovernor.decide(
-        setup: setup,
-        snapshot: snapshot,
-        progression: progression,
-      );
-    } catch (e) {
-      debugPrint('⚠️ Error al verificar acción permitida: $e');
-      return TrainingPlanAction.adapt; // Fallback seguro
-    }
-  }
-
-  String _getPlanActionTooltip(TrainingPlanAction action, Client client) {
-    // Leer SSOT para obtener rationale
-    final snapshotMap =
-        client.training.extra[TrainingExtraKeys.trainingEvaluationSnapshotV1]
-            as Map<String, dynamic>?;
-    final progressionMap =
-        client.training.extra[TrainingExtraKeys.trainingProgressionStateV1]
-            as Map<String, dynamic>?;
-
-    if (snapshotMap == null || progressionMap == null) {
-      return 'Plan inicial sin historial';
-    }
-
-    try {
-      final snapshot = TrainingEvaluationSnapshotV1.fromJson(snapshotMap);
-      final progression = TrainingProgressionStateV1.fromJson(progressionMap);
-
-      return TrainingPlanGovernor.getDecisionRationale(
-        action,
-        snapshot: snapshot,
-        progression: progression,
-      );
-    } catch (e) {
-      return 'Verificar estado del plan';
-    }
-  }
-
   // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
   Widget _buildCurrentPlanSection(
     BuildContext context,
@@ -260,6 +202,9 @@ class _TrainingWorkspaceScreenState
     TrainingProgressionStateV1 progression,
     TrainingInterviewStatus interviewStatus,
     TrainingFlowStage flowStage,
+    bool canAccessLandmarks,
+    bool landmarksAreCurrent,
+    bool canAccessIntensity,
     bool isIntensitySplitValid,
     bool canGeneratePlan,
     bool isPlanOutdated,
@@ -270,9 +215,13 @@ class _TrainingWorkspaceScreenState
     final hasAnyPlan = client.trainingPlans.isNotEmpty;
     final hasActiveId = activePlanId != null && activePlanId.isNotEmpty;
 
-    // E2 GOBERNANZA: Verificar acción permitida
-    final allowedAction = _checkPlanActionAllowed(client);
-    final actionTooltip = _getPlanActionTooltip(allowedAction, client);
+    // E2 GOBERNANZA: acción permitida y rationale delegados al provider
+    final planNotifier = ref.read(trainingPlanProvider.notifier);
+    final allowedAction = planNotifier.resolveAllowedAction(client);
+    final actionTooltip = planNotifier.resolvePlanActionTooltip(
+      client,
+      allowedAction,
+    );
 
     // Obtener plan activo o más reciente
     TrainingPlanConfig? plan;
@@ -295,18 +244,18 @@ class _TrainingWorkspaceScreenState
     final motorBlocked = motorState.blockReason;
     final motorSuggestions = motorState.suggestions ?? [];
     final motorLoading = motorState.isLoading;
-    final deloadAlert = ref.watch(
-      trainingPlanV3Provider.select((s) => s.deloadAlert),
-    );
+    final deloadAlert = _resolveDeloadAlertMessage(client);
 
     if (plan == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final targetTab = switch (flowStage) {
           TrainingFlowStage.interview => 0,
-          TrainingFlowStage.landmarks => 2,
-          TrainingFlowStage.intensity => 6,
-          TrainingFlowStage.plan => 3,
+          TrainingFlowStage.landmarks => 1,
+          TrainingFlowStage.intensity => 2,
+          TrainingFlowStage.gymExercises => 3,
+          TrainingFlowStage.plan => 4,
+          TrainingFlowStage.monitoring => 5,
         };
         if (_v3TabController.index != targetTab) {
           _v3TabController.animateTo(targetTab);
@@ -526,10 +475,10 @@ class _TrainingWorkspaceScreenState
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _generarPlan(),
+                        onPressed: () => _dismissDeloadAlert(client),
                         icon: const Icon(Icons.refresh, size: 16),
                         label: const Text(
-                          'Regenerar sin deload',
+                          'Descartar',
                           style: TextStyle(fontSize: 12),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -699,24 +648,21 @@ class _TrainingWorkspaceScreenState
             ),
           ),
 
-        // ✅ TabBar + TabBarView sin Expanded (parent lo maneja via Expanded en _buildMainPanel)
+        // ✅ TabBar + TabBarView con 6 etapas del pipeline oficial
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // TabBar
+              // TabBar con 6 etapas principales
               TabBar(
                 controller: _v3TabController,
                 isScrollable: true,
                 tabs: const [
                   Tab(text: 'Entrevista'),
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Músculos'),
-                  Tab(text: 'Sesiones'),
-                  Tab(text: 'Ejercicios'),
-                  Tab(text: 'Progresión'),
+                  Tab(text: 'Landmarks'),
                   Tab(text: 'Intensidad'),
-                  Tab(text: 'Decisiones'),
+                  Tab(text: 'Preferencias de ejercicios'),
+                  Tab(text: 'Plan'),
                   Tab(text: 'Monitoreo'),
                 ],
                 labelColor: kPrimaryColor,
@@ -724,76 +670,64 @@ class _TrainingWorkspaceScreenState
                 indicatorColor: kPrimaryColor,
               ),
 
-              // TabBarView (ocupa resto espacio en Expanded)
+              // TabBarView con 6 etapas del pipeline oficial
               Expanded(
                 child: TabBarView(
                   controller: _v3TabController,
                   children: [
-                    // Tab 0: Entrevista
+                    // Tab 0: Entrevista (ETAPA 1)
                     TrainingInterviewTab(key: _interviewTabKey),
-                    // Tab 1: Overview (placeholder simplificado)
-                    plan != null
-                        ? _buildOverviewTabPlaceholder(plan)
+
+                    // Tab 1: Landmarks (ETAPA 2)
+                    canAccessLandmarks
+                        ? _buildLandmarksTab(
+                            client: client,
+                            plan: plan,
+                            flowStage: flowStage,
+                            landmarksAreCurrent: landmarksAreCurrent,
+                          )
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa la entrevista para habilitar Landmarks.',
                           ),
-                    // Tab 2: Volumen
-                    _buildLandmarksTab(
-                      client: client,
-                      plan: plan,
-                      flowStage: flowStage,
+
+                    // Tab 2: Intensidad (ETAPA 3)
+                    !canAccessIntensity
+                        ? _buildLockedTab(
+                            title: 'Bloqueado',
+                            message: landmarksAreCurrent
+                                ? 'Completa la etapa de Landmarks para avanzar a Intensidad.'
+                                : 'Landmarks no vigentes. Guarda entrevista y confirma Landmarks.',
+                          )
+                        : IntensitySplitTable(
+                            trainingExtra: client.training.extra,
+                          ),
+
+                    // Tab 3: Preferencias de ejercicios (ETAPA 4)
+                    GymExercisesStageScreen(
+                      isLocked: !canAccessIntensity,
+                      onContinue: canAccessIntensity
+                          ? () => _v3TabController.animateTo(4)
+                          : null,
                     ),
-                    // Tab 3: Sesiones
+
+                    // Tab 4: Plan (ETAPA 5)
                     plan != null
                         ? WeeklyPlanDetailView(plan: plan)
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa Entrevista, Landmarks, Intensidad y Preferencias de ejercicios para generar Plan.',
                           ),
-                    // Tab 4: Ejercicios (placeholder)
-                    plan != null
-                        ? _buildExercisesTabPlaceholder(plan, client)
-                        : _buildLockedTab(
-                            title: 'Bloqueado',
-                            message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
-                          ),
-                    // Tab 5: Progresión (placeholder)
-                    plan != null
-                        ? _buildProgressionTabPlaceholder(plan)
-                        : _buildLockedTab(
-                            title: 'Bloqueado',
-                            message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
-                          ),
-                    // Tab 6: Intensidad
-                    flowStage == TrainingFlowStage.interview
-                        ? _buildLockedTab(
-                            title: 'Bloqueado',
-                            message:
-                                'Guarda la entrevista para avanzar a Landmarks.',
-                          )
-                        : IntensitySplitTable(
-                            trainingExtra: client.training.extra,
-                          ),
-                    // Tab 7: Decisiones (placeholder)
-                    plan != null
-                        ? _buildDecisionsTabPlaceholder(plan, client)
-                        : _buildLockedTab(
-                            title: 'Bloqueado',
-                            message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
-                          ),
-                    // Tab 8: Monitoreo (placeholder)
+
+                    // Tab 5: Monitoreo (ETAPA 6) - Absorbe Progresión
                     plan != null
                         ? _buildMonitoringTabPlaceholder(plan, client)
                         : _buildLockedTab(
                             title: 'Bloqueado',
                             message:
-                                'Completa Entrevista y genera plan para habilitar esta sección.',
+                                'Completa el plan para acceder a Monitoreo.',
                           ),
                   ],
                 ),
@@ -805,337 +739,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  Widget _buildOverviewTabPlaceholder(TrainingPlanConfig plan) {
-    final totalSessions = plan.weeks.fold<int>(
-      0,
-      (s, w) => s + w.sessions.length,
-    );
-    final splitId = plan.splitId.toUpperCase();
-    final startDate = plan.startDate;
-    final endDate = startDate.add(
-      Duration(days: plan.microcycleLengthInWeeks * plan.weeks.length * 7),
-    );
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Card principal
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: kCardColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kPrimaryColor.withAlpha(60)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.assignment, color: kPrimaryColor, size: 18),
-                    SizedBox(width: 8),
-                    Text(
-                      'Resumen del plan',
-                      style: TextStyle(
-                        color: kTextColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ),
-                const Divider(height: 20, color: Colors.white12),
-                _wsRow('Split', splitId),
-                _wsRow('Semanas', '${plan.weeks.length}'),
-                _wsRow('Sesiones totales', '$totalSessions'),
-                _wsRow(
-                  'Inicio',
-                  '${startDate.day}/${startDate.month}/${startDate.year}',
-                ),
-                _wsRow(
-                  'Fin estimado',
-                  '${endDate.day}/${endDate.month}/${endDate.year}',
-                ),
-                _wsRow(
-                  'Duración microciclo',
-                  '${plan.microcycleLengthInWeeks} sem',
-                ),
-                _wsRow('ID', plan.id.substring(0, 12)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Distribución de fases
-          const Text(
-            'Fases',
-            style: TextStyle(
-              color: kTextColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 10),
-          ...() {
-            final accum = plan.weeks
-                .where((w) => w.phase.isAccumulation)
-                .length;
-            final intens = plan.weeks
-                .where((w) => w.phase.isIntensification)
-                .length;
-            final deload = plan.weeks.where((w) => w.phase.isDeload).length;
-            final total = plan.weeks.length;
-            return [
-              _wsPhase(
-                'Acumulación',
-                accum,
-                total,
-                kInfoColor,
-                Icons.trending_up,
-              ),
-              const SizedBox(height: 8),
-              _wsPhase(
-                'Intensificación',
-                intens,
-                total,
-                kWarningColor,
-                Icons.bolt,
-              ),
-              const SizedBox(height: 8),
-              _wsPhase('Deload', deload, total, kSuccessColor, Icons.spa),
-            ];
-          }(),
-          // Volumen por músculo (si existe)
-          if (plan.volumePerMuscle != null &&
-              plan.volumePerMuscle!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Volumen programado (sets/semana)',
-              style: TextStyle(
-                color: kTextColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 10),
-            ...() {
-              final vol = plan.volumePerMuscle!;
-              final maxV = vol.values.reduce((a, b) => a > b ? a : b);
-              final sorted = vol.entries.toList()
-                ..sort((a, b) => b.value.compareTo(a.value));
-              return sorted.map(
-                (e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 110,
-                        child: Text(
-                          muscleLabelEs(e.key),
-                          style: const TextStyle(
-                            color: kTextColorSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: e.value / maxV,
-                            backgroundColor: Colors.white.withAlpha(15),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              kPrimaryColor.withAlpha(200),
-                            ),
-                            minHeight: 8,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 36,
-                        child: Text(
-                          '${e.value}',
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            color: kTextColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }(),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildExercisesTabPlaceholder(TrainingPlanConfig plan, Client client) {
-    // Semana activa desde ciclo (o semana 1 como fallback)
-    final activeCycle = client.trainingCycles
-        .where((c) => c.status == 'active')
-        .firstOrNull;
-    final currentWeekNumber = activeCycle?.currentWeek ?? 1;
-    final weekIndex = (currentWeekNumber - 1)
-        .clamp(0, plan.weeks.length - 1)
-        .toInt();
-
-    final currentWeek = plan.weeks.isNotEmpty ? plan.weeks[weekIndex] : null;
-    final sessions = currentWeek?.sessions ?? <TrainingSession>[];
-
-    if (sessions.isEmpty) {
-      return const Center(
-        child: Text(
-          'Sin sesiones',
-          style: TextStyle(color: kTextColorSecondary),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        // Chip de semana activa
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: kPrimaryColor.withAlpha(25),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: kPrimaryColor.withAlpha(80)),
-                ),
-                child: Text(
-                  'Semana $currentWeekNumber de ${plan.weeks.length}',
-                  style: const TextStyle(
-                    color: kPrimaryColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              // Botón cerrar semana
-              TextButton.icon(
-                onPressed: () => _cerrarSemana(
-                  client: client,
-                  weekNumber: currentWeekNumber,
-                ),
-                icon: const Icon(
-                  Icons.check_circle,
-                  size: 15,
-                  color: kSuccessColor,
-                ),
-                label: const Text(
-                  'Cerrar semana',
-                  style: TextStyle(color: kSuccessColor, fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Lista de sesiones
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: sessions.map((session) {
-              return Card(
-                color: kCardColor,
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ExpansionTile(
-                  tilePadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  title: Text(
-                    session.sessionName,
-                    style: const TextStyle(
-                      color: kTextColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '${session.prescriptions.length} ejercicios • Día ${session.dayNumber}',
-                    style: const TextStyle(
-                      color: kTextColorSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                  leading: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: kPrimaryColor.withAlpha(30),
-                      border: Border.all(color: kPrimaryColor.withAlpha(80)),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${session.dayNumber}',
-                        style: const TextStyle(
-                          color: kPrimaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-                  children: session.prescriptions.map((p) {
-                    return ListTile(
-                      dense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 2,
-                      ),
-                      leading: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: kPrimaryColor.withAlpha(25),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Center(
-                          child: Text(
-                            p.label,
-                            style: const TextStyle(
-                              color: kPrimaryColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        p.exerciseName,
-                        style: const TextStyle(color: kTextColor, fontSize: 13),
-                      ),
-                      subtitle: Text(
-                        '${p.sets} × ${p.repRange} reps  •  RIR ${p.rir}  •  ${muscleLabelEs(p.muscleGroup.canonicalKey)}',
-                        style: const TextStyle(
-                          color: kTextColorSecondary,
-                          fontSize: 11,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
+  // ✅ Métodos auxiliares para etapas del pipeline - Solo contienen lógica para etapas vigentes
 
   Widget _buildProgressionTabPlaceholder(TrainingPlanConfig plan) {
     final weeks = plan.weeks;
@@ -1952,11 +1556,53 @@ class _TrainingWorkspaceScreenState
     );
   }
 
+  Widget _metricChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: kPrimaryColor.withAlpha(24),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: kPrimaryColor.withAlpha(90)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              color: kTextColorSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: kTextColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLandmarksTab({
     required Client client,
     required TrainingPlanConfig? plan,
     required TrainingFlowStage flowStage,
+    required bool landmarksAreCurrent,
   }) {
+    final extra = client.training.extra;
+    final detectedLevel =
+        extra[TrainingExtraKeys.trainingLevelDerived]?.toString() ??
+        extra[TrainingExtraKeys.effectiveTrainingLevel]?.toString() ??
+        'n/d';
+    final vme = extra[TrainingExtraKeys.vmeCalculated];
+    final vmr = extra[TrainingExtraKeys.vmrCalculated];
+    final vop = extra[TrainingExtraKeys.vopCalculated];
+
     final landmarksByMuscle = LandmarkEngine.parseByCanonicalKey(
       client.training.extra[TrainingExtraKeys.muscleLandmarks],
     );
@@ -1976,6 +1622,40 @@ class _TrainingWorkspaceScreenState
           const Text(
             'Paso 2 del flujo. Estos valores se calculan al guardar entrevista.',
             style: TextStyle(color: kTextColorSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      _metricChip('Nivel detectado', detectedLevel),
+                      _metricChip('VME', vme?.toString() ?? 'n/d'),
+                      _metricChip('VMR', vmr?.toString() ?? 'n/d'),
+                      _metricChip('VOP', vop?.toString() ?? 'n/d'),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    landmarksAreCurrent
+                        ? 'Estado: válido para continuar a Intensidad.'
+                        : 'Estado: inválido para continuar. Guarda entrevista para recalcular.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: landmarksAreCurrent
+                          ? kSuccessColor
+                          : kWarningColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           if (rows.isEmpty)
@@ -2067,31 +1747,47 @@ class _TrainingWorkspaceScreenState
               ),
             ),
           if (rows.isNotEmpty && flowStage == TrainingFlowStage.landmarks) ...[
+            if (!landmarksAreCurrent)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: kWarningSubtle,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: kWarningColor.withAlpha(140)),
+                ),
+                child: const Text(
+                  'Los landmarks no corresponden a la última entrevista. Guarda entrevista nuevamente antes de continuar.',
+                  style: TextStyle(fontSize: 12, color: kTextColorSecondary),
+                ),
+              ),
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
-                onPressed: () async {
-                  await ref.read(clientsProvider.notifier).updateActiveClient((
-                    prev,
-                  ) {
-                    final extra = Map<String, dynamic>.from(
-                      prev.training.extra,
-                    );
-                    final recalculated = LandmarkEngine.calculateFromProfile(
-                      prev.training,
-                    );
-                    extra[TrainingExtraKeys.muscleLandmarks] =
-                        LandmarkEngine.serializeByCanonicalKey(recalculated);
-                    extra[TrainingExtraKeys.trainingFlowStage] =
-                        TrainingFlowStage.intensity.name;
-                    return prev.copyWith(
-                      training: prev.training.copyWith(extra: extra),
-                    );
-                  });
-                  if (!mounted) return;
-                  _v3TabController.animateTo(6);
-                },
+                onPressed: !landmarksAreCurrent
+                    ? null
+                    : () async {
+                        await ref
+                            .read(clientsProvider.notifier)
+                            .updateActiveClient((prev) {
+                              final extra = Map<String, dynamic>.from(
+                                prev.training.extra,
+                              );
+                              final guardStage =
+                                  TrainingPipelineGuard.allowedStage(extra);
+                              extra[TrainingExtraKeys.trainingFlowStage] =
+                                  guardStage.order >=
+                                      TrainingFlowStage.intensity.order
+                                  ? TrainingFlowStage.intensity.name
+                                  : TrainingFlowStage.landmarks.name;
+                              return prev.copyWith(
+                                training: prev.training.copyWith(extra: extra),
+                              );
+                            });
+                        if (!mounted) return;
+                        _v3TabController.animateTo(6);
+                      },
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Confirmar Landmarks y pasar a Intensidad'),
               ),
@@ -2559,14 +2255,9 @@ class _TrainingWorkspaceScreenState
       lastPlanChangeReason: _lastPlanReasonController.text.trim(),
     );
 
-    await ref.read(clientsProvider.notifier).updateActiveClient((current) {
-      final extra = Map<String, dynamic>.from(current.training.extra);
-      extra[TrainingExtraKeys.trainingProgressionStateV1] = progression
-          .toJson();
-      return current.copyWith(
-        training: current.training.copyWith(extra: extra),
-      );
-    });
+    await ref
+        .read(trainingPlanProvider.notifier)
+        .saveProgressionState(clientId: client.id, progression: progression);
   }
 
   // ignore: unused_element
@@ -2726,7 +2417,9 @@ class _TrainingWorkspaceScreenState
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
-    final errors = _validateAction(client, evaluation, progression);
+    final errors = ref
+        .read(trainingPlanProvider.notifier)
+        .validatePlanActionInputs(client: client, evaluation: evaluation);
     if (errors.isNotEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -2773,7 +2466,7 @@ class _TrainingWorkspaceScreenState
 
     await ref
         .read(trainingPlanProvider.notifier)
-        .generatePlanV3(selectedDate: DateTime.now());
+        .generatePlanFromActiveCycle(DateTime.now());
     await ref.read(clientsProvider.notifier).refresh();
 
     final refreshedClient = ref.read(clientsProvider).value?.activeClient;
@@ -2783,161 +2476,36 @@ class _TrainingWorkspaceScreenState
         '';
 
     final resetProgression = action == PlanAction.regenerate;
-    final updatedProgression = TrainingProgressionStateV1(
-      weeksCompleted: resetProgression ? 0 : progression.weeksCompleted,
-      sessionsCompleted: resetProgression ? 0 : progression.sessionsCompleted,
-      consecutiveWeeksTraining: resetProgression
-          ? 0
-          : progression.consecutiveWeeksTraining,
-      averageRIR: resetProgression ? 0.0 : progression.averageRIR,
-      averageSessionRPE: resetProgression ? 0.0 : progression.averageSessionRPE,
-      perceivedRecovery: resetProgression ? 0.0 : progression.perceivedRecovery,
-      lastPlanId: lastPlanId,
-      lastPlanChangeReason: action.name,
-    );
-
-    await ref.read(clientsProvider.notifier).updateActiveClient((current) {
-      final extra = Map<String, dynamic>.from(current.training.extra);
-      extra[TrainingExtraKeys.trainingProgressionStateV1] = updatedProgression
-          .toJson();
-      return current.copyWith(
-        training: current.training.copyWith(extra: extra),
-      );
-    });
-  }
-
-  List<String> _validateAction(
-    Client client,
-    TrainingEvaluationSnapshotV1 evaluation,
-    TrainingProgressionStateV1 progression,
-  ) {
-    final errors = <String>[];
-    final setup = _readSetup(client);
-
-    if (!setup.isValid) {
-      errors.add('Setup fisico invalido');
+    if (refreshedClient != null && lastPlanId.isNotEmpty) {
+      await ref
+          .read(trainingPlanProvider.notifier)
+          .recordPlanAction(
+            clientId: refreshedClient.id,
+            action: action.name,
+            resetProgressionCounters: resetProgression,
+            appendAdaptationHistory: action == PlanAction.adapt,
+          );
     }
-
-    if (evaluation.daysPerWeek <= 0 ||
-        evaluation.sessionDurationMinutes <= 0 ||
-        evaluation.planDurationInWeeks <= 0) {
-      errors.add('Evaluacion incompleta');
-    }
-
-    final allMuscles = <String>{}
-      ..addAll(evaluation.primaryMuscles)
-      ..addAll(evaluation.secondaryMuscles)
-      ..addAll(evaluation.tertiaryMuscles);
-    if (allMuscles.isEmpty) {
-      errors.add('Prioridades musculares vacias');
-    }
-
-    final duplicates = _findPriorityDuplicates(
-      evaluation.primaryMuscles,
-      evaluation.secondaryMuscles,
-      evaluation.tertiaryMuscles,
-    );
-    if (duplicates.isNotEmpty) {
-      errors.add('Prioridades ambiguas: ${duplicates.join(', ')}');
-    }
-
-    final splitId = client.training.extra[TrainingExtraKeys.selectedSplitId]
-        ?.toString();
-    if (splitId != null && splitId.isNotEmpty) {
-      final template = LegacySplitTemplates.getTemplateById(splitId);
-      if (template != null && template.daysPerWeek != evaluation.daysPerWeek) {
-        errors.add('Dias incompatibles con el split seleccionado');
-      }
-    }
-
-    return errors;
-  }
-
-  List<String> _findPriorityDuplicates(
-    List<String> primary,
-    List<String> secondary,
-    List<String> tertiary,
-  ) {
-    final duplicates = <String>{};
-    final seen = <String>{};
-
-    void register(List<String> items) {
-      for (final item in items) {
-        final key = item.trim();
-        if (key.isEmpty) continue;
-        if (seen.contains(key)) {
-          duplicates.add(key);
-        } else {
-          seen.add(key);
-        }
-      }
-    }
-
-    register(primary);
-    register(secondary);
-    register(tertiary);
-
-    return duplicates.toList();
   }
 
   /// ✅ NORMALIZACIÓN A KEYS CANÓNICAS
   /// Convierte labels legacy a keys estándar de Motor V3
   List<String> _normalizeMuscleKeys(List<String> keys) {
-    const labelToKeyMap = {
-      'Pecho': 'chest',
-      'Dorsal ancho': 'lats',
-      'Dorsal ancho (Lats)': 'lats',
-      'Espalda alta': 'upper_back',
-      'Espalda alta / Escápulas': 'upper_back',
-      'Espalda alta / Escápulas (Upper back)': 'upper_back',
-      'Upper back': 'upper_back',
-      'Trapecios': 'traps',
-      'Deltoide Anterior': 'deltoide_anterior',
-      'Deltoide anterior': 'deltoide_anterior',
-      'Deltoide Lateral': 'deltoide_lateral',
-      'Deltoide lateral': 'deltoide_lateral',
-      'Deltoide Posterior': 'deltoide_posterior',
-      'Deltoide posterior': 'deltoide_posterior',
-      'Bíceps': 'biceps',
-      'Tríceps': 'triceps',
-      'Cuádriceps': 'quads',
-      'Isquiotibiales': 'hamstrings',
-      'Glúteos': 'glutes',
-      'Pantorrillas': 'calves',
-      'Abdominales': 'abs',
-    };
+    final canonical = <String>{};
 
-    final expanded = <String>[];
-    for (final k in keys) {
-      final trimmed = k.trim();
-      final normalized = labelToKeyMap[trimmed] ?? trimmed;
-      // ✅ Handle legacy 'back' expansion
-      if (normalized == 'back') {
-        expanded.addAll(['lats', 'upper_back', 'traps']);
-      } else {
-        expanded.add(normalized);
+    for (final raw in keys) {
+      final normalized = muscle_registry.normalize(raw);
+      if (normalized != null) {
+        canonical.add(normalized);
+        continue;
       }
+
+      final expanded = muscle_registry.expandGroup(raw);
+      canonical.addAll(expanded);
     }
 
-    // ✅ Filter against canonical 14-muscle set
-    const canonicalKeys = {
-      'chest',
-      'lats',
-      'upper_back',
-      'traps',
-      'deltoide_anterior',
-      'deltoide_lateral',
-      'deltoide_posterior',
-      'biceps',
-      'triceps',
-      'quads',
-      'hamstrings',
-      'glutes',
-      'calves',
-      'abs',
-    };
-
-    return expanded.where((k) => canonicalKeys.contains(k)).toSet().toList();
+    final sorted = canonical.toList()..sort();
+    return sorted;
   }
 
   List<String> _parseMuscleList(dynamic raw) {
@@ -3071,13 +2639,14 @@ class _TrainingWorkspaceScreenState
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
-    final allowedAction = _checkPlanActionAllowed(client);
+    final planNotifier = ref.read(trainingPlanProvider.notifier);
+    final allowedAction = planNotifier.resolveAllowedAction(client);
     if (allowedAction == TrainingPlanAction.locked) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Plan bloqueado: ${_getPlanActionTooltip(allowedAction, client)}',
+              '❌ Plan bloqueado: ${planNotifier.resolvePlanActionTooltip(client, allowedAction)}',
             ),
             backgroundColor: kErrorColor,
           ),
@@ -3134,13 +2703,14 @@ class _TrainingWorkspaceScreenState
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
-    final allowedAction = _checkPlanActionAllowed(client);
+    final planNotifier = ref.read(trainingPlanProvider.notifier);
+    final allowedAction = planNotifier.resolveAllowedAction(client);
     if (allowedAction != TrainingPlanAction.regenerate) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Regeneración no permitida: ${_getPlanActionTooltip(allowedAction, client)}',
+              '❌ Regeneración no permitida: ${planNotifier.resolvePlanActionTooltip(client, allowedAction)}',
             ),
             backgroundColor: kErrorColor,
           ),
@@ -3233,13 +2803,14 @@ class _TrainingWorkspaceScreenState
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
-    final allowedAction = _checkPlanActionAllowed(client);
+    final planNotifier = ref.read(trainingPlanProvider.notifier);
+    final allowedAction = planNotifier.resolveAllowedAction(client);
     if (allowedAction != TrainingPlanAction.adapt) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Adaptación no permitida: ${_getPlanActionTooltip(allowedAction, client)}',
+              '❌ Adaptación no permitida: ${planNotifier.resolvePlanActionTooltip(client, allowedAction)}',
             ),
             backgroundColor: kErrorColor,
           ),
@@ -3283,55 +2854,57 @@ class _TrainingWorkspaceScreenState
     if (client == null) return;
 
     try {
-      final progressionMap =
-          client.training.extra[TrainingExtraKeys.trainingProgressionStateV1]
-              as Map<String, dynamic>? ??
-          {};
-      final progression = progressionMap.isNotEmpty
-          ? TrainingProgressionStateV1.fromJson(progressionMap)
-          : const TrainingProgressionStateV1(
-              weeksCompleted: 0,
-              sessionsCompleted: 0,
-              consecutiveWeeksTraining: 0,
-              averageRIR: 2.0,
-              averageSessionRPE: 7,
-              perceivedRecovery: 7,
-              lastPlanId: '',
-              lastPlanChangeReason: 'initial',
-            );
-
-      // Crear historial de adaptación
-      final adaptationHistoryCopy = List<Map<String, dynamic>>.from(
-        progression.adaptationHistory,
-      );
-      adaptationHistoryCopy.add({
-        'timestamp': DateTime.now().toIso8601String(),
-        'action': action,
-        'weekCompleted': progression.weeksCompleted,
-      });
-
-      // Actualizar progresión
-      final updatedProgressionMap = {
-        ...progression.toJson(),
-        'lastAdaptationAt': DateTime.now().toIso8601String(),
-        'adaptationHistory': adaptationHistoryCopy,
-        'lastPlanChangeReason': action,
-      };
-
-      // Persistir
-      await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
-        return prev.copyWith(
-          training: prev.training.copyWith(
-            extra: {
-              ...prev.training.extra,
-              TrainingExtraKeys.trainingProgressionStateV1:
-                  updatedProgressionMap,
-            },
-          ),
-        );
-      });
+      await ref
+          .read(trainingPlanProvider.notifier)
+          .recordPlanAction(
+            clientId: client.id,
+            action: action,
+            appendAdaptationHistory: true,
+          );
     } catch (e) {
       debugPrint('⚠️ Error al actualizar progresión: $e');
     }
+  }
+
+  String? _resolveDeloadAlertMessage(Client client) {
+    final snapshotRaw = client.training.extra['lastPhaseResolutionV1'];
+    if (snapshotRaw is! Map) {
+      return null;
+    }
+
+    final snapshot = Map<String, dynamic>.from(snapshotRaw);
+    final snapshotAt = snapshot['timestamp']?.toString();
+    if (snapshotAt != null && snapshotAt == _dismissedDeloadSnapshotAt) {
+      return null;
+    }
+
+    if (snapshot['needsDeload'] != true) {
+      return null;
+    }
+
+    final urgency = snapshot['urgency']?.toString().trim();
+    final reasons =
+        (snapshot['reasons'] as List?)
+            ?.map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList() ??
+        const <String>[];
+    final reasonsText = reasons.isNotEmpty
+        ? reasons.join(' | ')
+        : 'Fatiga acumulada detectada por el motor.';
+
+    if (urgency != null && urgency.isNotEmpty) {
+      return 'Urgencia $urgency: $reasonsText';
+    }
+
+    return reasonsText;
+  }
+
+  void _dismissDeloadAlert(Client client) {
+    final snapshotRaw = client.training.extra['lastPhaseResolutionV1'];
+    if (snapshotRaw is! Map) return;
+    setState(() {
+      _dismissedDeloadSnapshotAt = snapshotRaw['timestamp']?.toString();
+    });
   }
 }

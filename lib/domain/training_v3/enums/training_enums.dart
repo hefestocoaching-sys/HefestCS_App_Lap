@@ -50,15 +50,15 @@ enum TrainingPhase {
 /// Zona de intensidad
 enum IntensityZone {
   heavy,
-  moderate,
+  medium,
   light;
 
   String get displayName {
     switch (this) {
       case IntensityZone.heavy:
         return 'Heavy (6-8 reps)';
-      case IntensityZone.moderate:
-        return 'Moderate (8-12 reps)';
+      case IntensityZone.medium:
+        return 'Medium (8-12 reps)';
       case IntensityZone.light:
         return 'Light (16-20 reps)';
     }
@@ -67,11 +67,11 @@ enum IntensityZone {
   List<int> get repRange {
     switch (this) {
       case IntensityZone.heavy:
-        return [5, 8];
-      case IntensityZone.moderate:
+        return [6, 8];
+      case IntensityZone.medium:
         return [8, 12];
       case IntensityZone.light:
-        return [12, 20];
+        return [16, 20];
     }
   }
 
@@ -79,7 +79,7 @@ enum IntensityZone {
     switch (this) {
       case IntensityZone.heavy:
         return 3;
-      case IntensityZone.moderate:
+      case IntensityZone.medium:
         return 2;
       case IntensityZone.light:
         return 1;

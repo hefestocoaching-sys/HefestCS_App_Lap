@@ -1,4 +1,5 @@
-﻿/// Motor V3 <-> Catalogo V3 (exercise_catalog_gym.json)
+﻿/// Motor V3 <-> Catalogo V3 runtime
+/// assets/data/training_v3/catalog/exercise_catalog_v3_runtime.json
 ///
 /// MAPEO DE SINGLE SOURCE OF TRUTH (SSOT):
 /// Las 14 claves canonicas del motor son las unicas claves operativas.
@@ -10,12 +11,12 @@
 /// - pectorals -> ['pectorals']
 /// - lats -> ['lats']
 /// - upper_back -> ['upper_back']
-/// - delts_front -> ['deltoide_anterior']
-/// - delts_lateral -> ['deltoide_lateral']
-/// - delts_rear -> ['deltoide_posterior']
+/// - delts_front -> ['delts_front']
+/// - delts_lateral -> ['delts_lateral']
+/// - delts_rear -> ['delts_rear']
 /// - biceps -> ['biceps']
 /// - triceps -> ['triceps']
-/// - quads -> ['quadriceps']
+/// - quads -> ['quads']
 /// - hamstrings -> ['hamstrings']
 /// - glutes -> ['glutes']
 /// - abs -> ['abs']

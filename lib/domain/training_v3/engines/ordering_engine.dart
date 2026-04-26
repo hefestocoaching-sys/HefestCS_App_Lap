@@ -4,6 +4,8 @@ import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/exercise_prescription.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/planned_exercise.dart';
+import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/domain/policies/structural_exercise_order_contract.dart';
 
 /// Motor de ordenamiento científico de ejercicios
 ///
@@ -41,7 +43,7 @@ class OrderingEngine {
     'upper_back',
     'traps',
     'glutes',
-    'quadriceps',
+    'quads',
     'hamstrings',
   };
 
@@ -51,27 +53,16 @@ class OrderingEngine {
     required String exerciseId,
     required String zone,
   }) {
+    final canonicalMuscleKey = normalizeMuscleKey(muscleKey);
     final type = ExerciseCatalogV3.getTypeById(exerciseId);
     final isCompound = (type == 'compound');
-    final isMajor = _majorMuscles.contains(muscleKey);
+    final isMajor = _majorMuscles.contains(canonicalMuscleKey);
 
-    if (isMajor && isCompound) {
-      if (zone == IntensityZone.heavy) return 1;
-      if (zone == IntensityZone.medium) return 2;
-      return 5;
-    } else if (isMajor && !isCompound) {
-      if (zone == IntensityZone.heavy) return 7;
-      if (zone == IntensityZone.medium) return 8;
-      return 11;
-    } else if (!isMajor && isCompound) {
-      if (zone == IntensityZone.heavy) return 3;
-      if (zone == IntensityZone.medium) return 4;
-      return 6;
-    } else {
-      if (zone == IntensityZone.heavy) return 9;
-      if (zone == IntensityZone.medium) return 10;
-      return 12;
-    }
+    return StructuralExerciseOrderContract.structuralIndex(
+      isLargeMuscle: isMajor,
+      isCompound: isCompound,
+      intensityZone: zone,
+    );
   }
 
   /// P0.1 Evaluates Rule E index directly on prescriptions

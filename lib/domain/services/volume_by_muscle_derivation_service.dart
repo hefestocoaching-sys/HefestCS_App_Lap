@@ -5,6 +5,11 @@ import 'package:hcs_app_lap/domain/training/models/supported_muscles.dart';
 /// ═══════════════════════════════════════════════════════════════════════════
 /// Factores clínicos por músculo. Ajustados para garantizar entrenamiento
 /// integral incluso con coeficientes bajos (todo músculo recibe al menos MEV).
+///
+/// DEPRECADO EN FLUJO ACTIVO:
+/// Entrevista -> Landmarks ahora usa tabla SSOT por músculo+nivel + deltas
+/// globales (ver muscle_volume_landmarks_ssot.dart y LandmarkEngine).
+@Deprecated('No usar como autoridad de landmarks en flujo activo')
 class VolumeByMuscleDerivationService {
   /// Factores clínicos por músculo (canónicos 14)
   /// Ajusta aquí tu "coeficiente" para asegurar balance integral.

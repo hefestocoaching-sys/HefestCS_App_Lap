@@ -47,18 +47,18 @@ class ActiveCycleBootstrapper {
       logger.debug('Exercises by muscle', {'muscle': muscle, 'ids': ids});
     }
 
-    // 🔴 CLAVE: forzar presencia de las 14 keys canónicas
+    // 🔴 CLAVE: forzar presencia de las 14 keys canónicas (SSOT: muscle_registry.dart)
     const canonicalMuscles = [
       'pectorals',
       'lats',
       'upper_back',
       'traps',
-      'deltoide_anterior',
-      'deltoide_lateral',
-      'deltoide_posterior',
+      'delts_front',
+      'delts_lateral',
+      'delts_rear',
       'biceps',
       'triceps',
-      'quadriceps',
+      'quads',
       'hamstrings',
       'glutes',
       'calves',
@@ -150,16 +150,9 @@ class ActiveCycleBootstrapper {
     final raw = key.trim().toLowerCase();
     if (raw.isEmpty) return '';
 
-    const aliases = {
-      'chest': 'pectorals',
-      'quads': 'quadriceps',
-      'delts_front': 'deltoide_anterior',
-      'delts_side': 'deltoide_lateral',
-      'delts_rear': 'deltoide_posterior',
-    };
-
-    final fromAlias = aliases[raw];
-    if (fromAlias != null) return fromAlias;
+    // IMPORTANTE: NO usamos aliases locales. Delegamos completamente a muscle_registry.normalize()
+    // que es la SSOT (Single Source of Truth) para todas las normalizaciones.
+    // Eso garantiza consistencia con el catálogo de ejercicios y el resto del sistema.
 
     return muscle_registry.normalize(raw) ?? raw;
   }

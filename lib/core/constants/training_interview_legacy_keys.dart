@@ -1,5 +1,7 @@
 /// Legacy training interview keys retained for compatibility.
+/// The new Block 1 reads these keys when loading older profiles, but it no longer writes them.
 class TrainingInterviewLegacyKeys {
+  // Read-only legacy compatibility keys. Block 1 must not write these.
   static const yearsTrainingContinuous = 'yearsTrainingContinuous';
   static const avgSleepHours = 'avgSleepHours';
   static const sessionDurationMinutes = 'sessionDurationMinutes';

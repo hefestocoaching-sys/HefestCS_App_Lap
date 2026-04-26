@@ -1,21 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
+import 'package:hcs_app_lap/features/training_feature/domain/intensity_distribution_helper.dart';
 
-/// Modelo de distribución de intensidad para series pesadas, moderadas y ligeras
+/// Modelo de distribución de intensidad para series pesadas, medias y ligeras
 ///
 /// Los porcentajes deben:
 /// - Sumar 100% (con tolerancia de 0.01)
 /// - Estar dentro de rangos válidos:
 ///   * Heavy: 15-30%
-///   * Moderate: 40-70%
+///   * Medium: 40-70%
 ///   * Light: 15-30%
 @immutable
 class IntensityDistribution {
   /// Porcentaje de series pesadas (0.15 - 0.30)
   final double heavyPct;
 
-  /// Porcentaje de series moderadas (0.40 - 0.70)
-  final double moderatePct;
+  /// Porcentaje de series medias (0.40 - 0.70)
+  final double mediumPct;
 
   /// Porcentaje de series ligeras (0.15 - 0.30)
   final double lightPct;
@@ -23,14 +24,14 @@ class IntensityDistribution {
   // Rangos válidos
   static const double minHeavyPct = 0.15;
   static const double maxHeavyPct = 0.30;
-  static const double minModeratePct = 0.40;
-  static const double maxModeratePct = 0.70;
+  static const double minMediumPct = 0.40;
+  static const double maxMediumPct = 0.70;
   static const double minLightPct = 0.15;
   static const double maxLightPct = 0.30;
 
   const IntensityDistribution({
     required this.heavyPct,
-    required this.moderatePct,
+    required this.mediumPct,
     required this.lightPct,
   });
 
@@ -41,21 +42,21 @@ class IntensityDistribution {
         // Principiante: Menos pesadas, más énfasis en técnica
         return const IntensityDistribution(
           heavyPct: 0.15,
-          moderatePct: 0.55,
+          mediumPct: 0.55,
           lightPct: 0.30,
         );
       case TrainingLevel.intermediate:
         // Intermedio: Balance equilibrado
         return const IntensityDistribution(
           heavyPct: 0.20,
-          moderatePct: 0.60,
+          mediumPct: 0.60,
           lightPct: 0.20,
         );
       case TrainingLevel.advanced:
         // Avanzado: Más pesadas, menos ligeras
         return const IntensityDistribution(
           heavyPct: 0.30,
-          moderatePct: 0.50,
+          mediumPct: 0.50,
           lightPct: 0.20,
         );
     }
@@ -68,7 +69,7 @@ class IntensityDistribution {
 
   /// Valida que los porcentajes sumen 100% (con tolerancia)
   bool get isValid {
-    final sum = heavyPct + moderatePct + lightPct;
+    final sum = heavyPct + mediumPct + lightPct;
     return (sum - 1.0).abs() < 0.001; // Tolerancia de 0.1%
   }
 
@@ -76,8 +77,8 @@ class IntensityDistribution {
   bool get isWithinRanges {
     return heavyPct >= minHeavyPct &&
         heavyPct <= maxHeavyPct &&
-        moderatePct >= minModeratePct &&
-        moderatePct <= maxModeratePct &&
+        mediumPct >= minMediumPct &&
+        mediumPct <= maxMediumPct &&
         lightPct >= minLightPct &&
         lightPct <= maxLightPct;
   }
@@ -87,14 +88,18 @@ class IntensityDistribution {
 
   /// Calcula el número de series por tipo de intensidad dado un total
   IntensitySetsBreakdown calculateSets(int totalSets) {
-    final heavy = (totalSets * heavyPct).round();
-    final moderate = (totalSets * moderatePct).round();
-    final light = totalSets - heavy - moderate; // Asegurar suma exacta
+    final heavyPercent = (heavyPct * 100).round();
+    final lightPercent = (lightPct * 100).round();
+    final computed = IntensityDistributionHelper.computeSeriesBreakdown(
+      totalSeries: totalSets,
+      heavyPercent: heavyPercent,
+      lightPercent: lightPercent,
+    );
 
     return IntensitySetsBreakdown(
-      heavy: heavy,
-      moderate: moderate,
-      light: light,
+      heavy: computed.heavy,
+      medium: computed.medium,
+      light: computed.light,
       total: totalSets,
     );
   }
@@ -102,12 +107,12 @@ class IntensityDistribution {
   /// Copia con modificaciones
   IntensityDistribution copyWith({
     double? heavyPct,
-    double? moderatePct,
+    double? mediumPct,
     double? lightPct,
   }) {
     return IntensityDistribution(
       heavyPct: heavyPct ?? this.heavyPct,
-      moderatePct: moderatePct ?? this.moderatePct,
+      mediumPct: mediumPct ?? this.mediumPct,
       lightPct: lightPct ?? this.lightPct,
     );
   }
@@ -117,18 +122,18 @@ class IntensityDistribution {
       identical(this, other) ||
       other is IntensityDistribution &&
           heavyPct == other.heavyPct &&
-          moderatePct == other.moderatePct &&
+          mediumPct == other.mediumPct &&
           lightPct == other.lightPct;
 
   @override
   int get hashCode =>
-      heavyPct.hashCode ^ moderatePct.hashCode ^ lightPct.hashCode;
+      heavyPct.hashCode ^ mediumPct.hashCode ^ lightPct.hashCode;
 
   @override
   String toString() {
     return 'IntensityDistribution('
         'heavy: ${(heavyPct * 100).toStringAsFixed(1)}%, '
-        'moderate: ${(moderatePct * 100).toStringAsFixed(1)}%, '
+        'medium: ${(mediumPct * 100).toStringAsFixed(1)}%, '
         'light: ${(lightPct * 100).toStringAsFixed(1)}%)';
   }
 }
@@ -137,35 +142,35 @@ class IntensityDistribution {
 @immutable
 class IntensitySetsBreakdown {
   final int heavy;
-  final int moderate;
+  final int medium;
   final int light;
   final int total;
 
   const IntensitySetsBreakdown({
     required this.heavy,
-    required this.moderate,
+    required this.medium,
     required this.light,
     required this.total,
   });
 
   /// Verifica que la suma sea correcta
-  bool get isValid => heavy + moderate + light == total;
+  bool get isValid => heavy + medium + light == total;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is IntensitySetsBreakdown &&
           heavy == other.heavy &&
-          moderate == other.moderate &&
+          medium == other.medium &&
           light == other.light &&
           total == other.total;
 
   @override
   int get hashCode =>
-      heavy.hashCode ^ moderate.hashCode ^ light.hashCode ^ total.hashCode;
+      heavy.hashCode ^ medium.hashCode ^ light.hashCode ^ total.hashCode;
 
   @override
   String toString() {
-    return 'IntensitySetsBreakdown(H: $heavy, M: $moderate, L: $light, Total: $total)';
+    return 'IntensitySetsBreakdown(H: $heavy, M: $medium, L: $light, Total: $total)';
   }
 }

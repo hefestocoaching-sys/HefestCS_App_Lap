@@ -18,6 +18,14 @@ class Exercise {
   final List<String> tertiaryMuscles;
   final Map<String, double> stimulusContribution;
 
+  // V3 metadata tipada para selector/intensidad determinísticos.
+  final String movementPattern;
+  final String loadCategory;
+  final int fatigueScore;
+  final int stimulusScore;
+  final Map<String, bool> allowedIntensityZones;
+  final String equivalenceGroup;
+
   Exercise({
     required this.id,
     required this.externalId,
@@ -30,10 +38,23 @@ class Exercise {
     List<String>? secondaryMuscles,
     List<String>? tertiaryMuscles,
     Map<String, double>? stimulusContribution,
+    this.movementPattern = 'unknown',
+    this.loadCategory = 'light',
+    this.fatigueScore = 5,
+    this.stimulusScore = 1,
+    Map<String, bool>? allowedIntensityZones,
+    this.equivalenceGroup = '',
   }) : primaryMuscles = primaryMuscles ?? const <String>[],
        secondaryMuscles = secondaryMuscles ?? const <String>[],
        tertiaryMuscles = tertiaryMuscles ?? const <String>[],
-       stimulusContribution = stimulusContribution ?? const <String, double>{};
+       stimulusContribution = stimulusContribution ?? const <String, double>{},
+       allowedIntensityZones =
+           allowedIntensityZones ??
+           const <String, bool>{
+             'heavy': false,
+             'medium': false,
+             'light': false,
+           };
 
   bool matchesMuscle(String key) {
     return primaryMuscles.contains(key) ||
@@ -72,6 +93,34 @@ class Exercise {
     return const <String, double>{};
   }
 
+  static Map<String, bool> _sbm(dynamic v) {
+    const restrictive = <String, bool>{
+      'heavy': false,
+      'medium': false,
+      'light': false,
+    };
+    if (v is! Map) return restrictive;
+
+    bool toBool(dynamic raw) {
+      if (raw is bool) return raw;
+      if (raw is num) return raw != 0;
+      final s = raw?.toString().trim().toLowerCase();
+      return s == 'true' || s == '1' || s == 'yes' || s == 'si';
+    }
+
+    return <String, bool>{
+      'heavy': toBool(v['heavy']),
+      'medium': toBool(v['medium']),
+      'light': toBool(v['light']),
+    };
+  }
+
+  static int _toInt(dynamic v, int fallback) {
+    if (v is int) return v;
+    if (v is num) return v.round();
+    return int.tryParse(v?.toString() ?? '') ?? fallback;
+  }
+
   factory Exercise.fromMap(Map<String, dynamic> map) {
     // Detectar esquema v3
     final isV3 = map.containsKey('primaryMuscles') && map['id'] is String;
@@ -98,6 +147,11 @@ class Exercise {
       }
 
       final movementPattern = _s(map['movementPattern']);
+      final loadCategory = _s(map['loadCategory']).toLowerCase();
+      final fatigueScore = _toInt(map['fatigueScore'], 5);
+      final stimulusScore = _toInt(map['stimulusScore'], 1);
+      final allowedZones = _sbm(map['allowedIntensityZones']);
+      final equivalenceGroup = _s(map['equivalenceGroup']);
 
       // Función para normalizar listas de músculos
       List<String> normList(List<String> xs) {
@@ -133,6 +187,12 @@ class Exercise {
         secondaryMuscles: secondary,
         tertiaryMuscles: tertiary,
         stimulusContribution: contrib,
+        movementPattern: movementPattern,
+        loadCategory: loadCategory.isEmpty ? 'light' : loadCategory,
+        fatigueScore: fatigueScore,
+        stimulusScore: stimulusScore,
+        allowedIntensityZones: allowedZones,
+        equivalenceGroup: equivalenceGroup,
       );
     }
 
@@ -182,6 +242,18 @@ class Exercise {
       secondaryMuscles: const <String>[],
       tertiaryMuscles: const <String>[],
       stimulusContribution: const <String, double>{},
+      movementPattern: difficulty,
+      allowedIntensityZones: const <String, bool>{
+        'heavy': false,
+        'medium': false,
+        'light': false,
+      },
+      equivalenceGroup: id.isNotEmpty ? 'self:$id' : 'self:unknown',
     );
+  }
+
+  bool allowsZone(String zone) {
+    final z = zone.trim().toLowerCase();
+    return allowedIntensityZones[z] == true;
   }
 }

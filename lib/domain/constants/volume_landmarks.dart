@@ -4,6 +4,10 @@
 /// - Israetel et al. (2017-2020) Renaissance Periodization
 /// - Ramos-Campo et al. (2024) J Strength Cond Res 38(7):1330-1340
 /// - Schoenfeld et al. (2019) Meta-análisis volumen-hipertrofia
+///
+/// DEPRECADO PARA FLUJO ACTIVO DE ENTREVISTA->LANDMARKS:
+/// la autoridad oficial es muscle_volume_landmarks_ssot.dart.
+@Deprecated('Usar muscle_volume_landmarks_ssot.dart en flujo activo')
 class VolumeLandmarks {
   /// Mapeo de nombres en español a nombres canónicos en inglés
   static const Map<String, String> _spanishToEnglish = {

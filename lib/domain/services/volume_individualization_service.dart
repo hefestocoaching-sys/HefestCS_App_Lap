@@ -1,24 +1,10 @@
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
+import 'package:hcs_app_lap/core/constants/training_interview_legacy_keys.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/services/athlete_context_resolver.dart';
-
-/// Clasificación de altura
-enum HeightClass {
-  low, // Bajo (<160 cm)
-  medium, // Medio (160-175 cm)
-  high, // Alto (175-190 cm)
-  veryHigh, // Muy Alto (>=190 cm)
-}
-
-/// Clasificación de peso corporal
-enum WeightClass {
-  light, // Ligero (<60 kg)
-  medium, // Medio (60-80 kg)
-  semiheavy, // Semi-Pesado (80-100 kg)
-  heavy, // Pesado (>=100 kg)
-}
+import 'package:hcs_app_lap/domain/services/volume_adjustment_calculator.dart';
 
 /// Servicio para calcular los límites de volumen individualizados (MEV/MRV)
 /// basados en las tablas aditivas del PDF de individualización
@@ -117,6 +103,8 @@ class VolumeIndividualizationService {
     // 6. Calcular valores individualizados finales
     final mevIndividual = mevBase + mevAdjust;
     final mrvIndividual = mrvBase + mrvAdjust;
+    final vopIndividual =
+        mevIndividual + 0.35 * (mrvIndividual - mevIndividual);
 
     return VolumeBounds(
       mevBase: mevBase,
@@ -125,6 +113,7 @@ class VolumeIndividualizationService {
       mrvAdjustTotal: mrvAdjust,
       mevIndividual: mevIndividual,
       mrvIndividual: mrvIndividual,
+      vopIndividual: vopIndividual,
       contributionsMev: contributionsMev,
       contributionsMrv: contributionsMrv,
     );
@@ -165,191 +154,85 @@ class VolumeIndividualizationService {
   (int mevBase, int mrvBase) _getBaseBounds(TrainingLevel level) {
     switch (level) {
       case TrainingLevel.beginner:
-        // MEV: 6-8 → promedio 7
-        // MRV: 10-12 → promedio 11
-        return (7, 11);
+        return (6, 16);
       case TrainingLevel.intermediate:
-        // MEV: 8-10 → promedio 9
-        // MRV: 14-18 → promedio 16
-        return (9, 16);
+        return (12, 24);
       case TrainingLevel.advanced:
-        // MEV: 10-12 → promedio 11
-        // MRV: 18-22 → promedio 20
-        return (11, 20);
+        return (18, 32);
     }
-  }
-
-  // ==================== CLASIFICACIÓN ====================
-
-  /// Clasifica altura en categorías según rangos antropométricos
-  HeightClass _classifyHeight(double heightCm) {
-    if (heightCm < 160) return HeightClass.low;
-    if (heightCm < 175) return HeightClass.medium;
-    if (heightCm < 190) return HeightClass.high;
-    return HeightClass.veryHigh;
-  }
-
-  /// Clasifica peso corporal en categorías
-  WeightClass _classifyWeight(double weightKg) {
-    if (weightKg < 60) return WeightClass.light;
-    if (weightKg < 80) return WeightClass.medium;
-    if (weightKg < 100) return WeightClass.semiheavy;
-    return WeightClass.heavy;
   }
 
   // ==================== MEV ADJUSTMENTS ====================
 
   double _getMevGenderAdjust(Gender gender) {
-    return gender.isFemale ? 1.5 : 0.0; // mujer = +1.5, hombre = 0
+    return VolumeAdjustmentCalculator.sexVmeAdjust(gender);
   }
 
   double _getMevAgeAdjust(int ageYears) {
-    if (ageYears < 20) return 0.5;
-    if (ageYears >= 20 && ageYears <= 29) return 0.0;
-    if (ageYears >= 30 && ageYears <= 39) return -0.5;
-    if (ageYears >= 40) return -1.0;
-    return 0.0;
+    return VolumeAdjustmentCalculator.ageVmeAdjust(ageYears);
   }
 
   double _getMevHeightAdjust(double heightCm) {
-    final heightClass = _classifyHeight(heightCm);
-    switch (heightClass) {
-      case HeightClass.low:
-        return -0.5;
-      case HeightClass.medium:
-        return 0.0;
-      case HeightClass.high:
-        return 0.5;
-      case HeightClass.veryHigh:
-        return 1.0;
-    }
+    return VolumeAdjustmentCalculator.heightVmeAdjust(heightCm);
   }
 
   double _getMevWeightAdjust(double weightKg) {
-    final weightClass = _classifyWeight(weightKg);
-    switch (weightClass) {
-      case WeightClass.light:
-        return -0.5;
-      case WeightClass.medium:
-        return 0.0;
-      case WeightClass.semiheavy:
-        return 0.5;
-      case WeightClass.heavy:
-        return 1.0;
-    }
+    return VolumeAdjustmentCalculator.weightVmeAdjust(weightKg);
   }
 
   double _getMevStrengthLevelAdjust(Map<String, dynamic> extra) {
-    final level = extra[TrainingExtraKeys.strengthLevelClass] as String?;
-    if (level == null) {
-      throw StateError(
-        'Falta: strengthLevelClass. Este campo debe completarse en Evaluación Entrenamiento.',
-      );
-    }
-    switch (level) {
-      case 'B':
-        return -1.0; // Bajo
-      case 'M':
-        return -0.5; // Medio
-      case 'A':
-        return 0.0; // Alto
-      case 'MA':
-        return 0.5; // Muy Alto
-      default:
-        return 0.0;
-    }
+    final level =
+        extra[TrainingExtraKeys.strengthLevelClass]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.strengthLevelClass]?.toString();
+    return VolumeAdjustmentCalculator.strengthLevelVmeAdjust(level);
   }
 
   double _getMevWorkCapacityAdjust(Map<String, dynamic> extra) {
-    final score = extra[TrainingExtraKeys.workCapacityScore] as int?;
-    if (score == null) {
-      throw StateError(
-        'Falta: workCapacityScore. Completa la evaluación de capacidad de trabajo.',
-      );
-    }
-    switch (score) {
-      case 1:
-        return -1.0;
-      case 2:
-        return -0.5;
-      case 3:
-        return 0.0;
-      case 4:
-        return 0.5;
-      case 5:
-        return 1.0;
-      default:
-        return 0.0;
-    }
+    final score =
+        extra[TrainingExtraKeys.workCapacityScore] as int? ??
+        (extra[TrainingInterviewLegacyKeys.workCapacity] as num?)?.toInt() ??
+        (extra[TrainingInterviewLegacyKeys.workCapacityScore] as num?)?.toInt();
+    return VolumeAdjustmentCalculator.workCapacityVmeAdjust(score);
   }
 
   double _getMevRecoveryHistoryAdjust(Map<String, dynamic> extra) {
-    final score = extra[TrainingExtraKeys.recoveryHistoryScore] as int?;
-    if (score == null) {
-      throw StateError(
-        'Falta: recoveryHistoryScore. Completa la evaluación de historial de recuperación.',
-      );
-    }
-    switch (score) {
-      case 1:
-        return -1.0;
-      case 2:
-        return -0.5;
-      case 3:
-        return 0.0;
-      case 4:
-        return 0.5;
-      case 5:
-        return 1.0;
-      default:
-        return 0.0;
-    }
+    final score =
+        extra[TrainingExtraKeys.recoveryHistoryScore] as int? ??
+        (extra[TrainingInterviewLegacyKeys.recoveryHistory] as num?)?.toInt() ??
+        (extra[TrainingInterviewLegacyKeys.recoveryHistoryScore] as num?)
+            ?.toInt();
+    return VolumeAdjustmentCalculator.recoveryHistoryVmeAdjust(score);
   }
 
   double _getMevExternalRecoverySupportAdjust(Map<String, dynamic> extra) {
     final hasSupport =
-        extra[TrainingExtraKeys.externalRecoverySupport] as bool?;
-    if (hasSupport == null) return 0.0;
-    return hasSupport ? 0.5 : 0.0;
+        extra[TrainingExtraKeys.externalRecoverySupport] as bool? ??
+        (extra[TrainingInterviewLegacyKeys.externalRecovery] as bool?);
+    return VolumeAdjustmentCalculator.externalRecoverySupportVmeAdjust(
+      hasSupport,
+    );
   }
 
   double _getMevProgramNoveltyAdjust(Map<String, dynamic> extra) {
-    final novelty = extra[TrainingExtraKeys.programNoveltyClass] as String?;
-    if (novelty == null) return 0.0;
-    switch (novelty) {
-      case 'N':
-        return -1.0; // Nulo
-      case 'B':
-        return -0.5; // Bajo
-      case 'I':
-        return 0.0; // Intermedio
-      case 'A':
-        return 0.5; // Alto
-      default:
-        return 0.0;
-    }
+    final novelty =
+        extra[TrainingExtraKeys.programNoveltyClass]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.programNovelty]?.toString();
+    return VolumeAdjustmentCalculator.programNoveltyVmeAdjust(novelty);
   }
 
   double _getMevExternalPhysicalStressAdjust(Map<String, dynamic> extra) {
     final stress =
-        extra[TrainingExtraKeys.externalPhysicalStressLevel] as String?;
-    if (stress == null) return 0.0;
-    switch (stress) {
-      case 'B':
-        return 0.5; // Bajo
-      case 'N':
-        return 0.0; // Normal
-      case 'I':
-        return -0.5; // Intermedio
-      case 'A':
-        return -1.0; // Alto
-      default:
-        return 0.0;
-    }
+        extra[TrainingExtraKeys.externalPhysicalStressLevel]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.physicalStress]?.toString();
+    return VolumeAdjustmentCalculator.externalPhysicalStressVmeAdjust(stress);
   }
 
   String? _resolveNonPhysicalStressLevel(Map<String, dynamic> extra) {
-    final direct = extra[TrainingExtraKeys.nonPhysicalStressLevel2] as String?;
+    final direct =
+        extra[TrainingExtraKeys.nonPhysicalStressLevel2]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.nonPhysicalStressLevel2]
+            ?.toString() ??
+        extra[TrainingInterviewLegacyKeys.nonPhysicalStressLevel]?.toString();
     if (direct != null) return direct;
     final fallback = extra[TrainingExtraKeys.stressLevel] as String?;
     switch (fallback) {
@@ -365,7 +248,10 @@ class VolumeIndividualizationService {
   }
 
   String? _resolveRestQuality(Map<String, dynamic> extra) {
-    final direct = extra[TrainingExtraKeys.restQuality2] as String?;
+    final direct =
+        extra[TrainingExtraKeys.restQuality2]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.restQuality2]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.restQuality]?.toString();
     if (direct != null) return direct;
     final fallback = extra[TrainingExtraKeys.sleepBucket] as String?;
     switch (fallback) {
@@ -382,256 +268,114 @@ class VolumeIndividualizationService {
   }
 
   double _getMevNonPhysicalStressAdjust(Map<String, dynamic> extra) {
-    final stress = _resolveNonPhysicalStressLevel(extra);
-    if (stress == null) return 0.0;
-    switch (stress) {
-      case 'B':
-        return 0.5; // Bajo
-      case 'P':
-        return 0.0; // Promedio
-      case 'A':
-        return -0.5; // Alto
-      default:
-        return 0.0;
-    }
+    return VolumeAdjustmentCalculator.nonPhysicalStressVmeAdjust(
+      _resolveNonPhysicalStressLevel(extra),
+    );
   }
 
   double _getMevRestQualityAdjust(Map<String, dynamic> extra) {
-    final quality = _resolveRestQuality(extra);
-    if (quality == null) return 0.0;
-    switch (quality) {
-      case 'A':
-        return 0.5; // Alta
-      case 'P':
-        return 0.0; // Promedio
-      case 'B':
-        return -0.5; // Baja
-      default:
-        return 0.0;
-    }
+    return VolumeAdjustmentCalculator.restQualityVmeAdjust(
+      _resolveRestQuality(extra),
+    );
   }
 
   double _getMevDietHabitsAdjust(Map<String, dynamic> extra) {
-    final diet = extra[TrainingExtraKeys.dietHabitsClass] as String?;
-    if (diet == null) return 0.0;
-    switch (diet) {
-      case 'ISO':
-        return 0.0; // Isocalórico
-      case 'DCB':
-        return -0.5; // Déficit Bajo
-      case 'DCM':
-        return -1.0; // Déficit Medio
-      case 'DCA':
-        return -1.5; // Déficit Alto
-      case 'SCB':
-        return 0.5; // Superávit Bajo
-      case 'SCM':
-        return 1.0; // Superávit Medio
-      case 'SCA':
-        return 1.5; // Superávit Alto
-      default:
-        return 0.0;
-    }
+    final diet =
+        extra[TrainingExtraKeys.dietHabitsClass]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.dietQuality]?.toString();
+    return VolumeAdjustmentCalculator.dietHabitsVmeAdjust(diet);
   }
 
   double _getMevAnabolicsAdjust(bool usesAnabolics) {
-    return usesAnabolics ? -1.5 : 0.0;
+    return VolumeAdjustmentCalculator.anabolicsVmeAdjust(usesAnabolics);
   }
 
   // ==================== MRV ADJUSTMENTS ====================
 
   double _getMrvGenderAdjust(Gender gender) {
-    return gender.isFemale ? 3.0 : 0.0; // mujer = +3.0, hombre = 0
+    return VolumeAdjustmentCalculator.sexVmrAdjust(gender);
   }
 
   double _getMrvAgeAdjust(int ageYears) {
-    if (ageYears < 20) return 1.0;
-    if (ageYears >= 20 && ageYears <= 29) return 0.0;
-    if (ageYears >= 30 && ageYears <= 39) return -1.0;
-    if (ageYears >= 40) return -2.0;
-    return 0.0;
+    return VolumeAdjustmentCalculator.ageVmrAdjust(ageYears);
   }
 
   double _getMrvHeightAdjust(double heightCm) {
-    final heightClass = _classifyHeight(heightCm);
-    switch (heightClass) {
-      case HeightClass.low:
-        return -1.0;
-      case HeightClass.medium:
-        return 0.0;
-      case HeightClass.high:
-        return 1.0;
-      case HeightClass.veryHigh:
-        return 2.0;
-    }
+    return VolumeAdjustmentCalculator.heightVmrAdjust(heightCm);
   }
 
   double _getMrvWeightAdjust(double weightKg) {
-    final weightClass = _classifyWeight(weightKg);
-    switch (weightClass) {
-      case WeightClass.light:
-        return -1.0;
-      case WeightClass.medium:
-        return 0.0;
-      case WeightClass.semiheavy:
-        return 1.0;
-      case WeightClass.heavy:
-        return 2.0;
-    }
+    return VolumeAdjustmentCalculator.weightVmrAdjust(weightKg);
   }
 
   double _getMrvStrengthLevelAdjust(Map<String, dynamic> extra) {
-    final level = extra[TrainingExtraKeys.strengthLevelClass] as String?;
-    if (level == null) return 0.0;
-    switch (level) {
-      case 'B':
-        return -2.0; // Bajo
-      case 'M':
-        return -1.0; // Medio
-      case 'A':
-        return 0.0; // Alto
-      case 'MA':
-        return 1.0; // Muy Alto
-      default:
-        return 0.0;
-    }
+    final level =
+        extra[TrainingExtraKeys.strengthLevelClass]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.strengthLevelClass]?.toString();
+    return VolumeAdjustmentCalculator.strengthLevelVmrAdjust(level);
   }
 
   double _getMrvWorkCapacityAdjust(Map<String, dynamic> extra) {
-    final score = extra[TrainingExtraKeys.workCapacityScore] as int?;
-    if (score == null) return 0.0;
-    switch (score) {
-      case 1:
-        return -2.0;
-      case 2:
-        return -1.0;
-      case 3:
-        return 0.0;
-      case 4:
-        return 1.0;
-      case 5:
-        return 2.0;
-      default:
-        return 0.0;
-    }
+    final score =
+        extra[TrainingExtraKeys.workCapacityScore] as int? ??
+        (extra[TrainingInterviewLegacyKeys.workCapacity] as num?)?.toInt() ??
+        (extra[TrainingInterviewLegacyKeys.workCapacityScore] as num?)?.toInt();
+    return VolumeAdjustmentCalculator.workCapacityVmrAdjust(score);
   }
 
   double _getMrvRecoveryHistoryAdjust(Map<String, dynamic> extra) {
-    final score = extra[TrainingExtraKeys.recoveryHistoryScore] as int?;
-    if (score == null) return 0.0;
-    switch (score) {
-      case 1:
-        return -2.0;
-      case 2:
-        return -1.0;
-      case 3:
-        return 0.0;
-      case 4:
-        return 1.0;
-      case 5:
-        return 2.0;
-      default:
-        return 0.0;
-    }
+    final score =
+        extra[TrainingExtraKeys.recoveryHistoryScore] as int? ??
+        (extra[TrainingInterviewLegacyKeys.recoveryHistory] as num?)?.toInt() ??
+        (extra[TrainingInterviewLegacyKeys.recoveryHistoryScore] as num?)
+            ?.toInt();
+    return VolumeAdjustmentCalculator.recoveryHistoryVmrAdjust(score);
   }
 
   double _getMrvExternalRecoverySupportAdjust(Map<String, dynamic> extra) {
     final hasSupport =
-        extra[TrainingExtraKeys.externalRecoverySupport] as bool?;
-    if (hasSupport == null) return 0.0;
-    return hasSupport ? 1.0 : 0.0;
+        extra[TrainingExtraKeys.externalRecoverySupport] as bool? ??
+        (extra[TrainingInterviewLegacyKeys.externalRecovery] as bool?);
+    return VolumeAdjustmentCalculator.externalRecoverySupportVmrAdjust(
+      hasSupport,
+    );
   }
 
   double _getMrvProgramNoveltyAdjust(Map<String, dynamic> extra) {
-    final novelty = extra[TrainingExtraKeys.programNoveltyClass] as String?;
-    if (novelty == null) return 0.0;
-    switch (novelty) {
-      case 'N':
-        return -2.0; // Nulo
-      case 'B':
-        return -1.0; // Bajo
-      case 'I':
-        return 0.0; // Intermedio
-      case 'A':
-        return 1.0; // Alto
-      default:
-        return 0.0;
-    }
+    final novelty =
+        extra[TrainingExtraKeys.programNoveltyClass]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.programNovelty]?.toString();
+    return VolumeAdjustmentCalculator.programNoveltyVmrAdjust(novelty);
   }
 
   double _getMrvExternalPhysicalStressAdjust(Map<String, dynamic> extra) {
     final stress =
-        extra[TrainingExtraKeys.externalPhysicalStressLevel] as String?;
-    if (stress == null) return 0.0;
-    switch (stress) {
-      case 'B':
-        return 1.0; // Bajo
-      case 'N':
-        return 0.0; // Normal
-      case 'I':
-        return -1.0; // Intermedio
-      case 'A':
-        return -2.0; // Alto
-      default:
-        return 0.0;
-    }
+        extra[TrainingExtraKeys.externalPhysicalStressLevel]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.physicalStress]?.toString();
+    return VolumeAdjustmentCalculator.externalPhysicalStressVmrAdjust(stress);
   }
 
   double _getMrvNonPhysicalStressAdjust(Map<String, dynamic> extra) {
-    final stress = _resolveNonPhysicalStressLevel(extra);
-    if (stress == null) return 0.0;
-    switch (stress) {
-      case 'B':
-        return 1.0; // Bajo
-      case 'P':
-        return 0.0; // Promedio
-      case 'A':
-        return -1.0; // Alto
-      default:
-        return 0.0;
-    }
+    return VolumeAdjustmentCalculator.nonPhysicalStressVmrAdjust(
+      _resolveNonPhysicalStressLevel(extra),
+    );
   }
 
   double _getMrvRestQualityAdjust(Map<String, dynamic> extra) {
-    final quality = _resolveRestQuality(extra);
-    if (quality == null) return 0.0;
-    switch (quality) {
-      case 'A':
-        return 1.0; // Alta
-      case 'P':
-        return 0.0; // Promedio
-      case 'B':
-        return -1.0; // Baja
-      default:
-        return 0.0;
-    }
+    return VolumeAdjustmentCalculator.restQualityVmrAdjust(
+      _resolveRestQuality(extra),
+    );
   }
 
   double _getMrvDietHabitsAdjust(Map<String, dynamic> extra) {
-    final diet = extra[TrainingExtraKeys.dietHabitsClass] as String?;
-    if (diet == null) return 0.0;
-    switch (diet) {
-      case 'ISO':
-        return 0.0; // Isocalórico
-      case 'DCB':
-        return -1.0; // Déficit Bajo
-      case 'DCM':
-        return -2.0; // Déficit Medio
-      case 'DCA':
-        return -3.0; // Déficit Alto
-      case 'SCB':
-        return 1.0; // Superávit Bajo
-      case 'SCM':
-        return 2.0; // Superávit Medio
-      case 'SCA':
-        return 3.0; // Superávit Alto
-      default:
-        return 0.0;
-    }
+    final diet =
+        extra[TrainingExtraKeys.dietHabitsClass]?.toString() ??
+        extra[TrainingInterviewLegacyKeys.dietQuality]?.toString();
+    return VolumeAdjustmentCalculator.dietHabitsVmrAdjust(diet);
   }
 
   double _getMrvAnabolicsAdjust(bool usesAnabolics) {
-    return usesAnabolics ? 3.0 : 0.0;
+    return VolumeAdjustmentCalculator.anabolicsVmrAdjust(usesAnabolics);
   }
 }
 
@@ -655,6 +399,9 @@ class VolumeBounds {
   /// MRV individualizado final (base + ajustes)
   final double mrvIndividual;
 
+  /// VOP individualizado final (base + ajustes)
+  final double vopIndividual;
+
   /// Contribuciones individuales por factor (MEV)
   final Map<String, double> contributionsMev;
 
@@ -668,6 +415,7 @@ class VolumeBounds {
     required this.mrvAdjustTotal,
     required this.mevIndividual,
     required this.mrvIndividual,
+    required this.vopIndividual,
     required this.contributionsMev,
     required this.contributionsMrv,
   });
@@ -676,7 +424,8 @@ class VolumeBounds {
   String toString() {
     return 'VolumeBounds('
         'MEV: $mevBase + ${mevAdjustTotal.toStringAsFixed(1)} = ${mevIndividual.toStringAsFixed(1)}, '
-        'MRV: $mrvBase + ${mrvAdjustTotal.toStringAsFixed(1)} = ${mrvIndividual.toStringAsFixed(1)}'
+        'MRV: $mrvBase + ${mrvAdjustTotal.toStringAsFixed(1)} = ${mrvIndividual.toStringAsFixed(1)}, '
+        'VOP: ${vopIndividual.toStringAsFixed(1)}'
         ')';
   }
 }

@@ -1,0 +1,379 @@
+{
+  "version": "v3",
+  "patterns": {
+    "horizontal_press": {
+      "family": "push",
+      "canBeA": true,
+      "defaultSlotRoles": [
+        "A",
+        "B1",
+        "B2"
+      ],
+      "antagonistPatterns": [
+        "horizontal_pull",
+        "vertical_pull"
+      ],
+      "conflictPatterns": [
+        "horizontal_press"
+      ]
+    },
+    "vertical_press": {
+      "family": "push",
+      "canBeA": true,
+      "defaultSlotRoles": [
+        "A",
+        "B1",
+        "B2",
+        "C1"
+      ],
+      "antagonistPatterns": [
+        "vertical_pull",
+        "horizontal_pull"
+      ],
+      "conflictPatterns": [
+        "vertical_press"
+      ]
+    },
+    "horizontal_pull": {
+      "family": "pull",
+      "canBeA": true,
+      "defaultSlotRoles": [
+        "A",
+        "B1",
+        "B2"
+      ],
+      "antagonistPatterns": [
+        "horizontal_press",
+        "vertical_press"
+      ],
+      "conflictPatterns": [
+        "horizontal_pull"
+      ]
+    },
+    "vertical_pull": {
+      "family": "pull",
+      "canBeA": true,
+      "defaultSlotRoles": [
+        "A",
+        "B1",
+        "B2"
+      ],
+      "antagonistPatterns": [
+        "vertical_press",
+        "horizontal_press"
+      ],
+      "conflictPatterns": [
+        "vertical_pull"
+      ]
+    },
+    "knee_dominant": {
+      "family": "lower",
+      "canBeA": true,
+      "defaultSlotRoles": [
+        "A",
+        "B1",
+        "B2"
+      ],
+      "antagonistPatterns": [
+        "hip_hinge",
+        "knee_flexion"
+      ],
+      "conflictPatterns": [
+        "knee_dominant"
+      ]
+    },
+    "hip_hinge": {
+      "family": "lower",
+      "canBeA": true,
+      "defaultSlotRoles": [
+        "A",
+        "B1",
+        "B2"
+      ],
+      "antagonistPatterns": [
+        "knee_dominant"
+      ],
+      "conflictPatterns": [
+        "hip_hinge"
+      ]
+    },
+    "glute_bridge": {
+      "family": "lower",
+      "canBeA": true,
+      "defaultSlotRoles": [
+        "A",
+        "B1",
+        "B2",
+        "C1"
+      ],
+      "antagonistPatterns": [
+        "knee_dominant"
+      ],
+      "conflictPatterns": [
+        "glute_bridge",
+        "hip_hinge"
+      ]
+    },
+    "knee_flexion": {
+      "family": "lower_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "B1",
+        "B2",
+        "C1",
+        "C2",
+        "D1"
+      ],
+      "antagonistPatterns": [
+        "knee_extension"
+      ],
+      "conflictPatterns": []
+    },
+    "knee_extension": {
+      "family": "lower_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "B1",
+        "B2",
+        "C1",
+        "C2",
+        "D1"
+      ],
+      "antagonistPatterns": [
+        "knee_flexion"
+      ],
+      "conflictPatterns": []
+    },
+    "elbow_flexion": {
+      "family": "arm_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "elbow_extension"
+      ],
+      "conflictPatterns": []
+    },
+    "elbow_extension": {
+      "family": "arm_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "elbow_flexion"
+      ],
+      "conflictPatterns": []
+    },
+    "shoulder_abduction": {
+      "family": "shoulder_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [],
+      "conflictPatterns": []
+    },
+    "shoulder_horizontal_abduction": {
+      "family": "shoulder_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "horizontal_press"
+      ],
+      "conflictPatterns": []
+    },
+    "horizontal_adduction": {
+      "family": "chest_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "B1",
+        "B2",
+        "C1",
+        "C2",
+        "D1"
+      ],
+      "antagonistPatterns": [
+        "horizontal_pull"
+      ],
+      "conflictPatterns": []
+    },
+    "calf_raise": {
+      "family": "calf_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [],
+      "conflictPatterns": []
+    },
+    "scapular_elevation": {
+      "family": "trap_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [],
+      "conflictPatterns": []
+    },
+    "trunk_flexion": {
+      "family": "core",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "anti_extension"
+      ],
+      "conflictPatterns": []
+    },
+    "anti_extension": {
+      "family": "core",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "trunk_flexion"
+      ],
+      "conflictPatterns": []
+    },
+    "hip_abduction": {
+      "family": "glute_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "hip_adduction"
+      ],
+      "conflictPatterns": []
+    },
+    "hip_adduction": {
+      "family": "adductor_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "hip_abduction"
+      ],
+      "conflictPatterns": []
+    },
+    "hip_extension": {
+      "family": "glute_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "B1",
+        "B2",
+        "C1",
+        "C2",
+        "D1"
+      ],
+      "antagonistPatterns": [
+        "trunk_flexion"
+      ],
+      "conflictPatterns": [
+        "glute_bridge"
+      ]
+    },
+    "shoulder_flexion": {
+      "family": "shoulder_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "vertical_pull"
+      ],
+      "conflictPatterns": []
+    },
+    "shoulder_extension": {
+      "family": "back_accessory",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "C1",
+        "C2",
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "horizontal_press"
+      ],
+      "conflictPatterns": []
+    },
+    "hip_flexion": {
+      "family": "core",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "D1",
+        "D2"
+      ],
+      "antagonistPatterns": [
+        "hip_extension"
+      ],
+      "conflictPatterns": []
+    },
+    "high_pull": {
+      "family": "upper_mixed",
+      "canBeA": false,
+      "defaultSlotRoles": [
+        "B1",
+        "B2",
+        "C1"
+      ],
+      "antagonistPatterns": [
+        "horizontal_press"
+      ],
+      "conflictPatterns": [
+        "high_pull"
+      ]
+    }
+  },
+  "orderClassLegend": {
+    "1": "large compound high",
+    "2": "large compound medium",
+    "3": "small compound high",
+    "4": "small compound medium",
+    "5": "large compound low",
+    "6": "small compound low",
+    "7": "large isolation high",
+    "8": "large isolation medium",
+    "9": "small isolation high",
+    "10": "small isolation medium",
+    "11": "large isolation low",
+    "12": "small isolation low"
+  }
+}

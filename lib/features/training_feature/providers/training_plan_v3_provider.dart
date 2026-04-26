@@ -21,12 +21,18 @@ import 'package:hcs_app_lap/domain/training_v3/repositories/workout_log_reposito
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_v3_state.dart';
 
 /// Provider Notifier para planes V3
+@Deprecated(
+  'Legacy provider. Use trainingPlanProvider.generatePlanV3/generatePlanFromActiveCycle as SSOT.',
+)
 final trainingPlanV3Provider =
     NotifierProvider<TrainingPlanV3Notifier, TrainingPlanV3State>(
       TrainingPlanV3Notifier.new,
     );
 
 /// Notifier que maneja la lógica de generación V3
+@Deprecated(
+  'Legacy notifier. Use TrainingPlanNotifier in training_plan_provider.dart.',
+)
 class TrainingPlanV3Notifier extends Notifier<TrainingPlanV3State> {
   @override
   TrainingPlanV3State build() => TrainingPlanV3State.empty;
@@ -52,6 +58,10 @@ class TrainingPlanV3Notifier extends Notifier<TrainingPlanV3State> {
     required List<Exercise> exercises,
     DateTime? asOfDate,
   }) async {
+    debugPrint(
+      '⚠️ [trainingPlanV3Provider] Deprecated entrypoint. Use trainingPlanProvider as canonical pipeline.',
+    );
+
     final effectiveAsOfDate = asOfDate ?? DateTime.now();
 
     // Iniciar carga

@@ -52,19 +52,18 @@ void main() {
   });
 
   group('IntensityValidator', () {
-    test('debe validar distribución 35/45/20 correcta', () {
+    test('debe validar distribución 20/60/20 correcta', () {
       final intensities = {
         'ex1': 'heavy',
         'ex2': 'heavy',
-        'ex3': 'heavy',
-        'ex4': 'heavy', // 35%
+        'ex3': 'moderate',
+        'ex4': 'moderate',
         'ex5': 'moderate',
         'ex6': 'moderate',
         'ex7': 'moderate',
-        'ex8': 'moderate',
-        'ex9': 'moderate', // 45%
-        'ex10': 'light',
-        'ex11': 'light', // 20%
+        'ex8': 'moderate', // 60%
+        'ex9': 'light',
+        'ex10': 'light', // 20%
       };
 
       final prescriptions = intensities.map((id, intensity) {

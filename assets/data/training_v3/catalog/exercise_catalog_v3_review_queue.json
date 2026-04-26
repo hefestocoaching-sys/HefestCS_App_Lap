@@ -1,0 +1,62 @@
+{
+  "version": "exercise_catalog_v3_review_queue",
+  "queueCount": 7,
+  "items": [
+    {
+      "id": "encogimiento_con_barra",
+      "name": "Encogimiento con barra",
+      "movementPattern": "scapular_elevation",
+      "reasons": [
+        "trap_heavy_review"
+      ]
+    },
+    {
+      "id": "press_de_banca_agarre_cerrado",
+      "name": "Press de banca agarre cerrado",
+      "movementPattern": "horizontal_press",
+      "reasons": [
+        "compound_small_muscle_heavy_review"
+      ]
+    },
+    {
+      "id": "encogimiento_con_mancuerna",
+      "name": "Encogimiento con mancuerna",
+      "movementPattern": "scapular_elevation",
+      "reasons": [
+        "trap_heavy_review"
+      ]
+    },
+    {
+      "id": "encogimiento_con_barra_en_polea_baja",
+      "name": "Encogimiento con barra en polea baja",
+      "movementPattern": "scapular_elevation",
+      "reasons": [
+        "trap_heavy_review"
+      ]
+    },
+    {
+      "id": "encogimiento_con_barra_smith",
+      "name": "Encogimiento con barra smith",
+      "movementPattern": "scapular_elevation",
+      "reasons": [
+        "trap_heavy_review"
+      ]
+    },
+    {
+      "id": "jalon_al_menton_con_barra",
+      "name": "Jalón al menton con barra",
+      "movementPattern": "high_pull",
+      "reasons": [
+        "trap_heavy_review"
+      ]
+    },
+    {
+      "id": "fondos_para_triceps",
+      "name": "Fondos para triceps",
+      "movementPattern": "horizontal_press",
+      "reasons": [
+        "compound_small_muscle_heavy_review"
+      ]
+    }
+  ]
+}

@@ -74,7 +74,7 @@ void main() {
 
       // Validar volumen calculado
       expect(program.weeklyVolumeByMuscle, isNotEmpty);
-      expect(program.weeklyVolumeByMuscle['chest'], greaterThan(0));
+      expect(program.weeklyVolumeByMuscle['pectorals'], greaterThan(0));
     });
 
     test('debe retornar errores si perfil es inválido', () async {

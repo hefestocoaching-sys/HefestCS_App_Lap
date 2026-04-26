@@ -6,20 +6,24 @@ enum MuscleGroup { chest, back, deltoids, arms, legs, glutes, calves, core }
 /// Important: the V3 catalog uses canonical muscle keys directly.
 /// Avoid expanding to legacy granular keys that no longer exist.
 class MuscleToCatalogResolver {
+  static const Map<String, String> _legacyToCanonical = {
+    'chest': 'pectorals',
+    'quadriceps': 'quads',
+    'deltoide_anterior': 'delts_front',
+    'deltoide_lateral': 'delts_lateral',
+    'deltoide_posterior': 'delts_rear',
+  };
+
   static const Map<MuscleGroup, List<String>> _groupToKeysMap = {
     MuscleGroup.chest: ['pectorals'],
 
     MuscleGroup.back: ['lats', 'upper_back', 'traps'],
 
-    MuscleGroup.deltoids: [
-      'deltoide_anterior',
-      'deltoide_lateral',
-      'deltoide_posterior',
-    ],
+    MuscleGroup.deltoids: ['delts_front', 'delts_lateral', 'delts_rear'],
 
     MuscleGroup.arms: ['biceps', 'triceps'],
 
-    MuscleGroup.legs: ['quadriceps', 'hamstrings'],
+    MuscleGroup.legs: ['quads', 'hamstrings'],
 
     MuscleGroup.glutes: ['glutes'],
 
@@ -38,25 +42,21 @@ class MuscleToCatalogResolver {
 
   /// Expands a canonical muscle to its JSON keys.
   static List<String> expandMuscleKey(String canonicalMuscle) {
-    switch (canonicalMuscle) {
-      case 'chest':
+    final normalized = _toCanonical(canonicalMuscle);
+
+    switch (normalized) {
+      case 'pectorals':
         return ['pectorals'];
       case 'lats':
         return ['lats'];
       case 'upper_back':
         return ['upper_back'];
       case 'traps':
-        return ['traps_upper', 'traps_middle', 'traps_lower'];
-      case 'deltoide_anterior':
-        return ['deltoide_anterior'];
+        return ['traps'];
       case 'delts_front':
         return ['delts_front'];
-      case 'deltoide_lateral':
-        return ['deltoide_lateral'];
       case 'delts_lateral':
         return ['delts_lateral'];
-      case 'deltoide_posterior':
-        return ['deltoide_posterior'];
       case 'delts_rear':
         return ['delts_rear'];
       case 'biceps':
@@ -64,19 +64,17 @@ class MuscleToCatalogResolver {
       case 'triceps':
         return ['triceps'];
       case 'quads':
-        return ['quadriceps'];
-      case 'quadriceps':
-        return ['quadriceps'];
+        return ['quads'];
       case 'hamstrings':
         return ['hamstrings'];
       case 'glutes':
         return ['glutes'];
       case 'calves':
-        return ['gastrocnemio', 'soleo'];
+        return ['calves'];
       case 'abs':
         return ['abs'];
       default:
-        return [canonicalMuscle];
+        return [normalized];
     }
   }
 
@@ -91,8 +89,11 @@ class MuscleToCatalogResolver {
 
   /// Converts a JSON key to its canonical muscle (for logging).
   static String toCanonicalMuscle(String jsonKey) {
-    if (jsonKey == 'pectorals') return 'chest';
-    if (jsonKey == 'quadriceps') return 'quads';
-    return jsonKey;
+    return _toCanonical(jsonKey);
+  }
+
+  static String _toCanonical(String key) {
+    final normalized = key.trim().toLowerCase();
+    return _legacyToCanonical[normalized] ?? normalized;
   }
 }

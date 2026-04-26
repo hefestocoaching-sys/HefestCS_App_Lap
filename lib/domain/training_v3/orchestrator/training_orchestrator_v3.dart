@@ -10,6 +10,7 @@ import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/entities/training_week.dart' as v2;
 import 'package:hcs_app_lap/domain/entities/training_session.dart' as v2;
 import 'package:hcs_app_lap/domain/entities/exercise_prescription.dart' as v2;
+import 'package:hcs_app_lap/domain/entities/rep_range.dart' as rep;
 import 'package:hcs_app_lap/domain/training_v3/engines/landmark_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/intensity_split.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result.dart';
@@ -19,8 +20,6 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart'
 import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart' as v3;
 import 'package:hcs_app_lap/domain/training_v3/models/training_session.dart'
     as v3;
-import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
-import 'package:hcs_app_lap/domain/training_v3/resolvers/rep_range_resolver.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/decision_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_plan_meta.dart';
@@ -709,6 +708,8 @@ class TrainingOrchestratorV3 {
     return out;
   }
 
+  // Legacy compatibility boundary: this maps V3 output to V2 entities required by
+  // current consumers, without re-resolving programming intent.
   List<v2.TrainingSession> _convertV3Sessions(List<dynamic> sessions) {
     final out = <v2.TrainingSession>[];
     for (final session in sessions) {
@@ -725,13 +726,11 @@ class TrainingOrchestratorV3 {
         final ex = session.exercises[idx];
         final order = idx + 1;
         final totalSets = ex.sets.length;
-        final catalogExercise = ExerciseCatalogV3.getById(ex.exerciseId);
-        final resolved = RepRangeResolver.resolve(
-          exerciseName: ex.name,
-          muscleKey: ex.muscleKey,
-          exerciseType: ExerciseCatalogV3.getTypeById(ex.exerciseId),
-          movementPattern: catalogExercise?.difficulty,
-        );
+        final seed = ex.sets.isNotEmpty ? ex.sets.first : null;
+        final repRange = seed != null
+            ? rep.RepRange(seed.repsMin, seed.repsMax)
+            : const rep.RepRange(8, 12);
+        final rirTarget = seed?.rir ?? 2;
 
         prescriptions.add(
           v2.ExercisePrescription(
@@ -742,8 +741,8 @@ class TrainingOrchestratorV3 {
             label: _labelForOrder(order),
             exerciseName: ex.name,
             sets: totalSets,
-            repRange: resolved.repRange,
-            rir: resolved.rirTarget.toString(),
+            repRange: repRange,
+            rir: rirTarget.toString(),
             restMinutes: 2,
             notes: '',
             order: order,

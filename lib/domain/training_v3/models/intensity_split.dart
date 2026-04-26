@@ -12,11 +12,11 @@ class IntensitySplit {
   double get total => heavy + medium + light;
 
   bool get isWithinBounds =>
-      heavy >= 0 &&
+      heavy >= 15 &&
       heavy <= 30 &&
-      medium >= 0 &&
+      medium >= 40 &&
       medium <= 70 &&
-      light >= 0 &&
+      light >= 15 &&
       light <= 30;
 
   bool get sumsTo100 => (total - 100).abs() < 0.0001;

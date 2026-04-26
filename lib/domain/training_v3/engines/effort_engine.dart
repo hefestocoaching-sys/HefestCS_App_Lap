@@ -7,7 +7,7 @@ import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dar
 /// Implementa las reglas científicas de la Semana 4 (43 imágenes):
 /// - RIR óptimo varía según intensidad y tipo de ejercicio
 /// - Heavy compounds: RIR 3-4 (conservador, riesgo de lesión)
-/// - Moderate: RIR 2-3 (óptimo para hipertrofia)
+/// - Medium: RIR 2-3 (óptimo para hipertrofia)
 /// - Light isolation: RIR 0-1 (cerca del fallo)
 ///
 /// FUNDAMENTO CIENTÍFICO:
@@ -29,7 +29,7 @@ class EffortEngine {
   ///
   /// PARÁMETROS:
   /// - [exerciseId]: ID del ejercicio
-  /// - [intensity]: 'heavy'|'moderate'|'light'
+  /// - [intensity]: 'heavy'|'medium'|'light'
   /// - [exerciseType]: 'compound'|'isolation'
   ///
   /// RETORNA:

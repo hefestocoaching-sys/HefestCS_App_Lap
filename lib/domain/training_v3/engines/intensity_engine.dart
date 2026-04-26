@@ -1,6 +1,7 @@
 // lib/domain/training_v3/engines/intensity_engine.dart
 
 import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
+import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 
 // [V3][P0] Intensity zone range constants
 const int kHeavyMin = 15;
@@ -9,21 +10,20 @@ const int kMediumMin = 40;
 const int kMediumMax = 70;
 const int kLightMin = 15;
 const int kLightMax = 30;
-const String kModerateAlias = 'moderate';
 
 /// Motor de distribución de intensidad por ejercicio
 ///
 /// Implementa las reglas científicas de la Semana 3 (12 imágenes):
-/// - Distribución óptima: 35% heavy, 45% moderate, 20% light
+/// - Distribución óptima: 20% heavy, 60% medium, 20% light
 /// - Heavy: 6-8 reps, >85% 1RM
-/// - Moderate: 8-12 reps, 70-85% 1RM
+/// - Medium: 8-12 reps, 70-85% 1RM
 /// - Light: 16-20 reps, 60-70% 1RM
 ///
 /// FUNDAMENTO CIENTÍFICO:
 /// - Semana 3, Imagen 26: Curva de hipertrofia por intensidad
-/// - Semana 3, Imagen 27-29: Distribución 35/45/20
+/// - Semana 3, Imagen 27-29: Distribución 20/60/20
 /// - Semana 3, Imagen 30-32: Heavy para fuerza + hipertrofia
-/// - Semana 3, Imagen 33-35: Moderate para hipertrofia pura
+/// - Semana 3, Imagen 33-35: Medium para hipertrofia pura
 ///
 /// REFERENCIAS:
 /// - Schoenfeld et al. (2021): Hypertrophy across loading ranges
@@ -80,9 +80,9 @@ class IntensityEngine {
   /// Distribuye intensidades a una lista de ejercicios
   ///
   /// ALGORITMO:
-  /// 1. Calcular cuántos ejercicios por zona (35/45/20)
+  /// 1. Calcular cuántos ejercicios por zona (20/60/20)
   /// 2. Asignar heavy a compounds grandes primero
-  /// 3. Asignar moderate a compounds auxiliares
+  /// 3. Asignar medium a compounds auxiliares
   /// 4. Asignar light a aislamiento
   ///
   /// PARÁMETROS:
@@ -90,70 +90,80 @@ class IntensityEngine {
   /// - [exerciseTypes]: Mapa ejercicio → tipo ('compound'/'isolation')
   ///
   /// RETORNA:
-  /// - Map&lt;String, String&gt;: ejercicioId → 'heavy'|'moderate'|'light'
+  /// - Map&lt;String, String&gt;: ejercicioId → 'heavy'|'medium'|'light'
   static Map<String, String> distributeIntensities({
     required List<String> exercises,
     required Map<String, String> exerciseTypes,
     int dayIndex = 0,
   }) {
+    final ordered = List<String>.from(exercises)..sort();
     final intensities = <String, String>{};
 
+    if (ordered.isEmpty) return intensities;
+
+    final totalExercises = ordered.length;
+    int heavyCount = (totalExercises * 0.20).round();
+    int mediumCount = (totalExercises * 0.60).round();
+    int lightCount = totalExercises - heavyCount - mediumCount;
+
     if (dayIndex.isOdd) {
-      final medCount = (exercises.length * 0.60).round();
-      int assigned = 0;
-      for (final id in exercises) {
-        intensities[id] = assigned < medCount
-            ? kModerateAlias
-            : IntensityZone.light;
-        assigned++;
-      }
-      return intensities;
+      heavyCount = 0;
+      mediumCount = (totalExercises * 0.60).round();
+      lightCount = totalExercises - mediumCount;
     }
 
-    final totalExercises = exercises.length;
-
-    // PASO 1: Calcular distribución 35/45/20
-    // Semana 3, Imagen 27-29
-    final heavyCount = (totalExercises * 0.35).round();
-    final moderateCount = (totalExercises * 0.45).round();
-
-    // PASO 2: Separar por tipo
-    final compounds = exercises
-        .where((id) => exerciseTypes[id] == 'compound')
-        .toList();
-    final isolation = exercises
-        .where((id) => exerciseTypes[id] == 'isolation')
-        .toList();
-
-    // PASO 3: Asignar intensidades
-    // Heavy: Compounds primero
-    int assignedHeavy = 0;
-    for (final exerciseId in compounds) {
-      if (assignedHeavy < heavyCount) {
-        intensities[exerciseId] = IntensityZone.heavy;
-        assignedHeavy++;
-      } else {
-        break;
-      }
+    List<String> availableForZone(String zone) {
+      return ordered.where((id) {
+        if (intensities.containsKey(id)) return false;
+        return ExerciseCatalogV3.allowsZone(id, zone);
+      }).toList();
     }
 
-    // Moderate: Resto de compounds + algunos isolation
-    int assignedModerate = 0;
-    for (final exerciseId in [...compounds, ...isolation]) {
-      if (intensities.containsKey(exerciseId)) continue;
-      if (assignedModerate < moderateCount) {
-        intensities[exerciseId] = kModerateAlias;
-        assignedModerate++;
-      } else {
-        break;
+    void assignZone({
+      required String zone,
+      required int count,
+      bool compoundsFirst = false,
+    }) {
+      if (count <= 0) return;
+      var candidates = availableForZone(zone);
+      if (compoundsFirst) {
+        candidates.sort((a, b) {
+          final aCompound = exerciseTypes[a] == 'compound';
+          final bCompound = exerciseTypes[b] == 'compound';
+          if (aCompound != bCompound) return aCompound ? -1 : 1;
+          return a.compareTo(b);
+        });
+      }
+
+      if (candidates.length < count) {
+        throw StateError(
+          '[IntensityEngine][STRICT_NO_FALLBACK] No hay suficientes ejercicios para zona=$zone '
+          'requested=$count available=${candidates.length} total=$totalExercises',
+        );
+      }
+
+      for (var i = 0; i < count; i++) {
+        intensities[candidates[i]] = zone;
       }
     }
 
-    // Light: Lo que queda
-    for (final exerciseId in exercises) {
-      if (!intensities.containsKey(exerciseId)) {
-        intensities[exerciseId] = IntensityZone.light;
-      }
+    assignZone(
+      zone: IntensityZone.heavy,
+      count: heavyCount,
+      compoundsFirst: true,
+    );
+    assignZone(
+      zone: IntensityZone.medium,
+      count: mediumCount,
+      compoundsFirst: true,
+    );
+    assignZone(zone: IntensityZone.light, count: lightCount);
+
+    if (intensities.length != totalExercises) {
+      throw StateError(
+        '[IntensityEngine][STRICT_NO_FALLBACK] Intensidad incompleta: '
+        'assigned=${intensities.length} total=$totalExercises',
+      );
     }
 
     return intensities;
@@ -165,12 +175,11 @@ class IntensityEngine {
   static List<int> getRepRangeForIntensity(String intensity) {
     switch (intensity) {
       case IntensityZone.heavy:
-        return [5, 8]; // Fuerza + hipertrofia
+        return [6, 8]; // Fuerza + hipertrofia
       case IntensityZone.medium:
-      case kModerateAlias:
         return [8, 12]; // Hipertrofia óptima
       case IntensityZone.light:
-        return [12, 20]; // Hipertrofia metabólica
+        return [16, 20]; // Hipertrofia metabólica
       default:
         throw ArgumentError('Intensidad inválida: $intensity');
     }
@@ -184,7 +193,6 @@ class IntensityEngine {
       case IntensityZone.heavy:
         return 240; // 4 minutos (180-300s)
       case IntensityZone.medium:
-      case kModerateAlias:
         return 120; // 2 minutos (90-180s)
       case IntensityZone.light:
         return 75; // 75 segundos (60-90s)
@@ -201,8 +209,8 @@ class IntensityEngine {
     final heavyCount = intensities.values
         .where((i) => i == IntensityZone.heavy)
         .length;
-    final moderateCount = intensities.values
-        .where((i) => i == IntensityZone.medium || i == kModerateAlias)
+    final mediumCount = intensities.values
+        .where((i) => i == IntensityZone.medium)
         .length;
     final lightCount = intensities.values
         .where((i) => i == IntensityZone.light)
@@ -210,13 +218,15 @@ class IntensityEngine {
 
     // Calcular porcentajes
     final heavyPct = heavyCount / total;
-    final moderatePct = moderateCount / total;
+    final mediumPct = mediumCount / total;
     final lightPct = lightCount / total;
 
-    // Validar que estén cerca de 35/45/20 (±10% tolerancia)
-    if ((heavyPct - 0.35).abs() > 0.15) return false;
-    if ((moderatePct - 0.45).abs() > 0.15) return false;
-    if ((lightPct - 0.20).abs() > 0.15) return false;
+    final sumOk = ((heavyPct + mediumPct + lightPct) - 1.0).abs() <= 0.001;
+    if (!sumOk) return false;
+
+    if (heavyPct < 0.15 || heavyPct > 0.30) return false;
+    if (mediumPct < 0.40 || mediumPct > 0.70) return false;
+    if (lightPct < 0.15 || lightPct > 0.30) return false;
 
     return true;
   }

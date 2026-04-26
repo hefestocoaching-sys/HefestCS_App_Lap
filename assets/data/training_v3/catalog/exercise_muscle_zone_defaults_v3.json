@@ -1,0 +1,167 @@
+{
+  "version": "v3",
+  "defaults": {
+    "pectorals": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "primary",
+      "preferredPatterns": [
+        "horizontal_press",
+        "horizontal_adduction"
+      ]
+    },
+    "lats": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "primary",
+      "preferredPatterns": [
+        "vertical_pull",
+        "horizontal_pull"
+      ]
+    },
+    "upper_back": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "primary",
+      "preferredPatterns": [
+        "horizontal_pull",
+        "vertical_pull"
+      ]
+    },
+    "traps": {
+      "allowedZones": [
+        "medium",
+        "light"
+      ],
+      "heavyRole": "forbidden",
+      "preferredPatterns": [
+        "scapular_elevation"
+      ]
+    },
+    "biceps": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "optional",
+      "preferredPatterns": [
+        "elbow_flexion"
+      ]
+    },
+    "triceps": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "optional",
+      "preferredPatterns": [
+        "elbow_extension",
+        "horizontal_press"
+      ]
+    },
+    "deltoide_anterior": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "optional",
+      "preferredPatterns": [
+        "vertical_press"
+      ]
+    },
+    "deltoide_lateral": {
+      "allowedZones": [
+        "medium",
+        "light"
+      ],
+      "heavyRole": "forbidden",
+      "preferredPatterns": [
+        "shoulder_abduction"
+      ]
+    },
+    "deltoide_posterior": {
+      "allowedZones": [
+        "medium",
+        "light"
+      ],
+      "heavyRole": "forbidden",
+      "preferredPatterns": [
+        "shoulder_horizontal_abduction"
+      ]
+    },
+    "quadriceps": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "primary",
+      "preferredPatterns": [
+        "knee_dominant",
+        "knee_extension"
+      ]
+    },
+    "hamstrings": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "primary",
+      "preferredPatterns": [
+        "hip_hinge",
+        "knee_flexion"
+      ]
+    },
+    "glutes": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "primary",
+      "preferredPatterns": [
+        "glute_bridge",
+        "hip_hinge",
+        "knee_dominant",
+        "hip_extension",
+        "hip_abduction"
+      ]
+    },
+    "calves": {
+      "allowedZones": [
+        "heavy",
+        "medium",
+        "light"
+      ],
+      "heavyRole": "optional",
+      "preferredPatterns": [
+        "calf_raise"
+      ]
+    },
+    "abs": {
+      "allowedZones": [
+        "medium",
+        "light"
+      ],
+      "heavyRole": "forbidden",
+      "preferredPatterns": [
+        "trunk_flexion",
+        "anti_extension",
+        "hip_flexion"
+      ]
+    }
+  }
+}

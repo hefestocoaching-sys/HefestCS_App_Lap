@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import '../../../domain/entities/exercise.dart';
 
 class ExerciseCatalogLoader {
+  @Deprecated(
+    'Legacy wrapper kept for compatibility; runtime SSOT is ExerciseCatalogV3.',
+  )
   static List<Exercise>? _cache;
 
   static bool _validateV3(Map<String, dynamic> e, int i) {
@@ -52,58 +55,42 @@ class ExerciseCatalogLoader {
   static Future<List<Exercise>> load() async {
     if (_cache != null && _cache!.isNotEmpty) return _cache!;
 
-    try {
-      const path = 'assets/data/exercises/exercise_catalog_gym.json';
-      final jsonStr = await rootBundle.loadString(path);
-      final decoded = jsonDecode(jsonStr);
+    const path =
+        'assets/data/training_v3/catalog/exercise_catalog_v3_runtime.json';
+    final jsonStr = await rootBundle.loadString(path);
+    final decoded = jsonDecode(jsonStr);
 
-      // V3: root object con { schemaVersion, lastUpdated, notes, exercises: [] }
-      if (decoded is! Map<String, dynamic>) {
-        logger.error('ExerciseCatalogV3: Root invalid, expected Map');
-        _cache = const <Exercise>[];
-        return _cache!;
-      }
-
-      final list = decoded['exercises'];
-      if (list is! List) {
-        logger.error(
-          'ExerciseCatalogV3: Root invalid, missing exercises array',
-        );
-        _cache = const <Exercise>[];
-        return _cache!;
-      }
-
-      final out = <Exercise>[];
-      for (var i = 0; i < list.length; i++) {
-        final item = list[i];
-        if (item is! Map<String, dynamic>) {
-          logger.warning('ExerciseCatalogV3: Entry is not Map', {'index': i});
-          continue;
-        }
-        if (!_validateV3(item, i)) continue;
-        out.add(Exercise.fromMap(item));
-      }
-
-      _cache = out;
-      logger.info('ExerciseCatalogV3: Loaded exercises', {
-        'count': _cache!.length,
-      });
-
-      // Diagnóstico: conteo por músculo primario
-      final counts = <String, int>{};
-      for (final ex in _cache!) {
-        final k = ex.primaryMuscles.isNotEmpty
-            ? ex.primaryMuscles.first
-            : ex.muscleKey;
-        counts[k] = (counts[k] ?? 0) + 1;
-      }
-      logger.debug('ExerciseCatalogV3: By primary muscle', {'counts': counts});
-
-      return _cache!;
-    } catch (e, st) {
-      logger.error('ERROR loading exercise catalog v3', e, st);
-      _cache = const <Exercise>[];
-      return _cache!;
+    if (decoded is! Map<String, dynamic>) {
+      throw StateError(
+        'ExerciseCatalogV3 runtime root invalid: expected object',
+      );
     }
+
+    final list = decoded['exercises'];
+    if (list is! List) {
+      throw StateError(
+        'ExerciseCatalogV3 runtime invalid: missing exercises[]',
+      );
+    }
+
+    final out = <Exercise>[];
+    for (var i = 0; i < list.length; i++) {
+      final item = list[i];
+      if (item is! Map<String, dynamic>) {
+        throw StateError(
+          'ExerciseCatalogV3 runtime invalid entry type at index=$i',
+        );
+      }
+      if (!_validateV3(item, i)) {
+        throw StateError(
+          'ExerciseCatalogV3 runtime invalid mandatory fields at index=$i',
+        );
+      }
+      out.add(Exercise.fromMap(item));
+    }
+
+    _cache = out;
+    logger.info('ExerciseCatalogV3 runtime loaded', {'count': _cache!.length});
+    return _cache!;
   }
 }

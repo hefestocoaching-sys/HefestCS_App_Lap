@@ -1,5 +1,9 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/domain/training_v3/constants/muscle_intensity_policy.dart';
+import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
+
 class IntensityDistribution {
   final int heavySets;
   final int mediumSets;
@@ -15,6 +19,19 @@ class IntensityDistribution {
 }
 
 class IntensityDistributionEngine {
+  static ({int min, int max}) repRangeForZone(String zone) {
+    switch (zone.trim().toLowerCase()) {
+      case 'heavy':
+        return (min: 6, max: 8);
+      case 'medium':
+        return (min: 8, max: 12);
+      case 'light':
+        return (min: 15, max: 20);
+      default:
+        throw ArgumentError('Zona de intensidad inválida: $zone');
+    }
+  }
+
   static Map<String, IntensityDistribution> buildWeeklyTargets({
     required Map<String, int> weeklySetsByMuscle,
     required Map<String, double> intensitySplitPercent,
@@ -22,6 +39,7 @@ class IntensityDistributionEngine {
     return {
       for (final entry in weeklySetsByMuscle.entries)
         entry.key: splitWeeklySets(
+          muscleKey: entry.key,
           weeklySets: entry.value,
           intensitySplitPercent: intensitySplitPercent,
         ),
@@ -29,6 +47,7 @@ class IntensityDistributionEngine {
   }
 
   static IntensityDistribution splitWeeklySets({
+    String? muscleKey,
     required int weeklySets,
     required Map<String, double> intensitySplitPercent,
   }) {
@@ -70,10 +89,19 @@ class IntensityDistributionEngine {
       cursor++;
     }
 
-    return IntensityDistribution(
+    final originalDistribution = IntensityDistribution(
       heavySets: heavy,
       mediumSets: medium,
       lightSets: light,
+    );
+
+    if (muscleKey == null || muscleKey.trim().isEmpty) {
+      return originalDistribution;
+    }
+
+    return _applyMusclePolicy(
+      muscleKey: muscleKey,
+      originalDistribution: originalDistribution,
     );
   }
 
@@ -199,5 +227,94 @@ class IntensityDistributionEngine {
       'medium': (medium * 100.0) / total,
       'light': (light * 100.0) / total,
     };
+  }
+
+  static IntensityDistribution _applyMusclePolicy({
+    required String muscleKey,
+    required IntensityDistribution originalDistribution,
+  }) {
+    final allowedZones = MuscleIntensityPolicy.allowedZonesForMuscle(muscleKey);
+    final original = <String, int>{
+      'heavy': originalDistribution.heavySets,
+      'medium': originalDistribution.mediumSets,
+      'light': originalDistribution.lightSets,
+    };
+    final adjusted = Map<String, int>.from(original);
+    final removedZones = <String>[];
+    var reason = 'policy_ok';
+
+    void moveZone(String fromZone, List<String> targets) {
+      final amount = adjusted[fromZone] ?? 0;
+      if (amount <= 0) {
+        adjusted[fromZone] = 0;
+        return;
+      }
+
+      final targetZone = targets.firstWhere(
+        allowedZones.contains,
+        orElse: () => targets.first,
+      );
+      if (!allowedZones.contains(targetZone)) {
+        return;
+      }
+
+      adjusted[fromZone] = 0;
+      adjusted[targetZone] = (adjusted[targetZone] ?? 0) + amount;
+      removedZones.add(fromZone);
+    }
+
+    if (!allowedZones.contains('heavy')) {
+      moveZone('heavy', const ['medium', 'light']);
+      reason = 'policy_disallows_heavy';
+    }
+    if (!allowedZones.contains('medium')) {
+      moveZone('medium', const ['heavy', 'light']);
+      reason = reason == 'policy_disallows_heavy'
+          ? 'policy_disallows_heavy_medium'
+          : 'policy_disallows_medium';
+    }
+    if (!allowedZones.contains('light')) {
+      moveZone('light', const ['medium', 'heavy']);
+      reason = reason == 'policy_ok' ? 'policy_disallows_light' : reason;
+    }
+
+    final adjustedDistribution = IntensityDistribution(
+      heavySets: adjusted['heavy'] ?? 0,
+      mediumSets: adjusted['medium'] ?? 0,
+      lightSets: adjusted['light'] ?? 0,
+    );
+
+    if (adjustedDistribution.totalSets != originalDistribution.totalSets) {
+      final total = originalDistribution.totalSets;
+      debugPrint(
+        '[V3][INTENSITY_POLICY_WARN] muscle=$muscleKey totalMismatch original=$original adjusted=$adjusted total=$total',
+      );
+    }
+
+    if (adjustedDistribution.heavySets != originalDistribution.heavySets ||
+        adjustedDistribution.mediumSets != originalDistribution.mediumSets ||
+        adjustedDistribution.lightSets != originalDistribution.lightSets) {
+      debugPrint(
+        '[V3][INTENSITY_POLICY_TRACE] muscle=$muscleKey original=$original adjusted={heavy:${adjustedDistribution.heavySets}, medium:${adjustedDistribution.mediumSets}, light:${adjustedDistribution.lightSets}} removedZones=$removedZones reason=$reason',
+      );
+    }
+
+    final catalogZones = <String>{};
+    for (final exercise in ExerciseCatalogV3.getByMuscle(muscleKey)) {
+      for (final zone in MuscleIntensityPolicy.allZones) {
+        if (ExerciseCatalogV3.allowsZone(exercise.id, zone)) {
+          catalogZones.add(zone);
+        }
+      }
+    }
+    final intersection = catalogZones.intersection(allowedZones);
+    if (intersection.isEmpty &&
+        ExerciseCatalogV3.getByMuscle(muscleKey).isNotEmpty) {
+      debugPrint(
+        '[V3][INTENSITY_POLICY_WARN] muscle=$muscleKey policyZones=$allowedZones catalogZones=$catalogZones reason=no_intersection_with_catalog',
+      );
+    }
+
+    return adjustedDistribution;
   }
 }

@@ -2,23 +2,20 @@
 class MuscleCatalogMapper {
   /// Mapeo: Motor V3 muscle ID -> Catalog JSON muscle IDs.
   static const Map<String, List<String>> motorToCatalog = {
-    'chest': ['pectorals'],
+    'pectorals': ['pectorals'],
     'lats': ['lats'],
     'upper_back': ['upper_back'],
     'traps': ['traps'],
-    'deltoide_anterior': ['deltoide_anterior'],
-    'deltoide_lateral': ['deltoide_lateral'],
-    'deltoide_posterior': ['deltoide_posterior'],
+    'delts_front': ['delts_front'],
+    'delts_lateral': ['delts_lateral'],
+    'delts_rear': ['delts_rear'],
     'biceps': ['biceps'],
     'triceps': ['triceps'],
-    'forearms': ['forearms'],
-    'quads': ['quadriceps'],
+    'quads': ['quads'],
     'hamstrings': ['hamstrings'],
     'glutes': ['glutes'],
     'calves': ['calves'],
     'abs': ['abs'],
-    'obliques': ['obliques'],
-    'lower_back': ['lower_back'],
   };
 
   /// Convierte un muscle ID del motor V3 a IDs del catalogo JSON.

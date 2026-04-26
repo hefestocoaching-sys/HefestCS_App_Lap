@@ -92,34 +92,24 @@ class WeeklyProgressionServiceEnhancedAdapter
     required int prescribedRir,
     required Map<String, dynamic> userFeedback,
   }) async {
-    // 1. Convertir feedback
-    final _ = FeedbackEntry(
+    final decisions = await processWeeklyProgression(
       userId: userId,
-      muscle: muscle,
       weekNumber: weekNumber,
       weekStart: weekStart,
       weekEnd: weekEnd,
-      muscleActivation:
-          (userFeedback['muscle_activation'] as num?)?.toDouble() ?? 5.0,
-      pumpQuality: (userFeedback['pump_quality'] as num?)?.toDouble() ?? 5.0,
-      fatigueLevel: (userFeedback['fatigue_level'] as num?)?.toDouble() ?? 5.0,
-      recoveryQuality:
-          (userFeedback['recovery_quality'] as num?)?.toDouble() ?? 5.0,
-      hadPain: userFeedback['had_pain'] as bool? ?? false,
-      deloadRequested: userFeedback['deload_requested'] as bool? ?? false,
-      userComments: userFeedback['comments'] as String? ?? '',
-      submittedAt: DateTime.now(),
+      exerciseLogs: exerciseLogs,
+      userFeedbackByMuscle: {muscle: userFeedback},
     );
 
-    // Get current tracker via repo is tricky since we don't have repo access here directly.
-    // However, the EnhancedService.processMuscleProgressionEnhanced handles fetching the tracker!
-    // But wait, the Enhanced method requires passing 'currentTracker'.
-    // The legacy interface assumes the service fetches it internally or logic is embedded.
-    // EnhancedService expects the tracker passed in for the granular method.
-    // Let's check `WeeklyProgressionServiceEnhanced` definition again.
+    final decision = decisions[muscle];
+    if (decision != null) {
+      return decision;
+    }
 
-    throw UnimplementedError(
-      'Single muscle processing not fully supported in Adapter yet due to internal dependency on Repository. Use processWeeklyProgression instead.',
+    return MuscleDecisionHelpers.noChange(
+      muscle: muscle,
+      reason: 'Adapter fallback: no decision generated for muscle',
+      currentVolume: prescribedSets,
     );
   }
 

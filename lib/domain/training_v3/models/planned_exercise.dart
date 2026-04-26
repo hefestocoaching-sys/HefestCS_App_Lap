@@ -155,11 +155,13 @@ class IntensificationRule {
   final IntensificationType type;
   final bool applyToLastSetOnly;
   final bool applyToLastTwoSets;
+  final Map<String, dynamic> parameters;
 
   const IntensificationRule({
     required this.type,
     this.applyToLastSetOnly = true,
     this.applyToLastTwoSets = false,
+    this.parameters = const <String, dynamic>{},
   });
 
   Map<String, dynamic> toMap() {
@@ -167,6 +169,7 @@ class IntensificationRule {
       'type': type.name,
       'applyToLastSetOnly': applyToLastSetOnly,
       'applyToLastTwoSets': applyToLastTwoSets,
+      'parameters': parameters,
     };
   }
 
@@ -181,6 +184,9 @@ class IntensificationRule {
       type: type,
       applyToLastSetOnly: map['applyToLastSetOnly'] != false,
       applyToLastTwoSets: map['applyToLastTwoSets'] == true,
+      parameters: map['parameters'] is Map
+          ? Map<String, dynamic>.from(map['parameters'] as Map)
+          : const <String, dynamic>{},
     );
   }
 }

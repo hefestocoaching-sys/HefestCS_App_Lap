@@ -1,0 +1,125 @@
+class InjuryPatternMaps {
+  InjuryPatternMaps._();
+
+  static const Map<String, String> injuryRegionLabels = {
+    'neck_upper_back': 'Cuello / espalda alta',
+    'shoulder': 'Hombro',
+    'elbow': 'Codo',
+    'wrist': 'Muñeca',
+    'lower_back': 'Espalda baja',
+    'hip': 'Cadera',
+    'knee': 'Rodilla',
+    'ankle': 'Tobillo',
+  };
+
+  static const Map<String, List<String>> patternsByRegion = {
+    'shoulder': [
+      'verticalPress',
+      'horizontalPress',
+      'lateralRaise',
+      'overheadEndRange',
+      'wideGripPress',
+      'none',
+    ],
+    'knee': [
+      'squat',
+      'lunge',
+      'deepKneeFlexion',
+      'heavyKneeExtension',
+      'jumpsImpact',
+      'unilateralWork',
+      'none',
+    ],
+    'lower_back': [
+      'axialLoading',
+      'hipHinge',
+      'squat',
+      'deadliftRdl',
+      'bentOverRow',
+      'deepLumbarFlexion',
+      'none',
+    ],
+    'hip': [
+      'deepHipFlexion',
+      'hipHinge',
+      'squat',
+      'splitSquatLunge',
+      'unilateralWork',
+      'none',
+    ],
+    'elbow': [
+      'bicepsCurl',
+      'tricepsExtension',
+      'pullDownChinUp',
+      'pressing',
+      'strongGrip',
+      'none',
+    ],
+    'wrist': [
+      'barbellPress',
+      'frontRack',
+      'curling',
+      'extendedWristSupport',
+      'heavyGrip',
+      'none',
+    ],
+    'ankle': [
+      'deepDorsiflexion',
+      'squat',
+      'lunge',
+      'jumpsImpact',
+      'unilateralWork',
+      'none',
+    ],
+    'neck_upper_back': [
+      'highAxialLoading',
+      'heavyRow',
+      'shrugs',
+      'overheadPress',
+      'prolongedPosturalTension',
+      'none',
+    ],
+  };
+
+  static const Map<String, String> injuryPatternLabels = {
+    'verticalPress': 'Empuje vertical',
+    'horizontalPress': 'Empuje horizontal',
+    'lateralRaise': 'Elevación lateral',
+    'overheadEndRange': 'Rango final overhead',
+    'wideGripPress': 'Press con agarre amplio',
+    'none': 'Ninguno en particular',
+    'squat': 'Sentadilla',
+    'lunge': 'Zancada / lunge',
+    'deepKneeFlexion': 'Flexión profunda de rodilla',
+    'heavyKneeExtension': 'Extensión de rodilla pesada',
+    'jumpsImpact': 'Saltos / impactos',
+    'unilateralWork': 'Trabajo unilateral',
+    'axialLoading': 'Carga axial',
+    'hipHinge': 'Bisagra de cadera',
+    'deadliftRdl': 'Peso muerto / RDL',
+    'bentOverRow': 'Remo inclinado',
+    'deepLumbarFlexion': 'Flexión lumbar profunda',
+    'deepHipFlexion': 'Flexión profunda de cadera',
+    'splitSquatLunge': 'Split squat / zancada',
+    'bicepsCurl': 'Curl de bíceps',
+    'tricepsExtension': 'Extensión de tríceps',
+    'pullDownChinUp': 'Jalón / dominada',
+    'pressing': 'Press',
+    'strongGrip': 'Agarre fuerte',
+    'barbellPress': 'Press con barra',
+    'frontRack': 'Front rack',
+    'curling': 'Curl',
+    'extendedWristSupport': 'Apoyo extendido de muñeca',
+    'heavyGrip': 'Agarre pesado',
+    'deepDorsiflexion': 'Dorsiflexión profunda',
+    'highAxialLoading': 'Carga axial alta',
+    'heavyRow': 'Remo pesado',
+    'shrugs': 'Encogimientos',
+    'overheadPress': 'Press overhead',
+    'prolongedPosturalTension': 'Tensión postural prolongada',
+  };
+
+  static String regionLabel(String code) => injuryRegionLabels[code] ?? code;
+
+  static String patternLabel(String code) => injuryPatternLabels[code] ?? code;
+}

@@ -12,7 +12,6 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_session.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/planned_exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/split_config.dart';
-import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_split.dart';
 
@@ -27,21 +26,24 @@ import 'package:hcs_app_lap/domain/training_v3/engines/exercise_set_allocator.da
 import 'package:hcs_app_lap/domain/training_v3/engines/mesocycle_exercise_pool.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/ordering_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/session_structure_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/weekly_decision_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/intensity_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/intensity_distribution_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/muscle_priority_engine.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/mesocycle_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/effort_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/phase_progression_engine.dart'
     as phase_engine;
 import 'package:hcs_app_lap/domain/training_v3/engines/local_fatigue_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/muscle_progress_state.dart';
+import 'package:hcs_app_lap/domain/constants/volume_to_frequency_rule.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/frequency_feasibility_resolver.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/volume_feasibility_normalizer.dart';
+import 'package:hcs_app_lap/domain/training_v3/policies/intensification_eligibility.dart';
 
 // Validators
 import 'package:hcs_app_lap/domain/training_v3/validators/volume_validator.dart';
 import 'package:hcs_app_lap/domain/training_v3/validators/configuration_validator.dart';
+import 'package:hcs_app_lap/domain/training_v3/validators/training_plan_forensic_validator.dart';
 
 /// Orquestador principal del Motor V3
 ///
@@ -66,6 +68,8 @@ class MotorV3Orchestrator {
     'medium': 60,
     'light': 20,
   };
+
+  static const String _activePlanIdKey = 'activePlanId';
 
   static const int _adaptationWeeksDefault = 2;
   static const int _maintenanceWeeksDefault = 2;
@@ -160,21 +164,6 @@ class MotorV3Orchestrator {
 
       final resolvedBackFocus = _resolveBackFocus(client) ?? 'upper_back';
 
-      // ✅ PASO 4: Calcular volumen INICIAL con nuevo sistema
-      final volumeTargets = expandBackMuscle(
-        _resolveVolumeTargets(userProfile, muscleLandmarks),
-        backFocus: resolvedBackFocus,
-      );
-      debugPrint(
-        '📊 Volumen INICIAL por músculo (VOP): ${volumeTargets.length} grupos',
-      );
-
-      await ExerciseCatalogV3.ensureLoaded();
-      if (exercises.isNotEmpty) {
-        final seeded = exercises.whereType<Exercise>().toList();
-        ExerciseCatalogV3.loadFromExercises(seeded);
-      }
-
       // ✅ PASO 5: Resolver split efectivo (UI → Motor V3)
       final daysPerWeek = trainingDaysPerWeek ?? userProfile.availableDays;
       final resolvedSplit = _resolveSplit(
@@ -185,28 +174,40 @@ class MotorV3Orchestrator {
         '[Motor V3] splitId=$splitId availableDays=$daysPerWeek resolvedSplit=$resolvedSplit',
       );
 
+      // ✅ PASO 4: Calcular volumen INICIAL con nuevo sistema
+      final originalVolumeTargets = expandBackMuscle(
+        _resolveVolumeTargets(userProfile, muscleLandmarks),
+        backFocus: resolvedBackFocus,
+      );
+      final normalizedVolumeOutcome = _normalizeVolumeMapForFeasibility(
+        targetVolume: originalVolumeTargets,
+        daysPerWeek: daysPerWeek,
+        split: resolvedSplit,
+      );
+      final volumeTargets = normalizedVolumeOutcome.normalizedTargets;
+
+      if (normalizedVolumeOutcome.adjustedCount > 0) {
+        warnings.add(
+          '[V3][P0.3] Se normalizo volumen en ${normalizedVolumeOutcome.adjustedCount} musculos para respetar frecuencia contractual y cap diario.',
+        );
+      }
+      debugPrint(
+        '📊 Volumen INICIAL por músculo (VOP): ${volumeTargets.length} grupos',
+      );
+
+      await ExerciseCatalogV3.ensureLoaded();
+      if (exercises.isNotEmpty) {
+        debugPrint(
+          '[V3][CATALOG] Ignoring external exercises list. Runtime SSOT uses assets/data/training_v3/catalog/exercise_catalog_v3_runtime.json only.',
+        );
+      }
+
       // ✅ PASO 9: Usar fase recibida desde el provider/orchestrator
       final trainingPhase = _resolveTrainingPhase(phase);
       debugPrint('📅 Fase de entrada: ${trainingPhase.name}');
 
       // ✅ PASO 10: Construir TrainingPlanConfig real
-      // P0.2-MVO-2: Feasibility check BEFORE building the plan — hard-fail.
-      final feasErrors = _feasibilityErrors(
-        targetVolume: volumeTargets,
-        daysPerWeek: daysPerWeek,
-        split: resolvedSplit,
-      );
-      if (feasErrors.isNotEmpty) {
-        for (final e in feasErrors) {
-          debugPrint(e);
-        }
-        return {
-          'success': false,
-          'errors': feasErrors,
-          'warnings': warnings,
-          'planConfig': null,
-        };
-      }
+      // P0.3: target original -> target factible normalizado (sin tocar frecuencia).
 
       final previousPlanConfig = _resolvePreviousPlanConfig(
         client,
@@ -221,14 +222,35 @@ class MotorV3Orchestrator {
         intensityProfilePercentSplit,
         client: client,
       );
+      final normalizedPriorities = _normalizePriorities(userProfile);
       var mesocyclePoolByMuscle = _resolveMesocycleExercisePoolByMuscle(client);
-      if (mesocyclePoolByMuscle.isEmpty) {
+
+      // FALLBACK: Si el pool está vacío O si falta algún músculo canónico, reconstruir desde catálogo
+      // Esto maneja casos donde el ciclo viejo tiene keys desactualizadas o incompletas
+      if (mesocyclePoolByMuscle.isEmpty ||
+          volumeTargets.keys.any((muscle) {
+            final canonicalMuscle = _canonicalMuscleKey(muscle);
+            final poolIds = mesocyclePoolByMuscle[canonicalMuscle] ?? const [];
+            return poolIds.isEmpty;
+          })) {
+        debugPrint(
+          '[V3] FALLBACK: Reconstructing exercise pool from catalog (empty or incomplete)',
+        );
         final fallbackPool = <String, List<String>>{};
         for (final muscle in volumeTargets.keys) {
           final canonicalMuscle = _canonicalMuscleKey(muscle);
-          fallbackPool[canonicalMuscle] = ExerciseCatalogV3.getByMuscle(
+          final catalogExercises = ExerciseCatalogV3.getByMuscle(
             canonicalMuscle,
-          ).map((e) => e.id).toList();
+          );
+          final catalogIds = catalogExercises.map((e) => e.id).toList();
+
+          // Usar ejercicios del catálogo si no hay en el pool, sino usar lo que hay
+          if (catalogIds.isNotEmpty) {
+            fallbackPool[canonicalMuscle] = catalogIds;
+          } else {
+            fallbackPool[canonicalMuscle] =
+                mesocyclePoolByMuscle[canonicalMuscle] ?? [];
+          }
         }
         mesocyclePoolByMuscle = fallbackPool;
       }
@@ -239,10 +261,12 @@ class MotorV3Orchestrator {
         'light=${resolvedIntensitySplit['light']}',
       );
 
-      var planConfig = _buildRealTrainingPlan(
+      final planBuildResult = _buildRealTrainingPlan(
         client: client,
         asOfDate: effectiveAsOfDate,
         volumeTargets: volumeTargets,
+        originalVolumeTargets: originalVolumeTargets,
+        normalizationResults: normalizedVolumeOutcome.results,
         muscleLandmarks: muscleLandmarks,
         mesocycleExercisePoolByMuscle: mesocyclePoolByMuscle,
         intensityProfilePercentSplit: resolvedIntensitySplit,
@@ -255,6 +279,21 @@ class MotorV3Orchestrator {
         cycleStateWrapper: cycleStateWrapper,
         backFocus: backFocus,
       );
+
+      if (!planBuildResult.success) {
+        errors.add(
+          planBuildResult.error ??
+              '[Motor V3] Error construyendo plan real (sin detalle)',
+        );
+        return {
+          'success': false,
+          'errors': errors,
+          'warnings': warnings,
+          'planConfig': null,
+        };
+      }
+
+      var planConfig = planBuildResult.planConfig!;
 
       // P1A-8: Al final de generatePlan: actualizar estado
       final next = _advanceCycleStateNoLog(cycleStateWrapper.state);
@@ -269,9 +308,13 @@ class MotorV3Orchestrator {
             w.sessions.any((s) => (s as TrainingSession).exercises.isEmpty),
       );
       if (generatedWeeks.isEmpty || hasInvalidSessions) {
-        throw StateError(
-          '[Motor V3] Plan inválido: no se generaron sesiones reales',
-        );
+        errors.add('[Motor V3] Plan inválido: no se generaron sesiones reales');
+        return {
+          'success': false,
+          'errors': errors,
+          'warnings': warnings,
+          'planConfig': null,
+        };
       }
 
       // P0: Extract Week 1 structure for validation
@@ -285,10 +328,10 @@ class MotorV3Orchestrator {
       final coverageResult = _validateExerciseCoverage(
         targetVolume: volumeTargets,
         weekStructure: week1Structure,
-        feasibilityPassed: feasErrors.isEmpty,
+        feasibilityPassed: true,
       );
 
-      if (feasErrors.isEmpty && !coverageResult.isValid) {
+      if (!coverageResult.isValid) {
         return {
           'success': false,
           'errors': coverageResult.errors,
@@ -296,6 +339,25 @@ class MotorV3Orchestrator {
           'planConfig': null,
         };
       }
+
+      final forensicResult = TrainingPlanForensicValidator.validate(
+        planConfig: planConfig,
+        expectedWeeklyVolumeByMuscle: volumeTargets,
+        musclePriorities: normalizedPriorities,
+      );
+      TrainingPlanForensicValidator.logStructured(forensicResult);
+
+      if (!forensicResult.isValid) {
+        return {
+          'success': false,
+          'errors': forensicResult.blockingErrors,
+          'warnings': [...warnings, ...forensicResult.warnings],
+          'forensicValidation': forensicResult.toMap(),
+          'planConfig': null,
+        };
+      }
+
+      warnings.addAll(forensicResult.warnings);
 
       final totalSessions = planConfig.weeks.fold<int>(0, (sum, week) {
         final w = week as TrainingWeek;
@@ -326,6 +388,7 @@ class MotorV3Orchestrator {
         'success': true,
         'errors': [],
         'warnings': warnings,
+        'forensicValidation': forensicResult.toMap(),
         'program': program,
         'planConfig': planConfig,
         'clientProfile': clientProfile,
@@ -571,10 +634,12 @@ class MotorV3Orchestrator {
   /// - Accumulation: Construir capacidad de trabajo
   /// - Intensification: Pico de rendimiento
   /// - Deload: Recuperación y supercompensación
-  static TrainingPlanConfig _buildRealTrainingPlan({
+  static _PlanBuildResult _buildRealTrainingPlan({
     required dynamic client,
     required DateTime asOfDate,
     required Map<String, int> volumeTargets,
+    required Map<String, int> originalVolumeTargets,
+    required List<VolumeFeasibilityNormalizationResult> normalizationResults,
     required Map<String, Landmarks>? muscleLandmarks,
     required Map<String, List<String>> mesocycleExercisePoolByMuscle,
     required Map<String, double> intensityProfilePercentSplit,
@@ -587,7 +652,7 @@ class MotorV3Orchestrator {
     required _CycleStateWrapper cycleStateWrapper,
     required String? backFocus,
   }) {
-    final weeks = _buildWeeks(
+    final weeksBuildResult = _buildWeeks(
       durationWeeks: durationWeeks,
       phase: phase,
       split: split,
@@ -602,6 +667,19 @@ class MotorV3Orchestrator {
       backFocus: backFocus,
     );
 
+    if (!weeksBuildResult.success) {
+      return _PlanBuildResult.failure(
+        weeksBuildResult.error ?? 'Unknown Template Build Error',
+      );
+    }
+
+    final weeks = weeksBuildResult.weeks!;
+    final buildMetadata = weeksBuildResult.extraMetadata;
+
+    final inheritedExtra = Map<String, dynamic>.from(
+      cycleStateWrapper.planConfig?.extra ?? const <String, dynamic>{},
+    );
+
     final clientId = client != null
         ? (client as dynamic).id ?? 'client_unknown'
         : 'client_unknown';
@@ -609,34 +687,43 @@ class MotorV3Orchestrator {
     // ═══════════════════════════════════════════════════════════════════
     // PASO 7: Construir TrainingPlanConfig completo con propiedades tipadas
     // ═══════════════════════════════════════════════════════════════════
-    return TrainingPlanConfig(
-      id: 'plan_${clientId}_${asOfDate.millisecondsSinceEpoch}',
-      clientId: clientId,
-      startDate: asOfDate,
-      weeks: weeks,
-      createdAt: asOfDate,
+    return _PlanBuildResult.success(
+      TrainingPlanConfig(
+        id: 'plan_${clientId}_${asOfDate.millisecondsSinceEpoch}',
+        clientId: clientId,
+        startDate: asOfDate,
+        weeks: weeks,
+        createdAt: asOfDate,
 
-      // ✅ PROPIEDADES TIPADAS (reemplazo de extra)
-      volumePerMuscle: volumeTargets,
-      phase: phase.name,
-      split: _splitToString(split),
+        // ✅ PROPIEDADES TIPADAS (reemplazo de extra)
+        volumePerMuscle: volumeTargets,
+        phase: phase.name,
+        split: _splitToString(split),
 
-      // Mantener extra para compatibilidad legacy (deprecado)
-      extra: {
-        'generated_by': 'motor_v3_scientific',
-        'strategy': 'v3_orchestrator',
-        'phase': phase.name,
-        'split': _splitToString(split),
-        'duration_weeks': durationWeeks,
-        'volume_targets': volumeTargets,
-        'scientific_version': '2.0.0',
-        'periodization_model': 'linear_progressive',
-        if (backFocus != null) 'backFocus': backFocus,
-      },
+        // Mantener extra para compatibilidad legacy (deprecado)
+        extra: {
+          ...inheritedExtra,
+          'generated_by': 'motor_v3_scientific',
+          'strategy': 'v3_orchestrator',
+          'phase': phase.name,
+          'split': _splitToString(split),
+          'duration_weeks': durationWeeks,
+          'volume_targets': volumeTargets,
+          'volume_targets_original': originalVolumeTargets,
+          'volume_targets_final': volumeTargets,
+          'volume_normalization': normalizationResults
+              .map((e) => e.toMap())
+              .toList(growable: false),
+          ...buildMetadata,
+          'scientific_version': '2.0.0',
+          'periodization_model': 'linear_progressive',
+          if (backFocus != null) 'backFocus': backFocus,
+        },
+      ),
     );
   }
 
-  static List<TrainingWeek> _buildWeeks({
+  static _WeeksBuildResult _buildWeeks({
     required int durationWeeks,
     required TrainingPhase phase,
     required TrainingSplit split,
@@ -695,14 +782,11 @@ class MotorV3Orchestrator {
     );
 
     if (!buildResult.success) {
-      throw StateError(buildResult.error ?? 'Unknown Template Build Error');
+      return _WeeksBuildResult.failure(
+        buildResult.error ?? 'Unknown Template Build Error',
+      );
     }
     final baseSessions = buildResult.sessions!;
-
-    // Product flow default: fixed 4-week mesocycle over frozen baseline week.
-    if (durationWeeks == 4) {
-      return MesocycleEngine.generateFourWeeks(baselineSessions: baseSessions);
-    }
 
     // Calculate base volumes per muscle (Week 1)
     final baseVolumeMap = <String, int>{};
@@ -722,6 +806,15 @@ class MotorV3Orchestrator {
       trainingLevel: userProfile.trainingLevel,
       age: userProfile.age,
     );
+    final volumeLandmarksByMuscle = <String, Map<String, dynamic>>{
+      for (final entry in allLandmarks.entries)
+        entry.key: {
+          'vme': entry.value.vme,
+          'vop': entry.value.vop,
+          'vmr': entry.value.vmr,
+          'vmrTarget': entry.value.vmrTarget,
+        },
+    };
     final providedLandmarksByMuscle = <String, Landmarks>{
       if (muscleLandmarks != null)
         for (final entry in muscleLandmarks.entries)
@@ -731,6 +824,7 @@ class MotorV3Orchestrator {
     final localFatigueEngine = LocalFatigueEngine();
 
     final muscleStates = <String, MuscleProgressState>{};
+    final businessPhaseByWeek = <int, String>{};
     for (final entry in expandedBaseVolume.entries) {
       final m = entry.key;
       final vop = entry.value;
@@ -755,34 +849,14 @@ class MotorV3Orchestrator {
       // ✅ PASO 10.2: Calculate Target Volume for this week (Progression)
       final Map<String, int> targetWeeklyVolume = {};
 
-      double volumeFactor;
-      // ignore: unused_local_variable
-      String phaseNameForRir;
-
-      switch (cycleStateWrapper.state.phase) {
-        case CyclePhase.adaptation:
-          volumeFactor = 1.0;
-          phaseNameForRir = 'adaptation';
-          break;
-        case CyclePhase.accumulation:
-          volumeFactor = 1.0;
-          phaseNameForRir = 'accumulation';
-          break;
-        case CyclePhase.microDeload:
-          volumeFactor =
-              _microDeloadVolumeFactor; // 0.85 (Androulakis-Korakakis et al. 2024)
-          phaseNameForRir = 'deload';
-          break;
-        case CyclePhase.maintenance:
-          volumeFactor = 1.0;
-          phaseNameForRir = 'maintenance';
-          break;
-        case CyclePhase.deload:
-          volumeFactor =
-              _deloadVolumeFactor; // 0.80 (Coleman et al. PeerJ 2024)
-          phaseNameForRir = 'deload';
-          break;
-      }
+      final businessPhaseLabel = _resolveBusinessPhaseLabel(
+        cycleStateWrapper.state,
+      );
+      businessPhaseByWeek[weekNum] = businessPhaseLabel;
+      final volumeFactor = _businessPhaseVolumeFactor(businessPhaseLabel);
+      final allowZoneIntensification = _businessPhaseAllowsZoneIntensification(
+        businessPhaseLabel,
+      );
 
       if (weekNum == 1) {
         targetWeeklyVolume.addAll(expandedBaseVolume);
@@ -835,6 +909,17 @@ class MotorV3Orchestrator {
       targetWeeklyVolume
         ..clear()
         ..addAll(expandedWeekVolume);
+
+      targetWeeklyVolume
+        ..clear()
+        ..addAll(
+          _enforcePriorityCapsBeforeMaterialization(
+            targetWeeklyVolume: expandedWeekVolume,
+            landmarksByMuscle: allLandmarks,
+            prioritiesByMuscle: normalizedPriorities,
+            allowPrimaryOverVmr: false,
+          ),
+        );
 
       // ─────────────────────────────────────────────────────────────────
       // P1-D & P1-C: GATE PARA LOCAL DELOAD, HOLD / OVERREACH
@@ -944,8 +1029,17 @@ class MotorV3Orchestrator {
         targetWeeklyVolume[m] = (targetWeeklyVolume[m]! * volumeFactor).round();
       }
 
+      final normalizedWeekOutcome = _normalizeVolumeMapForFeasibility(
+        targetVolume: targetWeeklyVolume,
+        daysPerWeek: daysPerWeek,
+        split: split,
+      );
+      targetWeeklyVolume
+        ..clear()
+        ..addAll(normalizedWeekOutcome.normalizedTargets);
+
       debugPrint(
-        '[V3][P1A][PHASE] week=${cycleStateWrapper.state.cycleWeek} phase=${cycleStateWrapper.state.phase.name} volFactor=$volumeFactor',
+        '[V3][P1A][PHASE] week=${cycleStateWrapper.state.cycleWeek} cyclePhase=${cycleStateWrapper.state.phase.name} businessPhase=$businessPhaseLabel volFactor=$volumeFactor intensificationAllowed=$allowZoneIntensification',
       );
 
       // P0.1-MVO-1: REMOVED silent cap of 20 sets on weeks > 1.
@@ -973,6 +1067,12 @@ class MotorV3Orchestrator {
         );
       }
 
+      weekSessions = _applyZoneIntensificationContract(
+        sessions: weekSessions,
+        businessPhaseLabel: businessPhaseLabel,
+        allowZoneIntensification: allowZoneIntensification,
+      );
+
       // ─────────────────────────────────────────────────────────────────
       // P1-E: Intensificación Automática en Fase de Mantenimiento
       // ─────────────────────────────────────────────────────────────────
@@ -994,7 +1094,7 @@ class MotorV3Orchestrator {
           weekNumber: weekNum,
           sessions: weekSessions,
           notes:
-              'Semana $weekNum - Fase: ${phase.name.capitalize()} - Volumen: $totalSets sets',
+              'Semana $weekNum - Fase: ${phase.name.capitalize()} - FaseNegocio: $businessPhaseLabel - Volumen: $totalSets sets',
         ),
       );
 
@@ -1005,7 +1105,28 @@ class MotorV3Orchestrator {
       }
     }
 
-    return weeks;
+    return _WeeksBuildResult.success(
+      weeks,
+      extraMetadata: {
+        'volume_landmarks_by_muscle': volumeLandmarksByMuscle,
+        'business_phase_by_week': businessPhaseByWeek,
+        'frequency_contract': {
+          'f1': {
+            'distribution': [100],
+            'tolerance': [100, 100],
+          },
+          'f2': {
+            'distribution': [50, 50],
+            'tolerance': [40, 60],
+          },
+          'f3': {
+            'distribution': [40, 30, 30],
+            'tolerance': [35, 45],
+          },
+        },
+        'split_contract': _splitContractMetadata(split, daysPerWeek),
+      },
+    );
   }
 
   /// [V3][P0] Scales sets of base sessions to match target WITHOUT changing exercises.
@@ -1485,11 +1606,15 @@ class MotorV3Orchestrator {
     if (s == 'ppl' || s == 'push_pull_legs' || s == 'pushpulllegs') {
       return TrainingSplit.pushPullLegs;
     }
+    if (availableDays == 5) return TrainingSplit.pushPullLegs;
     if (availableDays >= 6) return TrainingSplit.pushPullLegs;
     if (availableDays == 4) return TrainingSplit.upperLower;
     return TrainingSplit.fullBody;
   }
 
+  @Deprecated(
+    'Legacy session builder path. Use _buildRealTrainingPlan -> CycleTemplateBuilder.buildBaseWeek as canonical Motor V3 runtime path.',
+  )
   @pragma('vm:entry-point')
   // ignore: unused_element
   static List<TrainingSession> _buildSessions(
@@ -1602,7 +1727,7 @@ class MotorV3Orchestrator {
       for (int i = 0; i < ordered.length; i++) {
         final id = ordered[i];
         final rawZone = intensities[id] ?? IntensityZone.medium;
-        final zone = rawZone == 'moderate' ? IntensityZone.medium : rawZone;
+        final zone = _normalizeIntensityZoneKey(rawZone);
         final exType = exTypes[id] ?? 'compound';
         final muscle = exToMuscle[id]!;
         final sets = max(1, allocatedSetsByExercise[id] ?? 0);
@@ -1645,7 +1770,7 @@ class MotorV3Orchestrator {
         TrainingSession(
           id: 'session_day${dayIndex + 1}',
           dayNumber: dayIndex + 1,
-          name: _sessionName(split.type, dayIndex),
+          name: _sessionName(split.type, split.daysPerWeek, dayIndex),
           primaryMuscles: musclesForDay,
           estimatedDurationMinutes: ((planned.length * 8) + (totalSetsDay * 2))
               .clamp(30, 120),
@@ -1657,12 +1782,20 @@ class MotorV3Orchestrator {
     return sessions;
   }
 
-  static String _sessionName(String splitType, int i) {
+  static String _sessionName(String splitType, int daysPerWeek, int i) {
     if (splitType == 'upper_lower') {
       return ['Upper A', 'Lower A', 'Upper B', 'Lower B'][i % 4];
     }
     if (splitType == 'full_body') return 'Full Body ${i + 1}';
-    if (splitType == 'push_pull_legs') return ['Push', 'Pull', 'Legs'][i % 3];
+    if (splitType == 'push_pull_legs') {
+      if (daysPerWeek >= 6) {
+        return ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs'][i % 6];
+      }
+      if (daysPerWeek == 5) {
+        return ['Push', 'Pull', 'Legs A', 'Torso', 'Legs B'][i % 5];
+      }
+      return ['Push', 'Pull', 'Legs'][i % 3];
+    }
     return 'Día ${i + 1}';
   }
 
@@ -1679,6 +1812,9 @@ class MotorV3Orchestrator {
       case TrainingSplit.upperLower:
         return SplitConfig.upperLower4x();
       case TrainingSplit.pushPullLegs:
+        if (daysPerWeek == 5) {
+          return SplitConfig.pushPullLegs5x();
+        }
         return daysPerWeek >= 6
             ? SplitConfig.pushPullLegs6x()
             : SplitConfig.pushPullLegs3x();
@@ -1961,8 +2097,74 @@ class MotorV3Orchestrator {
     required DateTime asOfDate,
   }) {
     try {
-      final training = client?.training;
-      final extraRaw = training?.extra;
+      final dynamic trainingPlansRaw = client?.trainingPlans;
+      final dynamic training = client?.training;
+      final dynamic extraRaw = training?.extra;
+
+      if (trainingPlansRaw is List && trainingPlansRaw.isNotEmpty) {
+        final plans = trainingPlansRaw.cast<dynamic>();
+        final activePlanId = extraRaw is Map
+            ? extraRaw[_activePlanIdKey]?.toString().trim()
+            : null;
+
+        dynamic selected;
+        if (activePlanId != null && activePlanId.isNotEmpty) {
+          for (final plan in plans) {
+            if (plan?.id?.toString() == activePlanId) {
+              selected = plan;
+              break;
+            }
+          }
+        }
+
+        selected ??= _selectMostRecentPlan(plans);
+
+        if (selected != null) {
+          final selectedExtra = _extractPlanExtra(selected);
+          if (extraRaw is Map && extraRaw['weeklyFatigue'] is Map) {
+            selectedExtra['weeklyFatigue'] = Map<String, dynamic>.from(
+              extraRaw['weeklyFatigue'] as Map,
+            );
+          }
+          final startDate = _parseDateTime(selected?.startDate) ?? asOfDate;
+          final createdAt =
+              _parseDateTime(selected?.createdAt) ??
+              _parseDateTime(selected?.updatedAt) ??
+              startDate;
+
+          final selectedClientId = selected?.clientId?.toString();
+          final clientId =
+              (selectedClientId != null && selectedClientId.isNotEmpty)
+              ? selectedClientId
+              : client?.id?.toString() ?? 'client_unknown';
+
+          final phase =
+              selected?.phase?.toString() ??
+              selectedExtra['phase']?.toString() ??
+              selectedExtra['cyclePhase']?.toString();
+
+          final split =
+              selected?.split?.toString() ??
+              selected?.splitId?.toString() ??
+              selectedExtra['split']?.toString() ??
+              selectedExtra['splitId']?.toString();
+
+          final volumePerMuscle = _extractVolumePerMuscle(selected);
+
+          return TrainingPlanConfig(
+            id: selected?.id?.toString() ?? 'cycle_state_$clientId',
+            clientId: clientId,
+            startDate: startDate,
+            weeks: const [],
+            createdAt: createdAt,
+            extra: selectedExtra,
+            phase: phase,
+            split: split,
+            volumePerMuscle: volumePerMuscle,
+          );
+        }
+      }
+
       if (extraRaw is! Map) return null;
 
       final extra = Map<String, dynamic>.from(extraRaw);
@@ -1987,6 +2189,58 @@ class MotorV3Orchestrator {
     } catch (_) {
       return null;
     }
+  }
+
+  static dynamic _selectMostRecentPlan(List<dynamic> plans) {
+    dynamic selected;
+    var bestEpoch = -1;
+
+    for (final plan in plans) {
+      final dt = _parseDateTime(plan?.startDate);
+      final epoch = dt?.millisecondsSinceEpoch ?? -1;
+      if (selected == null || epoch > bestEpoch) {
+        selected = plan;
+        bestEpoch = epoch;
+      }
+    }
+
+    return selected;
+  }
+
+  static DateTime? _parseDateTime(dynamic raw) {
+    if (raw is DateTime) return raw;
+    if (raw is String) return DateTime.tryParse(raw);
+    return null;
+  }
+
+  static Map<String, dynamic> _extractPlanExtra(dynamic plan) {
+    if (plan == null) return <String, dynamic>{};
+
+    final dynamic extraRaw = plan.extra;
+    if (extraRaw is Map) {
+      return Map<String, dynamic>.from(extraRaw);
+    }
+
+    final dynamic stateRaw = plan.state;
+    if (stateRaw is Map) {
+      return Map<String, dynamic>.from(stateRaw);
+    }
+
+    return <String, dynamic>{};
+  }
+
+  static Map<String, int>? _extractVolumePerMuscle(dynamic plan) {
+    final dynamic raw = plan?.volumePerMuscle;
+    if (raw is Map) {
+      final out = <String, int>{};
+      raw.forEach((key, value) {
+        if (value is num) {
+          out[key.toString()] = value.toInt();
+        }
+      });
+      return out.isEmpty ? null : out;
+    }
+    return null;
   }
 
   static Map<String, List<String>> _resolveMesocycleExercisePoolByMuscle(
@@ -2061,6 +2315,7 @@ class MotorV3Orchestrator {
         _defaultIntensityProfilePercentSplit['heavy']!;
     final medium =
         (raw['medium'] as num?)?.toDouble() ??
+        // Backward compatibility en borde de entrada: mapear legacy moderate -> medium.
         (raw['moderate'] as num?)?.toDouble() ??
         _defaultIntensityProfilePercentSplit['medium']!;
     final light =
@@ -2075,6 +2330,68 @@ class MotorV3Orchestrator {
       'medium': (medium * 100.0) / total,
       'light': (light * 100.0) / total,
     };
+  }
+
+  static String _normalizeIntensityZoneKey(String zone) {
+    if (zone == 'moderate') {
+      return IntensityZone.medium;
+    }
+    return zone;
+  }
+
+  static Map<String, int> _enforcePriorityCapsBeforeMaterialization({
+    required Map<String, int> targetWeeklyVolume,
+    required Map<String, VolumeLandmarks> landmarksByMuscle,
+    required Map<String, int> prioritiesByMuscle,
+    required bool allowPrimaryOverVmr,
+  }) {
+    final capped = <String, int>{};
+
+    for (final entry in targetWeeklyVolume.entries) {
+      final muscle = normalizeMuscleKey(entry.key);
+      final requested = max(0, entry.value);
+      final landmarks = landmarksByMuscle[muscle];
+
+      if (landmarks == null) {
+        capped[muscle] = requested;
+        continue;
+      }
+
+      final priority = prioritiesByMuscle[muscle] ?? 3;
+      final isPrimary = priority >= 5;
+      final isSecondary = priority >= 3 && priority < 5;
+      final isTertiary = priority < 3;
+
+      int hardCap;
+      String capLabel;
+      if (isPrimary) {
+        final primaryCap = allowPrimaryOverVmr
+            ? (landmarks.vmr * _overreachMaxFactor).round()
+            : landmarks.vmr;
+        hardCap = max(1, primaryCap);
+        capLabel = allowPrimaryOverVmr ? 'VMR_SOFT' : 'VMR';
+      } else if (isSecondary) {
+        hardCap = max(1, (landmarks.vmr * 0.75).floor());
+        capLabel = '0.75_VMR';
+      } else if (isTertiary) {
+        hardCap = max(1, landmarks.vop);
+        capLabel = 'VOP';
+      } else {
+        hardCap = max(1, landmarks.vop);
+        capLabel = 'VOP';
+      }
+
+      final finalTarget = min(requested, hardCap);
+      capped[muscle] = finalTarget;
+
+      if (requested > finalTarget) {
+        debugPrint(
+          '[V3][CAP_ENFORCE_EARLY] muscle=$muscle priority=$priority requested=$requested cap=$hardCap capType=$capLabel final=$finalTarget',
+        );
+      }
+    }
+
+    return capped;
   }
 
   static Map<String, int> _resolveVolumeTargets(
@@ -2212,17 +2529,9 @@ class MotorV3Orchestrator {
     TrainingPlanConfig planConfig,
     _CycleState s,
   ) {
-    // Evaluar con defaults de generación (sin logs disponibles en esta etapa)
-    final decision = WeeklyDecisionEngine().evaluate(
-      avgRIR: 2.0,
-      avgSessionRPE: 7.0,
-      recoveryScore: 0.0,
-    );
     debugPrint(
       '[V3][P1A][STATE_WRITE] week=${s.cycleWeek} phase=${s.phase.name} '
-      'wPhase=${s.weeksInPhase} wMicro=${s.weeksSinceLastMicro} '
-      'fatigue=${decision.fatigueIndex.toStringAsFixed(1)} '
-      'recovery=${decision.recoveryIndex.toStringAsFixed(1)}',
+      'wPhase=${s.weeksInPhase} wMicro=${s.weeksSinceLastMicro}',
     );
     final updatedExtra = Map<String, dynamic>.from(planConfig.extra);
     updatedExtra['cycleWeek'] = s.cycleWeek;
@@ -2343,18 +2652,28 @@ class MotorV3Orchestrator {
     targetVolume.forEach((muscle, sets) {
       if (sets <= 0) return;
 
-      final baseFrequency = switch (sets) {
-        <= 10 => 1,
-        <= 20 => 2,
-        _ => 3,
-      };
-
-      freqByMuscle[muscle] = _effectiveFrequencyForSplit(
-        muscle: muscle,
-        baseFrequency: baseFrequency,
-        split: split,
-        daysPerWeek: daysPerWeek,
+      final baseFrequency = VolumeToFrequencyRule.frequencyForWeeklyVolume(
+        sets,
       );
+      final resolution = FrequencyFeasibilityResolver.resolveFeasibleFrequency(
+        muscle: muscle,
+        targetSets: sets,
+        baseFrequency: baseFrequency,
+        maxFrequency: daysPerWeek,
+        dailyCap: _defaultDailyCapPerMuscle,
+        effectiveFrequencyForCandidate: (candidateFrequency) =>
+            _effectiveFrequencyForSplit(
+              muscle: muscle,
+              baseFrequency: candidateFrequency,
+              split: split,
+              daysPerWeek: daysPerWeek,
+            ),
+        errorContext: 'motor_v3_orchestrator',
+      );
+
+      debugPrint(resolution.toLogLine(tag: 'V3][P0.2][FREQ_TRACE'));
+
+      freqByMuscle[muscle] = resolution.effectiveFrequency;
     });
 
     return freqByMuscle;
@@ -2371,34 +2690,88 @@ class MotorV3Orchestrator {
     targetVolume.forEach((muscle, targetSets) {
       if (targetSets <= 0) return;
 
-      final int freq;
-      if (targetSets <= 10) {
-        freq = 1;
-      } else if (targetSets <= 20) {
-        freq = 2;
-      } else {
-        freq = 3;
-      }
-
-      final effectiveFreq = _effectiveFrequencyForSplit(
+      final baseFrequency = VolumeToFrequencyRule.frequencyForWeeklyVolume(
+        targetSets,
+      );
+      final resolution = FrequencyFeasibilityResolver.resolveFeasibleFrequency(
         muscle: muscle,
-        baseFrequency: freq,
-        split: split,
-        daysPerWeek: daysPerWeek,
+        targetSets: targetSets,
+        baseFrequency: baseFrequency,
+        maxFrequency: daysPerWeek,
+        dailyCap: dailyCapPerMuscle,
+        effectiveFrequencyForCandidate: (candidateFrequency) =>
+            _effectiveFrequencyForSplit(
+              muscle: muscle,
+              baseFrequency: candidateFrequency,
+              split: split,
+              daysPerWeek: daysPerWeek,
+            ),
+        errorContext:
+            'motor_v3_orchestrator split=${split.name} days=$daysPerWeek',
       );
 
-      final maxAssignable = effectiveFreq * dailyCapPerMuscle;
+      debugPrint(resolution.toLogLine(tag: 'V3][P0.2][FREQ_TRACE'));
 
-      if (targetSets > maxAssignable) {
+      if (!resolution.isFeasible) {
         errors.add(
-          '[V3][P0.2][INFEASIBLE] muscle="$muscle" target=$targetSets '
-          'exceeds maxAssignable=$maxAssignable '
-          '(baseFreq=$freq, effectiveFreq=$effectiveFreq, split=${split.name}, dailyCap=$dailyCapPerMuscle, days=$daysPerWeek).',
+          resolution.blockingError ??
+              '[V3][P0.2][INFEASIBLE] muscle="$muscle" target=$targetSets unresolved_frequency',
         );
       }
     });
 
     return errors;
+  }
+
+  static _VolumeNormalizationOutcome _normalizeVolumeMapForFeasibility({
+    required Map<String, int> targetVolume,
+    required int daysPerWeek,
+    required TrainingSplit split,
+    int dailyCapPerMuscle = _defaultDailyCapPerMuscle,
+  }) {
+    final normalized = <String, int>{};
+    final results = <VolumeFeasibilityNormalizationResult>[];
+
+    for (final entry in targetVolume.entries) {
+      final muscle = normalizeMuscleKey(entry.key);
+      final originalTarget = entry.value;
+
+      if (originalTarget <= 0) {
+        normalized[muscle] = 0;
+        continue;
+      }
+
+      final baseFrequency = VolumeToFrequencyRule.frequencyForWeeklyVolume(
+        originalTarget,
+      );
+      final effectiveFrequency = _effectiveFrequencyForSplit(
+        muscle: muscle,
+        baseFrequency: baseFrequency,
+        split: split,
+        daysPerWeek: daysPerWeek,
+      );
+      final maxAssignable = effectiveFrequency * dailyCapPerMuscle;
+
+      final result = VolumeFeasibilityNormalizer.normalizeTargetVolume(
+        muscle: muscle,
+        targetSets: originalTarget,
+        baseFrequency: baseFrequency,
+        effectiveFrequency: effectiveFrequency,
+        dailyCap: dailyCapPerMuscle,
+        maxAssignable: maxAssignable,
+        splitId: split.name,
+        daysPerWeek: daysPerWeek,
+      );
+
+      normalized[muscle] = result.normalizedTargetSets;
+      results.add(result);
+      debugPrint(result.toLogLine());
+    }
+
+    return _VolumeNormalizationOutcome(
+      normalizedTargets: normalized,
+      results: results,
+    );
   }
 
   static int _effectiveFrequencyForSplit({
@@ -2517,6 +2890,191 @@ class MotorV3Orchestrator {
       }
     }
   }
+
+  static String _resolveBusinessPhaseLabel(_CycleState state) {
+    switch (state.phase) {
+      case CyclePhase.adaptation:
+        return 'AA';
+      case CyclePhase.accumulation:
+        if (state.weeksInPhase <= 1) return 'HF1';
+        if (state.weeksInPhase == 2) return 'HF2';
+        return 'HF3';
+      case CyclePhase.maintenance:
+        return state.weeksInPhase < 3
+            ? 'maintenance_early'
+            : 'maintenance_late';
+      case CyclePhase.microDeload:
+      case CyclePhase.deload:
+        return 'regeneration';
+    }
+  }
+
+  static double _businessPhaseVolumeFactor(String businessPhaseLabel) {
+    switch (businessPhaseLabel) {
+      case 'AA':
+        return 0.85;
+      case 'HF1':
+        return 1.0;
+      case 'HF2':
+        return 1.05;
+      case 'HF3':
+        return 1.10;
+      case 'maintenance_early':
+        return 1.0;
+      case 'maintenance_late':
+        return 1.0;
+      case 'regeneration':
+        return 0.5;
+      default:
+        return 1.0;
+    }
+  }
+
+  static bool _businessPhaseAllowsZoneIntensification(
+    String businessPhaseLabel,
+  ) {
+    return businessPhaseLabel == 'HF2' ||
+        businessPhaseLabel == 'HF3' ||
+        businessPhaseLabel == 'maintenance_late';
+  }
+
+  static List<TrainingSession> _applyZoneIntensificationContract({
+    required List<TrainingSession> sessions,
+    required String businessPhaseLabel,
+    required bool allowZoneIntensification,
+  }) {
+    final updatedSessions = <TrainingSession>[];
+
+    for (final session in sessions) {
+      final updatedExercises = <PlannedExercise>[];
+      for (final exercise in session.exercises) {
+        if (ExerciseCatalogV3.getById(exercise.exerciseId) == null) {
+          updatedExercises.add(exercise);
+          continue;
+        }
+
+        if (!allowZoneIntensification) {
+          updatedExercises.add(exercise.copyWith(clearIntensification: true));
+          continue;
+        }
+
+        final loadCategory = ExerciseCatalogV3.getLoadCategory(
+          exercise.exerciseId,
+        );
+        final movementPattern = ExerciseCatalogV3.getMovementPattern(
+          exercise.exerciseId,
+        );
+        final requirement = IntensificationEligibility.requirementForExercise(
+          businessPhaseLabel: businessPhaseLabel,
+          exerciseId: exercise.exerciseId,
+          loadCategory: loadCategory,
+          movementPattern: movementPattern,
+          blockLabel: exercise.blockLabel,
+        );
+        if (requirement == IntensificationRequirement.exempt) {
+          updatedExercises.add(exercise.copyWith(clearIntensification: true));
+          continue;
+        }
+
+        final rule = _intensificationRuleForZone(loadCategory);
+        if (rule == null) {
+          updatedExercises.add(exercise.copyWith(clearIntensification: true));
+          continue;
+        }
+
+        updatedExercises.add(exercise.copyWith(intensification: rule));
+      }
+
+      updatedSessions.add(session.copyWith(exercises: updatedExercises));
+    }
+
+    debugPrint(
+      '[V3][ZONE_INTENSIFICATION] businessPhase=$businessPhaseLabel allow=$allowZoneIntensification sessions=${updatedSessions.length}',
+    );
+
+    return updatedSessions;
+  }
+
+  static IntensificationRule? _intensificationRuleForZone(String zone) {
+    switch (zone.trim().toLowerCase()) {
+      case 'heavy':
+        return IntensificationRule(
+          type: IntensificationType.dropSet,
+          applyToLastSetOnly: true,
+          applyToLastTwoSets: false,
+          parameters: {
+            'drop_percentages': [0.25, 0.25],
+            'to_failure': true,
+            'reps_range': {'min': 6, 'max': 8},
+          },
+        );
+      case 'medium':
+        return IntensificationRule(
+          type: IntensificationType.restPause,
+          applyToLastSetOnly: false,
+          applyToLastTwoSets: false,
+          parameters: {
+            'rest_seconds_min': 20,
+            'rest_seconds_max': 30,
+            'target_reps': 12,
+            'reps_range': {'min': 8, 'max': 12},
+          },
+        );
+      case 'light':
+        return IntensificationRule(
+          type: IntensificationType.isometricHold,
+          applyToLastSetOnly: false,
+          applyToLastTwoSets: true,
+          parameters: {
+            'hold_seconds_min': 15,
+            'hold_seconds_max': 30,
+            'reps_range': {'min': 15, 'max': 20},
+          },
+        );
+      default:
+        return null;
+    }
+  }
+
+  static Map<String, dynamic> _splitContractMetadata(
+    TrainingSplit split,
+    int daysPerWeek,
+  ) {
+    switch (split) {
+      case TrainingSplit.fullBody:
+        return {
+          'official_split': 'fullBody',
+          'daysPerWeek': daysPerWeek,
+          'day_order': ['torso_dominant', 'leg_dominant', 'mixed_posterior'],
+        };
+      case TrainingSplit.upperLower:
+        return {
+          'official_split': 'upperLower',
+          'daysPerWeek': daysPerWeek,
+          'day_order': ['torso_a', 'legs_a', 'torso_b', 'legs_b'],
+        };
+      case TrainingSplit.pushPullLegs:
+        if (daysPerWeek >= 6) {
+          return {
+            'official_split': 'pushPullLegs6x',
+            'daysPerWeek': daysPerWeek,
+            'day_order': ['push', 'pull', 'legs', 'push', 'pull', 'legs'],
+          };
+        }
+        if (daysPerWeek == 5) {
+          return {
+            'official_split': 'pushPullLegs5x',
+            'daysPerWeek': daysPerWeek,
+            'day_order': ['push', 'pull', 'legs_a', 'torso', 'legs_b'],
+          };
+        }
+        return {
+          'official_split': 'pushPullLegs3x',
+          'daysPerWeek': daysPerWeek,
+          'day_order': ['push', 'pull', 'legs'],
+        };
+    }
+  }
 }
 
 // TrainingSplit moved to lib/domain/training_v3/models/training_split.dart
@@ -2525,6 +3083,18 @@ class MotorV3Orchestrator {
 class _MotorLogger {
   void info(String message) => debugPrint(message);
   void warn(String message) => debugPrint('⚠️ $message');
+}
+
+class _VolumeNormalizationOutcome {
+  final Map<String, int> normalizedTargets;
+  final List<VolumeFeasibilityNormalizationResult> results;
+
+  const _VolumeNormalizationOutcome({
+    required this.normalizedTargets,
+    required this.results,
+  });
+
+  int get adjustedCount => results.where((r) => r.wasAdjusted).length;
 }
 
 /// Extension para capitalizar strings
@@ -2541,8 +3111,8 @@ enum RecoveryCapacity {
   /// Déficit >500 kcal, sueño <6h, estrés alto
   low,
 
-  /// Mantenimiento, sueño 6-7h, estrés moderado
-  moderate,
+  /// Mantenimiento, sueño 6-7h, estrés intermedio
+  medium,
 
   /// Superávit, sueño >7h, estrés bajo
   high,
@@ -2554,7 +3124,7 @@ enum CaloricBalance {
   highDeficit,
 
   /// 200-500 kcal déficit
-  moderateDeficit,
+  mediumDeficit,
 
   /// ±200 kcal
   maintenance,
@@ -2618,4 +3188,41 @@ class _CycleStateWrapper {
   _CycleState state;
   TrainingPlanConfig? planConfig;
   _CycleStateWrapper(this.state);
+}
+
+class _WeeksBuildResult {
+  final List<TrainingWeek>? weeks;
+  final String? error;
+  final Map<String, dynamic> extraMetadata;
+
+  const _WeeksBuildResult._({
+    this.weeks,
+    this.error,
+    this.extraMetadata = const <String, dynamic>{},
+  });
+
+  bool get success => weeks != null;
+
+  factory _WeeksBuildResult.success(
+    List<TrainingWeek> weeks, {
+    Map<String, dynamic> extraMetadata = const <String, dynamic>{},
+  }) => _WeeksBuildResult._(weeks: weeks, extraMetadata: extraMetadata);
+
+  factory _WeeksBuildResult.failure(String error) =>
+      _WeeksBuildResult._(error: error);
+}
+
+class _PlanBuildResult {
+  final TrainingPlanConfig? planConfig;
+  final String? error;
+
+  const _PlanBuildResult._({this.planConfig, this.error});
+
+  bool get success => planConfig != null;
+
+  factory _PlanBuildResult.success(TrainingPlanConfig planConfig) =>
+      _PlanBuildResult._(planConfig: planConfig);
+
+  factory _PlanBuildResult.failure(String error) =>
+      _PlanBuildResult._(error: error);
 }

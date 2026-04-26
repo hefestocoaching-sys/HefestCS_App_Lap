@@ -1,4 +1,5 @@
 import 'package:hcs_app_lap/domain/constants/session_limits.dart';
+import 'package:hcs_app_lap/domain/constants/volume_to_frequency_rule.dart';
 
 /// Determina frecuencia óptima de entrenamiento según volumen semanal
 ///
@@ -11,7 +12,10 @@ import 'package:hcs_app_lap/domain/constants/session_limits.dart';
 /// - 20 sets ÷ 2 = 10 sets/sesión (excede límite)
 /// - 21 sets ÷ 3 = 7 sets/sesión (dentro de límite)
 class FrequencyByVolume {
-  /// Umbral de volumen para cambiar frecuencia
+  @Deprecated(
+    'Legacy threshold. Use VolumeToFrequencyRule.frequencyForWeeklyVolume instead.',
+  )
+  /// Umbral legacy para cambiar frecuencia
   static const int volumeThresholdFor3x = 21;
 
   /// Calcula frecuencia óptima según volumen semanal
@@ -19,14 +23,13 @@ class FrequencyByVolume {
     required int weeklyVolume,
     required int maxDaysAvailable,
   }) {
-    // Regla principal
-    if (weeklyVolume >= volumeThresholdFor3x) {
-      // Necesita 3 sesiones
-      return maxDaysAvailable >= 3 ? 3 : maxDaysAvailable;
-    } else {
-      // 2 sesiones suficientes
-      return maxDaysAvailable >= 2 ? 2 : maxDaysAvailable;
+    final recommended = VolumeToFrequencyRule.frequencyForWeeklyVolume(
+      weeklyVolume,
+    );
+    if (recommended <= 0) {
+      return 0;
     }
+    return recommended <= maxDaysAvailable ? recommended : maxDaysAvailable;
   }
 
   /// Valida que la frecuencia sea suficiente para el volumen
@@ -76,12 +79,10 @@ class FrequencyByVolume {
     required int frequency,
     required String muscle,
   }) {
-    if (weeklyVolume >= volumeThresholdFor3x) {
-      return '$muscle: $weeklyVolume sets/semana → $frequency sesiones '
-          '(volumen alto ≥21 requiere 3x/semana)';
-    } else {
-      return '$muscle: $weeklyVolume sets/semana → $frequency sesiones '
-          '(volumen ≤20 suficiente con 2x/semana)';
-    }
+    final recommended = VolumeToFrequencyRule.frequencyForWeeklyVolume(
+      weeklyVolume,
+    );
+    return '$muscle: $weeklyVolume sets/semana -> $frequency sesiones '
+        '(recomendado por contrato: $recommended)';
   }
 }

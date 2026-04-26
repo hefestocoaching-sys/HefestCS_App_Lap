@@ -11,7 +11,6 @@ import 'package:hcs_app_lap/domain/training_v3/orchestrator/training_orchestrato
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v3/repositories/muscle_progression_repository.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service.dart';
-import 'package:hcs_app_lap/domain/training_v3/engines/weekly_decision_engine.dart';
 
 /// Unified service that combines initial generation and weekly adaptation.
 class UnifiedTrainingService {
@@ -161,26 +160,8 @@ class UnifiedTrainingService {
       }
 
       debugPrint('[UnifiedTraining] Adjusted volumes: $adjustedVolumes');
-
-      // Evaluar semana con datos reales de logs
-      double avgRPE = 0.0;
-      if (exerciseLogs.isNotEmpty) {
-        avgRPE =
-            exerciseLogs.map((l) => l.averageRpe).reduce((a, b) => a + b) /
-            exerciseLogs.length;
-      }
-      final avgRIR = (10.0 - avgRPE).clamp(0.0, 10.0);
-      final weekDecision = WeeklyDecisionEngine().evaluate(
-        avgRIR: avgRIR,
-        avgSessionRPE: avgRPE,
-        recoveryScore: 0.0,
-      );
       debugPrint(
-        '[UnifiedTraining] Week $weekNumber decision: '
-        'volumeDelta=${weekDecision.volumeDelta} '
-        'deload=${weekDecision.triggerDeload} '
-        'fatigue=${weekDecision.fatigueIndex.toStringAsFixed(1)} '
-        'recovery=${weekDecision.recoveryIndex.toStringAsFixed(1)}',
+        '[UnifiedTraining] Weekly progression resolved by WeeklyProgressionService (single authority)',
       );
 
       final updatedTrackers = await _progressionRepo.getAllTrackers(

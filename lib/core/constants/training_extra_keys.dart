@@ -2,6 +2,7 @@ class TrainingExtraKeys {
   static const String backFocus = 'backFocus'; // 'lats' | 'upper_back'
   static const effectiveTrainingState = 'effectiveTrainingState';
   static const effectiveTrainingLevel = 'effectiveTrainingLevel';
+  static const trainingLevelDerived = 'trainingLevelDerived';
   static const isReconditioningPhase = 'isReconditioningPhase';
   static const volumeToleranceModifier = 'volumeToleranceModifier';
 
@@ -10,11 +11,13 @@ class TrainingExtraKeys {
 
   static const sportDiscipline = 'sportDiscipline';
   static const trainingYears = 'trainingYears';
+  static const trainingMonths = 'trainingMonths';
   static const injuries = 'injuries';
   static const availableEquipment = 'availableEquipment';
   static const barriers = 'barriers';
   static const periodizationHistory = 'periodizationHistory';
   static const priorityExercises = 'priorityExercises';
+  static const exercisePreferencesByMuscle = 'exercisePreferencesByMuscle';
   static const prSquat = 'prSquat';
   static const prBench = 'prBench';
   static const prDeadlift = 'prDeadlift';
@@ -73,6 +76,10 @@ class TrainingExtraKeys {
   static const sleepBucket = 'sleepBucket';
   static const stressLevel = 'stressLevel';
   static const activeInjuries = 'activeInjuries';
+  static const injuryRegion = 'injuryRegion';
+  static const injuryPattern = 'injuryPattern';
+  static const injurySeverity = 'injurySeverity';
+  static const injuryStatus = 'injuryStatus';
   static const knowsPRs = 'knowsPRs';
 
   // --- Estructura y adaptación (v1) ---
@@ -102,6 +109,15 @@ class TrainingExtraKeys {
   // --- Volumen Individualizado (MEV/MRV por atleta) ---
   static const mevIndividual = 'mevIndividual'; // Double global
   static const mrvIndividual = 'mrvIndividual'; // Double global
+  static const vmeBase = 'vmeBase';
+  static const vmrBase = 'vmrBase';
+  static const vmeAdjustTotal = 'vmeAdjustTotal';
+  static const vmrAdjustTotal = 'vmrAdjustTotal';
+  static const deltaVmeGlobal = 'deltaVmeGlobal';
+  static const deltaVmrGlobal = 'deltaVmrGlobal';
+  static const vmeCalculated = 'vmeCalculated';
+  static const vmrCalculated = 'vmrCalculated';
+  static const vopCalculated = 'vopCalculated';
   static const weightKg = 'weightKg'; // Double peso del atleta
   static const mevByMuscle = 'mevByMuscle'; // Map<String, double>
   static const mrvByMuscle = 'mrvByMuscle'; // Map<String, double>
@@ -130,6 +146,7 @@ class TrainingExtraKeys {
 
   // Flujo estructurado de generación (entrevista -> landmarks -> intensidad -> plan)
   static const trainingFlowStage = 'trainingFlowStage';
+  static const interviewPipelineSignature = 'interviewPipelineSignature';
   static const muscleLandmarks =
       'muscleLandmarks'; // Map<String, Map<String, int>>
   static const intensitySetsByMuscle =

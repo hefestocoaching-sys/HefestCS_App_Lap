@@ -1,14 +1,19 @@
 // lib/domain/training_v3/constants/volume_landmarks.dart
 
 import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dart';
+import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 
 /// Constantes de landmarks de volumen (VME/MAV/MRV)
 ///
 /// FUENTE: Semana 1-2, Israetel et al. (2020)
+///
+/// DEPRECADO PARA FLUJO ACTIVO DE ENTREVISTA->LANDMARKS:
+/// la autoridad oficial es muscle_volume_landmarks_ssot.dart.
+@Deprecated('Usar muscle_volume_landmarks_ssot.dart en flujo activo')
 class VolumeLandmarks {
   /// Volumen Mínimo Efectivo (VME) por músculo y nivel
   static const Map<String, Map<String, int>> vme = {
-    MuscleKey.chest: {
+    MuscleKey.pectorals: {
       TrainingLevelKey.novice: 10,
       TrainingLevelKey.intermediate: 12,
       TrainingLevelKey.advanced: 15,
@@ -28,7 +33,7 @@ class VolumeLandmarks {
       TrainingLevelKey.intermediate: 6,
       TrainingLevelKey.advanced: 8,
     },
-    MuscleKey.quadriceps: {
+    MuscleKey.quads: {
       TrainingLevelKey.novice: 10,
       TrainingLevelKey.intermediate: 12,
       TrainingLevelKey.advanced: 15,
@@ -43,7 +48,21 @@ class VolumeLandmarks {
       TrainingLevelKey.intermediate: 10,
       TrainingLevelKey.advanced: 12,
     },
-    'shoulders': {'novice': 10, 'intermediate': 12, 'advanced': 15},
+    MuscleKey.deltsFront: {
+      TrainingLevelKey.novice: 4,
+      TrainingLevelKey.intermediate: 6,
+      TrainingLevelKey.advanced: 8,
+    },
+    MuscleKey.deltsLateral: {
+      TrainingLevelKey.novice: 4,
+      TrainingLevelKey.intermediate: 6,
+      TrainingLevelKey.advanced: 8,
+    },
+    MuscleKey.deltsRear: {
+      TrainingLevelKey.novice: 4,
+      TrainingLevelKey.intermediate: 6,
+      TrainingLevelKey.advanced: 8,
+    },
     MuscleKey.biceps: {
       TrainingLevelKey.novice: 6,
       TrainingLevelKey.intermediate: 8,
@@ -68,7 +87,7 @@ class VolumeLandmarks {
 
   /// Volumen Adaptativo Máximo (MAV) por músculo y nivel
   static const Map<String, Map<String, int>> mav = {
-    MuscleKey.chest: {
+    MuscleKey.pectorals: {
       TrainingLevelKey.novice: 15,
       TrainingLevelKey.intermediate: 18,
       TrainingLevelKey.advanced: 22,
@@ -88,7 +107,7 @@ class VolumeLandmarks {
       TrainingLevelKey.intermediate: 9,
       TrainingLevelKey.advanced: 12,
     },
-    MuscleKey.quadriceps: {
+    MuscleKey.quads: {
       TrainingLevelKey.novice: 15,
       TrainingLevelKey.intermediate: 18,
       TrainingLevelKey.advanced: 22,
@@ -103,7 +122,21 @@ class VolumeLandmarks {
       TrainingLevelKey.intermediate: 15,
       TrainingLevelKey.advanced: 18,
     },
-    'shoulders': {'novice': 15, 'intermediate': 18, 'advanced': 22},
+    MuscleKey.deltsFront: {
+      TrainingLevelKey.novice: 6,
+      TrainingLevelKey.intermediate: 9,
+      TrainingLevelKey.advanced: 12,
+    },
+    MuscleKey.deltsLateral: {
+      TrainingLevelKey.novice: 6,
+      TrainingLevelKey.intermediate: 9,
+      TrainingLevelKey.advanced: 12,
+    },
+    MuscleKey.deltsRear: {
+      TrainingLevelKey.novice: 6,
+      TrainingLevelKey.intermediate: 9,
+      TrainingLevelKey.advanced: 12,
+    },
     MuscleKey.biceps: {
       TrainingLevelKey.novice: 10,
       TrainingLevelKey.intermediate: 12,
@@ -128,7 +161,7 @@ class VolumeLandmarks {
 
   /// Volumen Máximo Recuperable (MRV) por músculo y nivel
   static const Map<String, Map<String, int>> mrv = {
-    MuscleKey.chest: {
+    MuscleKey.pectorals: {
       TrainingLevelKey.novice: 20,
       TrainingLevelKey.intermediate: 24,
       TrainingLevelKey.advanced: 28,
@@ -148,7 +181,7 @@ class VolumeLandmarks {
       TrainingLevelKey.intermediate: 12,
       TrainingLevelKey.advanced: 16,
     },
-    MuscleKey.quadriceps: {
+    MuscleKey.quads: {
       TrainingLevelKey.novice: 20,
       TrainingLevelKey.intermediate: 24,
       TrainingLevelKey.advanced: 28,
@@ -163,7 +196,21 @@ class VolumeLandmarks {
       TrainingLevelKey.intermediate: 20,
       TrainingLevelKey.advanced: 24,
     },
-    'shoulders': {'novice': 20, 'intermediate': 24, 'advanced': 28},
+    MuscleKey.deltsFront: {
+      TrainingLevelKey.novice: 8,
+      TrainingLevelKey.intermediate: 12,
+      TrainingLevelKey.advanced: 16,
+    },
+    MuscleKey.deltsLateral: {
+      TrainingLevelKey.novice: 8,
+      TrainingLevelKey.intermediate: 12,
+      TrainingLevelKey.advanced: 16,
+    },
+    MuscleKey.deltsRear: {
+      TrainingLevelKey.novice: 8,
+      TrainingLevelKey.intermediate: 12,
+      TrainingLevelKey.advanced: 16,
+    },
     MuscleKey.biceps: {
       TrainingLevelKey.novice: 14,
       TrainingLevelKey.intermediate: 16,
@@ -188,10 +235,11 @@ class VolumeLandmarks {
 
   /// Obtiene landmarks para músculo y nivel
   static Map<String, int> getLandmarks(String muscle, String level) {
+    final canonical = normalizeMuscleKey(muscle);
     return {
-      'vme': vme[muscle]?[level] ?? 0,
-      'mav': mav[muscle]?[level] ?? 0,
-      'mrv': mrv[muscle]?[level] ?? 0,
+      'vme': vme[canonical]?[level] ?? 0,
+      'mav': mav[canonical]?[level] ?? 0,
+      'mrv': mrv[canonical]?[level] ?? 0,
     };
   }
 }

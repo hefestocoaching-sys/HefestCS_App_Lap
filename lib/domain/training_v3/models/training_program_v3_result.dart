@@ -122,7 +122,7 @@ class TrainingProgramV3Result {
 ///
 /// CAMPOS:
 /// - volumeDecisions: Decisiones de volumen por músculo (MEV/MAV/MRV)
-/// - intensityDecisions: Distribución de intensidad (Heavy/Moderate/Light)
+/// - intensityDecisions: Distribución de intensidad (Heavy/Medium/Light)
 /// - exerciseSelections: Ejercicios seleccionados con scores
 /// - splitRationale: Por qué se eligió el split (FullBody/Upper-Lower/PPL)
 /// - phaseRationale: Por qué se eligió la fase (Accumulation/Intensification/Deload)
@@ -150,7 +150,7 @@ class DecisionTrace {
   /// {
   ///   'distribution': {
   ///     'heavy': 0.35,
-  ///     'moderate': 0.50,
+  ///     'medium': 0.50,
   ///     'light': 0.15
   ///   },
   ///   'goal': 'hypertrophy',

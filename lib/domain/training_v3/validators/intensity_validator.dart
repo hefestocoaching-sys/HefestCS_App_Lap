@@ -5,12 +5,12 @@ import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dar
 /// Validador científico de distribución de intensidad
 ///
 /// Valida que los programas cumplan con:
-/// - Distribución 35% heavy / 45% moderate / 20% light
-/// - Coherencia intensidad-reps (heavy 6-8, moderate 8-12, light 16-20)
+/// - Distribución 20% heavy / 60% medium / 20% light (SSOT actual)
+/// - Coherencia intensidad-reps (heavy 6-8, medium 8-12, light 16-20)
 /// - Descanso apropiado por intensidad
 ///
 /// FUNDAMENTO CIENTÍFICO:
-/// - Semana 3, Imagen 27-29: Distribución óptima 35/45/20
+/// - Política SSOT operativa del motor: 20/60/20
 /// - Hipertrofia máxima con diversidad de intensidades
 ///
 /// REFERENCIAS:
@@ -19,14 +19,23 @@ import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dar
 ///
 /// Versión: 1.0.0
 class IntensityValidator {
+  static const double _targetHeavyPct = 0.20;
+  static const double _targetMediumPct = 0.60;
+  static const double _targetLightPct = 0.20;
+
   static String _normalizeIntensity(String intensity) {
-    return intensity == 'moderate' ? IntensityZone.medium : intensity;
+    final normalized = intensity.trim().toLowerCase();
+    // Compatibilidad de borde: legacy moderate se traduce al SSOT interno.
+    if (normalized == 'moderate') {
+      return IntensityZone.medium;
+    }
+    return normalized;
   }
 
   /// Valida distribución de intensidades en un programa
   ///
   /// VALIDACIONES:
-  /// 1. Porcentajes cerca de 35/45/20 (±15% tolerancia)
+  /// 1. Porcentajes cerca de 20/60/20 (±15% tolerancia)
   /// 2. Cada ejercicio tiene intensidad asignada
   /// 3. Coherencia intensidad-reps
   /// 4. Descanso apropiado
@@ -81,7 +90,7 @@ class IntensityValidator {
     };
   }
 
-  /// Valida que la distribución esté cerca de 35/45/20
+  /// Valida que la distribución esté cerca de 20/60/20
   static Map<String, dynamic> _validateDistributionPercentages(
     Map<String, String> intensities,
   ) {
@@ -90,7 +99,7 @@ class IntensityValidator {
         .map(_normalizeIntensity)
         .where((i) => i == IntensityZone.heavy)
         .length;
-    final moderateCount = intensities.values
+    final mediumCount = intensities.values
         .map(_normalizeIntensity)
         .where((i) => i == IntensityZone.medium)
         .length;
@@ -100,27 +109,27 @@ class IntensityValidator {
         .length;
 
     final heavyPct = heavyCount / total;
-    final moderatePct = moderateCount / total;
+    final mediumPct = mediumCount / total;
     final lightPct = lightCount / total;
 
     // Tolerancia: ±15%
-    final heavyOk = (heavyPct - 0.35).abs() <= 0.15;
-    final moderateOk = (moderatePct - 0.45).abs() <= 0.15;
-    final lightOk = (lightPct - 0.20).abs() <= 0.15;
+    final heavyOk = (heavyPct - _targetHeavyPct).abs() <= 0.15;
+    final mediumOk = (mediumPct - _targetMediumPct).abs() <= 0.15;
+    final lightOk = (lightPct - _targetLightPct).abs() <= 0.15;
 
     final percentages = {
       IntensityZone.heavy: (heavyPct * 100).toStringAsFixed(1),
-      IntensityZone.medium: (moderatePct * 100).toStringAsFixed(1),
+      IntensityZone.medium: (mediumPct * 100).toStringAsFixed(1),
       IntensityZone.light: (lightPct * 100).toStringAsFixed(1),
     };
 
-    if (!heavyOk || !moderateOk || !lightOk) {
+    if (!heavyOk || !mediumOk || !lightOk) {
       return {
         'status': 'warning',
         'message':
             'Distribución de intensidad subóptima. '
             'Actual: ${percentages[IntensityZone.heavy]}% heavy / ${percentages[IntensityZone.medium]}% medium / ${percentages[IntensityZone.light]}% light. '
-            'Óptimo: 35% / 45% / 20%',
+            'Óptimo: 20% / 60% / 20%',
         'percentages': percentages,
       };
     }
@@ -136,7 +145,7 @@ class IntensityValidator {
   ///
   /// REGLAS:
   /// - Heavy: 6-8 reps
-  /// - Moderate: 8-12 reps
+  /// - Medium: 8-12 reps
   /// - Light: 16-20 reps
   static List<String> _validateIntensityRepCoherence(
     Map<String, String> intensities,
@@ -157,29 +166,33 @@ class IntensityValidator {
 
       switch (normalizedIntensity) {
         case IntensityZone.heavy:
-          if (minReps < 5 || maxReps > 8) {
+          if (minReps < 6 || maxReps > 8) {
             errors.add(
               '$exerciseId: Heavy con $minReps-$maxReps reps. '
-              'Heavy debe ser 5-8 reps.',
+              'Heavy debe ser 6-8 reps.',
             );
           }
           break;
         case IntensityZone.medium:
           if (minReps < 8 || maxReps > 12) {
             errors.add(
-              '$exerciseId: Moderate con $minReps-$maxReps reps. '
-              'Moderate debe ser 8-12 reps.',
+              '$exerciseId: Medium con $minReps-$maxReps reps. '
+              'Medium debe ser 8-12 reps.',
             );
           }
           break;
         case IntensityZone.light:
-          if (minReps < 12 || maxReps > 20) {
+          if (minReps < 16 || maxReps > 20) {
             errors.add(
               '$exerciseId: Light con $minReps-$maxReps reps. '
-              'Light debe ser 12-20 reps.',
+              'Light debe ser 16-20 reps.',
             );
           }
           break;
+        default:
+          errors.add(
+            '$exerciseId: Intensidad inválida ($normalizedIntensity).',
+          );
       }
     });
 
@@ -213,7 +226,7 @@ class IntensityValidator {
         case IntensityZone.medium:
           if (restSeconds < 90 || restSeconds > 180) {
             warnings.add(
-              '$exerciseId: Moderate con ${restSeconds}s descanso. '
+              '$exerciseId: Medium con ${restSeconds}s descanso. '
               'Recomendado: 90-180s.',
             );
           }

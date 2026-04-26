@@ -20,11 +20,15 @@ class ExerciseOrderingEngine {
         const <String, dynamic>{};
 
     int load = 0;
-    switch (metadata['loadCategory']?.toString()) {
+    final normalizedLoad = _normalizeLoadCategory(
+      metadata['loadCategory']?.toString(),
+    );
+
+    switch (normalizedLoad) {
       case 'heavy':
         load = 3;
         break;
-      case 'moderate':
+      case 'medium':
         load = 2;
         break;
       case 'light':
@@ -42,5 +46,14 @@ class ExerciseOrderingEngine {
     if (value is int) return value;
     if (value is num) return value.round();
     return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  static String _normalizeLoadCategory(String? raw) {
+    final normalized = (raw ?? '').trim().toLowerCase();
+    if (normalized == 'moderate') {
+      // Compatibilidad en borde de entrada: operativo interno usa medium.
+      return 'medium';
+    }
+    return normalized;
   }
 }

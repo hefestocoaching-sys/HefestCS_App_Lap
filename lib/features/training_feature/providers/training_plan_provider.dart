@@ -39,14 +39,17 @@ import 'package:hcs_app_lap/domain/training_v3/engines/landmark_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/intensity_split.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/unified_training_service.dart';
-import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_impl.dart';
+import 'package:hcs_app_lap/domain/training_v3/validators/training_plan_forensic_validator.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_snapshot_v1.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_progression_state_v1.dart';
+import 'package:hcs_app_lap/domain/training_domain/training_plan_governor.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_ssot_v1_service.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_flow_stage.dart';
 // VopSnapshot SSOT
 import 'package:hcs_app_lap/domain/training/vop_snapshot.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
+import 'package:hcs_app_lap/features/training_feature/domain/intensity_distribution_helper.dart';
+import 'package:hcs_app_lap/features/training_feature/domain/training_pipeline_guard.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 import 'package:hcs_app_lap/domain/training/services/active_cycle_bootstrapper.dart';
 import 'package:hcs_app_lap/domain/training/services/training_week_evaluator.dart';
@@ -520,10 +523,42 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   }
 
   /// Genera un plan basado en MusclePriorities (SSOT) para Motor V3.
+  @Deprecated('Usar generatePlanFromActiveCycle como entrada oficial')
   Future<TrainingPlan> generateTrainingPlan({
     required String clientId,
     required TrainingEvaluation evaluation,
   }) async {
+    final snapshot = TrainingEvaluationSnapshotV1.fromTrainingEvaluation(
+      clientId: clientId,
+      evaluation: evaluation,
+    );
+    await _saveEvaluationSnapshot(clientId: clientId, snapshot: snapshot);
+    await generatePlanFromActiveCycle(DateTime.now());
+
+    final client = await ref
+        .read(clientRepositoryProvider)
+        .getClientById(clientId);
+    final activeConfig = client != null
+        ? _findActivePlanConfigById(client)
+        : null;
+    if (activeConfig != null) {
+      return TrainingPlan(
+        id: activeConfig.id,
+        clientId: activeConfig.clientId,
+        name: activeConfig.name,
+        startDate: activeConfig.startDate,
+        weeks: const <v3.TrainingWeek>[],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        phase: activeConfig.phase.name,
+        split: activeConfig.splitId,
+        volumePerMuscle: activeConfig.volumePerMuscle,
+      );
+    }
+    throw StateError(
+      'No se pudo materializar TrainingPlan legacy. Usa generatePlanFromActiveCycle.',
+    );
+
     try {
       debugPrint(
         '[TrainingPlanProvider] Generating plan for client: $clientId',
@@ -681,12 +716,19 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   }
 
   /// Genera un plan basado en el perfil de entrenamiento (usa TrainingProgramEngine 1→8)
+  @Deprecated('Usar generatePlanFromActiveCycle como entrada oficial')
   Future<void> generatePlan({
     required TrainingProfile profile,
     String? forDateIso,
     Map<String, Landmarks>? muscleLandmarks,
     IntensitySplit? intensitySplit,
   }) async {
+    final activeDateIso =
+        forDateIso ?? dateIsoFrom(ref.read(globalDateProvider));
+    final selectedDate = tryParseDateTime(activeDateIso) ?? DateTime.now();
+    await generatePlanFromActiveCycle(selectedDate);
+    return;
+
     state = state.copyWith(isLoading: true, missingFields: const []);
     try {
       final flowError = _validateStructuredFlow(profile.extra);
@@ -902,12 +944,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       );
 
       final progressionRepo = ref.read(muscleProgressionRepositoryProvider);
-      final analysisRepo = ref.read(weeklyMuscleAnalysisRepositoryProvider);
-
-      final weeklyProgression = WeeklyProgressionServiceImpl(
-        progressionRepo: progressionRepo,
-        analysisRepo: analysisRepo,
-      );
+      final weeklyProgression = ref.read(weeklyProgressionServiceProvider);
 
       final unifiedService = UnifiedTrainingService(
         progressionRepo: progressionRepo,
@@ -947,6 +984,32 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       }
 
       final planConfig = resultV3.initialWeekPlan!;
+
+      final forensicResult = TrainingPlanForensicValidator.validate(
+        planConfig: planConfig,
+        expectedWeeklyVolumeByMuscle: planConfig.volumePerMuscle,
+      );
+      TrainingPlanForensicValidator.logStructured(forensicResult);
+
+      if (!forensicResult.isValid) {
+        final reason = forensicResult.blockingErrors.isNotEmpty
+            ? forensicResult.blockingErrors.first
+            : 'Validacion forense bloqueante';
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Plan bloqueado por validador forense: $reason',
+          blockReason: reason,
+          suggestions: [
+            ...forensicResult.blockingErrors,
+            ...forensicResult.warnings,
+          ],
+        );
+        return;
+      }
+
+      for (final warning in forensicResult.warnings) {
+        debugPrint('[V3][FORENSIC][WARNING] $warning');
+      }
 
       final vopByMuscle = _computeVopByMuscleFromPlan(planConfig);
       final vmrByMuscle = _computeVmrByMuscle(
@@ -2072,24 +2135,34 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       );
 
       final mevByMuscle = <String, double>{};
-      final mevRaw =
-          planConfig.trainingProfileSnapshot?.extra[TrainingExtraKeys
-              .mevByMuscle] ??
-          planConfig.volumePerMuscle ??
-          workingClient.training.extra[TrainingExtraKeys.mevByMuscle];
+      final landmarksByMuscle = LandmarkEngine.parseByCanonicalKey(
+        workingClient.training.extra[TrainingExtraKeys.muscleLandmarks],
+      );
+      if (landmarksByMuscle.isNotEmpty) {
+        for (final entry in landmarksByMuscle.entries) {
+          mevByMuscle[normalizeMuscleKey(entry.key)] = entry.value.vme
+              .toDouble();
+        }
+      } else {
+        final mevRaw =
+            planConfig.trainingProfileSnapshot?.extra[TrainingExtraKeys
+                .mevByMuscle] ??
+            planConfig.volumePerMuscle ??
+            workingClient.training.extra[TrainingExtraKeys.mevByMuscle];
 
-      if (mevRaw is Map) {
-        mevRaw.forEach((k, v) {
-          final key = normalizeMuscleKey(k.toString());
-          if (v is num) {
-            mevByMuscle[key] = v.toDouble();
-          } else {
-            final parsed = double.tryParse(v?.toString() ?? '');
-            if (parsed != null) {
-              mevByMuscle[key] = parsed;
+        if (mevRaw is Map) {
+          mevRaw.forEach((k, v) {
+            final key = normalizeMuscleKey(k.toString());
+            if (v is num) {
+              mevByMuscle[key] = v.toDouble();
+            } else {
+              final parsed = double.tryParse(v?.toString() ?? '');
+              if (parsed != null) {
+                mevByMuscle[key] = parsed;
+              }
             }
-          }
-        });
+          });
+        }
       }
 
       MevTable.seed(mevByMuscle);
@@ -2187,9 +2260,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   }
 
   String? _validateStructuredFlow(Map<String, dynamic> extra) {
-    final stage = TrainingFlowStageX.fromRaw(
-      extra[TrainingExtraKeys.trainingFlowStage]?.toString(),
-    );
+    final stage = TrainingPipelineGuard.allowedStage(extra);
     if (stage != TrainingFlowStage.plan) {
       return 'Flujo incompleto: debes completar entrevista, landmarks e intensidad antes de generar plan.';
     }
@@ -2269,14 +2340,13 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     );
 
     try {
-      final split = IntensitySplit(
-        heavy: heavyPercent.toDouble(),
-        medium: mediumPercent.toDouble(),
-        light: lightPercent.toDouble(),
+      final splitValid = IntensityDistributionHelper.isValidPercentSplit(
+        heavy: heavyPercent,
+        medium: mediumPercent,
+        light: lightPercent,
       );
-
-      if (!split.isWithinBounds) {
-        debugPrint('❌ [Tab 2] Split fuera de rango permitido');
+      if (!splitValid) {
+        debugPrint('❌ [Tab 2] Split inválido (rangos o suma)');
         return;
       }
 
@@ -2312,23 +2382,25 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
             for (final entry in landmarksByMuscle.entries) {
               final vop = entry.value.vop;
-              final setsHeavy = (vop * (split.heavy / 100.0)).round();
-              final setsMedium = (vop * (split.medium / 100.0)).round();
-              final setsLight = (vop * (split.light / 100.0)).round();
+              final computed =
+                  IntensityDistributionHelper.computeSeriesBreakdown(
+                    totalSeries: vop,
+                    heavyPercent: heavyPercent,
+                    lightPercent: lightPercent,
+                  );
 
               intensitySetsByMuscle[entry.key] = {
                 'vop': vop,
-                'heavy': setsHeavy,
-                'medium': setsMedium,
-                'light': setsLight,
+                'heavy': computed.heavy,
+                'medium': computed.medium,
+                'light': computed.light,
               };
             }
 
             extra[TrainingExtraKeys.intensitySetsByMuscle] =
                 intensitySetsByMuscle;
-            extra[TrainingExtraKeys.trainingFlowStage] = split.sumsTo100
-                ? TrainingFlowStage.plan.name
-                : TrainingFlowStage.intensity.name;
+            final allowedStage = TrainingPipelineGuard.allowedStage(extra);
+            extra[TrainingExtraKeys.trainingFlowStage] = allowedStage.name;
 
             debugPrint('✅ [Tab 2] Split actualizado en training.extra (local)');
 
@@ -2381,7 +2453,11 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
   ///   selectedDate: DateTime.now(),
   /// );
   /// ```
+  @Deprecated('Usar generatePlanFromActiveCycle como entrada oficial')
   Future<void> generatePlanV3({required DateTime selectedDate}) async {
+    await generatePlanFromActiveCycle(selectedDate);
+    return;
+
     debugPrint('🚀 [generatePlanV3] Iniciando generación Motor V3...');
 
     state = state.copyWith(isLoading: true);
@@ -2560,7 +2636,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
         training: updatedTraining,
         trainingPlans: const [],
         trainingCycles: const [],
-        activeCycleId: null,
       );
 
       // Guardar en repositorio
@@ -2620,6 +2695,266 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     );
   }
 
+  TrainingPlanAction resolveAllowedAction(Client client) {
+    final extra = Map<String, dynamic>.from(client.training.extra);
+    final progression = _readProgressionFromExtra(extra);
+    final evaluation = _readEvaluationFromExtra(extra);
+    final hasPlan =
+        client.trainingPlans.isNotEmpty || _findActiveCycle(client) != null;
+
+    if (evaluation != null) {
+      if (evaluation.peakPhaseWindow ||
+          (evaluation.weeksToCompetition != null &&
+              evaluation.weeksToCompetition! <= 3)) {
+        return TrainingPlanAction.locked;
+      }
+
+      if (progression.weeksCompleted == 0 &&
+          evaluation.regenerationPolicy == 'allow') {
+        return hasPlan
+            ? TrainingPlanAction.regenerate
+            : TrainingPlanAction.generate;
+      }
+
+      if (progression.weeksCompleted >= 1 &&
+          progression.weeksCompleted < 3 &&
+          evaluation.regenerationPolicy != 'locked') {
+        return TrainingPlanAction.adapt;
+      }
+
+      if (evaluation.regenerationPolicy == 'adapt_only' ||
+          progression.weeksCompleted >= 3) {
+        return TrainingPlanAction.adapt;
+      }
+    }
+
+    if (!hasPlan) {
+      return TrainingPlanAction.generate;
+    }
+
+    if (progression.weeksCompleted == 0) {
+      return TrainingPlanAction.regenerate;
+    }
+
+    return TrainingPlanAction.adapt;
+  }
+
+  String resolvePlanActionTooltip(Client client, TrainingPlanAction action) {
+    final extra = Map<String, dynamic>.from(client.training.extra);
+    final progression = _readProgressionFromExtra(extra);
+    final evaluation = _readEvaluationFromExtra(extra);
+
+    switch (action) {
+      case TrainingPlanAction.generate:
+        return evaluation == null
+            ? 'Generar plan inicial'
+            : 'Generar plan inicial con ${progression.weeksCompleted} semanas completadas';
+      case TrainingPlanAction.regenerate:
+        return 'Regenerar plan completo desde cero';
+      case TrainingPlanAction.adapt:
+        return 'Adaptar el plan sin romper la estructura del ciclo';
+      case TrainingPlanAction.locked:
+        return 'Plan bloqueado por ventana clínica crítica';
+    }
+  }
+
+  List<String> validatePlanActionInputs({
+    required Client client,
+    required TrainingEvaluationSnapshotV1 evaluation,
+  }) {
+    final errors = <String>[];
+    if (client.id.isEmpty) {
+      errors.add('Cliente inválido');
+    }
+    if (evaluation.daysPerWeek <= 0) {
+      errors.add('daysPerWeek debe ser mayor que 0');
+    }
+    if (evaluation.planDurationInWeeks <= 0) {
+      errors.add('planDurationInWeeks debe ser mayor que 0');
+    }
+    if (evaluation.sessionDurationMinutes <= 0) {
+      errors.add('sessionDurationMinutes debe ser mayor que 0');
+    }
+    return errors;
+  }
+
+  Future<void> saveProgressionState({
+    required String clientId,
+    required TrainingProgressionStateV1 progression,
+  }) async {
+    final client = await ref
+        .read(clientRepositoryProvider)
+        .getClientById(clientId);
+    if (client == null) return;
+
+    await _persistProgressionState(
+      client: client,
+      progression: progression,
+      syncCycleWeek: true,
+    );
+  }
+
+  Future<void> recordPlanAction({
+    required String clientId,
+    required String action,
+    bool resetProgressionCounters = false,
+    bool appendAdaptationHistory = false,
+  }) async {
+    final client = await ref
+        .read(clientRepositoryProvider)
+        .getClientById(clientId);
+    if (client == null) return;
+
+    final extra = Map<String, dynamic>.from(client.training.extra);
+    final progression = _readProgressionFromExtra(extra);
+    final now = DateTime.now();
+
+    final adaptationHistory = List<Map<String, dynamic>>.from(
+      progression.adaptationHistory,
+    );
+    if (appendAdaptationHistory) {
+      adaptationHistory.add({
+        'action': action,
+        'timestamp': now.toIso8601String(),
+        'planId': extra[TrainingExtraKeys.activePlanId]?.toString() ?? '',
+        'cycleWeek': _activeCycleWeek(client),
+      });
+    }
+
+    final updatedProgression = resetProgressionCounters
+        ? TrainingProgressionStateV1(
+            weeksCompleted: 0,
+            sessionsCompleted: 0,
+            consecutiveWeeksTraining: 0,
+            averageRIR: progression.averageRIR,
+            averageSessionRPE: progression.averageSessionRPE,
+            perceivedRecovery: progression.perceivedRecovery,
+            lastPlanId:
+                extra[TrainingExtraKeys.activePlanId]?.toString() ??
+                progression.lastPlanId,
+            lastPlanChangeReason: action,
+            lastAdaptationAt: appendAdaptationHistory
+                ? now
+                : progression.lastAdaptationAt,
+            adaptationHistory: adaptationHistory,
+          )
+        : TrainingProgressionStateV1(
+            weeksCompleted: progression.weeksCompleted,
+            sessionsCompleted: progression.sessionsCompleted,
+            consecutiveWeeksTraining: progression.consecutiveWeeksTraining,
+            averageRIR: progression.averageRIR,
+            averageSessionRPE: progression.averageSessionRPE,
+            perceivedRecovery: progression.perceivedRecovery,
+            lastPlanId:
+                extra[TrainingExtraKeys.activePlanId]?.toString() ??
+                progression.lastPlanId,
+            lastPlanChangeReason: action,
+            lastAdaptationAt: appendAdaptationHistory
+                ? now
+                : progression.lastAdaptationAt,
+            adaptationHistory: adaptationHistory,
+          );
+
+    await _persistProgressionState(
+      client: client,
+      progression: updatedProgression,
+      syncCycleWeek: true,
+    );
+  }
+
+  TrainingProgressionStateV1 _readProgressionFromExtra(
+    Map<String, dynamic> extra,
+  ) {
+    final raw = extra[TrainingExtraKeys.trainingProgressionStateV1];
+    if (raw is Map<String, dynamic>) {
+      return TrainingProgressionStateV1.fromJson(raw);
+    }
+    if (raw is Map) {
+      return TrainingProgressionStateV1.fromJson(raw.cast<String, dynamic>());
+    }
+
+    return TrainingProgressionStateV1(
+      weeksCompleted: 0,
+      sessionsCompleted: 0,
+      consecutiveWeeksTraining: 0,
+      averageRIR: 0,
+      averageSessionRPE: 0,
+      perceivedRecovery: 0,
+      lastPlanId: extra[TrainingExtraKeys.activePlanId]?.toString() ?? '',
+      lastPlanChangeReason: 'default',
+    );
+  }
+
+  TrainingEvaluationSnapshotV1? _readEvaluationFromExtra(
+    Map<String, dynamic> extra,
+  ) {
+    final raw = extra[TrainingExtraKeys.trainingEvaluationSnapshotV1];
+    if (raw is Map<String, dynamic>) {
+      return TrainingEvaluationSnapshotV1.fromJson(raw);
+    }
+    if (raw is Map) {
+      return TrainingEvaluationSnapshotV1.fromJson(raw.cast<String, dynamic>());
+    }
+    return null;
+  }
+
+  int _activeCycleWeek(Client client) {
+    final cycle = _findActiveCycle(client);
+    if (cycle == null || cycle.currentWeek <= 0) {
+      return 1;
+    }
+    return cycle.currentWeek;
+  }
+
+  Future<void> _persistProgressionState({
+    required Client client,
+    required TrainingProgressionStateV1 progression,
+    required bool syncCycleWeek,
+  }) async {
+    final extra = Map<String, dynamic>.from(client.training.extra);
+    extra[TrainingExtraKeys.trainingProgressionStateV1] = progression.toJson();
+
+    final updatedClient = syncCycleWeek
+        ? _syncClientCycleWeek(
+            client: client,
+            extra: extra,
+            progression: progression,
+          )
+        : client.copyWith(training: client.training.copyWith(extra: extra));
+
+    await ref.read(clientRepositoryProvider).saveClient(updatedClient);
+    await ref.read(clientsProvider.notifier).refresh();
+  }
+
+  Client _syncClientCycleWeek({
+    required Client client,
+    required Map<String, dynamic> extra,
+    required TrainingProgressionStateV1 progression,
+  }) {
+    final cycles = client.trainingCycles;
+    final activeIndex = cycles.indexWhere((cycle) => cycle.status == 'active');
+    if (activeIndex == -1) {
+      return client.copyWith(training: client.training.copyWith(extra: extra));
+    }
+
+    final activeCycle = cycles[activeIndex];
+    final desiredWeek = progression.weeksCompleted + 1;
+    final updatedCycle = activeCycle.copyWith(
+      currentWeek: desiredWeek > activeCycle.currentWeek
+          ? desiredWeek
+          : activeCycle.currentWeek,
+      updatedAt: DateTime.now(),
+    );
+
+    final updatedCycles = List<TrainingCycle>.from(cycles);
+    updatedCycles[activeIndex] = updatedCycle;
+
+    return client.copyWith(
+      training: client.training.copyWith(extra: extra),
+      trainingCycles: updatedCycles,
+    );
+  }
+
   Future<void> closeWeekExplicit(String clientId, int weekNumber) async {
     final client = await ref
         .read(clientRepositoryProvider)
@@ -2661,32 +2996,11 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
       lastPlanId: progression.lastPlanId,
       lastPlanChangeReason: 'week_closed_explicit',
     );
-    extra[TrainingExtraKeys.trainingProgressionStateV1] = updatedProgression
-        .toJson();
-
-    final cycles = client.trainingCycles;
-    final activeIndex = cycles.indexWhere((c) => c.status == 'active');
-    List<TrainingCycle> updatedCycles = cycles;
-    if (activeIndex != -1) {
-      final activeCycle = cycles[activeIndex];
-      final nextWeek = activeCycle.currentWeek + 1;
-
-      final replacement = activeCycle.copyWith(
-        currentWeek: nextWeek,
-        updatedAt: DateTime.now(),
-      );
-
-      updatedCycles = List<TrainingCycle>.from(cycles);
-      updatedCycles[activeIndex] = replacement;
-    }
-
-    final updatedClient = client.copyWith(
-      training: client.training.copyWith(extra: extra),
-      trainingCycles: updatedCycles,
+    await _persistProgressionState(
+      client: client,
+      progression: updatedProgression,
+      syncCycleWeek: true,
     );
-
-    await ref.read(clientRepositoryProvider).saveClient(updatedClient);
-    await ref.read(clientsProvider.notifier).refresh();
   }
 
   Map<String, double> _readIntensitySplitPercent(Map<String, dynamic> extra) {

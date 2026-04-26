@@ -28,18 +28,6 @@ class MuscleExerciseRoleMap {
 }
 
 class ExerciseRoleEngine {
-  static const Set<String> _basePatterns = {
-    'horizontal_press',
-    'vertical_press',
-    'horizontal_pull',
-    'vertical_pull',
-    'knee_dominant',
-    'hip_hinge',
-    'squat',
-    'deadlift',
-    'lunge',
-  };
-
   MuscleExerciseRoleMap classify({
     required String muscle,
     required List<Exercise> pool,
@@ -49,28 +37,23 @@ class ExerciseRoleEngine {
     final accessories = <Exercise>[];
 
     for (final exercise in pool) {
-      final metadata =
-          ExerciseCatalogV3.getMetadataById(exercise.id) ?? const {};
-      final category =
-          metadata['category']?.toString() ??
-          ExerciseCatalogV3.getTypeById(exercise.id);
-      final movementPattern = metadata['movementPattern']?.toString() ?? '';
-      final equipmentRaw = metadata['equipment'];
-      final equipment = equipmentRaw is List && equipmentRaw.isNotEmpty
-          ? equipmentRaw.first.toString()
-          : exercise.equipment.toLowerCase();
+      final supportsA =
+          ExerciseCatalogV3.supportsSlot(exercise.id, 'A') &&
+          ExerciseCatalogV3.isAEligible(exercise.id);
+      final supportsB =
+          ExerciseCatalogV3.supportsSlot(exercise.id, 'B1') ||
+          ExerciseCatalogV3.supportsSlot(exercise.id, 'B2');
+      final supportsCD =
+          ExerciseCatalogV3.supportsSlot(exercise.id, 'C1') ||
+          ExerciseCatalogV3.supportsSlot(exercise.id, 'C2') ||
+          ExerciseCatalogV3.supportsSlot(exercise.id, 'D1') ||
+          ExerciseCatalogV3.supportsSlot(exercise.id, 'D2');
 
-      final isCompound = category == 'compound';
-      final isIsolation = category == 'isolation';
-      final isBasePattern = _basePatterns.contains(movementPattern);
-      final isAccessoryEquipment =
-          equipment == 'cable' || equipment == 'machine';
-
-      if (isCompound && isBasePattern) {
+      if (supportsA) {
         anchors.add(exercise);
-      } else if (isCompound) {
+      } else if (supportsB) {
         supports.add(exercise);
-      } else if (isIsolation || isAccessoryEquipment) {
+      } else if (supportsCD) {
         accessories.add(exercise);
       } else {
         supports.add(exercise);

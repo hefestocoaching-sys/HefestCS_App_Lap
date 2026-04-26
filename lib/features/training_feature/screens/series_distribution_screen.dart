@@ -5,10 +5,11 @@ import 'package:hcs_app_lap/features/training_feature/domain/volume_intelligence
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/utils/widgets/section_title.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
-import 'package:hcs_app_lap/utils/deep_merge.dart';
+import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
 
 const muscleLabelEs = {
   'chest': 'Pectoral',
+  'pectorals': 'Pectoral',
   'back': 'Espalda',
   'lats': 'Dorsal ancho',
   'traps': 'Trapecio',
@@ -28,7 +29,7 @@ const muscleLabelEs = {
 ///
 /// Distribuye el volumen total (targetSetsByMuscle) en:
 /// - Series pesadas (15-30%)
-/// - Series moderadas (40-70%)
+/// - Series medias (40-70%)
 /// - Series ligeras (15-30%)
 ///
 /// NO recalcula MEV/MRV ni genera sets adicionales.
@@ -67,29 +68,29 @@ class _SeriesDistributionScreenState
         // Ajustar los otros dos para mantener suma en 100%
         final remaining = 1.0 - newValue;
         final ratio =
-            remaining / (_distribution.moderatePct + _distribution.lightPct);
+            remaining / (_distribution.mediumPct + _distribution.lightPct);
         _distribution = _distribution.copyWith(
           heavyPct: newValue,
-          moderatePct: _distribution.moderatePct * ratio,
+          mediumPct: _distribution.mediumPct * ratio,
           lightPct: _distribution.lightPct * ratio,
         );
-      } else if (type == 'moderate') {
+      } else if (type == 'medium') {
         final remaining = 1.0 - newValue;
         final ratio =
             remaining / (_distribution.heavyPct + _distribution.lightPct);
         _distribution = _distribution.copyWith(
-          moderatePct: newValue,
+          mediumPct: newValue,
           heavyPct: _distribution.heavyPct * ratio,
           lightPct: _distribution.lightPct * ratio,
         );
       } else if (type == 'light') {
         final remaining = 1.0 - newValue;
         final ratio =
-            remaining / (_distribution.heavyPct + _distribution.moderatePct);
+            remaining / (_distribution.heavyPct + _distribution.mediumPct);
         _distribution = _distribution.copyWith(
           lightPct: newValue,
           heavyPct: _distribution.heavyPct * ratio,
-          moderatePct: _distribution.moderatePct * ratio,
+          mediumPct: _distribution.mediumPct * ratio,
         );
       }
     });
@@ -186,7 +187,7 @@ class _SeriesDistributionScreenState
           ),
           SizedBox(height: 12),
           Text(
-            'Distribuye el volumen total en series pesadas, moderadas y ligeras '
+            'Distribuye el volumen total en series pesadas, medias y ligeras '
             'sin alterar el número total de sets. Los porcentajes deben sumar 100%.',
             style: TextStyle(color: kTextColorSecondary, height: 1.5),
           ),
@@ -231,11 +232,11 @@ class _SeriesDistributionScreenState
           const SizedBox(height: 16),
 
           _buildPercentageSlider(
-            'Series Moderadas',
-            _distribution.moderatePct,
-            IntensityDistribution.minModeratePct,
-            IntensityDistribution.maxModeratePct,
-            (value) => _updatePercentage('moderate', value),
+            'Series Medias',
+            _distribution.mediumPct,
+            IntensityDistribution.minMediumPct,
+            IntensityDistribution.maxMediumPct,
+            (value) => _updatePercentage('medium', value),
             Colors.orange.shade400,
           ),
           const SizedBox(height: 16),
@@ -266,7 +267,7 @@ class _SeriesDistributionScreenState
                 ),
               ),
               Text(
-                '${((_distribution.heavyPct + _distribution.moderatePct + _distribution.lightPct) * 100).toStringAsFixed(1)}%',
+                '${((_distribution.heavyPct + _distribution.mediumPct + _distribution.lightPct) * 100).toStringAsFixed(1)}%',
                 style: TextStyle(
                   color: _distribution.isValid
                       ? kPrimaryColor
@@ -426,7 +427,7 @@ class _SeriesDistributionScreenState
             ),
             DataColumn(
               label: Text(
-                'Moderadas',
+                'Medias',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: kTextColor,
@@ -474,7 +475,7 @@ class _SeriesDistributionScreenState
                 ),
                 DataCell(
                   Text(
-                    breakdown.moderate.toString(),
+                    breakdown.medium.toString(),
                     style: TextStyle(color: Colors.orange.shade400),
                   ),
                 ),
@@ -522,39 +523,17 @@ class _SeriesDistributionScreenState
           onPressed: !_distribution.isValid
               ? null
               : () async {
-                  // Calcular distribución por músculo
-                  final intensityBreakdown = <String, Map<String, int>>{};
-
-                  for (final entry in targetSetsByMuscle.entries) {
-                    final muscle = entry.key;
-                    final totalSets = entry.value.round();
-                    final breakdown = _distribution.calculateSets(totalSets);
-
-                    intensityBreakdown[muscle] = {
-                      'heavy': breakdown.heavy,
-                      'moderate': breakdown.moderate,
-                      'light': breakdown.light,
-                      'total': breakdown.total,
-                    };
-                  }
-
-                  // Guardar en training.extra con deep merge
                   final messenger = ScaffoldMessenger.of(context);
+                  final heavy = (_distribution.heavyPct * 100).round();
+                  final medium = (_distribution.mediumPct * 100).round();
+                  final light = (_distribution.lightPct * 100).round();
+
                   await ref
-                      .read(clientsProvider.notifier)
-                      .updateActiveClient(
-                        (prev) => prev.copyWith(
-                          training: prev.training.copyWith(
-                            extra: deepMerge(prev.training.extra, {
-                              'intensityDistribution': {
-                                'heavyPct': _distribution.heavyPct,
-                                'moderatePct': _distribution.moderatePct,
-                                'lightPct': _distribution.lightPct,
-                              },
-                              'intensityBreakdown': intensityBreakdown,
-                            }),
-                          ),
-                        ),
+                      .read(trainingPlanProvider.notifier)
+                      .recalculateSeriesDistribution(
+                        heavyPercent: heavy,
+                        mediumPercent: medium,
+                        lightPercent: light,
                       );
 
                   if (!mounted) return;

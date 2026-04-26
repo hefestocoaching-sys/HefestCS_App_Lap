@@ -1,5 +1,6 @@
 import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/domain/entities/exercise_prescription.dart';
+import 'package:hcs_app_lap/domain/policies/structural_exercise_order_contract.dart';
 
 /// Política de ordenamiento AA (aproximado-alternado) para ejercicios de un día
 ///
@@ -14,28 +15,21 @@ class DayExerciseOrderingPolicy {
   static List<ExercisePrescription> orderDay(List<ExercisePrescription> items) {
     if (items.isEmpty || items.length <= 1) return List.from(items);
 
-    // Separar en compuestos vs aislados
-    final compuestos = <ExercisePrescription>[];
-    final aislados = <ExercisePrescription>[];
+    final ordered = List<ExercisePrescription>.from(items)
+      ..sort((a, b) {
+        final aIndex = StructuralExerciseOrderContract.structuralIndex(
+          isLargeMuscle: _isLargeMuscle(a.muscleGroup),
+          isCompound: _isCompoundExercise(a),
+          intensityZone: _zoneFromRepMax(a.repRange.max),
+        );
+        final bIndex = StructuralExerciseOrderContract.structuralIndex(
+          isLargeMuscle: _isLargeMuscle(b.muscleGroup),
+          isCompound: _isCompoundExercise(b),
+          intensityZone: _zoneFromRepMax(b.repRange.max),
+        );
+        return aIndex.compareTo(bIndex);
+      });
 
-    for (final item in items) {
-      if (_isCompoundExercise(item)) {
-        compuestos.add(item);
-      } else {
-        aislados.add(item);
-      }
-    }
-
-    // Ordenar compuestos por rep range (bajos primero = más pesado)
-    compuestos.sort((a, b) => a.repRange.max.compareTo(b.repRange.max));
-
-    // Ordenar aislados por músculo
-    aislados.sort((a, b) => a.muscleGroup.name.compareTo(b.muscleGroup.name));
-
-    // Concatenar: compuestos luego aislados
-    final ordered = <ExercisePrescription>[...compuestos, ...aislados];
-
-    // Aplicar política de intercalado de músculos
     return _interleaveMuscles(ordered);
   }
 
@@ -80,6 +74,19 @@ class DayExerciseOrderingPolicy {
     }
 
     return isCompoundPattern;
+  }
+
+  static bool _isLargeMuscle(MuscleGroup group) {
+    return group == MuscleGroup.chest ||
+        group == MuscleGroup.back ||
+        group == MuscleGroup.quads ||
+        group == MuscleGroup.glutes;
+  }
+
+  static String _zoneFromRepMax(int repsMax) {
+    if (repsMax <= 8) return 'heavy';
+    if (repsMax <= 15) return 'medium';
+    return 'light';
   }
 
   /// Intercala ejercicios para evitar músculos consecutivos

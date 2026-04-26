@@ -1,0 +1,2576 @@
+{
+  "version": "exercise_catalog_v3_enrichment_candidates",
+  "candidateCount": 90,
+  "candidates": [
+    {
+      "exerciseId": "lever_front_jalon",
+      "name": {
+        "es": "Lever front jalón",
+        "en": "lever front pulldown"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0579.gif",
+      "externalId": "0579",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height and position yourself on the machine with your knees under the pads and your feet flat on the ground.",
+        "Grasp the handles with an overhand grip, slightly wider than shoulder-width apart.",
+        "Sit upright with your chest lifted and your shoulders back, maintaining a slight arch in your lower back.",
+        "Engage your lats and pull the handles down towards your chest, squeezing your shoulder blades together.",
+        "Pause for a moment at the bottom of the movement, then slowly release the handles back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever front pulldown is a machine-based exercise targeting the latissimus dorsi (lats) and is commonly used to build back strength and muscle mass. It involves pulling handles down towards the chest while seated, using a leverage machine.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "reverse_grip_maquina_dorsal_jalon",
+      "name": {
+        "es": "Reverse grip máquina dorsal jalón",
+        "en": "reverse grip machine lat pulldown"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0673.gif",
+      "externalId": "0673",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height and position yourself on the machine with your knees under the pads and your feet flat on the ground.",
+        "Grasp the handles with an underhand grip, slightly wider than shoulder-width apart.",
+        "Sit upright with your chest out and shoulders back, maintaining a slight arch in your lower back.",
+        "Pull the handles down towards your chest, squeezing your shoulder blades together.",
+        "Pause for a moment at the bottom of the movement, then slowly release the handles back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The reverse grip machine lat pulldown targets the latissimus dorsi using a leverage machine and an underhand grip, also engaging the biceps and forearms. It is performed seated with controlled movement, focusing on pulling the handles down to the chest and squeezing the shoulder blades together.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_one_arm_lateral_wide_jalon",
+      "name": {
+        "es": "Lever one arm lateral wide jalón",
+        "en": "lever one arm lateral wide pulldown"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\1347.gif",
+      "externalId": "1347",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height and position yourself on the machine with your chest against the pad and your feet flat on the floor.",
+        "Grasp the handle with an overhand grip and fully extend your arm, keeping a slight bend in your elbow.",
+        "Pull the handle down and across your body towards your opposite hip, squeezing your lat muscle at the bottom of the movement.",
+        "Slowly return the handle to the starting position, fully extending your arm.",
+        "Repeat for the desired number of repetitions, then switch sides."
+      ],
+      "description": "The lever one arm lateral wide pulldown is a machine-based exercise targeting the latissimus dorsi, performed one arm at a time for unilateral strength and muscle development.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_reverse_grip_lateral_jalon",
+      "name": {
+        "es": "Lever reverse grip lateral jalón",
+        "en": "lever reverse grip lateral pulldown"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\2736.gif",
+      "externalId": "2736",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height and position yourself on the machine with your knees under the pads and your feet flat on the ground.",
+        "Grasp the handles with an overhand grip, slightly wider than shoulder-width apart.",
+        "Sit upright with your chest out and shoulders back, maintaining a slight arch in your lower back.",
+        "Pull the handles down towards your chest, leading with your elbows and squeezing your shoulder blades together.",
+        "Pause for a moment at the bottom of the movement, then slowly release the handles back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever reverse grip lateral pulldown is a machine-based exercise targeting the latissimus dorsi (lats) with a reverse (underhand) grip, also engaging the biceps, rhomboids, and rear deltoids. It is performed on a leverage machine, making it accessible and safe for most users.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "assisted_dominadas",
+      "name": {
+        "es": "Assisted dominadas",
+        "en": "assisted pull-up"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0017.gif",
+      "externalId": "0017",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the machine to your desired weight and height settings.",
+        "Grasp the handles with an overhand grip, slightly wider than shoulder-width apart.",
+        "Hang with your arms fully extended and your feet off the ground.",
+        "Engage your back muscles and pull your body up towards the handles, keeping your elbows close to your body.",
+        "Continue pulling until your chin is above the handles.",
+        "Pause for a moment at the top, then slowly lower your body back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The assisted pull-up is a machine-based exercise that helps users perform pull-ups with added support, making it easier to lift their body weight. It primarily targets the latissimus dorsi (lats) and also engages the biceps and forearms.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_assisted_dominadas_supinas",
+      "name": {
+        "es": "Lever assisted dominadas supinas",
+        "en": "lever assisted chin-up"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0572.gif",
+      "externalId": "0572",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the leverage machine to your desired resistance level.",
+        "Stand on the foot platform and grip the handles with an overhand grip, slightly wider than shoulder-width apart.",
+        "Hang with your arms fully extended, keeping your body straight.",
+        "Engage your back muscles and pull your body up towards the handles, leading with your chest.",
+        "Continue pulling until your chin is above the handles.",
+        "Pause for a moment at the top, then slowly lower your body back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever assisted chin-up is a machine-based exercise that helps users perform chin-ups with assistance, making it easier to build strength in the lats, biceps, and forearms. It is ideal for those who are not yet able to perform unassisted chin-ups.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "assisted_standing_dominadas_supinas",
+      "name": {
+        "es": "Assisted standing dominadas supinas",
+        "en": "assisted standing chin-up"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\1431.gif",
+      "externalId": "1431",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the machine to your desired assistance level.",
+        "Stand on the foot platform and grip the handles with an overhand grip, slightly wider than shoulder-width apart.",
+        "Keep your chest up and shoulders back, engage your core, and slightly bend your knees.",
+        "Pull your body up by flexing your elbows and driving your elbows down towards your sides.",
+        "Continue pulling until your chin is above the bar.",
+        "Pause for a moment at the top, then slowly lower your body back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The assisted standing chin-up is a machine-based exercise that helps users perform chin-ups with added support, making it easier to build strength in the lats, biceps, and forearms. The leverage machine reduces the amount of body weight lifted, allowing for proper form and gradual progression.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "assisted_standing_dominadas",
+      "name": {
+        "es": "Assisted standing dominadas",
+        "en": "assisted standing pull-up"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\1432.gif",
+      "externalId": "1432",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the machine to your desired weight and height settings.",
+        "Stand facing the machine with your feet shoulder-width apart.",
+        "Grasp the handles with an overhand grip, slightly wider than shoulder-width apart.",
+        "Engage your lats and biceps, and pull yourself up towards the handles.",
+        "Pause for a moment at the top, squeezing your back muscles.",
+        "Slowly lower yourself back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The assisted standing pull-up is a machine-based exercise targeting the latissimus dorsi (lats) with assistance to help perform the pull-up movement. It is suitable for those building strength to perform unassisted pull-ups.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "assisted_parallel_close_grip_dominadas",
+      "name": {
+        "es": "Assisted parallel close grip dominadas",
+        "en": "assisted parallel close grip pull-up"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0015.gif",
+      "externalId": "0015",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the machine to your desired weight and height.",
+        "Place your hands on the parallel bars with a close grip, palms facing each other.",
+        "Hang from the bars with your arms fully extended and your feet off the ground.",
+        "Engage your back muscles and pull your body up towards the bars, keeping your elbows close to your body.",
+        "Continue pulling until your chin is above the bars.",
+        "Pause for a moment at the top, then slowly lower your body back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The assisted parallel close grip pull-up is a back exercise performed on a leverage machine that helps users perform pull-ups with added support, making it easier to complete the movement and focus on form.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_jalon",
+      "name": {
+        "es": "Polea jalón",
+        "en": "cable pulldown"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0198.gif",
+      "externalId": "0198",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Adjust the cable pulldown machine so that the seat is at a comfortable height and the knee pad is secured.",
+        "Sit on the seat with your back straight and your feet flat on the ground.",
+        "Grasp the cable bar with an overhand grip, slightly wider than shoulder-width apart.",
+        "Lean back slightly and engage your core.",
+        "Pull the cable bar down towards your chest, squeezing your shoulder blades together.",
+        "Pause for a moment at the bottom of the movement, then slowly release the bar back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The cable pulldown is a strength exercise targeting the latissimus dorsi (lats) using a cable machine. It is commonly performed to build upper back strength and muscle mass.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_rear_jalon",
+      "name": {
+        "es": "Polea rear jalón",
+        "en": "cable rear pulldown"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0205.gif",
+      "externalId": "0205",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Adjust the cable machine so that the pulley is at the highest position.",
+        "Sit facing the machine with your feet flat on the ground and your knees slightly bent.",
+        "Grasp the cable attachment with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Lean back slightly, keeping your back straight and your chest up.",
+        "Pull the cable attachment down towards your chest, squeezing your shoulder blades together.",
+        "Pause for a moment at the bottom of the movement, then slowly release the cable back up to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The cable rear pulldown is a strength exercise targeting the latissimus dorsi muscles, performed using a cable machine. It also engages the biceps, rhomboids, and rear deltoids. The movement involves pulling a cable attachment down towards the chest while seated, focusing on squeezing the shoulder blades together.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_one_arm_jalon",
+      "name": {
+        "es": "Polea one arm jalón",
+        "en": "cable one arm pulldown"
+      },
+      "movementPattern": "vertical_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\3563.gif",
+      "externalId": "3563",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Attach a single handle to a high pulley cable machine.",
+        "Stand facing the machine with your feet shoulder-width apart.",
+        "Grasp the handle with an overhand grip and extend your arm fully.",
+        "Keep your back straight and your core engaged.",
+        "Pull the handle down towards your side while keeping your elbow close to your body.",
+        "Pause for a moment at the bottom of the movement, squeezing your lat muscle.",
+        "Slowly release the handle back to the starting position.",
+        "Repeat for the desired number of repetitions.",
+        "Switch sides and repeat the exercise with the other arm."
+      ],
+      "description": "The cable one arm pulldown is a unilateral exercise that targets the latissimus dorsi using a cable machine. It also engages the biceps and forearms as secondary muscles. The movement requires good form and control to isolate the lats and avoid compensatory movements.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_incline_remo",
+      "name": {
+        "es": "Barra incline remo",
+        "en": "barbell incline row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0049.gif",
+      "externalId": "0049",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Set up an incline bench at a 45-degree angle.",
+        "Lie face down on the bench with your chest against the pad and your feet flat on the ground.",
+        "Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Keep your back straight and your core engaged.",
+        "Pull the barbell towards your chest, squeezing your shoulder blades together.",
+        "Pause for a moment at the top, then slowly lower the barbell back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell incline row is a compound exercise targeting the upper back, performed while lying face down on an incline bench and pulling a barbell towards the chest.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_upright_remo",
+      "name": {
+        "es": "Barra upright remo",
+        "en": "barbell upright row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0120.gif",
+      "externalId": "0120",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Let the barbell hang in front of your thighs, arms fully extended.",
+        "Keeping your back straight and core engaged, exhale and lift the barbell straight up towards your chin, leading with your elbows.",
+        "Pause for a moment at the top, then inhale and slowly lower the barbell back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell upright row is a compound exercise that targets the deltoids and also works the traps and biceps. It involves lifting a barbell from the thighs to the upper chest, leading with the elbows.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_inclinado_remo",
+      "name": {
+        "es": "Lever inclinado remo",
+        "en": "lever bent over row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0574.gif",
+      "externalId": "0574",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and knees slightly bent.",
+        "Hold the barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Bend forward at the hips, keeping your back straight and chest up.",
+        "Pull the barbell towards your lower chest, squeezing your shoulder blades together.",
+        "Pause for a moment at the top, then slowly lower the barbell back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever bent over row is a compound strength exercise targeting the upper back, performed with a barbell. It requires good posture, core stability, and proper technique to avoid injury.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_pendlay_remo",
+      "name": {
+        "es": "Barra pendlay remo",
+        "en": "barbell pendlay row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\3017.gif",
+      "externalId": "3017",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and your knees slightly bent.",
+        "Bend forward at the hips, keeping your back straight and your chest up.",
+        "Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Pull the barbell towards your upper abdomen, squeezing your shoulder blades together.",
+        "Lower the barbell back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell Pendlay row is a strength exercise targeting the upper back, performed by pulling a barbell from the floor to the upper abdomen with strict form.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_inclinado_remo",
+      "name": {
+        "es": "Barra inclinado remo",
+        "en": "barbell bent over row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0027.gif",
+      "externalId": "0027",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and knees slightly bent.",
+        "Bend forward at the hips while keeping your back straight and chest up.",
+        "Grasp the barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Pull the barbell towards your lower chest by retracting your shoulder blades and squeezing your back muscles.",
+        "Pause for a moment at the top, then slowly lower the barbell back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell bent over row is a compound exercise targeting the upper back, requiring the lifter to hinge at the hips and pull a barbell towards the torso. It develops strength and muscle mass in the upper back, biceps, and forearms, and demands good posture and core stability.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_rear_delt_remo",
+      "name": {
+        "es": "Barra rear delt remo",
+        "en": "barbell rear delt row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0076.gif",
+      "externalId": "0076",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and knees slightly bent.",
+        "Hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Bend forward at the hips, keeping your back straight and chest up.",
+        "Pull the barbell towards your chest, squeezing your shoulder blades together.",
+        "Pause for a moment at the top, then slowly lower the barbell back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell rear delt row is a compound exercise targeting the rear deltoids, with secondary emphasis on the trapezius, rhomboids, and biceps. It involves pulling a barbell towards the chest while bent over, focusing on squeezing the shoulder blades together to engage the upper back and rear shoulders.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "cambered_bar_lying_remo",
+      "name": {
+        "es": "Cambered bar lying remo",
+        "en": "cambered bar lying row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0248.gif",
+      "externalId": "0248",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Set up a barbell on the floor and lie face down on a bench with your chest just off the edge.",
+        "Reach down and grab the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "With your legs straight and feet on the ground, lift the barbell off the floor by extending your arms.",
+        "Pull the barbell towards your chest, squeezing your shoulder blades together.",
+        "Lower the barbell back down to the starting position and repeat for the desired number of repetitions."
+      ],
+      "description": "The cambered bar lying row is a strength exercise targeting the upper back. It is performed by lying face down on a bench and pulling a barbell towards the chest, emphasizing scapular retraction and upper back engagement.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_upright_remo_v_2",
+      "name": {
+        "es": "Barra upright remo v. 2",
+        "en": "barbell upright row v. 2"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0119.gif",
+      "externalId": "0119",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Let the barbell hang in front of your thighs, arms fully extended.",
+        "Keeping your back straight, exhale and lift the barbell straight up towards your chin, leading with your elbows.",
+        "Pause for a moment at the top, then inhale and slowly lower the barbell back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell upright row v. 2 is a compound exercise targeting the deltoids, with secondary emphasis on the traps and biceps. It involves lifting a barbell from the thighs to the upper chest by leading with the elbows, requiring good form to avoid shoulder impingement.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_upright_remo_v_3",
+      "name": {
+        "es": "Barra upright remo v. 3",
+        "en": "barbell upright row v. 3"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0121.gif",
+      "externalId": "0121",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Let the barbell hang in front of your thighs, arms fully extended.",
+        "Keeping your core engaged and back straight, exhale as you lift the barbell straight up towards your chin, leading with your elbows.",
+        "Pause for a moment at the top, then inhale as you slowly lower the barbell back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell upright row v. 3 is a compound exercise targeting the deltoids, with secondary emphasis on the traps and biceps. It involves lifting a barbell from thigh level to chin height, leading with the elbows.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_narrow_stance_squat",
+      "name": {
+        "es": "Barra narrow stance squat",
+        "en": "barbell narrow stance squat"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0063.gif",
+      "externalId": "0063",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and toes pointing slightly outward.",
+        "Hold the barbell across your upper back, resting it on your traps or rear delts.",
+        "Engage your core and keep your chest up as you slowly lower your body by bending your knees and pushing your hips back.",
+        "Continue lowering until your thighs are parallel to the ground or slightly below.",
+        "Pause for a moment, then push through your heels to return to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell narrow stance squat is a lower body strength exercise that targets the glutes, with significant involvement of the quadriceps, hamstrings, and calves. It is performed by holding a barbell across the upper back and squatting with a narrow stance, emphasizing the inner thighs and glutes.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_one_arm_inclinado_remo",
+      "name": {
+        "es": "Lever one arm inclinado remo",
+        "en": "lever one arm bent over row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0589.gif",
+      "externalId": "0589",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart, knees slightly bent, and hold a barbell with an overhand grip.",
+        "Bend forward at the hips, keeping your back straight and your head up.",
+        "Let the barbell hang in front of you with your arms fully extended.",
+        "Pull the barbell up towards your chest, keeping your elbows close to your body.",
+        "Squeeze your shoulder blades together at the top of the movement.",
+        "Lower the barbell back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever one arm bent over row is a unilateral back exercise performed with a barbell. It targets the upper back and also works the biceps and forearms. The movement requires maintaining a stable bent-over position while rowing the weight with one arm, demanding core stability and coordination.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_one_arm_inclinado_remo",
+      "name": {
+        "es": "Barra one arm inclinado remo",
+        "en": "barbell one arm bent over row"
+      },
+      "movementPattern": "horizontal_pull",
+      "primaryMuscles": [
+        "back"
+      ],
+      "secondaryMuscles": [
+        "biceps",
+        "deltoide_posterior"
+      ],
+      "gifPath": "assets/gifs\\0064.gif",
+      "externalId": "0064",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart, knees slightly bent, and hold a barbell with one hand using an overhand grip.",
+        "Bend forward at the hips, keeping your back straight and your head in a neutral position.",
+        "Pull the barbell up towards your chest, keeping your elbow close to your body and squeezing your shoulder blades together.",
+        "Lower the barbell back down to the starting position in a controlled manner.",
+        "Repeat for the desired number of repetitions, then switch to the other arm."
+      ],
+      "description": "The barbell one arm bent over row is a unilateral strength exercise targeting the upper back, requiring balance, coordination, and core stability. It is performed by bending at the hips, keeping the back straight, and rowing a barbell with one arm while maintaining a stable position.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "standing_behind_neck_press",
+      "name": {
+        "es": "Standing behind neck press",
+        "en": "standing behind neck press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\0788.gif",
+      "externalId": "0788",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold the barbell behind your neck with an overhand grip.",
+        "Keep your back straight and core engaged.",
+        "Press the barbell overhead by extending your arms, fully extending your elbows.",
+        "Pause for a moment at the top, then slowly lower the barbell back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The standing behind neck press is a barbell exercise targeting the deltoids, performed by pressing a barbell from behind the neck to overhead while standing. It also engages the triceps and upper back.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_seated_press_militar",
+      "name": {
+        "es": "Barra seated press militar",
+        "en": "barbell seated overhead press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\0091.gif",
+      "externalId": "0091",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Sit on a bench with your back straight and feet flat on the ground.",
+        "Hold the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Lift the barbell off the rack and bring it to shoulder level, with your elbows bent and palms facing forward.",
+        "Press the barbell overhead by extending your arms fully.",
+        "Pause for a moment at the top, then slowly lower the barbell back to shoulder level.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell seated overhead press is a compound strength exercise targeting the deltoid muscles of the shoulders. It also engages the triceps and upper back as secondary muscles. This movement is performed seated, which helps stabilize the lower body and focus the effort on the upper body. It requires proper technique and shoulder mobility to perform safely and effectively.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_standing_bradford_press",
+      "name": {
+        "es": "Barra standing bradford press",
+        "en": "barbell standing bradford press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\0105.gif",
+      "externalId": "0105",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold the barbell in front of your shoulders with an overhand grip.",
+        "Press the barbell overhead, fully extending your arms.",
+        "Lower the barbell back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell standing Bradford press is a shoulder exercise that targets the deltoids and also works the triceps and upper back. It involves pressing a barbell overhead from the front of the shoulders, requiring strength, coordination, and shoulder mobility.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_seated_bradford_rocky_press",
+      "name": {
+        "es": "Barra seated bradford rocky press",
+        "en": "barbell seated bradford rocky press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\0087.gif",
+      "externalId": "0087",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Sit on a bench with your back straight and feet flat on the ground.",
+        "Hold the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Lift the barbell to shoulder height, keeping your elbows slightly bent and pointing forward.",
+        "Press the barbell overhead, fully extending your arms.",
+        "Lower the barbell back to shoulder height and repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell seated Bradford Rocky press is a shoulder exercise performed while seated, focusing on pressing a barbell overhead to target the deltoids. It also engages the triceps and upper back as secondary muscles. The movement requires good shoulder mobility, core stability, and pressing strength.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_standing_wide_military_press",
+      "name": {
+        "es": "Barra standing wide military press",
+        "en": "barbell standing wide military press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\1457.gif",
+      "externalId": "1457",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold the barbell with an overhand grip, slightly wider than shoulder-width.",
+        "Lift the barbell to shoulder height, keeping your elbows slightly in front of the bar.",
+        "Press the barbell overhead, extending your arms fully.",
+        "Lower the barbell back to shoulder height and repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell standing wide military press is a compound exercise that targets the deltoid muscles of the shoulders. It also engages the triceps and upper back as secondary muscles. The movement requires pressing a barbell overhead from shoulder height while standing, with a grip wider than shoulder-width.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_seated_behind_head_military_press",
+      "name": {
+        "es": "Barra seated behind head military press",
+        "en": "barbell seated behind head military press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\0086.gif",
+      "externalId": "0086",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Sit on a bench with your back straight and feet flat on the ground.",
+        "Hold the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Lift the barbell off the rack and bring it down to shoulder level, behind your head.",
+        "Press the barbell upward until your arms are fully extended.",
+        "Lower the barbell back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell seated behind head military press is a compound shoulder exercise that targets the deltoids, with secondary emphasis on the triceps and upper back. It requires good shoulder mobility and stability, as well as proper technique to avoid injury.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_standing_close_grip_military_press",
+      "name": {
+        "es": "Barra standing close grip military press",
+        "en": "barbell standing close grip military press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\1456.gif",
+      "externalId": "1456",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold the barbell with an overhand grip, hands slightly closer than shoulder-width apart.",
+        "Lift the barbell to shoulder height, keeping your elbows close to your body.",
+        "Press the barbell overhead, extending your arms fully.",
+        "Lower the barbell back to shoulder height.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell standing close grip military press is a compound strength exercise targeting the deltoids, with secondary emphasis on the triceps and upper back. It is performed by pressing a barbell overhead from shoulder height with a close grip, requiring core stability and shoulder strength.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_w_press",
+      "name": {
+        "es": "Mancuerna w-press",
+        "en": "dumbbell w-press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\0438.gif",
+      "externalId": "0438",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Sit on a bench with a dumbbell in each hand, palms facing forward.",
+        "Raise the dumbbells to shoulder height, elbows bent and palms facing forward.",
+        "Press the dumbbells upward until your arms are fully extended overhead.",
+        "Lower the dumbbells back to shoulder height.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell W-press is a shoulder exercise performed with dumbbells, focusing on the deltoid muscles. It involves pressing the weights overhead from a 'W' position, engaging the shoulders, triceps, and chest.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_push_press",
+      "name": {
+        "es": "Mancuerna push press",
+        "en": "dumbbell push press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\1700.gif",
+      "externalId": "1700",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart, holding a dumbbell in each hand at shoulder level.",
+        "Bend your knees slightly and dip your body down, then explosively extend your legs and press the dumbbells overhead.",
+        "Lock out your arms at the top of the movement, then lower the dumbbells back to shoulder level.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell push press is a compound exercise that targets the deltoids (shoulders) and also engages the triceps and core. It involves a slight dip and drive from the legs to help press the dumbbells overhead, making it a dynamic movement that combines strength and power.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_cuban_press",
+      "name": {
+        "es": "Mancuerna cuban press",
+        "en": "dumbbell cuban press"
+      },
+      "movementPattern": "vertical_press",
+      "primaryMuscles": [
+        "deltoide_anterior"
+      ],
+      "secondaryMuscles": [
+        "triceps"
+      ],
+      "gifPath": "assets/gifs\\0299.gif",
+      "externalId": "0299",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Stand with your feet shoulder-width apart, holding a dumbbell in each hand at shoulder height with your palms facing down.",
+        "Keeping your core engaged and your elbows slightly bent, press the dumbbells up and overhead until your arms are fully extended.",
+        "Rotate your wrists so that your palms are facing forward.",
+        "Slowly lower the dumbbells back to the starting position, rotating your wrists back to the starting position as you do so.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell Cuban press is a shoulder exercise that combines external rotation and pressing to target the deltoids, triceps, and upper back. It is often used to improve shoulder strength and stability, as well as to promote healthy shoulder movement patterns.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_sentado_fondos_enfoque_pecho",
+      "name": {
+        "es": "Lever Sentado Fondos (Enfoque Pecho)",
+        "en": "lever seated dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1451.gif",
+      "externalId": "1451",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height so that your feet are flat on the ground and your knees are at a 90-degree angle.",
+        "Grasp the handles of the leverage machine with your palms facing down and your arms fully extended.",
+        "Slowly lower your body by bending your elbows until your upper arms are parallel to the ground.",
+        "Pause for a moment, then push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever seated dip is a machine-based exercise targeting the triceps, with secondary emphasis on the chest and shoulders. It involves pressing down on handles while seated, simulating a dip movement in a controlled environment.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_sentado_fondos_enfoque_triceps",
+      "name": {
+        "es": "Lever Sentado Fondos (Enfoque Tríceps)",
+        "en": "lever seated dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "pectorals",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1451.gif",
+      "externalId": "1451",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height so that your feet are flat on the ground and your knees are at a 90-degree angle.",
+        "Grasp the handles of the leverage machine with your palms facing down and your arms fully extended.",
+        "Slowly lower your body by bending your elbows until your upper arms are parallel to the ground.",
+        "Pause for a moment, then push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever seated dip is a machine-based exercise targeting the triceps, with secondary emphasis on the chest and shoulders. It involves pressing down on handles while seated, simulating a dip movement in a controlled environment.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_overhand_triceps_fondos_enfoque_pecho",
+      "name": {
+        "es": "Lever Overhand Triceps Fondos (Enfoque Pecho)",
+        "en": "lever overhand triceps dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0591.gif",
+      "externalId": "0591",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the machine to the appropriate height and secure your body in position.",
+        "Grasp the handles with an overhand grip and position your body so that your arms are fully extended.",
+        "Lower your body by bending your elbows, keeping your upper arms close to your sides.",
+        "Continue lowering until your upper arms are parallel to the floor.",
+        "Pause for a moment, then push yourself back up to the starting position by extending your elbows.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever overhand triceps dip is a machine-based exercise targeting the triceps, with secondary emphasis on the chest and shoulders. It involves lowering and raising the body using a leverage machine, which provides stability and controlled resistance.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_overhand_triceps_fondos_enfoque_triceps",
+      "name": {
+        "es": "Lever Overhand Triceps Fondos (Enfoque Tríceps)",
+        "en": "lever overhand triceps dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "pectorals",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0591.gif",
+      "externalId": "0591",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the machine to the appropriate height and secure your body in position.",
+        "Grasp the handles with an overhand grip and position your body so that your arms are fully extended.",
+        "Lower your body by bending your elbows, keeping your upper arms close to your sides.",
+        "Continue lowering until your upper arms are parallel to the floor.",
+        "Pause for a moment, then push yourself back up to the starting position by extending your elbows.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever overhand triceps dip is a machine-based exercise targeting the triceps, with secondary emphasis on the chest and shoulders. It involves lowering and raising the body using a leverage machine, which provides stability and controlled resistance.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "chest_fondos_enfoque_pecho",
+      "name": {
+        "es": "Chest Fondos (Enfoque Pecho)",
+        "en": "chest dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0251.gif",
+      "externalId": "0251",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Position yourself on parallel bars with your arms fully extended and your body straight.",
+        "Lower your body by bending your elbows until your shoulders are below your elbows.",
+        "Push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The chest dip is a bodyweight exercise performed on parallel bars that primarily targets the pectoral muscles, with secondary emphasis on the triceps and shoulders. It requires significant upper body strength, stability, and control.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "chest_fondos_enfoque_triceps",
+      "name": {
+        "es": "Chest Fondos (Enfoque Tríceps)",
+        "en": "chest dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "pectorals",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0251.gif",
+      "externalId": "0251",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Position yourself on parallel bars with your arms fully extended and your body straight.",
+        "Lower your body by bending your elbows until your shoulders are below your elbows.",
+        "Push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The chest dip is a bodyweight exercise performed on parallel bars that primarily targets the pectoral muscles, with secondary emphasis on the triceps and shoulders. It requires significant upper body strength, stability, and control.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "ring_dips_enfoque_pecho",
+      "name": {
+        "es": "Ring Dips (Enfoque Pecho)",
+        "en": "ring dips"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0677.gif",
+      "externalId": "0677",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Start by hanging from the rings with your arms fully extended and your body straight.",
+        "Lower your body by bending your elbows until your shoulders are below your elbows.",
+        "Push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "Ring dips are a challenging bodyweight exercise performed on gymnastic rings, primarily targeting the triceps, with significant engagement of the chest and shoulders. The instability of the rings requires considerable strength, balance, and coordination.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "ring_dips_enfoque_triceps",
+      "name": {
+        "es": "Ring Dips (Enfoque Tríceps)",
+        "en": "ring dips"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "pectorals",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0677.gif",
+      "externalId": "0677",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Start by hanging from the rings with your arms fully extended and your body straight.",
+        "Lower your body by bending your elbows until your shoulders are below your elbows.",
+        "Push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "Ring dips are a challenging bodyweight exercise performed on gymnastic rings, primarily targeting the triceps, with significant engagement of the chest and shoulders. The instability of the rings requires considerable strength, balance, and coordination.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "exercise_ball_fondos_enfoque_pecho",
+      "name": {
+        "es": "Exercise Ball Fondos (Enfoque Pecho)",
+        "en": "exercise ball dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1744.gif",
+      "externalId": "1744",
+      "equipmentHint": "stability ball",
+      "instructions": [
+        "Sit on the stability ball with your feet flat on the ground and your knees bent at a 90-degree angle.",
+        "Place your hands on the ball beside your hips, fingers pointing forward.",
+        "Engage your triceps and push through your hands to lift your body off the ball, straightening your arms.",
+        "Lower your body back down by bending your elbows, keeping them close to your sides.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The exercise ball dip is a triceps-focused movement performed using a stability ball. It challenges the triceps, chest, and shoulders while also requiring balance and core engagement due to the unstable surface.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "exercise_ball_fondos_enfoque_triceps",
+      "name": {
+        "es": "Exercise Ball Fondos (Enfoque Tríceps)",
+        "en": "exercise ball dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "pectorals",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1744.gif",
+      "externalId": "1744",
+      "equipmentHint": "stability ball",
+      "instructions": [
+        "Sit on the stability ball with your feet flat on the ground and your knees bent at a 90-degree angle.",
+        "Place your hands on the ball beside your hips, fingers pointing forward.",
+        "Engage your triceps and push through your hands to lift your body off the ball, straightening your arms.",
+        "Lower your body back down by bending your elbows, keeping them close to your sides.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The exercise ball dip is a triceps-focused movement performed using a stability ball. It challenges the triceps, chest, and shoulders while also requiring balance and core engagement due to the unstable surface.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "weighted_banca_fondos_enfoque_pecho",
+      "name": {
+        "es": "Weighted Banca Fondos (Enfoque Pecho)",
+        "en": "weighted bench dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0830.gif",
+      "externalId": "0830",
+      "equipmentHint": "weighted",
+      "instructions": [
+        "Sit on a bench with your hands gripping the edge, fingers pointing forward.",
+        "Slide your butt off the bench, supporting your weight with your hands.",
+        "Lower your body by bending your elbows until your upper arms are parallel to the floor.",
+        "Push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The weighted bench dip is an upper body exercise that targets the triceps, with secondary emphasis on the chest and shoulders. It involves lowering and raising your body using your arms while your feet are on the floor and your hands are on a bench, with added weight for increased resistance.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "weighted_banca_fondos_enfoque_triceps",
+      "name": {
+        "es": "Weighted Banca Fondos (Enfoque Tríceps)",
+        "en": "weighted bench dip"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "secondaryMuscles": [
+        "pectorals",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0830.gif",
+      "externalId": "0830",
+      "equipmentHint": "weighted",
+      "instructions": [
+        "Sit on a bench with your hands gripping the edge, fingers pointing forward.",
+        "Slide your butt off the bench, supporting your weight with your hands.",
+        "Lower your body by bending your elbows until your upper arms are parallel to the floor.",
+        "Push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The weighted bench dip is an upper body exercise that targets the triceps, with secondary emphasis on the chest and shoulders. It involves lowering and raising your body using your arms while your feet are on the floor and your hands are on a bench, with added weight for increased resistance.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_banca_press",
+      "name": {
+        "es": "Barra Banca Press",
+        "en": "barbell bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0025.gif",
+      "externalId": "0025",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+        "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+        "Lift the barbell off the rack and hold it directly above your chest with your arms fully extended.",
+        "Lower the barbell slowly towards your chest, keeping your elbows tucked in.",
+        "Pause for a moment when the barbell touches your chest.",
+        "Push the barbell back up to the starting position by extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell bench press is a classic compound exercise that primarily targets the pectoral muscles, while also engaging the triceps and shoulders. It is performed by lying on a bench and pressing a barbell up and down in a controlled manner.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_jm_banca_press",
+      "name": {
+        "es": "Barra Jm Banca Press",
+        "en": "barbell jm bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0052.gif",
+      "externalId": "0052",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+        "Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Lower the barbell to your chest, keeping your elbows tucked in close to your body.",
+        "Push the barbell back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell JM bench press is a triceps-focused pressing movement that combines elements of a close-grip bench press and a triceps extension. It is performed lying on a bench, lowering the barbell to the chest with elbows tucked, and pressing back up.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_banca_press",
+      "name": {
+        "es": "Mancuerna Banca Press",
+        "en": "dumbbell bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0289.gif",
+      "externalId": "0289",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+        "Hold a dumbbell in each hand, with your palms facing forward and your arms extended above your chest.",
+        "Lower the dumbbells slowly to the sides of your chest, keeping your elbows at a 90-degree angle.",
+        "Pause for a moment, then push the dumbbells back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell bench press is a classic upper body strength exercise that targets the pectoral muscles, with secondary emphasis on the triceps and shoulders. It is performed lying on a bench, pressing dumbbells from chest level to full arm extension.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_reverse_banca_press",
+      "name": {
+        "es": "Mancuerna Reverse Banca Press",
+        "en": "dumbbell reverse bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1624.gif",
+      "externalId": "1624",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Lie flat on a bench with your feet flat on the ground and your knees bent.",
+        "Hold a dumbbell in each hand with an overhand grip, palms facing towards your feet.",
+        "Extend your arms straight up towards the ceiling, keeping a slight bend in your elbows.",
+        "Slowly lower the dumbbells towards your chest, allowing your elbows to flare out to the sides.",
+        "Pause for a moment at the bottom, then push the dumbbells back up to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell reverse bench press is a chest exercise performed lying on a bench, pressing dumbbells upward with an overhand grip. It targets the pectorals and also works the triceps and shoulders.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "smith_banca_press",
+      "name": {
+        "es": "Smith Banca Press",
+        "en": "smith bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0748.gif",
+      "externalId": "0748",
+      "equipmentHint": "smith machine",
+      "instructions": [
+        "Adjust the height of the smith machine bar to chest level.",
+        "Lie flat on the bench with your feet firmly planted on the ground.",
+        "Grip the bar with an overhand grip slightly wider than shoulder-width apart.",
+        "Unrack the bar and lower it towards your chest, keeping your elbows tucked in.",
+        "Pause for a moment when the bar touches your chest.",
+        "Push the bar back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The smith bench press is a chest exercise performed on a smith machine, which provides a guided bar path for pressing movements. It primarily targets the pectorals, with secondary emphasis on the triceps and shoulders. The smith machine offers additional stability compared to a free-weight bench press, making it accessible for those with less experience or those seeking a safer alternative to heavy pressing.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "smith_wide_grip_banca_press",
+      "name": {
+        "es": "Smith Wide Grip Banca Press",
+        "en": "smith wide grip bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1308.gif",
+      "externalId": "1308",
+      "equipmentHint": "smith machine",
+      "instructions": [
+        "Adjust the bench to a comfortable position on the smith machine.",
+        "Lie down on the bench with your feet flat on the ground.",
+        "Grasp the barbell with a wide grip, slightly wider than shoulder-width apart.",
+        "Unrack the barbell and lower it slowly towards your chest, keeping your elbows out to the sides.",
+        "Pause for a moment when the barbell touches your chest.",
+        "Push the barbell back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The smith wide grip bench press is a chest exercise performed on a smith machine with a wide grip to target the pectoral muscles. It also engages the triceps and shoulders as secondary muscles. The smith machine provides stability, making it accessible to those with less experience, but proper form and control are still required.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_banca_press",
+      "name": {
+        "es": "Polea Banca Press",
+        "en": "cable bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0151.gif",
+      "externalId": "0151",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Adjust the cable machine to chest height and attach the handles.",
+        "Stand facing away from the machine with your feet shoulder-width apart.",
+        "Grasp the handles with an overhand grip and step forward to create tension in the cables.",
+        "Position your feet firmly on the ground and engage your core.",
+        "Bend your elbows and bring your hands to shoulder level, keeping your elbows at a 90-degree angle.",
+        "Push the handles forward, extending your arms fully in front of you.",
+        "Pause for a moment, then slowly reverse the movement, bringing your hands back to shoulder level.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The cable bench press is a chest exercise performed using a cable machine. It targets the pectoral muscles and also works the triceps and shoulders. The movement is similar to a traditional bench press but uses cables for constant tension throughout the range of motion.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "band_banca_press",
+      "name": {
+        "es": "Band Banca Press",
+        "en": "band bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1254.gif",
+      "externalId": "1254",
+      "equipmentHint": "band",
+      "instructions": [
+        "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+        "Grasp the band handles with an overhand grip, slightly wider than shoulder-width apart.",
+        "Extend your arms fully, pushing the bands away from your chest.",
+        "Slowly lower the bands back down to your chest, keeping your elbows at a 90-degree angle.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The band bench press is a resistance exercise targeting the pectoral muscles using a resistance band. It mimics the traditional bench press but uses bands instead of weights, making it accessible and effective for building chest strength with less equipment.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "ez_barra_jm_banca_press",
+      "name": {
+        "es": "Ez Barra Jm Banca Press",
+        "en": "ez barbell jm bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0450.gif",
+      "externalId": "0450",
+      "equipmentHint": "ez barbell",
+      "instructions": [
+        "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+        "Grasp the ez barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Lower the barbell to your chest, keeping your elbows tucked in close to your body.",
+        "Push the barbell back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The EZ Barbell JM Bench Press is a triceps-focused pressing movement performed on a bench using an EZ bar. It combines elements of a close-grip bench press and a triceps extension, targeting the triceps while also engaging the chest and shoulders.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_declinado_banca_press",
+      "name": {
+        "es": "Barra Declinado Banca Press",
+        "en": "barbell decline bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0033.gif",
+      "externalId": "0033",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Lie on a decline bench with your feet secured and your head lower than your hips.",
+        "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+        "Unrack the barbell and lower it slowly towards your chest, keeping your elbows tucked in.",
+        "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell decline bench press is a compound exercise targeting the lower portion of the pectoral muscles. It is performed on a decline bench, requiring the lifter to press a barbell upward from a declined position, engaging the chest, triceps, and shoulders.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_declinado_wide_grip_press",
+      "name": {
+        "es": "Barra Declinado Wide-grip Press",
+        "en": "barbell decline wide-grip press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0036.gif",
+      "externalId": "0036",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Lie on a decline bench with your feet secured and your head lower than your hips.",
+        "Grasp the barbell with a wide grip, slightly wider than shoulder-width apart.",
+        "Lower the barbell to your chest, keeping your elbows out to the sides.",
+        "Push the barbell back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell decline wide-grip press is a compound chest exercise performed on a decline bench using a barbell with a wide grip. It targets the lower portion of the pectoral muscles and also engages the triceps and shoulders.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_declinado_banca_press",
+      "name": {
+        "es": "Mancuerna Declinado Banca Press",
+        "en": "dumbbell decline bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0301.gif",
+      "externalId": "0301",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Lie down on a decline bench with your feet secured and your head lower than your hips.",
+        "Hold a dumbbell in each hand and extend your arms straight up above your chest, palms facing forward.",
+        "Lower the dumbbells slowly to the sides of your chest, keeping your elbows at a 90-degree angle.",
+        "Push the dumbbells back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell decline bench press is a chest exercise performed on a decline bench, targeting the lower pectorals. It also engages the triceps and shoulders as secondary muscles. The movement involves pressing dumbbells upward from a declined position, requiring good form and control.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_declinado_hammer_press",
+      "name": {
+        "es": "Mancuerna Declinado Hammer Press",
+        "en": "dumbbell decline hammer press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0303.gif",
+      "externalId": "0303",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Lie on a decline bench with your feet secured and your head lower than your hips.",
+        "Hold a dumbbell in each hand with your palms facing each other and your arms extended above your chest.",
+        "Lower the dumbbells to the sides of your chest, keeping your elbows slightly bent.",
+        "Press the dumbbells back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell decline hammer press is a chest exercise performed on a decline bench using dumbbells. It targets the lower pectorals and also engages the triceps and shoulders. The hammer grip (palms facing each other) emphasizes the inner chest and triceps while reducing shoulder strain.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "smith_declinado_banca_press",
+      "name": {
+        "es": "Smith Declinado Banca Press",
+        "en": "smith decline bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0753.gif",
+      "externalId": "0753",
+      "equipmentHint": "smith machine",
+      "instructions": [
+        "Adjust the decline bench to the desired angle.",
+        "Lie down on the bench with your feet secured under the foot pads.",
+        "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+        "Unrack the barbell and lower it slowly towards your chest, keeping your elbows tucked in.",
+        "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The smith decline bench press is a chest exercise performed on a decline bench using a smith machine. It primarily targets the pectoral muscles, with secondary emphasis on the triceps and shoulders. The smith machine provides guided movement, making it safer and more stable than a free-weight decline bench press.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "smith_declinado_reverse_grip_press",
+      "name": {
+        "es": "Smith Declinado Reverse-grip Press",
+        "en": "smith decline reverse-grip press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0754.gif",
+      "externalId": "0754",
+      "equipmentHint": "smith machine",
+      "instructions": [
+        "Adjust the smith machine to a decline position.",
+        "Lie down on the bench with your feet secured under the foot pads.",
+        "Grasp the barbell with a reverse grip, hands slightly wider than shoulder-width apart.",
+        "Unrack the barbell and lower it towards your chest, keeping your elbows tucked in.",
+        "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The smith decline reverse-grip press is a chest exercise performed on a smith machine in a decline position, using a reverse (underhand) grip to target the lower pectorals and engage the triceps and shoulders.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_declinado_press_de_pecho",
+      "name": {
+        "es": "Lever Declinado Press de Pecho",
+        "en": "lever decline chest press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1300.gif",
+      "externalId": "1300",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height and backrest of the leverage machine to a comfortable position.",
+        "Sit on the machine with your back against the backrest and your feet flat on the floor.",
+        "Grasp the handles with an overhand grip and position your hands slightly wider than shoulder-width apart.",
+        "Push the handles forward and away from your body until your arms are fully extended.",
+        "Slowly lower the handles back towards your chest, keeping your elbows slightly bent.",
+        "Pause for a moment at the bottom, then push the handles back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever decline chest press is a machine-based exercise targeting the pectoral muscles, with secondary emphasis on the triceps and shoulders. It is performed on a leverage machine, providing guided movement for safety and stability.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_declinado_press",
+      "name": {
+        "es": "Polea Declinado Press",
+        "en": "cable decline press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1261.gif",
+      "externalId": "1261",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Adjust the cable machine to a decline position.",
+        "Sit on the decline bench facing the cable machine.",
+        "Grasp the handles with an overhand grip and position them at chest level.",
+        "Keep your feet flat on the ground and your back firmly against the bench.",
+        "Exhale and push the handles away from your body, extending your arms fully.",
+        "Pause for a moment at the end of the movement, squeezing your chest muscles.",
+        "Inhale and slowly return the handles back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The cable decline press is a chest exercise performed on a cable machine with a decline bench. It targets the lower portion of the pectoral muscles and also engages the triceps and shoulders. The movement involves pressing the handles away from the body in a decline position, providing constant tension through the range of motion.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_declinado_one_arm_press",
+      "name": {
+        "es": "Polea Declinado One Arm Press",
+        "en": "cable decline one arm press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1260.gif",
+      "externalId": "1260",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Adjust the cable machine to a decline position.",
+        "Stand facing away from the machine and grab the handle with one hand.",
+        "Position yourself with your back against the decline bench and your arm extended straight in front of you.",
+        "Bend your elbow and lower the handle towards your chest while keeping your upper arm stationary.",
+        "Pause for a moment at the bottom, then push the handle back up to the starting position.",
+        "Repeat for the desired number of repetitions, then switch arms."
+      ],
+      "description": "The cable decline one arm press is a unilateral chest exercise performed on a cable machine, targeting the lower pectorals while also engaging the triceps and shoulders. It requires stabilization and control, especially due to the single-arm nature and the decline angle.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_inclinado_banca_press",
+      "name": {
+        "es": "Barra Inclinado Banca Press",
+        "en": "barbell incline bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0047.gif",
+      "externalId": "0047",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Set up an incline bench at a 45-degree angle.",
+        "Lie down on the bench with your feet flat on the ground.",
+        "Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+        "Unrack the barbell and lower it slowly towards your chest, keeping your elbows at a 45-degree angle.",
+        "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell incline bench press is a compound upper-body exercise that targets the upper portion of the pectoral muscles, with secondary emphasis on the shoulders and triceps. It is performed on an incline bench using a barbell, making it a staple in strength training routines for developing chest size and strength.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "barra_inclinado_close_grip_banca_press",
+      "name": {
+        "es": "Barra Inclinado Close Grip Banca Press",
+        "en": "barbell incline close grip bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1719.gif",
+      "externalId": "1719",
+      "equipmentHint": "barbell",
+      "instructions": [
+        "Set up an incline bench at a 45-degree angle.",
+        "Lie down on the bench with your feet flat on the ground.",
+        "Grasp the barbell with a close grip, slightly narrower than shoulder-width apart.",
+        "Unrack the barbell and lower it slowly towards your chest, keeping your elbows close to your body.",
+        "Pause for a moment when the barbell touches your chest.",
+        "Push the barbell back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The barbell incline close grip bench press is a compound upper body exercise that primarily targets the triceps, with secondary emphasis on the chest and shoulders. It is performed on an incline bench using a barbell with a close grip to maximize triceps activation.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_inclinado_banca_press",
+      "name": {
+        "es": "Mancuerna Inclinado Banca Press",
+        "en": "dumbbell incline bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0314.gif",
+      "externalId": "0314",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Set up an incline bench at a 45-degree angle.",
+        "Sit on the bench with your feet flat on the ground and your back pressed firmly against the bench.",
+        "Hold a dumbbell in each hand, palms facing forward, and lift them to shoulder height.",
+        "Slowly lower the dumbbells to the sides of your chest, keeping your elbows at a 90-degree angle.",
+        "Push the dumbbells back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell incline bench press is a compound upper body exercise that targets the upper portion of the pectoral muscles, with additional emphasis on the shoulders and triceps. It is performed on an incline bench using dumbbells, requiring stability and control throughout the movement.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_inclinado_hammer_press",
+      "name": {
+        "es": "Mancuerna Inclinado Hammer Press",
+        "en": "dumbbell incline hammer press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0321.gif",
+      "externalId": "0321",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Set an incline bench to a 45-degree angle and sit on it with a dumbbell in each hand, resting on your thighs.",
+        "Lie back on the bench and position the dumbbells at shoulder level with your palms facing each other.",
+        "Press the dumbbells up and away from your body until your arms are fully extended.",
+        "Pause for a moment at the top, then slowly lower the dumbbells back down to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell incline hammer press is a chest exercise performed on an incline bench using dumbbells, with a neutral grip (palms facing each other). It targets the upper chest (pectorals) and also works the shoulders and triceps.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "smith_inclinado_banca_press",
+      "name": {
+        "es": "Smith Inclinado Banca Press",
+        "en": "smith incline bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0757.gif",
+      "externalId": "0757",
+      "equipmentHint": "smith machine",
+      "instructions": [
+        "Adjust the bench to a 30-45 degree incline.",
+        "Sit on the bench with your back flat against the pad and feet firmly on the ground.",
+        "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+        "Unrack the barbell and lower it slowly towards your upper chest, keeping your elbows slightly tucked in.",
+        "Pause for a moment at the bottom, then push the barbell back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The smith incline bench press is a chest exercise performed on a smith machine with the bench set at a 30-45 degree incline. It primarily targets the upper pectorals, with secondary emphasis on the shoulders and triceps. The smith machine provides stability, making it accessible for those with less experience, but still requires proper form and control.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "smith_inclinado_reverse_grip_press",
+      "name": {
+        "es": "Smith Inclinado Reverse-grip Press",
+        "en": "smith incline reverse-grip press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0758.gif",
+      "externalId": "0758",
+      "equipmentHint": "smith machine",
+      "instructions": [
+        "Adjust the seat of the smith machine to a comfortable incline angle.",
+        "Sit on the machine with your back against the pad and your feet flat on the ground.",
+        "Grasp the bar with an overhand grip that is slightly wider than shoulder-width apart.",
+        "Unrack the bar and lower it slowly towards your chest, keeping your elbows tucked in.",
+        "Pause for a moment when the bar is just above your chest.",
+        "Push the bar back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The smith incline reverse-grip press is a chest exercise performed on a smith machine with an incline bench. It targets the pectoral muscles using a reverse (underhand) grip, which also engages the triceps and shoulders. The smith machine provides stability, but the reverse grip and incline angle require good coordination and some experience.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_inclinado_press_de_pecho",
+      "name": {
+        "es": "Lever Inclinado Press de Pecho",
+        "en": "lever incline chest press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1299.gif",
+      "externalId": "1299",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat and backrest of the leverage machine to a comfortable position.",
+        "Sit on the machine with your back against the backrest and your feet flat on the floor.",
+        "Grasp the handles with an overhand grip and position your hands slightly wider than shoulder-width apart.",
+        "Push the handles forward and away from your body until your arms are fully extended.",
+        "Pause for a moment, then slowly bend your elbows and lower the handles back towards your chest.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever incline chest press is a machine-based exercise targeting the upper chest (pectorals), with secondary emphasis on the shoulders and triceps. It is performed on a leverage machine, providing guided movement for safety and stability.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_inclinado_press_de_pecho_v_2",
+      "name": {
+        "es": "Lever Inclinado Press de Pecho V. 2",
+        "en": "lever incline chest press v. 2"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1479.gif",
+      "externalId": "1479",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height and backrest angle on the leverage machine to a comfortable position.",
+        "Sit on the machine with your back against the backrest and your feet flat on the floor.",
+        "Grasp the handles with an overhand grip and position your hands slightly wider than shoulder-width apart.",
+        "Push the handles forward and away from your body until your arms are fully extended, but without locking your elbows.",
+        "Pause for a moment at the fully extended position, then slowly bend your elbows and lower the handles back towards your chest.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever incline chest press v. 2 is a machine-based exercise that targets the pectoral muscles, with secondary emphasis on the triceps and shoulders. It involves pressing handles away from the body while seated on a leverage machine, simulating an incline bench press motion.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_inclinado_banca_press",
+      "name": {
+        "es": "Polea Inclinado Banca Press",
+        "en": "cable incline bench press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0169.gif",
+      "externalId": "0169",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Adjust the bench to a 45-degree incline.",
+        "Attach the cable handles to the high pulleys.",
+        "Sit on the bench facing the cable machine with your feet flat on the ground.",
+        "Grasp the handles with an overhand grip and bring them to shoulder height.",
+        "Push the handles forward and upward until your arms are fully extended.",
+        "Pause for a moment, then slowly lower the handles back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The cable incline bench press is a chest exercise performed on an incline bench using cable handles. It targets the upper pectorals and also works the deltoids and triceps. The cable resistance provides constant tension throughout the movement, making it effective for building strength and muscle in the upper chest.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_one_arm_inclinado_press",
+      "name": {
+        "es": "Polea One Arm Inclinado Press",
+        "en": "cable one arm incline press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1265.gif",
+      "externalId": "1265",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Adjust the cable machine to a low pulley position.",
+        "Sit on an incline bench facing away from the cable machine.",
+        "Grasp the handle with one hand and bring it up to shoulder height.",
+        "Position your feet firmly on the ground and maintain a stable position.",
+        "Press the handle forward and upward, extending your arm fully.",
+        "Pause for a moment at the top, then slowly lower the handle back to the starting position.",
+        "Repeat for the desired number of repetitions, then switch sides."
+      ],
+      "description": "The cable one arm incline press is a unilateral chest exercise performed on an incline bench using a cable machine. It targets the pectoral muscles while also engaging the deltoids and triceps. This movement requires stability and coordination as you press the cable handle upward with one arm at a time.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "flexiones_close_grip_off_mancuerna",
+      "name": {
+        "es": "Flexiones Close-grip Off Mancuerna",
+        "en": "push-up close-grip off dumbbell"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0660.gif",
+      "externalId": "0660",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Start in a push-up position with your hands placed close together, directly under your shoulders.",
+        "Hold a dumbbell in each hand, resting them on the ground.",
+        "Lower your body towards the ground by bending your elbows, keeping them close to your sides.",
+        "Push through your palms to extend your arms and return to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The push-up close-grip off dumbbell is a variation of the push-up that targets the triceps, with additional emphasis on the chest and shoulders. It is performed by gripping dumbbells placed on the ground, which increases the range of motion and challenges stability.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "flexiones",
+      "name": {
+        "es": "Flexiones",
+        "en": "push-up"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0662.gif",
+      "externalId": "0662",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Start in a high plank position with your hands slightly wider than shoulder-width apart and your feet together.",
+        "Engage your core and lower your body towards the ground by bending your elbows, keeping your body in a straight line.",
+        "Pause for a moment when your chest is just above the ground, then push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The push-up is a classic bodyweight exercise that targets the pectoral muscles, triceps, deltoids, and core. It is performed by lowering and raising the body using the arms while maintaining a straight line from head to heels.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "side_flexiones",
+      "name": {
+        "es": "Side Flexiones",
+        "en": "side push-up"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0717.gif",
+      "externalId": "0717",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Start by lying on your side with your legs extended and stacked on top of each other.",
+        "Place your bottom hand on the ground directly under your shoulder, fingers pointing forward.",
+        "Press through your bottom hand to lift your body off the ground, keeping your legs straight and your core engaged.",
+        "Extend your top arm straight up towards the ceiling, creating a straight line from your head to your heels.",
+        "Lower your body back down to the starting position with control.",
+        "Repeat for the desired number of repetitions, then switch sides."
+      ],
+      "description": "The side push-up is a bodyweight exercise that primarily targets the triceps, while also engaging the shoulders, chest, and core. It is performed by lying on your side and pressing your body up using your bottom arm, which challenges your upper arm strength and stability.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "flexiones_bosu_ball",
+      "name": {
+        "es": "Flexiones (bosu Ball)",
+        "en": "push-up (bosu ball)"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0653.gif",
+      "externalId": "0653",
+      "equipmentHint": "bosu ball",
+      "instructions": [
+        "Place the bosu ball on the ground with the flat side facing up.",
+        "Position yourself in a push-up position with your hands on the outer edges of the bosu ball.",
+        "Engage your core and lower your body down towards the bosu ball by bending your elbows.",
+        "Push yourself back up to the starting position by extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The push-up (bosu ball) is a variation of the traditional push-up performed with hands on a BOSU ball, increasing instability and engaging more core and stabilizer muscles.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "flexiones_medicine_ball",
+      "name": {
+        "es": "Flexiones Medicine Ball",
+        "en": "push-up medicine ball"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0663.gif",
+      "externalId": "0663",
+      "equipmentHint": "medicine ball",
+      "instructions": [
+        "Start in a high plank position with your hands on the medicine ball, shoulder-width apart.",
+        "Engage your core and lower your body towards the ground by bending your elbows, keeping your back straight.",
+        "Push through your palms to extend your arms and return to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The push-up medicine ball is a challenging variation of the traditional push-up that requires you to place both hands on a medicine ball. This increases the demand on your chest, triceps, shoulders, and core, while also challenging your balance and stability.",
+      "difficulty": "advanced",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "declinado_flexiones",
+      "name": {
+        "es": "Declinado Flexiones",
+        "en": "decline push-up"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0279.gif",
+      "externalId": "0279",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Place your hands on the ground slightly wider than shoulder-width apart, with your feet elevated on a stable surface.",
+        "Keep your body in a straight line from head to toe, engaging your core muscles.",
+        "Lower your chest towards the ground by bending your elbows, keeping them close to your body.",
+        "Push through your palms to extend your arms and return to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The decline push-up is a bodyweight exercise that targets the pectoral muscles by elevating the feet, increasing the difficulty compared to a standard push-up. It also engages the triceps and shoulders as secondary muscles.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_acostado_hammer_press",
+      "name": {
+        "es": "Mancuerna Acostado Hammer Press",
+        "en": "dumbbell lying hammer press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0340.gif",
+      "externalId": "0340",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Lie flat on a bench with a dumbbell in each hand, palms facing each other and arms extended straight up.",
+        "Lower the dumbbells to the sides of your chest, keeping your elbows at a 90-degree angle.",
+        "Press the dumbbells back up to the starting position, fully extending your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The dumbbell lying hammer press is a chest exercise performed on a bench with dumbbells held in a neutral grip (palms facing each other). It targets the pectorals while also engaging the triceps and shoulders.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "mancuerna_acostado_one_arm_press",
+      "name": {
+        "es": "Mancuerna Acostado One Arm Press",
+        "en": "dumbbell lying one arm press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0343.gif",
+      "externalId": "0343",
+      "equipmentHint": "dumbbell",
+      "instructions": [
+        "Lie flat on a bench with a dumbbell in one hand and your feet flat on the ground.",
+        "Hold the dumbbell at shoulder level with your palm facing forward.",
+        "Press the dumbbell upward until your arm is fully extended.",
+        "Pause for a moment at the top, then slowly lower the dumbbell back to the starting position.",
+        "Repeat for the desired number of repetitions, then switch to the other arm."
+      ],
+      "description": "The dumbbell lying one arm press is a unilateral chest exercise performed on a bench, focusing on the pectorals while also engaging the triceps and shoulders. It challenges stability and coordination due to the single-arm movement.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "smith_reverse_grip_press",
+      "name": {
+        "es": "Smith Reverse-grip Press",
+        "en": "smith reverse-grip press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0764.gif",
+      "externalId": "0764",
+      "equipmentHint": "smith machine",
+      "instructions": [
+        "Adjust the height of the smith machine bar to chest level.",
+        "Stand facing the bar with your feet shoulder-width apart.",
+        "Grasp the bar with an overhand grip, hands slightly wider than shoulder-width apart.",
+        "Step back and position yourself with a slight bend in your knees.",
+        "Keep your chest up and core engaged throughout the exercise.",
+        "Lower the bar towards your chest, keeping your elbows tucked in.",
+        "Pause for a moment at the bottom, then push the bar back up to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The smith reverse-grip press is a chest exercise performed on a smith machine using a reverse (underhand) grip. This variation targets the upper chest and also engages the triceps and shoulders. The smith machine provides stability, making it suitable for those looking to focus on form and muscle activation.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "lever_press_de_pecho",
+      "name": {
+        "es": "Lever Press de Pecho",
+        "en": "lever chest press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0576.gif",
+      "externalId": "0576",
+      "equipmentHint": "leverage machine",
+      "instructions": [
+        "Adjust the seat height and position yourself on the machine with your back flat against the pad.",
+        "Grasp the handles with an overhand grip and position your elbows at a 90-degree angle.",
+        "Push the handles forward until your arms are fully extended, exhaling during the movement.",
+        "Pause briefly at the end of the movement, then slowly return to the starting position, inhaling as you do so.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The lever chest press is a machine-based exercise that targets the pectoral muscles, with secondary emphasis on the triceps and shoulders. It is performed on a leverage machine, providing guided movement for safety and stability.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_sentado_press_de_pecho",
+      "name": {
+        "es": "Polea Sentado Press de Pecho",
+        "en": "cable seated chest press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\2144.gif",
+      "externalId": "2144",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Adjust the seat height and cable handles to a comfortable position.",
+        "Sit on the bench with your back straight and feet flat on the floor.",
+        "Grasp the cable handles with an overhand grip at shoulder height.",
+        "Push the handles forward and away from your body, extending your arms fully.",
+        "Pause for a moment, then slowly bring the handles back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The cable seated chest press is a resistance exercise targeting the pectoral muscles using a cable machine. It also engages the shoulders and triceps as secondary muscles. The movement is performed while seated, pressing the cable handles forward and then returning to the starting position.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "polea_press_on_exercise_ball",
+      "name": {
+        "es": "Polea Press On Exercise Ball",
+        "en": "cable press on exercise ball"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1268.gif",
+      "externalId": "1268",
+      "equipmentHint": "cable",
+      "instructions": [
+        "Sit on an exercise ball with your feet flat on the ground and your knees at a 90-degree angle.",
+        "Hold the cable handles at chest height with your palms facing down and your elbows bent.",
+        "Engage your core and press the cable handles forward until your arms are fully extended.",
+        "Pause for a moment, then slowly release the tension and bring the cable handles back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The cable press on exercise ball is a chest exercise that also engages the shoulders and triceps. It is performed by sitting on an exercise ball, holding cable handles, and pressing them forward while maintaining balance and core stability.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "weighted_svend_press",
+      "name": {
+        "es": "Weighted Svend Press",
+        "en": "weighted svend press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0856.gif",
+      "externalId": "0856",
+      "equipmentHint": "weighted",
+      "instructions": [
+        "Stand with your feet shoulder-width apart and hold a weight plate in front of your chest with both hands.",
+        "Keep your elbows slightly bent and your palms facing each other.",
+        "Press the weight plate straight out in front of you, fully extending your arms.",
+        "Pause for a moment at the end of the movement, then slowly bring the weight plate back to the starting position.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The weighted Svend press is a chest exercise performed by pressing a weight plate out in front of the body, emphasizing the pectoral muscles while also engaging the shoulders and triceps.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "kettlebell_one_arm_floor_press",
+      "name": {
+        "es": "Kettlebell One Arm Floor Press",
+        "en": "kettlebell one arm floor press"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\1298.gif",
+      "externalId": "1298",
+      "equipmentHint": "kettlebell",
+      "instructions": [
+        "Lie flat on your back on the floor with your knees bent and feet flat on the ground.",
+        "Hold the kettlebell in one hand with your palm facing towards your feet and your arm extended straight up towards the ceiling.",
+        "Slowly lower the kettlebell towards your chest by bending your elbow, keeping your upper arm close to your body.",
+        "Pause for a moment when the kettlebell is just above your chest, then push it back up to the starting position by extending your elbow.",
+        "Repeat for the desired number of repetitions, then switch to the other arm."
+      ],
+      "description": "The kettlebell one arm floor press is a unilateral chest exercise performed lying on the floor, pressing a kettlebell with one arm at a time. It targets the pectorals while also engaging the triceps and shoulders, and requires stability and control.",
+      "difficulty": "intermediate",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "inclinado_flexiones",
+      "name": {
+        "es": "Inclinado Flexiones",
+        "en": "incline push-up"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\0493.gif",
+      "externalId": "0493",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Place your hands on an elevated surface, such as a bench or step, slightly wider than shoulder-width apart.",
+        "Extend your legs behind you, resting on the balls of your feet, creating a straight line from your head to your heels.",
+        "Lower your chest towards the elevated surface by bending your elbows, keeping your body in a straight line.",
+        "Pause for a moment at the bottom, then push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The incline push-up is a bodyweight exercise that targets the pectoral muscles by performing a push-up with the hands elevated on a surface such as a bench or step. This variation reduces the load compared to a standard push-up, making it more accessible for beginners.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    },
+    {
+      "exerciseId": "inclinado_flexiones_on_box",
+      "name": {
+        "es": "Inclinado Flexiones (on Box)",
+        "en": "incline push-up (on box)"
+      },
+      "movementPattern": "horizontal_press",
+      "primaryMuscles": [
+        "pectorals"
+      ],
+      "secondaryMuscles": [
+        "triceps",
+        "deltoide_anterior"
+      ],
+      "gifPath": "assets/gifs\\3785.gif",
+      "externalId": "3785",
+      "equipmentHint": "body weight",
+      "instructions": [
+        "Place your hands on the edge of a box or elevated surface, slightly wider than shoulder-width apart.",
+        "Extend your legs behind you, resting on the balls of your feet, creating a straight line from your head to your heels.",
+        "Lower your chest towards the box by bending your elbows, keeping your body in a straight line.",
+        "Pause for a moment at the bottom, then push yourself back up to the starting position by straightening your arms.",
+        "Repeat for the desired number of repetitions."
+      ],
+      "description": "The incline push-up (on box) is a bodyweight exercise that targets the pectoral muscles, with secondary emphasis on the triceps and shoulders. It is performed by placing the hands on an elevated surface, such as a box, and executing a push-up motion.",
+      "difficulty": "beginner",
+      "needsManualMerge": true
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 
 part 'volume_landmarks.freezed.dart';
 part 'volume_landmarks.g.dart';
@@ -22,6 +23,11 @@ abstract class VolumeLandmarks with _$VolumeLandmarks {
   factory VolumeLandmarks.fromJson(Map<String, dynamic> json) =>
       _$VolumeLandmarksFromJson(json);
 
+  static int calculateVopFromRange({required int vme, required int vmr}) {
+    if (vmr <= vme) return vme;
+    return (vme + (0.35 * (vmr - vme))).round();
+  }
+
   /// Calcula landmarks para un músculo específico
   static VolumeLandmarks calculate({
     required String muscle,
@@ -36,7 +42,7 @@ abstract class VolumeLandmarks with _$VolumeLandmarks {
 
     final vme = (vmeBase * levelMultiplier * ageMultiplier).round();
     final vmr = (vmrBase * levelMultiplier * ageMultiplier).round();
-    final vop = (vme + ((vmr - vme) * 0.35)).round();
+    final vop = calculateVopFromRange(vme: vme, vmr: vmr);
 
     int vmrTarget;
     if (priority == 5) {
@@ -51,10 +57,10 @@ abstract class VolumeLandmarks with _$VolumeLandmarks {
   }
 
   static int _getVMEBase(String muscle) {
-    switch (muscle) {
+    switch (normalizeMuscleKey(muscle)) {
       case 'pectorals':
         return 8;
-      case 'quadriceps':
+      case 'quads':
         return 8;
       case 'lats':
         return 6;
@@ -62,9 +68,9 @@ abstract class VolumeLandmarks with _$VolumeLandmarks {
         return 4;
       case 'traps':
         return 4;
-      case 'deltoide_anterior':
-      case 'deltoide_lateral':
-      case 'deltoide_posterior':
+      case 'delts_front':
+      case 'delts_lateral':
+      case 'delts_rear':
         return 4;
       case 'triceps':
         return 6;
@@ -84,10 +90,10 @@ abstract class VolumeLandmarks with _$VolumeLandmarks {
   }
 
   static int _getVMRBase(String muscle) {
-    switch (muscle) {
+    switch (normalizeMuscleKey(muscle)) {
       case 'pectorals':
         return 22;
-      case 'quadriceps':
+      case 'quads':
         return 24;
       case 'lats':
         return 20;
@@ -95,9 +101,9 @@ abstract class VolumeLandmarks with _$VolumeLandmarks {
         return 14;
       case 'traps':
         return 14;
-      case 'deltoide_anterior':
-      case 'deltoide_lateral':
-      case 'deltoide_posterior':
+      case 'delts_front':
+      case 'delts_lateral':
+      case 'delts_rear':
         return 18;
       case 'triceps':
         return 18;

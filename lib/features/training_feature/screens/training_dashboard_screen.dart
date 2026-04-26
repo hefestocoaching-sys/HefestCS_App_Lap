@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use_from_same_package, unused_element, unused_field, prefer_final_fields, unnecessary_to_list_in_spreads
+// ignore_for_file: unused_element, unused_field, prefer_final_fields, unnecessary_to_list_in_spreads
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
@@ -9,7 +9,6 @@ import 'package:hcs_app_lap/core/enums/training_phase.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/entities/training_session.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
-import 'package:hcs_app_lap/features/training_feature/providers/training_plan_v3_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_workspace_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/domain/training_interview_status.dart';
 import 'package:intl/intl.dart';
@@ -35,7 +34,7 @@ import '../widgets/weekly_plan_detail_view.dart';
 /// 3. Sesiones: Plan semanal detallado
 /// 4. Ejercicios: Catálogo con selección científica (04-exercise-selection.md)
 /// 5. Progresión: Periodización (06-progression-variation.md)
-/// 6. Intensidad: Distribución Heavy/Moderate/Light (02-intensity.md)
+/// 6. Intensidad: Distribución Heavy/Medium/Light (02-intensity.md)
 /// 7. Decisiones: DecisionTrace científico (trazabilidad)
 /// 8. Monitoreo: Adherencia y ajustes reactivos
 ///
@@ -63,6 +62,7 @@ class _TrainingDashboardScreenState
   late TabController _tabController;
   int _selectedTabIndex = 0;
   late VoidCallback _tabListener;
+  String? _dismissedDeloadSnapshotAt;
 
   @override
   void initState() {
@@ -330,9 +330,7 @@ class _TrainingDashboardScreenState
     TrainingInterviewStatus interviewStatus,
     bool isPlanOutdated,
   ) {
-    final deloadAlert = ref.watch(
-      trainingPlanV3Provider.select((s) => s.deloadAlert),
-    );
+    final deloadAlert = _resolveDeloadAlertMessage(client);
 
     // Verificar si hay plan activo
     final activePlanId =
@@ -380,8 +378,7 @@ class _TrainingDashboardScreenState
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () =>
-                          ref.read(trainingPlanV3Provider.notifier).clearPlan(),
+                      onPressed: _dismissDeloadAlert,
                       child: const Text(
                         'Descartar',
                         style: TextStyle(color: Colors.orange),
@@ -621,7 +618,7 @@ class _TrainingDashboardScreenState
                   const SizedBox(height: 12),
                   _buildBulletPoint('Volumen: MEV/MAV/MRV (Israetel 2020)'),
                   _buildBulletPoint(
-                    'Distribución: 25/50/25 Heavy/Moderate/Light',
+                    'Distribución: 25/50/25 Heavy/Medium/Light',
                   ),
                   _buildBulletPoint('Periodización: 4 semanas acumulación'),
                   _buildBulletPoint(
@@ -2036,6 +2033,64 @@ class _TrainingDashboardScreenState
     await ref
         .read(trainingPlanProvider.notifier)
         .generatePlanFromActiveCycle(DateTime.now());
-    ref.read(trainingPlanV3Provider.notifier).clearPlan();
+
+    final client = ref.read(clientsProvider).value?.activeClient;
+    if (client != null) {
+      await ref
+          .read(trainingPlanProvider.notifier)
+          .recordPlanAction(
+            clientId: client.id,
+            action: 'deload',
+            appendAdaptationHistory: true,
+          );
+    }
+  }
+
+  String? _resolveDeloadAlertMessage(dynamic client) {
+    final snapshotRaw = client.training.extra['lastPhaseResolutionV1'];
+    if (snapshotRaw is! Map) {
+      return null;
+    }
+
+    final snapshot = Map<String, dynamic>.from(snapshotRaw);
+    final snapshotAt = snapshot['timestamp']?.toString();
+    if (snapshotAt != null && snapshotAt == _dismissedDeloadSnapshotAt) {
+      return null;
+    }
+
+    final needsDeload = snapshot['needsDeload'] == true;
+    if (!needsDeload) {
+      return null;
+    }
+
+    final urgency = snapshot['urgency']?.toString().trim();
+    final reasons =
+        (snapshot['reasons'] as List?)
+            ?.map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList() ??
+        const <String>[];
+
+    final reasonsText = reasons.isNotEmpty
+        ? reasons.join(' | ')
+        : 'Fatiga acumulada detectada por el motor.';
+
+    if (urgency != null && urgency.isNotEmpty) {
+      return 'Urgencia $urgency: $reasonsText';
+    }
+
+    return reasonsText;
+  }
+
+  void _dismissDeloadAlert() {
+    final client = ref.read(clientsProvider).value?.activeClient;
+    if (client == null) return;
+
+    final snapshotRaw = client.training.extra['lastPhaseResolutionV1'];
+    if (snapshotRaw is! Map) return;
+
+    setState(() {
+      _dismissedDeloadSnapshotAt = snapshotRaw['timestamp']?.toString();
+    });
   }
 }

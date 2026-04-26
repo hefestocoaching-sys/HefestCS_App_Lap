@@ -48,7 +48,7 @@ class SplitConfig extends Equatable {
   /// Distribución de músculos por día
   /// Ejemplo para PPL:
   /// [
-  ///   ['chest', 'shoulders', 'triceps'],  // Push
+  ///   ['pectorals', 'delts_front', 'delts_lateral', 'delts_rear', 'triceps'],  // Push
   ///   ['back', 'biceps'],                 // Pull
   ///   ['quads', 'hamstrings', 'glutes']   // Legs
   /// ]
@@ -92,7 +92,8 @@ class SplitConfig extends Equatable {
     // Validar que muscleDistribution tenga sentido con daysPerWeek
     // Para PPL 6x: debe tener 3 días base (Push, Pull, Legs) que se repiten
     // Para Upper/Lower 4x: debe tener 2 días base (Upper, Lower) que se repiten
-    if (type == 'push_pull_legs' && muscleDistribution.length != 3) {
+    if (type == 'push_pull_legs' &&
+        !const [3, 5, 6].contains(muscleDistribution.length)) {
       return false;
     }
     if (type == 'upper_lower' && muscleDistribution.length != 2) return false;
@@ -125,13 +126,15 @@ class SplitConfig extends Equatable {
       frequencyPerMuscle: 3.0,
       muscleDistribution: [
         [
-          MuscleKey.chest,
+          MuscleKey.pectorals,
           MuscleKey.lats,
           MuscleKey.upperBack,
           MuscleKey.traps,
-          MuscleKey.quadriceps,
+          MuscleKey.quads,
           MuscleKey.hamstrings,
-          'shoulders',
+          MuscleKey.deltsFront,
+          MuscleKey.deltsLateral,
+          MuscleKey.deltsRear,
           MuscleKey.biceps,
           MuscleKey.triceps,
         ],
@@ -151,13 +154,15 @@ class SplitConfig extends Equatable {
       frequencyPerMuscle: 2.0, // Alta frecuencia, se gestiona con volumen
       muscleDistribution: [
         [
-          MuscleKey.chest,
+          MuscleKey.pectorals,
           MuscleKey.lats,
           MuscleKey.upperBack,
           MuscleKey.traps,
-          MuscleKey.quadriceps,
+          MuscleKey.quads,
           MuscleKey.hamstrings,
-          'shoulders',
+          MuscleKey.deltsFront,
+          MuscleKey.deltsLateral,
+          MuscleKey.deltsRear,
           MuscleKey.biceps,
           MuscleKey.triceps,
         ],
@@ -176,13 +181,15 @@ class SplitConfig extends Equatable {
       frequencyPerMuscle: 2.0, // Muy alta frecuencia
       muscleDistribution: [
         [
-          MuscleKey.chest,
+          MuscleKey.pectorals,
           MuscleKey.lats,
           MuscleKey.upperBack,
           MuscleKey.traps,
-          MuscleKey.quadriceps,
+          MuscleKey.quads,
           MuscleKey.hamstrings,
-          'shoulders',
+          MuscleKey.deltsFront,
+          MuscleKey.deltsLateral,
+          MuscleKey.deltsRear,
           MuscleKey.biceps,
           MuscleKey.triceps,
         ],
@@ -203,16 +210,18 @@ class SplitConfig extends Equatable {
       frequencyPerMuscle: 2.0,
       muscleDistribution: [
         [
-          MuscleKey.chest,
+          MuscleKey.pectorals,
           MuscleKey.lats,
           MuscleKey.upperBack,
           MuscleKey.traps,
-          'shoulders',
+          MuscleKey.deltsFront,
+          MuscleKey.deltsLateral,
+          MuscleKey.deltsRear,
           MuscleKey.biceps,
           MuscleKey.triceps,
         ], // Upper
         [
-          MuscleKey.quadriceps,
+          MuscleKey.quads,
           MuscleKey.hamstrings,
           MuscleKey.glutes,
           MuscleKey.calves,
@@ -234,18 +243,84 @@ class SplitConfig extends Equatable {
       daysPerWeek: 6,
       frequencyPerMuscle: 2.0,
       muscleDistribution: [
-        [MuscleKey.chest, 'shoulders', MuscleKey.triceps], // Push
+        [
+          MuscleKey.pectorals,
+          MuscleKey.deltsFront,
+          MuscleKey.deltsLateral,
+          MuscleKey.deltsRear,
+          MuscleKey.triceps,
+        ], // Push
         [
           MuscleKey.lats,
           MuscleKey.upperBack,
           MuscleKey.traps,
           MuscleKey.biceps,
         ], // Pull
-        [MuscleKey.quadriceps, MuscleKey.hamstrings, MuscleKey.glutes], // Legs
+        [MuscleKey.quads, MuscleKey.hamstrings, MuscleKey.glutes], // Legs
       ],
       description:
           'División Push/Pull/Legs 6 días por semana (2 ciclos completos). '
           'Alto volumen total, ideal para intermedios/avanzados.',
+    );
+  }
+
+  /// Push/Pull/Legs 5 días por semana con día torso intermedio.
+  ///
+  /// Orden oficial:
+  /// - Push
+  /// - Pull
+  /// - Legs A
+  /// - Torso
+  /// - Legs B
+  factory SplitConfig.pushPullLegs5x() {
+    return const SplitConfig(
+      id: 'ppl_5x',
+      name: 'Push/Pull/Legs 5x',
+      type: 'push_pull_legs',
+      daysPerWeek: 5,
+      frequencyPerMuscle: 1.67,
+      muscleDistribution: [
+        [
+          MuscleKey.pectorals,
+          MuscleKey.deltsFront,
+          MuscleKey.deltsLateral,
+          MuscleKey.triceps,
+        ], // Push
+        [
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          MuscleKey.deltsRear,
+          MuscleKey.biceps,
+        ], // Pull
+        [
+          MuscleKey.quads,
+          MuscleKey.hamstrings,
+          MuscleKey.glutes,
+          MuscleKey.calves,
+        ], // Legs A
+        [
+          MuscleKey.pectorals,
+          MuscleKey.lats,
+          MuscleKey.upperBack,
+          MuscleKey.traps,
+          MuscleKey.deltsFront,
+          MuscleKey.deltsLateral,
+          MuscleKey.deltsRear,
+          MuscleKey.biceps,
+          MuscleKey.triceps,
+          MuscleKey.abs,
+        ], // Torso
+        [
+          MuscleKey.quads,
+          MuscleKey.hamstrings,
+          MuscleKey.glutes,
+          MuscleKey.calves,
+        ], // Legs B
+      ],
+      description:
+          'División Push/Pull/Legs 5 días por semana con día torso intermedio. '
+          'Elimina ambigüedad legacy y mantiene la arquitectura oficial x5.',
     );
   }
 
@@ -259,14 +334,20 @@ class SplitConfig extends Equatable {
       daysPerWeek: 3,
       frequencyPerMuscle: 1.0,
       muscleDistribution: [
-        [MuscleKey.chest, 'shoulders', MuscleKey.triceps], // Push
+        [
+          MuscleKey.pectorals,
+          MuscleKey.deltsFront,
+          MuscleKey.deltsLateral,
+          MuscleKey.deltsRear,
+          MuscleKey.triceps,
+        ], // Push
         [
           MuscleKey.lats,
           MuscleKey.upperBack,
           MuscleKey.traps,
           MuscleKey.biceps,
         ], // Pull
-        [MuscleKey.quadriceps, MuscleKey.hamstrings, MuscleKey.glutes], // Legs
+        [MuscleKey.quads, MuscleKey.hamstrings, MuscleKey.glutes], // Legs
       ],
       description:
           'División Push/Pull/Legs 3 días por semana (1 ciclo). '

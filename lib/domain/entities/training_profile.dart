@@ -132,12 +132,25 @@ class TrainingProfile extends Equatable {
   }
 
   static const List<String> _interviewKeys = [
-    TrainingInterviewKeys.hasTrainedBefore,
-    TrainingInterviewKeys.totalYearsTrainedBefore,
-    TrainingInterviewKeys.hadLongPause,
-    TrainingInterviewKeys.longestPauseMonths,
-    TrainingInterviewKeys.isTrainingNow,
-    TrainingInterviewKeys.monthsTrainingNow,
+    TrainingExtraKeys.heightCm,
+    TrainingExtraKeys.weightKg,
+    TrainingExtraKeys.ageYears,
+    TrainingExtraKeys.trainingMonths,
+    TrainingExtraKeys.effectiveTrainingLevel,
+    TrainingExtraKeys.strengthLevelClass,
+    TrainingExtraKeys.workCapacityScore,
+    TrainingExtraKeys.recoveryHistoryScore,
+    TrainingExtraKeys.externalRecoverySupport,
+    TrainingExtraKeys.programNoveltyClass,
+    TrainingExtraKeys.externalPhysicalStressLevel,
+    TrainingExtraKeys.nonPhysicalStressLevel2,
+    TrainingExtraKeys.restQuality2,
+    TrainingExtraKeys.dietHabitsClass,
+    TrainingExtraKeys.usesAnabolics,
+    TrainingExtraKeys.priorityMusclesPrimary,
+    TrainingExtraKeys.priorityMusclesSecondary,
+    TrainingExtraKeys.priorityMusclesTertiary,
+    TrainingExtraKeys.backFocus,
   ];
 
   bool hasInterviewChangedSincePlanGeneration(TrainingPlanConfig plan) {

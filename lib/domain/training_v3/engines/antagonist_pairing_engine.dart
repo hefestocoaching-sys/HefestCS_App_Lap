@@ -1,3 +1,5 @@
+import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+
 class AntagonistPairingEngine {
   static bool areAntagonists(String a, String b) {
     final left = _normalize(a);
@@ -17,16 +19,10 @@ class AntagonistPairingEngine {
   }
 
   static String _normalize(String key) {
-    final normalized = key.trim().toLowerCase();
-    switch (normalized) {
-      case 'quadriceps':
-        return 'quads';
-      case 'chest':
-        return 'pectorals';
-      case 'traps_upper':
-        return 'traps';
-      default:
-        return normalized;
+    final normalized = normalizeMuscleKey(key);
+    if (normalized == 'traps_upper') {
+      return 'traps';
     }
+    return normalized;
   }
 }

@@ -67,7 +67,7 @@ abstract class WeeklyProgressionService {
   ///       'incline_press': {...},
   ///     }
   ///   },
-  ///   'quadriceps': {...},
+  ///   'quads': {...},
   ///   ...
   /// }
   /// ```
@@ -88,7 +88,7 @@ abstract class WeeklyProgressionService {
   ///
   /// // decisions['pectorals'].newVolume = 15
   /// // decisions['pectorals'].action = VolumeAction.increase
-  /// // decisions['quadriceps'].action = VolumeAction.microdeload
+  /// // decisions['quads'].action = VolumeAction.microdeload
   /// ```
   Future<Map<String, MuscleDecision>> processWeeklyProgression({
     required String userId,
@@ -103,7 +103,7 @@ abstract class WeeklyProgressionService {
   ///
   /// PARAMETERS:
   /// - userId: User ID
-  /// - muscle: Muscle canonical name ('pectorals', 'quadriceps', etc.)
+  /// - muscle: Muscle canonical name ('pectorals', 'quads', etc.)
   /// - weekNumber: Global week number
   /// - weekStart: Start of week
   /// - weekEnd: End of week
@@ -169,7 +169,7 @@ abstract class WeeklyProgressionService {
   ///         {'week': 8, 'volume': 10, 'phase': 'microdeload'},
   ///       ],
   ///     },
-  ///     'quadriceps': {...},
+  ///     'quads': {...},
   ///     ...
   ///   },
   ///   'summary': {

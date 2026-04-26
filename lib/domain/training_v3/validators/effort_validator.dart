@@ -113,7 +113,7 @@ class EffortValidator {
   ///
   /// REGLAS CIENTÍFICAS:
   /// - Compound heavy: RIR >= 3 (seguridad)
-  /// - Compound moderate: RIR >= 2
+  /// - Compound medium: RIR >= 2
   /// - Isolation light: RIR 0-1 (seguro a fallo)
   static Map<String, dynamic> _validateRirCoherence({
     required String exerciseId,
@@ -125,21 +125,21 @@ class EffortValidator {
     if (type == 'compound' && intensity == IntensityZone.heavy) {
       if (rir < 3) {
         return {
-          'status': 'warning',
+          'status': 'error',
           'message':
               '$exerciseId: Compound heavy con RIR $rir. '
-              'Recomendado: RIR >= 3 para seguridad.',
+              'REQUERIDO: RIR >= 3 para seguridad. RIR < 3 en heavy es biomecánicamente inseguro.',
         };
       }
     }
 
-    // Compound moderate
+    // Compound medium
     if (type == 'compound' && intensity == IntensityZone.medium) {
       if (rir < 2) {
         return {
           'status': 'warning',
           'message':
-              '$exerciseId: Compound moderate con RIR $rir. '
+              '$exerciseId: Compound medium con RIR $rir. '
               'Recomendado: RIR >= 2 para balance hipertrofia/fatiga.',
         };
       }

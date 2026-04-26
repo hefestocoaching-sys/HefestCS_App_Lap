@@ -6,15 +6,15 @@ import 'package:equatable/equatable.dart';
 ///
 /// Define todos los parámetros de ejecución para un ejercicio específico:
 /// - Series, repeticiones, RIR (esfuerzo)
-/// - Intensidad (heavy/moderate/light)
+/// - Intensidad (heavy/medium/light)
 /// - Descanso entre series
 /// - Técnicas de intensificación opcionales
 ///
 /// FUNDAMENTO CIENTÍFICO:
-/// - Semana 3, Imagen 26-35: Distribución de intensidad (35% heavy, 45% moderate, 20% light)
+/// - Semana 3, Imagen 26-35: Distribución de intensidad (20% heavy, 60% medium, 20% light)
 /// - Semana 4, Imagen 36-43: RIR (Reps in Reserve) óptimo por intensidad
 ///   * Heavy (6-8 reps): RIR 2
-///   * Moderate (8-12 reps): RIR 2-3
+///   * Medium (8-12 reps): RIR 2-3
 ///   * Light (16-20 reps): RIR 1
 /// - Semana Suplementaria: Técnicas avanzadas (drop sets, rest-pause, etc.)
 ///
@@ -55,7 +55,7 @@ class ExercisePrescription extends Equatable {
 
   /// Zona de intensidad
   /// - 'heavy': 6-8 reps, RIR 2, carga >85% 1RM
-  /// - 'moderate': 8-12 reps, RIR 2-3, carga 70-85% 1RM
+  /// - 'medium': 8-12 reps, RIR 2-3, carga 70-85% 1RM
   /// - 'light': 16-20 reps, RIR 1, carga 60-70% 1RM
   /// Semana 3, Imagen 26-35
   final String intensityZone;
@@ -66,7 +66,7 @@ class ExercisePrescription extends Equatable {
 
   /// Descanso entre series en segundos (60-300)
   /// - Heavy: 180-300s (3-5 min)
-  /// - Moderate: 90-180s (1.5-3 min)
+  /// - Medium: 90-180s (1.5-3 min)
   /// - Light: 60-90s (1-1.5 min)
   final int restSeconds;
 
@@ -121,7 +121,7 @@ class ExercisePrescription extends Equatable {
     if (targetRir < 0 || targetRir > 5) return false;
 
     // Validar intensityZone válida
-    if (!['heavy', 'moderate', 'light'].contains(intensityZone)) return false;
+    if (!['heavy', 'medium', 'light'].contains(intensityZone)) return false;
 
     // Validar descanso razonable
     if (restSeconds < 30 || restSeconds > 600) return false;
@@ -130,8 +130,8 @@ class ExercisePrescription extends Equatable {
     if (intensityZone == 'heavy') {
       // Heavy: 6-8 reps, RIR 2
       if (repRange[0] < 6 || repRange[1] > 8 || targetRir != 2) return false;
-    } else if (intensityZone == 'moderate') {
-      // Moderate: 8-12 reps, RIR 2-3
+    } else if (intensityZone == 'medium') {
+      // Medium: 8-12 reps, RIR 2-3
       if (repRange[0] < 8 || repRange[1] > 12) return false;
     } else if (intensityZone == 'light') {
       // Light: 16-20 reps, RIR 1

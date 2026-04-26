@@ -5,6 +5,9 @@ import 'package:hcs_app_lap/domain/training_v3/engines/antagonist_pairing_engine
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_ordering_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/fatigue_balancer.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/planned_exercise.dart';
+import 'package:hcs_app_lap/domain/policies/pairing_contract.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
 
 class SessionStructure {
   final Exercise mainLift;
@@ -189,6 +192,22 @@ class SessionStructureEngine {
     }).toList();
   }
 
+  static bool _isCompatiblePair(Exercise first, Exercise second) {
+    final firstPattern = ExerciseCatalogV3.getMovementPattern(first.id);
+    final secondPattern = ExerciseCatalogV3.getMovementPattern(second.id);
+    if (firstPattern.isNotEmpty && firstPattern == secondPattern) {
+      return false;
+    }
+
+    final firstHeavy = ExerciseCatalogV3.getLoadCategory(first.id) == 'heavy';
+    final secondHeavy = ExerciseCatalogV3.getLoadCategory(second.id) == 'heavy';
+    if (firstHeavy && secondHeavy) {
+      return false;
+    }
+
+    return true;
+  }
+
   static SessionStructure build(List<Exercise> exercises) {
     if (exercises.isEmpty) {
       throw StateError('SessionStructureEngine requires at least one exercise');
@@ -284,6 +303,8 @@ class SessionStructureEngine {
     _appendPaired(blocks, blockC, blockLabel: 'C');
     _appendPaired(blocks, blockD, blockLabel: 'D');
 
+    _assertNoDuplicateHeavyCompoundPattern(mainLift: mainLift, blocks: blocks);
+
     return SessionStructure(mainLift: mainLift, blocks: blocks);
   }
 
@@ -297,27 +318,52 @@ class SessionStructureEngine {
     var slotIndex = 1;
     while (working.isNotEmpty) {
       final first = working.removeAt(0);
+      if (slotIndex > 2) {
+        blocks.add(
+          SessionBlock.single(
+            first: first,
+            blockLabel: blockLabel,
+            slotFirst: _contractSlotLabel(blockLabel, 2),
+          ),
+        );
+        continue;
+      }
+
       final partnerIndex = working.indexWhere((candidate) {
-        if (preferAntagonists) {
-          return AntagonistPairingEngine.areAntagonists(
-            _primaryMuscle(first),
-            _primaryMuscle(candidate),
-          );
-        }
         final firstMuscle = _primaryMuscle(first);
         final candidateMuscle = _primaryMuscle(candidate);
-        final lowA =
-            InterferenceMatrix.lowInterference[firstMuscle] ?? const <String>[];
-        final lowB =
-            InterferenceMatrix.lowInterference[candidateMuscle] ??
-            const <String>[];
-        return lowA.contains(candidateMuscle) || lowB.contains(firstMuscle);
+        if (!PairingContract.isAllowedBiserie(
+          firstPrimaryMuscle: firstMuscle,
+          secondPrimaryMuscle: candidateMuscle,
+        )) {
+          return false;
+        }
+
+        if (!_isCompatiblePair(first, candidate)) {
+          return false;
+        }
+
+        if (preferAntagonists) {
+          return PairingContract.classify(
+                firstPrimaryMuscle: firstMuscle,
+                secondPrimaryMuscle: candidateMuscle,
+              ) ==
+              PairingType.antagonist;
+        }
+
+        final pairingType = PairingContract.classify(
+          firstPrimaryMuscle: firstMuscle,
+          secondPrimaryMuscle: candidateMuscle,
+        );
+        return pairingType == PairingType.antagonist ||
+            pairingType == PairingType.lowInterference ||
+            pairingType == PairingType.synergy;
       });
 
-      if (partnerIndex >= 0) {
+      if (partnerIndex >= 0 && slotIndex < 2) {
         final second = working.removeAt(partnerIndex);
-        final slotFirst = '$blockLabel$slotIndex';
-        final slotSecond = '$blockLabel${slotIndex + 1}';
+        final slotFirst = _contractSlotLabel(blockLabel, slotIndex);
+        final slotSecond = _contractSlotLabel(blockLabel, slotIndex + 1);
         final pairId = '${blockLabel}_${((slotIndex + 1) / 2).ceil()}';
         blocks.add(
           SessionBlock.biserie(
@@ -335,11 +381,43 @@ class SessionStructureEngine {
           SessionBlock.single(
             first: first,
             blockLabel: blockLabel,
-            slotFirst: '$blockLabel$slotIndex',
+            slotFirst: _contractSlotLabel(blockLabel, slotIndex),
           ),
         );
         slotIndex += 1;
       }
+    }
+  }
+
+  static String _contractSlotLabel(String blockLabel, int slotIndex) {
+    final normalizedBlock = blockLabel.trim().toUpperCase();
+    if (normalizedBlock == 'A') return 'A';
+    final safeSlot = slotIndex <= 2 ? slotIndex : 2;
+    return '$normalizedBlock$safeSlot';
+  }
+
+  static void _assertNoDuplicateHeavyCompoundPattern({
+    required Exercise mainLift,
+    required List<SessionBlock> blocks,
+  }) {
+    final all = <Exercise>[mainLift, ...blocks.expand((b) => b.exercises)];
+    final heavyPatternCount = <String, int>{};
+
+    for (final ex in all) {
+      final load = ExerciseCatalogV3.getLoadCategory(ex.id);
+      final type = ExerciseCatalogV3.getTypeById(ex.id);
+      if (load != 'heavy' || type != 'compound') continue;
+      final pattern = ExerciseCatalogV3.getMovementPattern(ex.id);
+      if (pattern.isEmpty || pattern == 'unknown') continue;
+      heavyPatternCount[pattern] = (heavyPatternCount[pattern] ?? 0) + 1;
+    }
+
+    final conflicts = heavyPatternCount.entries.where((e) => e.value > 1);
+    if (conflicts.isNotEmpty) {
+      throw StateError(
+        '[V3][P9][HEAVY_PATTERN_CONFLICT] duplicate heavy compound patterns in session: '
+        '${conflicts.map((e) => '${e.key}x${e.value}').join(', ')}',
+      );
     }
   }
 
@@ -352,17 +430,11 @@ class SessionStructureEngine {
 
   static String _primaryMuscle(Exercise exercise) {
     String normalize(String raw) {
-      switch (raw.toLowerCase()) {
-        case 'chest':
-          return 'pectorals';
-        case 'quads':
-          return 'quadriceps';
-        case 'shoulders':
-        case 'deltoids':
-          return 'deltoide_lateral';
-        default:
-          return raw.toLowerCase();
-      }
+      final canonical = muscle_registry.normalize(raw);
+      if (canonical != null) return canonical;
+      final expanded = muscle_registry.expandGroup(raw);
+      if (expanded.isNotEmpty) return expanded.first;
+      return raw.trim().toLowerCase();
     }
 
     if (exercise.primaryMuscles.isNotEmpty) {

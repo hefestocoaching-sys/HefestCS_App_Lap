@@ -5,6 +5,7 @@ import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/landmark_engine.dart';
 import 'package:hcs_app_lap/features/training_feature/context/vop_context.dart';
+import 'package:hcs_app_lap/features/training_feature/domain/intensity_distribution_helper.dart';
 import 'package:hcs_app_lap/features/training_feature/providers/training_plan_provider.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/utils/widgets/hcs_input_decoration.dart';
@@ -62,11 +63,20 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
     bool needsPersist = false;
 
     if (raw is Map) {
+      final heavy = (raw['heavy'] as num?)?.toInt() ?? 20;
+      final medium = (raw['medium'] as num?)?.toInt() ?? 60;
+      final light = (raw['light'] as num?)?.toInt() ?? 20;
+      final valid = IntensityDistributionHelper.isValidPercentSplit(
+        heavy: heavy,
+        medium: medium,
+        light: light,
+      );
       setState(() {
-        _heavyPercent = (raw['heavy'] as num?)?.toInt() ?? 20;
-        _mediumPercent = (raw['medium'] as num?)?.toInt() ?? 60;
-        _lightPercent = (raw['light'] as num?)?.toInt() ?? 20;
+        _heavyPercent = valid ? heavy : 20;
+        _mediumPercent = valid ? medium : 60;
+        _lightPercent = valid ? light : 20;
       });
+      needsPersist = !valid;
     } else {
       setState(() {
         _heavyPercent = 20;
@@ -119,12 +129,6 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
       widget.trainingExtra['priorityMusclesTertiary'],
     );
 
-    final intensityVolumeSplit = <String, double>{
-      'heavy': _heavyPercent / 100,
-      'medium': _mediumPercent / 100,
-      'light': _lightPercent / 100,
-    };
-
     // Agrupar espalda como bloque único
     final vopByMuscle = _aggregateForDisplay(vopRaw);
     final muscles = vopByMuscle.keys.toList()..sort();
@@ -140,7 +144,6 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
             _buildVopTable(
               muscles: muscles,
               vopByMuscle: vopByMuscle,
-              intensitySplit: intensityVolumeSplit,
               primary: primaryMuscles,
               secondary: secondaryMuscles,
               tertiary: tertiaryMuscles,
@@ -210,12 +213,16 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
 
   /// Control en línea con 3 dropdowns para distribución de series H/M/L
   Widget _buildSeriesSplitControl(BuildContext context) {
-    const heavyOptions = [0, 5, 10, 15, 20, 25, 30];
-    const lightOptions = [0, 5, 10, 15, 20, 25, 30];
-    const mediumOptions = [0, 10, 20, 30, 40, 50, 60, 70];
+    const heavyOptions = [15, 20, 25, 30];
+    const lightOptions = [15, 20, 25, 30];
+    const mediumOptions = [40, 45, 50, 55, 60, 65, 70];
 
     final total = _heavyPercent + _mediumPercent + _lightPercent;
-    final isValid = total == 100;
+    final isValid = IntensityDistributionHelper.isValidPercentSplit(
+      heavy: _heavyPercent,
+      medium: _mediumPercent,
+      light: _lightPercent,
+    );
 
     return Card(
       margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
@@ -535,7 +542,6 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
   Widget _buildVopTable({
     required List<String> muscles,
     required Map<String, double> vopByMuscle,
-    required Map<String, double> intensitySplit,
     required Set<String> primary,
     required Set<String> secondary,
     required Set<String> tertiary,
@@ -648,9 +654,11 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
             final vop = vopByMuscle[muscle] ?? 0;
 
             // Distribuir series según split H/M/L
-            final heavy = (vop * intensitySplit['heavy']!).round();
-            final medium = (vop * intensitySplit['medium']!).round();
-            final light = (vop * intensitySplit['light']!).round();
+            final computed = IntensityDistributionHelper.computeSeriesBreakdown(
+              totalSeries: vop.round(),
+              heavyPercent: _heavyPercent,
+              lightPercent: _lightPercent,
+            );
 
             const status = 'OK';
             const statusColor = Colors.green;
@@ -715,7 +723,7 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '$heavy',
+                      '${computed.heavy}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.red, fontSize: 12),
                     ),
@@ -723,7 +731,7 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '$medium',
+                      '${computed.medium}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.amber, fontSize: 12),
                     ),
@@ -731,7 +739,7 @@ class _IntensitySplitTableState extends ConsumerState<IntensitySplitTable> {
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '$light',
+                      '${computed.light}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.teal, fontSize: 12),
                     ),

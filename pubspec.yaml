@@ -76,4 +76,6 @@ flutter:
     - assets/Logos/
     - assets/data/
     - assets/data/exercises/exercise_catalog_gym.json
+    - assets/data/training_v3/catalog/
+    - assets/media/exercises/gifs/
     

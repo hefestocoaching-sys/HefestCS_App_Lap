@@ -23,7 +23,7 @@ part 'exercise_angle_coverage.g.dart';
 ///   - Vertical: pulldown, dominadas
 ///   - Unilateral: remo unilateral
 ///
-/// CUÁDRICEPS:
+/// QUADS (CUÁDRICEPS):
 ///   - Frontal: leg press, hack squat
 ///   - Centro: squat, leg extension
 ///   - Medial: sissy squat, bulgarian split squat
@@ -111,7 +111,7 @@ class MuscleAngleRegistry {
   static const Map<String, List<String>> anglesByMuscle = {
     // PUSH MUSCLES
     'pectorals': ['horizontal', 'incline', 'decline', 'vertical'],
-    'anterior_deltoids': [
+    'delts_front': [
       'vertical',
       'horizontal',
       'lean_forward',
@@ -123,17 +123,16 @@ class MuscleAngleRegistry {
     ], // Press, rope, pushdown
     // PULL MUSCLES
     'lats': ['horizontal', 'vertical', 'unilateral'],
-    'mid_back': ['horizontal', 'vertical', 'neutral'],
-    'rear_deltoids': ['horizontal', 'fly', 'row'],
+    'upper_back': ['horizontal', 'vertical', 'neutral'],
+    'traps': ['horizontal', 'vertical', 'shrug'],
+    'delts_rear': ['horizontal', 'fly', 'row'],
+    'delts_lateral': ['vertical', 'lateral_raise', 'upright_row'],
 
     // LEG MUSCLES - EXTENSORS
-    'quadriceps': ['narrow_stance', 'wide_stance', 'single_leg'],
-    'vastus_medialis': ['high_foot', 'leg_extension'],
-    'vastus_lateralis': ['low_foot', 'sissy_squat'],
+    'quads': ['narrow_stance', 'wide_stance', 'single_leg'],
 
     // LEG MUSCLES - FLEXORS
     'hamstrings': ['hip_extension', 'knee_flexion', 'unilateral'],
-    'biceps_femoris': ['horizontal_abduction', 'vertical'],
 
     // LEG MUSCLES - OTHER
     'glutes': ['horizontal_abduction', 'hip_extension', 'unilateral'],
@@ -143,11 +142,24 @@ class MuscleAngleRegistry {
 
     // ARMS
     'biceps': ['horizontal', 'vertical', 'neutral'],
+
+    // CORE
+    'abs': ['anti_extension', 'flexion', 'anti_rotation'],
   };
 
   /// Obtiene ángulos conocidos para un músculo
   static List<String> getAnglesForMuscle(String muscle) {
-    return anglesByMuscle[muscle] ?? const [];
+    final normalized = switch (muscle) {
+      // Compatibilidad de borde: aliases legacy -> claves canónicas SSOT
+      'anterior_deltoids' || 'deltoide_anterior' => 'delts_front',
+      'rear_deltoids' || 'deltoide_posterior' => 'delts_rear',
+      'side_deltoids' || 'deltoide_lateral' => 'delts_lateral',
+      'mid_back' => 'upper_back',
+      'quadriceps' => 'quads',
+      'chest' => 'pectorals',
+      _ => muscle,
+    };
+    return anglesByMuscle[normalized] ?? const [];
   }
 
   /// DistInt si los ejercicios datos usan suficiente variedad

@@ -21,6 +21,9 @@ import 'package:hcs_app_lap/domain/training_v3/constants/muscle_key_registry.dar
 /// - Grgic et al. (2018): Frequency meta-analysis (2x > 1x)
 ///
 /// Versión: 1.0.0
+@Deprecated(
+  'Non-canonical split helper. The active Motor V3 runtime resolves split via TrainingPlanProvider -> TrainingOrchestratorV3 -> MotorV3Orchestrator/CycleTemplateBuilder contracts.',
+)
 class SplitGeneratorEngine {
   /// Genera el split óptimo según días disponibles
   ///
@@ -57,10 +60,8 @@ class SplitGeneratorEngine {
         return SplitConfig.upperLower4x();
 
       case 5:
-        // PPL 5x: Asignar 6 días y descansar 1
-        // Frecuencia ~1.5x por músculo (subóptimo)
-        // Recomendamos 4 o 6 días en su lugar
-        return _generatePPL5Days();
+        // PPL 5x oficial con día torso intermedio.
+        return SplitConfig.pushPullLegs5x();
 
       case 6:
         // PPL 6x: Frecuencia 2x por músculo (ÓPTIMO)
@@ -74,27 +75,7 @@ class SplitGeneratorEngine {
 
   /// Genera PPL modificado para 5 días (subóptimo)
   static SplitConfig _generatePPL5Days() {
-    return const SplitConfig(
-      id: 'ppl_5x',
-      name: 'Push/Pull/Legs 5x (modificado)',
-      type: 'push_pull_legs',
-      daysPerWeek: 5,
-      frequencyPerMuscle: 1.67, // 5/3 = ~1.67x
-      muscleDistribution: [
-        [MuscleKey.chest, 'shoulders', MuscleKey.triceps], // Push
-        [
-          MuscleKey.lats,
-          MuscleKey.upperBack,
-          MuscleKey.traps,
-          MuscleKey.biceps,
-        ], // Pull
-        [MuscleKey.quadriceps, MuscleKey.hamstrings, MuscleKey.glutes], // Legs
-      ],
-      description:
-          'División Push/Pull/Legs adaptada a 5 días. '
-          'Frecuencia subóptima (~1.67x por músculo). '
-          'RECOMENDACIÓN: Usar 4 días (Upper/Lower) o 6 días (PPL completo) para frecuencia 2x.',
-    );
+    return SplitConfig.pushPullLegs5x();
   }
 
   /// Recomienda el split óptimo basado en volumen total
@@ -129,6 +110,8 @@ class SplitGeneratorEngine {
       case 'upper_lower':
         return (daysPerWeek / 2).toDouble(); // Cada músculo cada 2 días
       case 'push_pull_legs':
+        if (daysPerWeek >= 6) return 2.0;
+        if (daysPerWeek == 5) return 1.67;
         return (daysPerWeek / 3).toDouble(); // Cada músculo cada 3 días
       default:
         throw ArgumentError('Split type inválido: $splitType');
@@ -163,11 +146,13 @@ class SplitGeneratorEngine {
       final upper = muscles
           .where(
             (m) => [
-              MuscleKey.chest,
+              MuscleKey.pectorals,
               MuscleKey.lats,
               MuscleKey.upperBack,
               MuscleKey.traps,
-              'shoulders',
+              MuscleKey.deltsFront,
+              MuscleKey.deltsLateral,
+              MuscleKey.deltsRear,
               MuscleKey.biceps,
               MuscleKey.triceps,
             ].contains(m),
@@ -176,7 +161,7 @@ class SplitGeneratorEngine {
       final lower = muscles
           .where(
             (m) => [
-              MuscleKey.quadriceps,
+              MuscleKey.quads,
               MuscleKey.hamstrings,
               MuscleKey.glutes,
               MuscleKey.calves,
@@ -188,8 +173,13 @@ class SplitGeneratorEngine {
       // Push/Pull/Legs
       final push = muscles
           .where(
-            (m) =>
-                [MuscleKey.chest, 'shoulders', MuscleKey.triceps].contains(m),
+            (m) => [
+              MuscleKey.pectorals,
+              MuscleKey.deltsFront,
+              MuscleKey.deltsLateral,
+              MuscleKey.deltsRear,
+              MuscleKey.triceps,
+            ].contains(m),
           )
           .toList();
       final pull = muscles
@@ -205,7 +195,7 @@ class SplitGeneratorEngine {
       final legs = muscles
           .where(
             (m) => [
-              MuscleKey.quadriceps,
+              MuscleKey.quads,
               MuscleKey.hamstrings,
               MuscleKey.glutes,
               MuscleKey.calves,

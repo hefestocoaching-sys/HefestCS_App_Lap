@@ -12,6 +12,9 @@
 /// Los ejercicios se almacenan en JSON estático.
 ///
 /// Versión: 1.0.0
+@Deprecated(
+  'Legacy repository. Runtime Motor V3 must use ExerciseCatalogV3 from assets/data/training_v3/catalog/exercise_catalog_v3_runtime.json.',
+)
 class ExerciseDatabaseRepository {
   /// Cache en memoria del catálogo de ejercicios
   static Map<String, Map<String, dynamic>>? _exerciseCache;
@@ -35,8 +38,8 @@ class ExerciseDatabaseRepository {
         'id': 'bench_press',
         'name': 'Bench Press',
         'type': 'compound',
-        'primary_muscles': ['chest'],
-        'secondary_muscles': ['triceps', 'shoulders'],
+        'primary_muscles': ['pectorals'],
+        'secondary_muscles': ['triceps', 'delts_front'],
         'equipment': ['barbell', 'bench'],
         'movement_pattern': 'horizontal_push',
         'rom': 8.0,
@@ -51,7 +54,7 @@ class ExerciseDatabaseRepository {
         'id': 'squat',
         'name': 'Back Squat',
         'type': 'compound',
-        'primary_muscles': ['quadriceps'],
+        'primary_muscles': ['quads'],
         'secondary_muscles': ['glutes', 'hamstrings'],
         'equipment': ['barbell', 'rack'],
         'movement_pattern': 'squat',
@@ -99,7 +102,7 @@ class ExerciseDatabaseRepository {
         'id': 'overhead_press',
         'name': 'Overhead Press',
         'type': 'compound',
-        'primary_muscles': ['shoulders'],
+        'primary_muscles': ['delts_front'],
         'secondary_muscles': ['triceps'],
         'equipment': ['barbell'],
         'movement_pattern': 'vertical_push',

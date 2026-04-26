@@ -1,0 +1,31 @@
+{
+  "version": "v3",
+  "sessionContract": {
+    "validSlots": [
+      "A",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "D1",
+      "D2"
+    ],
+    "oneA": true,
+    "dOptional": true,
+    "noExtraSlots": true
+  },
+  "heavyRules": {
+    "maxHeavySamePatternPerSession": 1,
+    "secondHeavyRequiresDifferentPattern": true,
+    "secondHeavySubordinateToA": true
+  },
+  "priorityCaps": {
+    "primary": "VMR",
+    "secondary": "75%VMR",
+    "tertiary": "VOP"
+  },
+  "notes": [
+    "No D3/C3/B3.",
+    "Second heavy can exist only if pattern differs and does not compete with A."
+  ]
+}

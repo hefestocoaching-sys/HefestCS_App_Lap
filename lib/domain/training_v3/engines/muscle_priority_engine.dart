@@ -6,13 +6,12 @@ import 'package:hcs_app_lap/domain/training_v3/models/training_split.dart';
 class MusclePriorityEngine {
   static const Set<String> _upperMuscles = {
     'pectorals',
-    'chest',
     'lats',
     'upper_back',
     'traps',
-    'deltoide_anterior',
-    'deltoide_lateral',
-    'deltoide_posterior',
+    'delts_front',
+    'delts_lateral',
+    'delts_rear',
     'biceps',
     'triceps',
     'abs',
@@ -20,7 +19,6 @@ class MusclePriorityEngine {
 
   static const Set<String> _lowerMuscles = {
     'quads',
-    'quadriceps',
     'hamstrings',
     'glutes',
     'calves',

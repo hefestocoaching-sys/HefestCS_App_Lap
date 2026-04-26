@@ -13,12 +13,18 @@ import 'package:hcs_app_lap/domain/training_v3/engines/session_intensity_set_all
 import 'package:hcs_app_lap/domain/training_v3/engines/session_time_estimator.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_ordering_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_role_engine.dart';
+import 'package:hcs_app_lap/domain/training_v3/engines/exercise_selection_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/intensity_distribution_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/mesocycle_exercise_pool.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/exercise_set_allocator.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/session_structure_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/antagonist_pairing_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/interference_matrix.dart';
+import 'package:hcs_app_lap/domain/constants/volume_to_frequency_rule.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/frequency_feasibility_resolver.dart';
+import 'package:hcs_app_lap/domain/policies/day_start_policy.dart';
+import 'package:hcs_app_lap/domain/policies/week_start_policy.dart';
+import 'package:hcs_app_lap/domain/policies/pairing_contract.dart';
 import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
     as muscle_registry;
 
@@ -117,6 +123,7 @@ class CycleTemplateBuilder {
     final configResult = _calculateMuscleConfigOrFail(
       canonicalTargetVolume,
       availableDays,
+      split,
     );
     if (!configResult.success) return configResult.asBuildResult;
     final muscleConfig = configResult._muscleConfig!;
@@ -131,15 +138,7 @@ class CycleTemplateBuilder {
       priorities[key] = p;
     });
 
-    // 3. Forzar frecuencia mínima 2 en UL 4 días
-    if (availableDays == 4 && split == TrainingSplit.upperLower) {
-      muscleConfig.updateAll(
-        (key, cfg) =>
-            _MuscleFreqConfig(weeklySets: cfg.weeklySets, frequency: 2),
-      );
-    }
-
-    // 4. Distribute Muscles into Days using split template
+    // 3. Distribute Muscles into Days using split template
     final dailyAllocations = _distributeMusclesToDaysBySplit(
       config: muscleConfig,
       availableDays: availableDays,
@@ -328,11 +327,33 @@ class CycleTemplateBuilder {
           final resolvedDayIntensity =
               dayIntensity ??
               IntensityDistributionEngine.splitWeeklySets(
+                muscleKey: normalizedMuscle,
                 weeklySets: setsForDay,
                 intensitySplitPercent: intensityProfilePercentSplit,
               );
           final (primaryZone, secondaryZone) =
               IntensityDistributionEngine.zonesForDay(resolvedDayIntensity);
+          final heavySingleByDefault =
+              primaryZone == 'heavy' || secondaryZone == 'heavy';
+          final selectionPrimaryZone = heavySingleByDefault
+              ? 'heavy'
+              : primaryZone;
+          final selectionSecondaryZone = heavySingleByDefault
+              ? (primaryZone == 'heavy' ? secondaryZone : primaryZone)
+              : secondaryZone;
+
+          final hasPrimaryZoneCandidate = lockedPool.any(
+            (exercise) =>
+                ExerciseCatalogV3.allowsZone(exercise.id, selectionPrimaryZone),
+          );
+          if (!hasPrimaryZoneCandidate) {
+            throw StateError(
+              '[V3][P9][INTENSITY_PRECHECK_FAIL] '
+              'muscle=$normalizedMuscle day=$dayNum '
+              'requiredZone=$selectionPrimaryZone no compatible exercise in locked pool.',
+            );
+          }
+
           final rolePlan = _resolveSessionRolePlan(
             frequency: frequency,
             sessionIndex: occurrence,
@@ -356,19 +377,35 @@ class CycleTemplateBuilder {
             'ex2=${structure.secondExercise.min}-${structure.secondExercise.max}',
           );
 
-          final requestedExerciseCount = setsForDay <= 3 ? 1 : 2;
+          final requestedExerciseCount = heavySingleByDefault
+              ? 1
+              : (setsForDay <= 3 ? 1 : 2);
           final exerciseCount = min(requestedExerciseCount, maxPerMusclePerDay);
+
+          if (heavySingleByDefault) {
+            debugPrint(
+              '[V3][HEAVY_SINGLE_DEFAULT] muscle=$normalizedMuscle day=$dayNum '
+              'primary=$primaryZone secondary=$secondaryZone '
+              'selection_primary=$selectionPrimaryZone desiredCount=$exerciseCount',
+            );
+          }
 
           final sessionUsedIds = daySeedExercises
               .map((e) => e.exercise.id)
               .toSet();
+
+          final slotPlan = _slotPlanForBlock(
+            blockLabel,
+            desiredCount: exerciseCount,
+          );
+
           final selected = _selectExercisesForMuscleDay(
             rawPoolIds: poolIds,
             pool: lockedPool,
             roleMap: roleMap,
             sessionUsedIds: sessionUsedIds,
-            primaryZone: primaryZone,
-            secondaryZone: secondaryZone,
+            primaryZone: selectionPrimaryZone,
+            secondaryZone: selectionSecondaryZone,
             preferredRoles: rolePlan,
             desiredCount: exerciseCount,
             muscle: normalizedMuscle,
@@ -376,26 +413,27 @@ class CycleTemplateBuilder {
             sessionIndex: occurrence,
             lastPair: lastPairByMuscle[normalizedMuscle],
             lockedAnchorId: lockedAnchorByMuscle[normalizedMuscle],
+            requiredSlotRoles: slotPlan,
           );
 
           if (selected.length >= 2) {
             final previousPair = lastPairByMuscle[normalizedMuscle];
             if (previousPair != null) {
               final status =
-                  (previousPair[0] == selected[0].id &&
-                      previousPair[1] == selected[1].id)
+                  (previousPair[0] == selected[0].exercise.id &&
+                      previousPair[1] == selected[1].exercise.id)
                   ? 'mirrored_limited'
                   : 'varied';
               debugPrint(
                 '[V3][PAIR_VARIATION] muscle=$normalizedMuscle '
                 'session$occurrence=$previousPair '
-                'session${occurrence + 1}=${selected.map((e) => e.id).toList()} '
+                'session${occurrence + 1}=${selected.map((e) => e.exercise.id).toList()} '
                 'status=$status',
               );
             }
             lastPairByMuscle[normalizedMuscle] = [
-              selected[0].id,
-              selected[1].id,
+              selected[0].exercise.id,
+              selected[1].exercise.id,
             ];
           }
 
@@ -423,32 +461,36 @@ class CycleTemplateBuilder {
             '[V3][SESSION_SLOT_PLAN] '
             'muscle=$normalizedMuscle '
             'session=${occurrence + 1} '
-            'slot1_zone=$primaryZone '
-            'slot2_zone=$secondaryZone '
-            'slot1_reps=${structure.firstExercise.min}-${structure.firstExercise.max} '
-            'slot2_reps=${structure.secondExercise.min}-${structure.secondExercise.max} '
+            'slot1_zone=${selected.isNotEmpty ? selected.first.zone : selectionPrimaryZone} '
+            'slot2_zone=${selected.length >= 2 ? selected[1].zone : 'n/a'} '
+            'slot1_reps=6-8 '
+            'slot2_reps=${selected.length >= 2 ? (selected[1].zone == 'light' ? '15-20' : '8-12') : 'n/a'} '
             'slot_sets=$slotSets',
           );
 
           debugPrint(
             '[V3][EX_ASSIGN_FINAL] muscle=$normalizedMuscle day=$dayNum '
-            'exercises=${selected.map((e) => e.id).toList()} '
+            'exercises=${selected.map((e) => e.exercise.id).toList()} '
+            'zones=${selected.map((e) => e.zone).toList()} '
             'sets=$slotSets '
-            'reps=['
-            '${structure.firstExercise.min}-${structure.firstExercise.max},'
-            '${structure.secondExercise.min}-${structure.secondExercise.max}]'
             '${selected.length == 1 ? ' reason=single_forced' : ''}',
           );
 
           for (var i = 0; i < selected.length; i++) {
-            final chosen = selected[i];
-            final repRange = i == 0
-                ? structure.firstExercise
-                : structure.secondExercise;
-            final rir = repRange.max >= 16 ? 1 : 2;
+            final chosen = selected[i].exercise;
+            final zone = selected[i].zone;
+            final repRange = IntensityDistributionEngine.repRangeForZone(zone);
+            final rir = repRange.max >= 15 ? 1 : 2;
             final setsForExercise = i < slotSets.length
                 ? slotSets[i]
                 : slotSets.last;
+
+            if (!ExerciseCatalogV3.allowsZone(chosen.id, zone)) {
+              throw StateError(
+                '[V3][ZONE_VALIDATION_FAIL] exercise=${chosen.id} muscle=$normalizedMuscle '
+                'day=$dayNum zone=$zone not allowed by catalog metadata',
+              );
+            }
 
             daySeedExercises.add(
               _DayExerciseSeed(
@@ -497,6 +539,12 @@ class CycleTemplateBuilder {
           ..clear()
           ..addAll(refined);
       }
+
+      _enforceStructuralOrder(sessionExercises);
+      _resolveHeavyPatternConflictsInSession(
+        sessionExercises,
+        dayNumber: dayNum,
+      );
 
       final estimatedMinutes = sessionTimeEstimator.estimateMinutes(
         sessionExercises,
@@ -575,9 +623,16 @@ class CycleTemplateBuilder {
         maxMusclesPerDay: maxMusclesPerDay,
         allocation: allocation,
       );
-    } else {
-      // upperLower (or pushPullLegs fallback → also upperLower)
+    } else if (split == TrainingSplit.upperLower) {
       _distributeUpperLower(
+        config: canonicalConfig,
+        availableDays: availableDays,
+        priorities: canonicalPriorities,
+        maxMusclesPerDay: maxMusclesPerDay,
+        allocation: allocation,
+      );
+    } else {
+      _distributePushPullLegs(
         config: canonicalConfig,
         availableDays: availableDays,
         priorities: canonicalPriorities,
@@ -643,9 +698,9 @@ class CycleTemplateBuilder {
         return '[V3][P0.2][INFEASIBLE_DAILY_ALLOCATION] '
             'muscle="$normalized" day=${dayIdx + 1} '
             'attempted=$sets cap=$dailyCapPerMuscle '
-            '(split=${split.name}, days=$availableDays). '
-            'Fix: increase effective frequency for that muscle/split '
-            'or reduce weekly target volume.';
+            '(split=${split.name}, days=$availableDays, expectedFreq=$freqComputed, eligibleDays=$eligibleDays). '
+            'Contract note: frequency is fixed by volume rule and cannot be auto-adjusted. '
+            'Fix input targets or split constraints.';
       }
     }
     return null;
@@ -675,10 +730,18 @@ class CycleTemplateBuilder {
         .toList();
     // 'abs' is in both — already included in upperPool; don't double-add to lower
 
+    final weekStart = WeekStartPolicy.resolveFromWeeklySets(
+      weeklySetsByMuscle: {
+        for (final entry in config.entries) entry.key: entry.value.weeklySets,
+      },
+    );
+    final startsWithUpper = weekStart == WeekStartFocus.torso;
+
     final upperDays = <int>[];
     final lowerDays = <int>[];
     for (int dayIdx = 0; dayIdx < availableDays; dayIdx++) {
-      if (dayIdx % 2 == 0) {
+      final isUpperDay = startsWithUpper ? dayIdx % 2 == 0 : dayIdx % 2 != 0;
+      if (isUpperDay) {
         upperDays.add(dayIdx);
       } else {
         lowerDays.add(dayIdx);
@@ -710,6 +773,97 @@ class CycleTemplateBuilder {
       '[CycleTemplateBuilder][B4][UpperLower] '
       'upper=${upperPool.length} lower=${lowerPool.length}',
     );
+  }
+
+  static void _distributePushPullLegs({
+    required Map<String, _MuscleFreqConfig> config,
+    required int availableDays,
+    required Map<String, int> priorities,
+    required int maxMusclesPerDay,
+    required List<Map<String, int>> allocation,
+  }) {
+    final canonicalConfig = _canonicalizeConfigMap(config);
+    final orderedMuscles = canonicalConfig.keys.toList()
+      ..sort((a, b) {
+        final byPriority = (priorities[b] ?? 0).compareTo(priorities[a] ?? 0);
+        if (byPriority != 0) return byPriority;
+        final byTarget = (canonicalConfig[b]?.weeklySets ?? 0).compareTo(
+          canonicalConfig[a]?.weeklySets ?? 0,
+        );
+        if (byTarget != 0) return byTarget;
+        return a.compareTo(b);
+      });
+
+    final dayMuscles = <int, List<String>>{
+      for (int dayIdx = 0; dayIdx < availableDays; dayIdx++) dayIdx: <String>[],
+    };
+
+    for (final muscle in orderedMuscles) {
+      final cfg = canonicalConfig[muscle];
+      if (cfg == null) continue;
+
+      final eligibleDays = _eligibleDaysForMuscle(
+        muscle,
+        split: TrainingSplit.pushPullLegs,
+        availableDays: availableDays,
+      );
+      final desiredFrequency = cfg.frequency.clamp(1, eligibleDays.length);
+
+      final assignedDays = <int>[];
+      final candidateDays = List<int>.from(eligibleDays)
+        ..sort((a, b) {
+          final loadA = dayMuscles[a - 1]!.length;
+          final loadB = dayMuscles[b - 1]!.length;
+          final byCapacity = loadA.compareTo(loadB);
+          if (byCapacity != 0) return byCapacity;
+          return a.compareTo(b);
+        });
+
+      for (final day in candidateDays) {
+        if (assignedDays.length >= desiredFrequency) break;
+        if (dayMuscles[day - 1]!.length >= maxMusclesPerDay) {
+          continue;
+        }
+        dayMuscles[day - 1]!.add(muscle);
+        assignedDays.add(day);
+      }
+
+      if (assignedDays.isEmpty && candidateDays.isNotEmpty) {
+        final fallbackDay = candidateDays.first;
+        dayMuscles[fallbackDay - 1]!.add(muscle);
+        assignedDays.add(fallbackDay);
+      }
+
+      while (assignedDays.length < desiredFrequency) {
+        final relaxed = candidateDays
+            .where((day) => !assignedDays.contains(day))
+            .toList();
+        if (relaxed.isEmpty) break;
+        final selectedDay = relaxed.first;
+        dayMuscles[selectedDay - 1]!.add(muscle);
+        assignedDays.add(selectedDay);
+      }
+
+      if (assignedDays.isEmpty) continue;
+
+      final sets = cfg.weeklySets;
+      final baseSets = sets ~/ assignedDays.length;
+      final remainder = sets % assignedDays.length;
+
+      for (var i = 0; i < assignedDays.length; i++) {
+        final dayNumber = assignedDays[i];
+        final setsForDay = baseSets + (i < remainder ? 1 : 0);
+        final normalized = normalizeMuscleKey(muscle);
+        allocation[dayNumber - 1][normalized] =
+            (allocation[dayNumber - 1][normalized] ?? 0) + setsForDay;
+      }
+    }
+
+    for (final dayIndex in dayMuscles.keys) {
+      debugPrint(
+        '[Template] split=PPL day=${dayIndex + 1} músculos=${dayMuscles[dayIndex]!.length} maxMusclesPerDay=$maxMusclesPerDay',
+      );
+    }
   }
 
   /// Asignación determinista para Upper/Lower: cada músculo se asigna exactamente "frequency" veces,
@@ -770,15 +924,12 @@ class CycleTemplateBuilder {
       final cfg = config[muscle];
       if (cfg == null) continue;
 
-      // P0: garantizar factibilidad de sets respecto al dailyCap
-      const int dailyCap = 10;
       final int weeklySets = cfg.weeklySets;
-      final int minDaysNeeded = (weeklySets / dailyCap).ceil();
       final int requestedFrequency = cfg.frequency;
-      final int desiredFrequency = max(
-        requestedFrequency,
-        minDaysNeeded,
-      ).clamp(1, groupDays.length);
+      final int desiredFrequency = requestedFrequency.clamp(
+        1,
+        groupDays.length,
+      );
       final assignedDays = groupDays
           .where((dayIndex) => dayMuscles[dayIndex]!.contains(muscle))
           .toList();
@@ -822,24 +973,6 @@ class CycleTemplateBuilder {
         }
       }
 
-      // P0.2: degradar en vez de lanzar excepción si el cap diario hace
-      // imposible asignar todos los sets solicitados.
-      int effectiveWeeklySets = weeklySets;
-      final maxAssignableSets = assignedDays.length * dailyCap;
-      if (effectiveWeeklySets > maxAssignableSets) {
-        debugPrint(
-          '[V3][P0.2][INFEASIBLE_DAILY_ALLOCATION] '
-          'muscle="$muscle" '
-          'weeklySets=$weeklySets '
-          'minDaysNeeded=$minDaysNeeded '
-          'assignedDays=${assignedDays.length} '
-          'groupDays=${groupDays.length} '
-          'cap=$dailyCap '
-          'action=cap_to_$maxAssignableSets',
-        );
-        effectiveWeeklySets = maxAssignableSets;
-      }
-
       if (desiredFrequency == 2 &&
           assignedDays.length == 1 &&
           availableDays == 4 &&
@@ -881,7 +1014,7 @@ class CycleTemplateBuilder {
         assignedDays.add(fallbackDay);
       }
 
-      final sets = effectiveWeeklySets;
+      final sets = weeklySets;
       final baseSets = sets ~/ assignedDays.length;
       final remainder = sets % assignedDays.length;
 
@@ -938,10 +1071,12 @@ class CycleTemplateBuilder {
     }
 
     if (mismatches.isNotEmpty) {
-      debugPrint(
-        '[V3][P0.2][SESSION_COVERAGE_WARN] '
-        'coverage mismatch after session build: ${mismatches.join('; ')} '
-        'action=continue_without_throw',
+      throw StateError(
+        '[V3][P0.2][SESSION_COVERAGE_FAIL] CRITICAL: '
+        'Cobertura de sesión no coincide con objetivo. '
+        'Mismatches: ${mismatches.join("; ")}. '
+        'Esto indica un fallo en CycleTemplateBuilder.buildSession() — '
+        'no se pudieron asignar todos los músculos y sus sets según el plan.',
       );
     }
   }
@@ -1005,7 +1140,7 @@ class CycleTemplateBuilder {
     return canonical;
   }
 
-  static List<Exercise> _selectExercisesForMuscleDay({
+  static List<_SelectedExerciseWithZone> _selectExercisesForMuscleDay({
     required List<String> rawPoolIds,
     required List<Exercise> pool,
     required MuscleExerciseRoleMap roleMap,
@@ -1019,7 +1154,20 @@ class CycleTemplateBuilder {
     required int sessionIndex,
     required List<String>? lastPair,
     required String? lockedAnchorId,
+    required List<String> requiredSlotRoles,
   }) {
+    final slotRoles = requiredSlotRoles.isEmpty
+        ? const <String>['B1']
+        : requiredSlotRoles;
+    final firstSlot = slotRoles.first;
+    final secondSlot = slotRoles.length > 1 ? slotRoles[1] : slotRoles.first;
+    final firstAllowedPatterns = ExerciseCatalogV3.allowedPatternsForSlot(
+      firstSlot,
+    ).toSet();
+    final secondAllowedPatterns = ExerciseCatalogV3.allowedPatternsForSlot(
+      secondSlot,
+    ).toSet();
+
     final firstRole = preferredRoles.isNotEmpty
         ? preferredRoles.first
         : ExerciseRole.primaryAnchor;
@@ -1038,12 +1186,18 @@ class CycleTemplateBuilder {
     var firstIntensitySelection = _selectByPreferredZone(
       pool: _filterByIntensityZone(firstRolePool, primaryZone),
       desiredZone: primaryZone,
+      muscle: muscle,
+      requiredSlotRole: firstSlot,
+      allowedPatterns: firstAllowedPatterns,
     );
     // b) exact intensity + same muscle + unused
     if (firstIntensitySelection.candidates.isEmpty) {
       firstIntensitySelection = _selectByPreferredZone(
         pool: _filterByIntensityZone(pool, primaryZone),
         desiredZone: primaryZone,
+        muscle: muscle,
+        requiredSlotRole: firstSlot,
+        allowedPatterns: firstAllowedPatterns,
       );
     }
     // c) same role + fallback intensity
@@ -1051,6 +1205,9 @@ class CycleTemplateBuilder {
       firstIntensitySelection = _selectByPreferredZone(
         pool: firstRolePool,
         desiredZone: primaryZone,
+        muscle: muscle,
+        requiredSlotRole: firstSlot,
+        allowedPatterns: firstAllowedPatterns,
       );
     }
     // d/e fallback to same muscle/accessory path
@@ -1061,6 +1218,9 @@ class CycleTemplateBuilder {
       firstIntensitySelection = _selectByPreferredZone(
         pool: accessoryPool,
         desiredZone: primaryZone,
+        muscle: muscle,
+        requiredSlotRole: firstSlot,
+        allowedPatterns: firstAllowedPatterns,
       );
     }
 
@@ -1109,7 +1269,12 @@ class CycleTemplateBuilder {
 
     final chosenFirst = rotatedFirst.first;
     if (desiredCount <= 1) {
-      return [chosenFirst];
+      return [
+        _SelectedExerciseWithZone(
+          exercise: chosenFirst,
+          zone: firstIntensitySelection.usedZone,
+        ),
+      ];
     }
 
     final firstEqGroup = ExerciseCatalogV3.getEquivalenceGroup(chosenFirst.id);
@@ -1152,6 +1317,9 @@ class CycleTemplateBuilder {
           _selectByPreferredZone(
             pool: secondRolePool,
             desiredZone: secondaryZone,
+            muscle: muscle,
+            requiredSlotRole: secondSlot,
+            allowedPatterns: secondAllowedPatterns,
           ).candidates.where((candidate) {
             final secondEq = ExerciseCatalogV3.getEquivalenceGroup(
               candidate.id,
@@ -1163,14 +1331,17 @@ class CycleTemplateBuilder {
     }
     // d) same muscle + different equivalence group
     if (secondCandidates.isEmpty) {
-      secondCandidates = pool.where((ex) => ex.id != chosenFirst.id).where((
-        candidate,
-      ) {
-        final secondEq = ExerciseCatalogV3.getEquivalenceGroup(candidate.id);
-        return firstEqGroup == null ||
-            secondEq == null ||
-            firstEqGroup != secondEq;
-      }).toList();
+      secondCandidates = _filterByIntensityZone(pool, secondaryZone)
+          .where((ex) => ex.id != chosenFirst.id)
+          .where((candidate) {
+            final secondEq = ExerciseCatalogV3.getEquivalenceGroup(
+              candidate.id,
+            );
+            return firstEqGroup == null ||
+                secondEq == null ||
+                firstEqGroup != secondEq;
+          })
+          .toList();
     }
     // e) accessory fallback
     if (secondCandidates.isEmpty) {
@@ -1180,6 +1351,9 @@ class CycleTemplateBuilder {
       secondCandidates = _selectByPreferredZone(
         pool: accessoryPool,
         desiredZone: secondaryZone,
+        muscle: muscle,
+        requiredSlotRole: secondSlot,
+        allowedPatterns: secondAllowedPatterns,
       ).candidates;
     }
 
@@ -1188,6 +1362,9 @@ class CycleTemplateBuilder {
       secondCandidates = _selectByPreferredZone(
         pool: secondRolePool,
         desiredZone: secondaryZone,
+        muscle: muscle,
+        requiredSlotRole: secondSlot,
+        allowedPatterns: secondAllowedPatterns,
       ).candidates;
     }
 
@@ -1230,39 +1407,80 @@ class CycleTemplateBuilder {
     );
 
     if (rotatedSecond.isEmpty) {
-      debugPrint(
-        '[V3][ROLE_FALLBACK] muscle=$muscle reason=limited_pool used=single_only',
+      if (secondaryZone == 'heavy') {
+        debugPrint(
+          '[V3][HEAVY_SINGLE_DEFAULT] muscle=$muscle day=$dayNum '
+          'reason=no_second_heavy_candidate first=${chosenFirst.id}',
+        );
+        return [
+          _SelectedExerciseWithZone(
+            exercise: chosenFirst,
+            zone: firstIntensitySelection.usedZone,
+          ),
+        ];
+      }
+      throw StateError(
+        '[V3][STRICT_ZONE_SELECTION_FAIL] muscle=$muscle day=$dayNum '
+        'zone=$secondaryZone reason=no_second_exercise_candidates_for_multi_slot '
+        'first=${chosenFirst.id}',
       );
-      return [chosenFirst];
     }
 
     for (final candidate in rotatedSecond) {
+      if (!_isCompatibleBiseriePair(chosenFirst, candidate)) {
+        continue;
+      }
       final secondEqGroup = ExerciseCatalogV3.getEquivalenceGroup(candidate.id);
       if (firstEqGroup == null || secondEqGroup == null) {
-        return _applyPairVariation(
+        final pair = _applyPairVariation(
           first: chosenFirst,
           candidate: candidate,
           alternatives: rotatedSecond,
           lastPair: lastPair,
         );
+        return [
+          _SelectedExerciseWithZone(
+            exercise: pair.first,
+            zone: firstIntensitySelection.usedZone,
+          ),
+          _SelectedExerciseWithZone(
+            exercise: pair.last,
+            zone: secondIntensitySelection.usedZone,
+          ),
+        ];
       }
       if (firstEqGroup != secondEqGroup) {
         debugPrint(
           '[V3][EQ_GROUP_FILTER] muscle=$muscle day=$dayNum first=$firstEqGroup second=$secondEqGroup result=ok',
         );
-        return _applyPairVariation(
+        final pair = _applyPairVariation(
           first: chosenFirst,
           candidate: candidate,
           alternatives: rotatedSecond,
           lastPair: lastPair,
         );
+        return [
+          _SelectedExerciseWithZone(
+            exercise: pair.first,
+            zone: firstIntensitySelection.usedZone,
+          ),
+          _SelectedExerciseWithZone(
+            exercise: pair.last,
+            zone: secondIntensitySelection.usedZone,
+          ),
+        ];
       }
     }
 
     debugPrint(
       '[V3][EQ_GROUP_FILTER] muscle=$muscle day=$dayNum first=$firstEqGroup result=fallback_single',
     );
-    return [chosenFirst];
+    return [
+      _SelectedExerciseWithZone(
+        exercise: chosenFirst,
+        zone: firstIntensitySelection.usedZone,
+      ),
+    ];
   }
 
   static List<ExerciseRole> _resolveSessionRolePlan({
@@ -1335,32 +1553,37 @@ class CycleTemplateBuilder {
     String zone,
   ) {
     return pool.where((exercise) {
-      final allowed = ExerciseCatalogV3.getAllowedIntensityZones(exercise.id);
-      return allowed[zone] == true;
+      return ExerciseCatalogV3.allowsZone(exercise.id, zone) &&
+          exercise.allowsZone(zone);
     }).toList();
   }
 
   static _ZoneSelection _selectByPreferredZone({
     required List<Exercise> pool,
     required String desiredZone,
+    required String muscle,
+    required String requiredSlotRole,
+    required Set<String> allowedPatterns,
   }) {
-    final desiredCandidates = _filterByIntensityZone(pool, desiredZone);
-    if (desiredCandidates.isNotEmpty) {
+    try {
+      final desiredCandidates =
+          ExerciseSelectionEngine.selectDeterministicCandidates(
+            pool: pool,
+            muscleKey: muscle,
+            intensityZone: desiredZone,
+            requiredSlotRole: requiredSlotRole,
+            allowedMovementPatterns: allowedPatterns,
+          );
       return _ZoneSelection(
         usedZone: desiredZone,
         candidates: desiredCandidates,
       );
+    } on StateError catch (e) {
+      debugPrint(
+        '[V3][STRICT_ZONE_CANDIDATES_EMPTY] muscle=$muscle zone=$desiredZone error=$e',
+      );
+      return const _ZoneSelection(usedZone: 'none', candidates: <Exercise>[]);
     }
-
-    final mediumCandidates = _filterByIntensityZone(pool, 'medium');
-    if (mediumCandidates.isNotEmpty) {
-      return _ZoneSelection(usedZone: 'medium', candidates: mediumCandidates);
-    }
-
-    return _ZoneSelection(
-      usedZone: 'any',
-      candidates: List<Exercise>.from(pool),
-    );
   }
 
   static String _intensityZoneForRepRange(RepRange range) {
@@ -1426,10 +1649,54 @@ class CycleTemplateBuilder {
           ).where((day) => day.isEven).toList();
         }
         return List<int>.generate(availableDays, (i) => i + 1);
-      case TrainingSplit.fullBody:
       case TrainingSplit.pushPullLegs:
+        if (availableDays >= 6) {
+          final pushDays = <int>[1, 4];
+          final pullDays = <int>[2, 5];
+          final legDays = <int>[3, 6];
+          final torsoDays = <int>[1, 2, 3, 4, 5, 6];
+          if (_isPushMuscle(normalized)) return pushDays;
+          if (_isPullMuscle(normalized)) return pullDays;
+          if (_isLowerMuscle(normalized)) return legDays;
+          if (normalized == 'abs') return legDays;
+          return torsoDays;
+        }
+
+        if (availableDays == 5) {
+          final pushDays = <int>[1, 4];
+          final pullDays = <int>[2, 4];
+          final legDays = <int>[3, 5];
+          final torsoDays = <int>[4];
+          if (_isPushMuscle(normalized)) return pushDays;
+          if (_isPullMuscle(normalized)) return pullDays;
+          if (_isLowerMuscle(normalized)) return legDays;
+          if (normalized == 'abs') return <int>[3, 4, 5];
+          return torsoDays;
+        }
+
+        return List<int>.generate(availableDays, (i) => i + 1);
+      case TrainingSplit.fullBody:
         return List<int>.generate(availableDays, (i) => i + 1);
     }
+  }
+
+  static bool _isPushMuscle(String muscle) {
+    return const {
+      'pectorals',
+      'delts_front',
+      'delts_lateral',
+      'triceps',
+    }.contains(muscle);
+  }
+
+  static bool _isPullMuscle(String muscle) {
+    return const {
+      'lats',
+      'upper_back',
+      'traps',
+      'biceps',
+      'delts_rear',
+    }.contains(muscle);
   }
 
   static int _effectiveFrequencyForMuscle({
@@ -1443,13 +1710,7 @@ class CycleTemplateBuilder {
       split: split,
       availableDays: availableDays,
     );
-    var effective = min(requestedFrequency, eligibleDays.length);
-    if (split == TrainingSplit.upperLower &&
-        availableDays == 4 &&
-        eligibleDays.length == 2 &&
-        effective < 2) {
-      effective = 2;
-    }
+    final effective = min(requestedFrequency, eligibleDays.length);
     return max(effective, 1);
   }
 
@@ -1481,18 +1742,13 @@ class CycleTemplateBuilder {
       final cfg = config[muscle];
       if (cfg == null) continue;
 
-      const int dailyCap = _defaultDailyCapPerMuscle;
-      final minDaysNeeded = (cfg.weeklySets / dailyCap).ceil();
       final effectiveFrequency = _effectiveFrequencyForMuscle(
         muscle: muscle,
         requestedFrequency: cfg.frequency,
         split: TrainingSplit.fullBody,
         availableDays: availableDays,
       );
-      final desiredFrequency = max(
-        effectiveFrequency,
-        minDaysNeeded,
-      ).clamp(1, availableDays);
+      final desiredFrequency = effectiveFrequency.clamp(1, availableDays);
 
       final assignedDays = <int>[];
       while (assignedDays.length < desiredFrequency) {
@@ -1620,28 +1876,66 @@ class CycleTemplateBuilder {
     Map<String, int> priorities,
   ) {
     while (exercises.length > maxPerSession) {
-      // Find the exercise to prune: lowest priority muscle, then prefer light
-      // Build score: lower = candidate for removal
-      PlannedExercise? toRemove;
-      int lowestPrio = 9999;
-      bool hasLight = false;
-
+      final countByMuscle = <String, int>{};
       for (final ex in exercises) {
-        final prio = priorities[ex.muscleKey] ?? 0;
-        final exHasLight = ex.sets.any((s) => s.repsMin >= 12);
-        if (prio < lowestPrio ||
-            (prio == lowestPrio && !hasLight && exHasLight)) {
-          lowestPrio = prio;
-          hasLight = exHasLight;
-          toRemove = ex;
-        }
+        final muscle = normalizeMuscleKey(ex.muscleKey);
+        countByMuscle[muscle] = (countByMuscle[muscle] ?? 0) + 1;
       }
 
-      if (toRemove != null) {
-        exercises.remove(toRemove);
-      } else {
-        exercises.removeLast();
+      final removable = exercises.where((ex) {
+        final muscle = normalizeMuscleKey(ex.muscleKey);
+        return (countByMuscle[muscle] ?? 0) > 1;
+      }).toList();
+
+      if (removable.isEmpty) {
+        debugPrint(
+          '[V3][P0.2][SESSION_CAP_WARN] Unable to reduce session to cap=$maxPerSession without losing muscle coverage. Keeping ${exercises.length} exercises.',
+        );
+        return;
       }
+
+      removable.sort((a, b) {
+        if (a.isMainLift != b.isMainLift) {
+          return a.isMainLift ? 1 : -1;
+        }
+
+        final prioA = priorities[normalizeMuscleKey(a.muscleKey)] ?? 0;
+        final prioB = priorities[normalizeMuscleKey(b.muscleKey)] ?? 0;
+        final byPriority = prioA.compareTo(prioB);
+        if (byPriority != 0) return byPriority;
+
+        final aHasLight = a.sets.any((s) => s.repsMin >= 12);
+        final bHasLight = b.sets.any((s) => s.repsMin >= 12);
+        if (aHasLight != bHasLight) {
+          return aHasLight ? -1 : 1;
+        }
+
+        return a.sets.length.compareTo(b.sets.length);
+      });
+
+      final toRemove = removable.first;
+      final muscle = normalizeMuscleKey(toRemove.muscleKey);
+      final replacementIndex = exercises.indexWhere(
+        (ex) =>
+            ex.id != toRemove.id && normalizeMuscleKey(ex.muscleKey) == muscle,
+      );
+
+      if (replacementIndex < 0) {
+        debugPrint(
+          '[V3][P0.2][SESSION_CAP_WARN] No replacement found for muscle=$muscle while pruning. Keeping ${exercises.length} exercises.',
+        );
+        return;
+      }
+
+      final replacement = exercises[replacementIndex];
+      exercises[replacementIndex] = replacement.copyWith(
+        sets: [...replacement.sets, ...toRemove.sets],
+      );
+      exercises.remove(toRemove);
+
+      debugPrint(
+        '[V3][P0.2][SESSION_CAP_MERGE] muscle=$muscle removed=${toRemove.exerciseId} mergedInto=${replacement.exerciseId} remaining=${exercises.length} cap=$maxPerSession',
+      );
     }
   }
 
@@ -1879,9 +2173,17 @@ class CycleTemplateBuilder {
         continue;
       }
 
-      final pairGroupId = block.exercises.length >= 2
+      final pairGroupId =
+          block.exercises.length >= 2 &&
+              _isValidPairingForBlock(block.exercises[0], block.exercises[1])
           ? '${block.blockLabel}_1'
           : null;
+      if (block.exercises.length >= 2 && pairGroupId == null) {
+        debugPrint(
+          '[V3][P9][PAIRING_FALLBACK_SINGLE] block=${block.blockLabel} '
+          'left=${block.exercises[0].id} right=${block.exercises[1].id}',
+        );
+      }
       for (var index = 0; index < block.exercises.length; index++) {
         final exercise = block.exercises[index];
         final slot = '${block.blockLabel}${index + 1}';
@@ -1999,14 +2301,10 @@ class CycleTemplateBuilder {
     Map<String, int> dayAlloc,
     Map<String, int> priorities,
   ) {
-    if (dayAlloc.isEmpty) {
-      return '';
-    }
-    return dayAlloc.keys.reduce((a, b) {
-      final aScore = (dayAlloc[a] ?? 0) * 10 + (priorities[a] ?? 0);
-      final bScore = (dayAlloc[b] ?? 0) * 10 + (priorities[b] ?? 0);
-      return aScore >= bScore ? a : b;
-    });
+    return DayStartPolicy.resolvePrimaryMuscle(
+      dayAllocation: dayAlloc,
+      priorities: priorities,
+    );
   }
 
   /// Orders muscles by block affinity relative to [primaryMuscle].
@@ -2060,8 +2358,12 @@ class CycleTemplateBuilder {
         m == 'traps';
 
     final bCandidates = remaining.where((m) {
-      return AntagonistPairingEngine.areAntagonists(primaryMuscle, m) ||
-          _isLowInterference(primaryMuscle, m);
+      return PairingContract.isAllowedBiserie(
+            firstPrimaryMuscle: primaryMuscle,
+            secondPrimaryMuscle: m,
+          ) &&
+          (AntagonistPairingEngine.areAntagonists(primaryMuscle, m) ||
+              _isLowInterference(primaryMuscle, m));
     }).toList();
     for (final muscle in bCandidates.take(2)) {
       plan['B']!.add(muscle);
@@ -2122,6 +2424,315 @@ class CycleTemplateBuilder {
     }
   }
 
+  static bool _isValidPairingForBlock(Exercise left, Exercise right) {
+    final leftMuscle = normalizeMuscleKey(
+      left.primaryMuscles.isNotEmpty ? left.primaryMuscles.first : '',
+    );
+    final rightMuscle = normalizeMuscleKey(
+      right.primaryMuscles.isNotEmpty ? right.primaryMuscles.first : '',
+    );
+    if (leftMuscle.isEmpty || rightMuscle.isEmpty) {
+      return false;
+    }
+    if (leftMuscle == rightMuscle) {
+      return false;
+    }
+    return _isCompatibleBiseriePair(left, right) &&
+        PairingContract.isAllowedBiserie(
+          firstPrimaryMuscle: leftMuscle,
+          secondPrimaryMuscle: rightMuscle,
+        );
+  }
+
+  static bool _isCompatibleBiseriePair(Exercise first, Exercise second) {
+    final firstPattern = ExerciseCatalogV3.getMovementPattern(first.id);
+    final secondPattern = ExerciseCatalogV3.getMovementPattern(second.id);
+    if (firstPattern.isNotEmpty && firstPattern == secondPattern) {
+      return false;
+    }
+
+    final firstHeavy = ExerciseCatalogV3.getLoadCategory(first.id) == 'heavy';
+    final secondHeavy = ExerciseCatalogV3.getLoadCategory(second.id) == 'heavy';
+    if (firstHeavy && secondHeavy) {
+      return false;
+    }
+
+    return true;
+  }
+
+  static void _enforceStructuralOrder(List<PlannedExercise> exercises) {
+    int loadRank(PlannedExercise planned) {
+      final load = ExerciseCatalogV3.getLoadCategory(planned.exerciseId);
+      switch (load) {
+        case 'heavy':
+          return 0;
+        case 'medium':
+          return 1;
+        case 'light':
+          return 2;
+        default:
+          return 3;
+      }
+    }
+
+    final originalIndex = <String, int>{};
+    for (var i = 0; i < exercises.length; i++) {
+      originalIndex[exercises[i].id] = i;
+    }
+
+    exercises.sort((a, b) {
+      final byLoad = loadRank(a).compareTo(loadRank(b));
+      if (byLoad != 0) return byLoad;
+      return (originalIndex[a.id] ?? 1 << 20).compareTo(
+        originalIndex[b.id] ?? 1 << 20,
+      );
+    });
+  }
+
+  static void _resolveHeavyPatternConflictsInSession(
+    List<PlannedExercise> exercises, {
+    required int dayNumber,
+  }) {
+    if (exercises.length < 2) return;
+
+    final orderedIndexes = List<int>.generate(exercises.length, (i) => i)
+      ..sort((a, b) {
+        final left = exercises[a];
+        final right = exercises[b];
+        final byMain = (right.isMainLift ? 1 : 0).compareTo(
+          left.isMainLift ? 1 : 0,
+        );
+        if (byMain != 0) return byMain;
+        final slotA = (left.slotLabel ?? '').toUpperCase();
+        final slotB = (right.slotLabel ?? '').toUpperCase();
+        final rankA = _slotRank(slotA);
+        final rankB = _slotRank(slotB);
+        if (rankA != rankB) return rankA.compareTo(rankB);
+        return a.compareTo(b);
+      });
+
+    final keepByPattern = <String, int>{};
+    for (final index in orderedIndexes) {
+      final current = exercises[index];
+      if (!_isHeavyCompound(current.exerciseId)) continue;
+      final conflicts = ExerciseCatalogV3.getConflictPatterns(
+        current.exerciseId,
+      );
+      if (conflicts.isEmpty) continue;
+      for (final conflictPattern in conflicts) {
+        keepByPattern.putIfAbsent(conflictPattern, () => index);
+      }
+    }
+
+    final usedIds = exercises.map((e) => e.exerciseId).toSet();
+    for (final index in orderedIndexes) {
+      final current = exercises[index];
+      if (!_isHeavyCompound(current.exerciseId)) continue;
+
+      final conflicts = ExerciseCatalogV3.getConflictPatterns(
+        current.exerciseId,
+      );
+      if (conflicts.isEmpty) {
+        continue;
+      }
+
+      final keepIndex = conflicts
+          .map((pattern) => keepByPattern[pattern])
+          .whereType<int>()
+          .fold<int?>(null, (acc, value) {
+            if (acc == null) return value;
+            return value < acc ? value : acc;
+          });
+      if (keepIndex == null || keepIndex == index) continue;
+
+      final source = ExerciseCatalogV3.getById(current.exerciseId);
+      if (source == null) {
+        throw StateError(
+          '[V3][P9][HEAVY_PATTERN_CONFLICT] day=$dayNumber conflict=${current.exerciseId} missing_source_catalog',
+        );
+      }
+
+      final replacement = _resolveHeavyConflictReplacement(
+        source: source,
+        muscleKey: normalizeMuscleKey(current.muscleKey),
+        conflictingPatterns: conflicts,
+        usedIds: usedIds,
+      );
+
+      if (replacement == null) {
+        throw StateError(
+          '[V3][P9][HEAVY_PATTERN_CONFLICT] day=$dayNumber patterns=$conflicts keep=${exercises[keepIndex].exerciseId} conflict=${current.exerciseId} no_resolution',
+        );
+      }
+
+      usedIds
+        ..remove(current.exerciseId)
+        ..add(replacement.exercise.id);
+
+      final repRange = IntensityDistributionEngine.repRangeForZone(
+        replacement.zone,
+      );
+      final rir = replacement.zone == 'light' ? 1 : 2;
+
+      final setCount = max(1, current.sets.length);
+      exercises[index] = current.copyWith(
+        exerciseId: replacement.exercise.id,
+        name: replacement.exercise.name,
+        muscleKey: normalizeMuscleKey(current.muscleKey),
+        primaryMuscle: _exercisePrimaryMuscle(replacement.exercise),
+        secondaryMuscles: List<String>.from(
+          replacement.exercise.secondaryMuscles,
+        ),
+        sets: List.generate(
+          setCount,
+          (_) => SetPrescription(
+            repsMin: repRange.min,
+            repsMax: repRange.max,
+            rir: rir,
+          ),
+        ),
+      );
+
+      debugPrint(
+        '[V3][P9][HEAVY_PATTERN_RESOLVE] day=$dayNumber patterns=$conflicts '
+        'replaced=${current.exerciseId} -> ${replacement.exercise.id} '
+        'zone=${replacement.zone}',
+      );
+    }
+  }
+
+  static _ReplacementCandidate? _resolveHeavyConflictReplacement({
+    required Exercise source,
+    required String muscleKey,
+    required List<String> conflictingPatterns,
+    required Set<String> usedIds,
+  }) {
+    bool isNonHeavyCompound(String exerciseId) {
+      final loadCategory = ExerciseCatalogV3.getLoadCategory(exerciseId);
+      final type = ExerciseCatalogV3.getTypeById(exerciseId);
+      return !(loadCategory == 'heavy' && type == 'compound');
+    }
+
+    // Prioridad 2: degradar a medium/light dentro de equivalencias válidas.
+    for (final zone in const <String>['medium', 'light']) {
+      final sameGroup =
+          ExerciseCatalogV3.findEquivalentExercisesForZone(
+            source: source,
+            zone: zone,
+            muscleKey: muscleKey,
+            excludeIds: usedIds,
+          ).where((candidate) {
+            if (!isNonHeavyCompound(candidate.id)) return false;
+            if (zone == 'medium' &&
+                !ExerciseCatalogV3.canDemoteToMediumNextBlock(candidate.id)) {
+              return false;
+            }
+            if (zone == 'light' &&
+                !ExerciseCatalogV3.getSecondaryHeavyEligibility(candidate.id)) {
+              return false;
+            }
+            return true;
+          }).toList();
+
+      if (sameGroup.isNotEmpty) {
+        return _ReplacementCandidate(exercise: sameGroup.first, zone: zone);
+      }
+    }
+
+    // Prioridad 3: sustituir por patrón complementario válido del mismo músculo.
+    final sameMusclePool = ExerciseCatalogV3.getByMuscle(muscleKey).where((
+      candidate,
+    ) {
+      if (candidate.id == source.id || usedIds.contains(candidate.id)) {
+        return false;
+      }
+      final pattern = ExerciseCatalogV3.getMovementPattern(candidate.id);
+      if (pattern.isEmpty || pattern == 'unknown') return false;
+      if (conflictingPatterns.contains(pattern)) return false;
+      return isNonHeavyCompound(candidate.id);
+    }).toList();
+
+    sameMusclePool.sort((a, b) {
+      int zoneRank(String id) {
+        if (ExerciseCatalogV3.allowsZone(id, 'medium')) return 0;
+        if (ExerciseCatalogV3.allowsZone(id, 'light')) return 1;
+        return 10;
+      }
+
+      final byZone = zoneRank(a.id).compareTo(zoneRank(b.id));
+      if (byZone != 0) return byZone;
+
+      final byStimulus = ExerciseCatalogV3.getStimulusScore(
+        b.id,
+      ).compareTo(ExerciseCatalogV3.getStimulusScore(a.id));
+      if (byStimulus != 0) return byStimulus;
+
+      final byFatigue = ExerciseCatalogV3.getFatigueScore(
+        a.id,
+      ).compareTo(ExerciseCatalogV3.getFatigueScore(b.id));
+      if (byFatigue != 0) return byFatigue;
+
+      return a.id.compareTo(b.id);
+    });
+
+    for (final candidate in sameMusclePool) {
+      if (ExerciseCatalogV3.allowsZone(candidate.id, 'medium')) {
+        return _ReplacementCandidate(exercise: candidate, zone: 'medium');
+      }
+      if (ExerciseCatalogV3.allowsZone(candidate.id, 'light')) {
+        return _ReplacementCandidate(exercise: candidate, zone: 'light');
+      }
+    }
+
+    // Prioridad 4: sin resolución válida -> block.
+    return null;
+  }
+
+  static List<String> _slotPlanForBlock(
+    String blockLabel, {
+    required int desiredCount,
+  }) {
+    final normalized = blockLabel.trim().toUpperCase();
+    if (normalized == 'A') return const <String>['A'];
+    if (normalized == 'B') {
+      return desiredCount > 1
+          ? const <String>['B1', 'B2']
+          : const <String>['B1'];
+    }
+    if (normalized == 'C') {
+      return desiredCount > 1
+          ? const <String>['C1', 'C2']
+          : const <String>['C1'];
+    }
+    return desiredCount > 1 ? const <String>['D1', 'D2'] : const <String>['D1'];
+  }
+
+  static bool _isHeavyCompound(String exerciseId) {
+    return ExerciseCatalogV3.getLoadCategory(exerciseId) == 'heavy' &&
+        ExerciseCatalogV3.getTypeById(exerciseId) == 'compound';
+  }
+
+  static int _slotRank(String slot) {
+    switch (slot) {
+      case 'A':
+        return 0;
+      case 'B1':
+        return 1;
+      case 'B2':
+        return 2;
+      case 'C1':
+        return 3;
+      case 'C2':
+        return 4;
+      case 'D1':
+        return 5;
+      case 'D2':
+        return 6;
+      default:
+        return 100;
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // P0.1 — Feasibility helpers
   // ─────────────────────────────────────────────────────────────────────────
@@ -2158,6 +2769,7 @@ class CycleTemplateBuilder {
   static _ConfigOrFail _calculateMuscleConfigOrFail(
     Map<String, int> volume,
     int availableDays,
+    TrainingSplit split,
   ) {
     final config = <String, _MuscleFreqConfig>{};
 
@@ -2166,27 +2778,53 @@ class CycleTemplateBuilder {
       final sets = entry.value;
 
       int freq = 1;
-      if (sets <= 10) {
-        freq = 1;
-      } else if (sets <= 20) {
-        freq = 2;
-      } else {
-        freq = 3;
-      }
+      freq = VolumeToFrequencyRule.frequencyForWeeklyVolume(sets);
 
       if (freq > availableDays) freq = availableDays;
+
+      final freqResolution =
+          FrequencyFeasibilityResolver.resolveFeasibleFrequency(
+            muscle: muscle,
+            targetSets: sets,
+            baseFrequency: freq,
+            maxFrequency: availableDays,
+            dailyCap: _defaultDailyCapPerMuscle,
+            effectiveFrequencyForCandidate: (candidateFrequency) =>
+                _effectiveFrequencyForMuscle(
+                  muscle: muscle,
+                  requestedFrequency: candidateFrequency,
+                  split: split,
+                  availableDays: availableDays,
+                ),
+            errorContext: 'cycle_template_builder',
+          );
+
+      debugPrint(freqResolution.toLogLine(tag: 'V3][P0.2][FREQ_TRACE'));
+
+      if (!freqResolution.isFeasible) {
+        return _ConfigOrFail.failure(
+          TemplateBuildResult.failure(
+            error:
+                freqResolution.blockingError ??
+                '[V3][P0.2][INFEASIBLE] Unable to resolve feasible frequency.',
+          ),
+        );
+      }
 
       final feasResult = _failIfInfeasible(
         muscle: muscle,
         targetSets: sets,
-        frequency: freq,
+        frequency: freqResolution.effectiveFrequency,
         daysPerWeek: availableDays,
       );
       if (!feasResult.success) {
         return _ConfigOrFail.failure(feasResult);
       }
 
-      config[muscle] = _MuscleFreqConfig(weeklySets: sets, frequency: freq);
+      config[muscle] = _MuscleFreqConfig(
+        weeklySets: sets,
+        frequency: freqResolution.effectiveFrequency,
+      );
     }
     return _ConfigOrFail.ok(config);
   }
@@ -2225,6 +2863,20 @@ class _ZoneSelection {
   final List<Exercise> candidates;
 
   const _ZoneSelection({required this.usedZone, required this.candidates});
+}
+
+class _SelectedExerciseWithZone {
+  final Exercise exercise;
+  final String zone;
+
+  const _SelectedExerciseWithZone({required this.exercise, required this.zone});
+}
+
+class _ReplacementCandidate {
+  final Exercise exercise;
+  final String zone;
+
+  const _ReplacementCandidate({required this.exercise, required this.zone});
 }
 
 class _StructuredSessionData {

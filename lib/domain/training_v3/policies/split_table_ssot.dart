@@ -9,14 +9,14 @@ class SplitTableSSOT {
     // Tier 1: Big Compound Movers (Primary)
     'pectorals': 2,
     'lats': 2,
-    'quadriceps': 2,
+    'quads': 2,
     'glutes': 2,
     'hamstrings': 2, // Often heavy
-    'deltoide_anterior': 2, // Push primary
+    'delts_front': 2, // Push primary
     // Tier 2: Secondary / Smaller Components
     'upper_back': 1,
-    'deltoide_lateral': 1,
-    'deltoide_posterior': 1,
+    'delts_lateral': 1,
+    'delts_rear': 1,
     'triceps': 1,
     'biceps': 1,
 
@@ -47,26 +47,51 @@ class SplitTableSSOT {
       'pectorals',
       'lats',
       'upper_back',
-      'deltoide_anterior',
-      'deltoide_lateral',
-      'deltoide_posterior',
+      'delts_front',
+      'delts_lateral',
+      'delts_rear',
       'biceps',
       'triceps',
       'traps',
     ],
-    'lower': ['quadriceps', 'hamstrings', 'glutes', 'calves', 'abs'],
+    'lower': ['quads', 'hamstrings', 'glutes', 'calves', 'abs'],
   };
 
   /// Recommended Pattern for 6-day Split (Push/Pull/Legs).
   static const Map<String, List<String>> pplTemplate = {
-    'push': [
+    'push': ['pectorals', 'delts_front', 'delts_lateral', 'triceps', 'abs'],
+    'pull': ['lats', 'upper_back', 'delts_rear', 'biceps', 'traps'],
+    'legs': ['quads', 'hamstrings', 'glutes', 'calves'],
+  };
+
+  /// Recommended Pattern for 5-day PPL hybrid split.
+  /// Day 4 is a torso emphasis day, not an upper/lower fallback.
+  static const Map<String, List<String>> ppl5Template = {
+    'push': ['pectorals', 'delts_front', 'delts_lateral', 'triceps'],
+    'pull': ['lats', 'upper_back', 'delts_rear', 'biceps', 'traps'],
+    'legs_a': ['quads', 'hamstrings', 'glutes', 'calves'],
+    'torso': [
       'pectorals',
-      'deltoide_anterior',
-      'deltoide_lateral',
+      'lats',
+      'upper_back',
+      'traps',
+      'delts_front',
+      'delts_lateral',
+      'delts_rear',
+      'biceps',
       'triceps',
       'abs',
     ],
-    'pull': ['lats', 'upper_back', 'deltoide_posterior', 'biceps', 'traps'],
-    'legs': ['quadriceps', 'hamstrings', 'glutes', 'calves'],
+    'legs_b': ['quads', 'hamstrings', 'glutes', 'calves'],
+  };
+
+  /// Recommended Pattern for 6-day PPL split.
+  static const Map<String, List<String>> ppl6Template = {
+    'push_a': ['pectorals', 'delts_front', 'delts_lateral', 'triceps'],
+    'pull_a': ['lats', 'upper_back', 'delts_rear', 'biceps', 'traps'],
+    'legs_a': ['quads', 'hamstrings', 'glutes', 'calves'],
+    'push_b': ['pectorals', 'delts_front', 'delts_lateral', 'triceps'],
+    'pull_b': ['lats', 'upper_back', 'delts_rear', 'biceps', 'traps'],
+    'legs_b': ['quads', 'hamstrings', 'glutes', 'calves'],
   };
 }

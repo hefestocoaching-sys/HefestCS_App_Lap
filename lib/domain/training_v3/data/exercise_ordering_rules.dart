@@ -1,37 +1,27 @@
 import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
+import 'package:hcs_app_lap/domain/policies/structural_exercise_order_contract.dart';
 
 /// Helper class to provide ordering metadata for exercises.
 ///
 /// Used to sort exercises within a session according to:
 /// 1. Compound > Isolation
-/// 2. Heavy Load > Moderate > Light
+/// 2. Heavy Load > Medium > Light
 /// 3. Large Muscle > Small Muscle (handled by session structure usually, but good for tie-breaking)
 class ExerciseOrderingRules {
   /// Returns a score for sorting. Higher is better (comes first).
   static int getScore(Exercise exercise) {
-    int score = 0;
+    final isCompound = _isCompound(exercise);
+    final isLarge = _isLargeMuscle(exercise);
+    final zone = _inferIntensityZone(exercise);
+    final index = StructuralExerciseOrderContract.structuralIndex(
+      isLargeMuscle: isLarge,
+      isCompound: isCompound,
+      intensityZone: zone,
+    );
 
-    // 1. Compound vs Isolation (Base score)
-    // We infer this from the 'mechanics' field if available, or tags.
-    // Since Exercise model might not have explicit mechanics, we use a heuristic or catalog lookup if possible.
-    // For now, we assume 'compound' tag or 'multi-joint' in metadata.
-    if (_isCompound(exercise)) {
-      score += 100;
-    } else {
-      score += 50;
-    }
-
-    // 2. Load Tier (Heavy/Med/Light)
-    // Inferred from difficulty or type.
-    // 'compound' usually heavy.
-    if (_isHeavy(exercise)) {
-      score += 20;
-    } else if (_isModerate(exercise)) {
-      score += 10;
-    }
-
-    return score;
+    // Menor índice estructural debe salir primero.
+    return 1000 - index;
   }
 
   static bool _isCompound(Exercise ex) {
@@ -44,10 +34,11 @@ class ExerciseOrderingRules {
 
     // Fallback by muscle group
     final heavyMuscles = [
-      'quadriceps',
+      'quads',
       'hamstrings',
-      'chest',
-      'back',
+      'pectorals',
+      'lats',
+      'upper_back',
       'glutes',
     ];
     if (ex.primaryMuscles.any((m) => heavyMuscles.contains(m.toLowerCase()))) {
@@ -56,12 +47,25 @@ class ExerciseOrderingRules {
     return false;
   }
 
-  static bool _isHeavy(Exercise ex) {
-    // Compounds are generally heavy
-    return _isCompound(ex);
+  static bool _isLargeMuscle(Exercise ex) {
+    final large = {
+      'quads',
+      'hamstrings',
+      'pectorals',
+      'lats',
+      'upper_back',
+      'glutes',
+      'traps',
+    };
+    return ex.primaryMuscles.any((m) => large.contains(m.toLowerCase()));
   }
 
-  static bool _isModerate(Exercise ex) {
-    return !_isCompound(ex);
+  static String _inferIntensityZone(Exercise ex) {
+    final metadata = ExerciseCatalogV3.getMetadataById(ex.id) ?? const {};
+    final loadCategory = metadata['loadCategory']?.toString().toLowerCase();
+    if (loadCategory == 'heavy' || loadCategory == 'light') {
+      return loadCategory!;
+    }
+    return 'medium';
   }
 }

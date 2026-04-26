@@ -9,6 +9,8 @@ import 'package:hcs_app_lap/domain/training_v3/models/client_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/resolvers/muscle_to_catalog_resolver.dart'
     as resolver;
 import 'package:hcs_app_lap/domain/training_v3/utils/muscle_key_adapter_v3.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
 
 /// Motor de selección inteligente de ejercicios
 ///
@@ -45,6 +47,12 @@ class ExerciseSelectionEngine {
   static const int _maxSetsPerExercise = 5;
   static const int _maxExercisesPerMusclePerSession = 2;
 
+  static String normalizeMuscleKey(String raw) {
+    final key = raw.trim().toLowerCase();
+    if (key.isEmpty) return key;
+    return muscle_registry.normalize(key) ?? key;
+  }
+
   /// P0.1 Selection Rule: selects exercises and distributes sets respecting hard caps
   static List<SelectedExerciseResult> selectExercisesForMuscle({
     required List<Exercise> pool,
@@ -79,10 +87,11 @@ class ExerciseSelectionEngine {
       if (i == selected.length - 1) {
         int unassigned = targetSets - totalAssigned;
         if (unassigned > 0) {
-          debugPrint(
-            '[V3][P0.1][UNASSIGNED_SETS] target=$targetSets assigned=$totalAssigned unassigned=$unassigned',
+          throw StateError(
+            '[V3][P0.1][UNASSIGNED_SETS] CRITICAL: target=$targetSets assigned=$totalAssigned unassigned=$unassigned. '
+            'Volume cap exceeded: max 5 sets/exercise × 2 exercises = 10 sets/session. '
+            'Request: ${pool.length} exercises but only 2 available slots.',
           );
-          notes = 'unassignedSets: $unassigned';
         }
       }
 
@@ -104,6 +113,10 @@ class ExerciseSelectionEngine {
     required List<String> availableEquipment,
     required Map<String, String> injuryHistory,
     required int targetExerciseCount,
+    String? intensityZone,
+    String? preferredMovementPattern,
+    Set<String> recentExerciseIds = const <String>{},
+    Set<String> restrictedExerciseIds = const <String>{},
   }) {
     // P0.2: NORMALIZACIÓN CANÓNICA
     // Convertir la clave canónica del motor a las claves REALES del catálogo
@@ -113,10 +126,24 @@ class ExerciseSelectionEngine {
       '[ExerciseSelection][selectExercises] motor_muscle="$targetMuscle" → catalogKeys=$catalogKeys',
     );
 
+    List<String> normalizeEquipment(dynamic raw) {
+      if (raw is List) {
+        return raw
+            .map((e) => e?.toString().trim().toLowerCase() ?? '')
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
+      final single = raw?.toString().trim().toLowerCase() ?? '';
+      return single.isEmpty ? const <String>[] : <String>[single];
+    }
+
     bool hasEquipmentMatch(Map<String, dynamic> exercise) {
-      final equipment = (exercise['equipment'] as List?)?.cast<String>() ?? [];
+      final equipment = normalizeEquipment(exercise['equipment']);
       if (availableEquipment.isEmpty || equipment.isEmpty) return true;
-      return equipment.any(availableEquipment.contains);
+      final available = availableEquipment
+          .map((e) => e.trim().toLowerCase())
+          .toSet();
+      return equipment.any(available.contains);
     }
 
     bool isInjurySafe(Map<String, dynamic> exercise) {
@@ -126,49 +153,103 @@ class ExerciseSelectionEngine {
       return !stressed.any(injuryHistory.containsKey);
     }
 
-    // P0.2: COMPARACIÓN POR CATÁLOGO (no por motor)
     bool targetsMuscle(Map<String, dynamic> exercise) {
       final primary =
-          (exercise['primary_muscles'] as List?)?.cast<String>() ?? [];
-      // Verificar si alguno de los primaryMuscles coincide con alguno de los catalogKeys
-      final matches = primary.where((p) => catalogKeys.contains(p)).toList();
-      return matches.isNotEmpty;
+          (exercise['primaryMuscles'] as List?)?.cast<String>() ??
+          (exercise['primary_muscles'] as List?)?.cast<String>() ??
+          const <String>[];
+      return primary.any((p) => catalogKeys.contains(p));
+    }
+
+    bool intensityCompatible(String id) {
+      final zone = intensityZone;
+      if (zone == null || zone.trim().isEmpty) return true;
+      return ExerciseCatalogV3.allowsZone(id, zone);
     }
 
     final candidates = availableExercises.entries.where((entry) {
+      final id = entry.key;
       final data = entry.value;
+      if (restrictedExerciseIds.contains(id)) return false;
       return targetsMuscle(data) &&
           hasEquipmentMatch(data) &&
-          isInjurySafe(data);
+          isInjurySafe(data) &&
+          intensityCompatible(id);
     }).toList();
 
     debugPrint(
       '[ExerciseSelection][selectExercises] catalogKeys=$catalogKeys found=${candidates.length} candidates',
     );
 
+    int readInt(Map<String, dynamic> data, String key, int fallback) {
+      final raw = data[key];
+      if (raw is int) return raw;
+      if (raw is num) return raw.round();
+      return int.tryParse(raw?.toString() ?? '') ?? fallback;
+    }
+
+    String readPattern(Map<String, dynamic> data, String fallbackId) {
+      final fromData = data['movementPattern']?.toString().trim().toLowerCase();
+      if (fromData != null && fromData.isNotEmpty) return fromData;
+      return ExerciseCatalogV3.getMovementPattern(fallbackId);
+    }
+
+    final preferredPattern = preferredMovementPattern?.trim().toLowerCase();
+
     candidates.sort((a, b) {
-      final typeA = a.value['type'] as String? ?? 'compound';
-      final typeB = b.value['type'] as String? ?? 'compound';
-      if (typeA == typeB) return 0;
-      return typeA == 'compound' ? -1 : 1;
+      final stimulusA = readInt(
+        a.value,
+        'stimulusScore',
+        ExerciseCatalogV3.getStimulusScore(a.key),
+      );
+      final stimulusB = readInt(
+        b.value,
+        'stimulusScore',
+        ExerciseCatalogV3.getStimulusScore(b.key),
+      );
+      final byStimulus = stimulusB.compareTo(stimulusA);
+      if (byStimulus != 0) return byStimulus;
+
+      final fatigueA = readInt(
+        a.value,
+        'fatigueScore',
+        ExerciseCatalogV3.getFatigueScore(a.key),
+      );
+      final fatigueB = readInt(
+        b.value,
+        'fatigueScore',
+        ExerciseCatalogV3.getFatigueScore(b.key),
+      );
+      final byFatigue = fatigueA.compareTo(fatigueB);
+      if (byFatigue != 0) return byFatigue;
+
+      if (preferredPattern != null && preferredPattern.isNotEmpty) {
+        final matchA = readPattern(a.value, a.key) == preferredPattern;
+        final matchB = readPattern(b.value, b.key) == preferredPattern;
+        if (matchA != matchB) return matchA ? -1 : 1;
+      }
+
+      final recentA = recentExerciseIds.contains(a.key);
+      final recentB = recentExerciseIds.contains(b.key);
+      if (recentA != recentB) return recentA ? 1 : -1;
+
+      return a.key.compareTo(b.key);
     });
 
     if (candidates.isNotEmpty) {
-      final selected = candidates
-          .take(targetExerciseCount)
-          .map((e) => e.key)
-          .toList();
+      final count = min(targetExerciseCount, candidates.length);
+      final selected = candidates.sublist(0, count).map((e) => e.key).toList();
       debugPrint(
         '[ExerciseSelection][selectExercises] selected=${selected.length}/$targetExerciseCount exercises for muscle="$targetMuscle"',
       );
       return selected;
     }
 
-    debugPrint(
-      '[ExerciseSelection][selectExercises] ⚠️ NO candidates found for muscle="$targetMuscle" (catalogs=$catalogKeys). Using fallback.',
+    throw StateError(
+      '[ExerciseSelection][STRICT_NO_FALLBACK] No candidates for muscle="$targetMuscle" '
+      'catalogKeys=$catalogKeys intensityZone=${intensityZone ?? 'any'} '
+      'equipment=${availableEquipment.join(',')} injuries=${injuryHistory.keys.join(',')}',
     );
-
-    return availableExercises.keys.take(targetExerciseCount).toList();
   }
 
   /// Selecciona ejercicios reales del catálogo por grupos musculares
@@ -182,6 +263,11 @@ class ExerciseSelectionEngine {
     required int targetSets,
     required ClientProfile profile,
     bool limitToTargetSets = true,
+    String? intensityZone,
+    List<String> availableEquipment = const <String>[],
+    Set<String> restrictedExerciseIds = const <String>{},
+    Set<String> recentExerciseIds = const <String>{},
+    String? preferredMovementPattern,
   }) {
     final keys = <String>{};
     for (final group in groups) {
@@ -189,8 +275,9 @@ class ExerciseSelectionEngine {
     }
 
     if (keys.isEmpty) {
-      debugPrint('[ExerciseSelection] ⚠️ No hay keys para grupos: $groups');
-      return const <Exercise>[];
+      throw StateError(
+        '[ExerciseSelection][STRICT] No hay keys para grupos: $groups',
+      );
     }
 
     debugPrint(
@@ -214,45 +301,10 @@ class ExerciseSelectionEngine {
     }
 
     if (all.isEmpty) {
-      debugPrint(
-        '[ExerciseSelection] ⚠️ No exercises for motorKeys=$keys catalogKeys=$catalogKeys',
+      throw StateError(
+        '[ExerciseSelection][STRICT_NO_FALLBACK] No exercises for groups=$groups '
+        'motorKeys=$keys catalogKeys=$catalogKeys',
       );
-
-      // Fallback inteligente: filtrar por primaryMuscles
-      final fallbackPrimary = ExerciseCatalogV3.getAllExercises().where((ex) {
-        return ex.primaryMuscles.any((m) => keys.contains(m));
-      }).toList();
-
-      debugPrint(
-        '[ExerciseSelection] Fallback(primary): Filtered ${fallbackPrimary.length}/${ExerciseCatalogV3.getAllExercises().length} exercises that match keys: $keys',
-      );
-
-      if (fallbackPrimary.isNotEmpty) {
-        all.addAll(fallbackPrimary);
-      }
-
-      if (all.isEmpty) {
-        final fallbackSecondary = ExerciseCatalogV3.getAllExercises().where((
-          ex,
-        ) {
-          return ex.secondaryMuscles.any((m) => keys.contains(m));
-        }).toList();
-
-        debugPrint(
-          '[ExerciseSelection] Fallback(secondary): Filtered ${fallbackSecondary.length}/${ExerciseCatalogV3.getAllExercises().length} exercises that match keys: $keys',
-        );
-
-        if (fallbackSecondary.isNotEmpty) {
-          all.addAll(fallbackSecondary);
-        }
-      }
-    }
-
-    if (all.isEmpty) {
-      debugPrint(
-        '[ExerciseSelection] ⚠️ Catalogo vacio o sin ejercicios para: $keys',
-      );
-      return const <Exercise>[];
     }
 
     final seen = <String>{};
@@ -261,14 +313,293 @@ class ExerciseSelectionEngine {
       if (seen.add(e.id)) deduped.add(e);
     }
 
-    final ordered = deduped..sort((a, b) => a.name.compareTo(b.name));
+    bool hasEquipment(Exercise ex) {
+      if (availableEquipment.isEmpty) return true;
+      final exEquipment = ex.equipment.trim().toLowerCase();
+      if (exEquipment.isEmpty) return true;
+      final available = availableEquipment
+          .map((e) => e.trim().toLowerCase())
+          .toSet();
+      return available.contains(exEquipment);
+    }
+
+    bool zoneOk(Exercise ex) {
+      final zone = intensityZone;
+      if (zone == null || zone.trim().isEmpty) return true;
+      return ExerciseCatalogV3.allowsZone(ex.id, zone);
+    }
+
+    final preferredPattern = preferredMovementPattern?.trim().toLowerCase();
+    final filtered = deduped.where((ex) {
+      if (restrictedExerciseIds.contains(ex.id)) return false;
+      if (!hasEquipment(ex)) return false;
+      if (!zoneOk(ex)) return false;
+      return true;
+    }).toList();
+
+    filtered.sort((a, b) {
+      final byStimulus = ExerciseCatalogV3.getStimulusScore(
+        b.id,
+      ).compareTo(ExerciseCatalogV3.getStimulusScore(a.id));
+      if (byStimulus != 0) return byStimulus;
+
+      final byFatigue = ExerciseCatalogV3.getFatigueScore(
+        a.id,
+      ).compareTo(ExerciseCatalogV3.getFatigueScore(b.id));
+      if (byFatigue != 0) return byFatigue;
+
+      if (preferredPattern != null && preferredPattern.isNotEmpty) {
+        final aMatch =
+            ExerciseCatalogV3.getMovementPattern(a.id) == preferredPattern;
+        final bMatch =
+            ExerciseCatalogV3.getMovementPattern(b.id) == preferredPattern;
+        if (aMatch != bMatch) return aMatch ? -1 : 1;
+      }
+
+      final aRecent = recentExerciseIds.contains(a.id);
+      final bRecent = recentExerciseIds.contains(b.id);
+      if (aRecent != bRecent) return aRecent ? 1 : -1;
+
+      return a.id.compareTo(b.id);
+    });
+
+    if (filtered.isEmpty) {
+      throw StateError(
+        '[ExerciseSelection][STRICT_NO_FALLBACK] No filtered exercises remain for '
+        'groups=$groups zone=${intensityZone ?? 'any'} equipment=$availableEquipment',
+      );
+    }
+
+    final ordered = filtered;
 
     if (!limitToTargetSets) {
       return ordered.toList();
     }
 
     final exerciseCount = max(1, min(ordered.length, (targetSets / 3).ceil()));
-    return ordered.take(exerciseCount).toList();
+    return ordered.sublist(0, exerciseCount);
+  }
+
+  static List<Exercise> selectDeterministicCandidates({
+    required List<Exercise> pool,
+    required String muscleKey,
+    required String intensityZone,
+    String? requiredSlotRole,
+    Set<String> allowedMovementPatterns = const <String>{},
+    List<String> availableEquipment = const <String>[],
+    Set<String> restrictedExerciseIds = const <String>{},
+    Set<String> recentExerciseIds = const <String>{},
+    String? preferredMovementPattern,
+  }) {
+    final normalizedZone = intensityZone.trim().toLowerCase();
+    if (normalizedZone.isEmpty) {
+      throw StateError(
+        '[ExerciseSelection][STRICT_ZONE_REQUIRED] intensityZone is required for deterministic selection',
+      );
+    }
+
+    final normalizedMuscle = normalizeMuscleKey(muscleKey);
+    final preferredPattern = preferredMovementPattern?.trim().toLowerCase();
+    final normalizedSlot = requiredSlotRole?.trim().toUpperCase();
+    final normalizedAllowedPatterns = allowedMovementPatterns
+        .map((pattern) => pattern.trim().toLowerCase())
+        .where((pattern) => pattern.isNotEmpty)
+        .toSet();
+    final available = availableEquipment
+        .map((e) => e.trim().toLowerCase())
+        .toSet();
+
+    int compatibilityScore(Exercise ex) {
+      var score = 0;
+      if (normalizedSlot != null &&
+          normalizedSlot.isNotEmpty &&
+          ExerciseCatalogV3.supportsSlot(ex.id, normalizedSlot)) {
+        score += 100;
+      }
+
+      final pattern = ExerciseCatalogV3.getMovementPattern(ex.id);
+      if (normalizedAllowedPatterns.isNotEmpty &&
+          normalizedAllowedPatterns.contains(pattern)) {
+        score += 80;
+      }
+
+      if (ExerciseCatalogV3.allowsZone(ex.id, normalizedZone)) {
+        score += 60;
+      }
+
+      return score;
+    }
+
+    final filtered = pool.where((ex) {
+      if (restrictedExerciseIds.contains(ex.id)) return false;
+      if (!ex.primaryMuscles.any(
+        (m) => normalizeMuscleKey(m) == normalizedMuscle,
+      )) {
+        return false;
+      }
+      if (!ExerciseCatalogV3.allowsZone(ex.id, normalizedZone)) return false;
+      if (!ex.allowsZone(normalizedZone)) return false;
+      if (normalizedSlot != null &&
+          normalizedSlot.isNotEmpty &&
+          !ExerciseCatalogV3.supportsSlot(ex.id, normalizedSlot)) {
+        return false;
+      }
+      final movementPattern = ExerciseCatalogV3.getMovementPattern(ex.id);
+      if (normalizedAllowedPatterns.isNotEmpty &&
+          !normalizedAllowedPatterns.contains(movementPattern)) {
+        return false;
+      }
+      final exEquipment = ex.equipment.trim().toLowerCase();
+      if (available.isNotEmpty &&
+          exEquipment.isNotEmpty &&
+          !available.contains(exEquipment)) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    filtered.sort((a, b) {
+      final byCompatibility = compatibilityScore(
+        b,
+      ).compareTo(compatibilityScore(a));
+      if (byCompatibility != 0) return byCompatibility;
+
+      final byOrderClass = ExerciseCatalogV3.getExerciseOrderClass(
+        a.id,
+      ).compareTo(ExerciseCatalogV3.getExerciseOrderClass(b.id));
+      if (byOrderClass != 0) return byOrderClass;
+
+      final byStimulus = ExerciseCatalogV3.getStimulusScore(
+        b.id,
+      ).compareTo(ExerciseCatalogV3.getStimulusScore(a.id));
+      if (byStimulus != 0) return byStimulus;
+
+      final byFatigue = ExerciseCatalogV3.getFatigueScore(
+        a.id,
+      ).compareTo(ExerciseCatalogV3.getFatigueScore(b.id));
+      if (byFatigue != 0) return byFatigue;
+
+      if (preferredPattern != null && preferredPattern.isNotEmpty) {
+        final aMatch =
+            ExerciseCatalogV3.getMovementPattern(a.id) == preferredPattern;
+        final bMatch =
+            ExerciseCatalogV3.getMovementPattern(b.id) == preferredPattern;
+        if (aMatch != bMatch) return aMatch ? -1 : 1;
+      }
+
+      final aRecent = recentExerciseIds.contains(a.id);
+      final bRecent = recentExerciseIds.contains(b.id);
+      if (aRecent != bRecent) return aRecent ? 1 : -1;
+
+      final byVariantTier = ExerciseCatalogV3.getVariantTier(
+        a.id,
+      ).compareTo(ExerciseCatalogV3.getVariantTier(b.id));
+      if (byVariantTier != 0) return byVariantTier;
+
+      return a.id.compareTo(b.id);
+    });
+
+    if (filtered.isNotEmpty) {
+      return filtered;
+    }
+
+    // Fallback controlado: explorar equivalentes únicamente dentro de
+    // equivalenceGroup y compatibles con zona objetivo.
+    final fallback = <Exercise>[];
+    final seen = <String>{};
+    for (final source in pool) {
+      final sourceMuscleMatches = source.primaryMuscles.any(
+        (m) => normalizeMuscleKey(m) == normalizedMuscle,
+      );
+      if (!sourceMuscleMatches) continue;
+
+      final candidates = ExerciseCatalogV3.findEquivalentExercisesForZone(
+        source: source,
+        zone: normalizedZone,
+        muscleKey: normalizedMuscle,
+        excludeIds: {...restrictedExerciseIds, ...recentExerciseIds},
+      );
+      for (final candidate in candidates) {
+        if (restrictedExerciseIds.contains(candidate.id)) continue;
+        if (!candidate.primaryMuscles.any(
+          (m) => normalizeMuscleKey(m) == normalizedMuscle,
+        )) {
+          continue;
+        }
+        if (!ExerciseCatalogV3.allowsZone(candidate.id, normalizedZone)) {
+          continue;
+        }
+        if (!candidate.allowsZone(normalizedZone)) continue;
+        if (normalizedSlot != null &&
+            normalizedSlot.isNotEmpty &&
+            !ExerciseCatalogV3.supportsSlot(candidate.id, normalizedSlot)) {
+          continue;
+        }
+        final movementPattern = ExerciseCatalogV3.getMovementPattern(
+          candidate.id,
+        );
+        if (normalizedAllowedPatterns.isNotEmpty &&
+            !normalizedAllowedPatterns.contains(movementPattern)) {
+          continue;
+        }
+        final exEquipment = candidate.equipment.trim().toLowerCase();
+        if (available.isNotEmpty &&
+            exEquipment.isNotEmpty &&
+            !available.contains(exEquipment)) {
+          continue;
+        }
+        if (seen.add(candidate.id)) {
+          fallback.add(candidate);
+        }
+      }
+    }
+
+    fallback.sort((a, b) {
+      final byCompatibility = compatibilityScore(
+        b,
+      ).compareTo(compatibilityScore(a));
+      if (byCompatibility != 0) return byCompatibility;
+
+      final byOrderClass = ExerciseCatalogV3.getExerciseOrderClass(
+        a.id,
+      ).compareTo(ExerciseCatalogV3.getExerciseOrderClass(b.id));
+      if (byOrderClass != 0) return byOrderClass;
+
+      final byStimulus = ExerciseCatalogV3.getStimulusScore(
+        b.id,
+      ).compareTo(ExerciseCatalogV3.getStimulusScore(a.id));
+      if (byStimulus != 0) return byStimulus;
+
+      final byFatigue = ExerciseCatalogV3.getFatigueScore(
+        a.id,
+      ).compareTo(ExerciseCatalogV3.getFatigueScore(b.id));
+      if (byFatigue != 0) return byFatigue;
+
+      if (preferredPattern != null && preferredPattern.isNotEmpty) {
+        final aMatch =
+            ExerciseCatalogV3.getMovementPattern(a.id) == preferredPattern;
+        final bMatch =
+            ExerciseCatalogV3.getMovementPattern(b.id) == preferredPattern;
+        if (aMatch != bMatch) return aMatch ? -1 : 1;
+      }
+
+      final byVariantTier = ExerciseCatalogV3.getVariantTier(
+        a.id,
+      ).compareTo(ExerciseCatalogV3.getVariantTier(b.id));
+      if (byVariantTier != 0) return byVariantTier;
+
+      return a.id.compareTo(b.id);
+    });
+
+    if (fallback.isNotEmpty) {
+      return fallback;
+    }
+
+    throw StateError(
+      '[ExerciseSelection][STRICT_NO_ZONE_CANDIDATES] '
+      'muscle=$normalizedMuscle zone=$normalizedZone pool=${pool.length} '
+      'restricted=${restrictedExerciseIds.length} recent=${recentExerciseIds.length}',
+    );
   }
 
   /// Metodo refactorizado pero no integrado en flujo actual

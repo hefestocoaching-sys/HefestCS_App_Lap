@@ -182,7 +182,7 @@ class LoadProgressionEngine {
   /// Sugiere variación para romper plateau
   ///
   /// ESTRATEGIAS:
-  /// 1. Cambiar rango de reps (heavy → moderate, etc.)
+  /// 1. Cambiar rango de reps (heavy → medium, etc.)
   /// 2. Cambiar ejercicio (variación)
   /// 3. Técnica de intensificación (drop sets, rest-pause)
   static Map<String, dynamic> suggestPlateauBreaker({
