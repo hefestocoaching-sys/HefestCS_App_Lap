@@ -8,6 +8,7 @@ import 'package:hcs_app_lap/features/training_feature/domain/training_pipeline_g
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/features/training_feature/providers/client_preferences_effect_provider.dart';
 
 class TrainingWorkspaceState {
   final TrainingInterviewStatus interviewStatus;
@@ -38,6 +39,10 @@ class TrainingWorkspaceState {
 }
 
 final trainingWorkspaceProvider = Provider<TrainingWorkspaceState>((ref) {
+  // Vigila cambios en preferencias del cliente para recomputar el workspace
+  // cuando las preferencias se actualizan (ej: cliente selecciona ejercicios favoritos)
+  ref.watch(clientPreferencesEffectProvider);
+
   final client = ref.watch(clientsProvider).value?.activeClient;
   final extra = client?.training.extra ?? const <String, dynamic>{};
   final interviewStatus = evaluateTrainingInterview(client?.training.extra);
