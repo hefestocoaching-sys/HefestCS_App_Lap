@@ -108,5 +108,22 @@ service cloud.firestore {
         allow read, write: if canAccessUserTrainingData(userId);
       }
     }
+
+    // ════════════════════════════════════════════════════════════
+    // ✅ CLIENT EXERCISE PREFERENCES (NUEVA)
+    // Cliente escribe sus preferencias de ejercicio
+    // Coach lee preferencias para plan regeneration
+    // ════════════════════════════════════════════════════════════
+    
+    match /clients/{clientId} {
+      match /profile {
+        match /training {
+          // Cliente escribe sus propias preferencias
+          allow write: if isOwner(clientId);
+          // Coach lee preferencias de su cliente
+          allow read: if isOwner(clientId) || isCoachOfClient(clientId);
+        }
+      }
+    }
   }
 }
