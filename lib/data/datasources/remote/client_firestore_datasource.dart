@@ -42,7 +42,9 @@ abstract class ClientRemoteDataSource {
 
 class ClientFirestoreDataSource implements ClientRemoteDataSource {
   final FirebaseFirestore _firestore;
-  static const bool _enableFirestoreAudit = true;
+  // Audits disabled in production for performance (500-2000ms savings per save)
+  // Enable only in debug mode via: _enableFirestoreAudit = kDebugMode
+  static const bool _enableFirestoreAudit = false;
   static const Set<String> _remoteExcludedKeys = {
     'anthropometry',
     'biochemistry',

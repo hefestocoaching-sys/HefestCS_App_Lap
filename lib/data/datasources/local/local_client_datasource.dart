@@ -1,4 +1,3 @@
-
 import 'package:hcs_app_lap/domain/entities/client.dart';
 
 abstract class LocalClientDataSource {
@@ -7,5 +6,6 @@ abstract class LocalClientDataSource {
   Future<void> saveClient(Client client);
   Future<void> deleteClient(String id);
   Future<List<Client>> getUnsyncedClients();
+  Future<List<Client>> getUnsyncedDeletedClients();
   Future<void> markClientAsSynced(String id);
 }

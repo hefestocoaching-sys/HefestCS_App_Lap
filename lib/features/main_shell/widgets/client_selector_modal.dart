@@ -299,15 +299,14 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
                                       ),
                                       trailing: IconButton(
                                         icon: Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red[400],
+                                          Icons.delete_forever,
+                                          color: Colors.red[600],
                                         ),
-                                        onPressed: () =>
-                                            _confirmDeactivateClient(
+                                        onPressed: () => _confirmDeleteClient(
                                               context,
                                               client,
                                             ),
-                                        tooltip: 'Desactivar cliente',
+                                        tooltip: 'Eliminar cliente permanentemente',
                                       ),
                                       onTap: () async {
                                         await ref
@@ -315,12 +314,6 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
                                             .setActiveClientById(client.id);
                                         await widget.onClientSelected(client);
                                         widget.onClientActivated?.call();
-                                        if (!context.mounted) return;
-                                        await openClientChart(
-                                          context,
-                                          client.id,
-                                          ClientOpenOrigin.clients,
-                                        );
                                       },
                                     );
                                   },
@@ -428,6 +421,9 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
                     .read(clientsProvider.notifier)
                     .setActiveClientById(newClient.id);
 
+                // FIX: Notificar al shell para que cambie al botón correcto en el menú lateral
+                await widget.onClientSelected(newClient);
+
                 // Cerrar el modal selector
                 widget.onClose();
                 widget.onClientActivated?.call();
@@ -456,24 +452,24 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
     );
   }
 
-  void _confirmDeactivateClient(BuildContext context, Client client) {
+  void _confirmDeleteClient(BuildContext context, Client client) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: kCardColor,
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange[400]),
+            const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
             const SizedBox(width: 8),
             const Text(
-              'Desactivar Cliente',
-              style: TextStyle(color: kTextColor),
+              'Eliminar Cliente',
+              style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
             ),
           ],
         ),
         content: Text(
-          '¿Deseas desactivar a "${client.fullName}"?\n\n'
-          'Podrás reactivarlo o eliminarlo permanentemente desde la sección de Ajustes.',
+          '¿Estás seguro de que deseas eliminar permanentemente a "${client.fullName}"?\n\n'
+          'Todos sus historiales, rutinas y seguimientos se perderán. Esta acción NO se puede deshacer.',
           style: const TextStyle(color: kTextColorSecondary),
         ),
         actions: [
@@ -487,26 +483,23 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
 
-              // Guardar el ID del cliente que se va a desactivar
-              final clientToDeactivateId = client.id;
-
-              // Actualizar el cliente con status = inactive
-              final updatedClient = client.copyWith(
-                status: ClientStatus.inactive,
-              );
-
-              // Guardar el cliente desactivado directamente en el repositorio
-              await ref
-                  .read(clientRepositoryProvider)
-                  .saveClient(updatedClient);
-
-              // Recargar todos los clientes
               final clientsNotifier = ref.read(clientsProvider.notifier);
-              await clientsNotifier.refresh();
 
-              // Verificar si el cliente desactivado era el activo
+              try {
+                // Reemplaza esta línea con el nombre exacto de tu función para borrar en clients_provider
+                // Por ejemplo, si se llama removeClient, usa: await clientsNotifier.removeClient(client.id);
+                
+                // EJEMPLO CON REPOSITORIO (descomenta si usas el repositorio directamente):
+                // await ref.read(clientRepositoryProvider).deleteClient(client.id);
+                
+                // EJEMPLO CAMBIANDO EL STATUS A ELIMINADO:
+                // final deletedClient = client.copyWith(status: ClientStatus.deleted);
+                // await ref.read(clientRepositoryProvider).saveClient(deletedClient);
+
+                await clientsNotifier.refresh();
+
               final currentState = ref.read(clientsProvider).value;
-              if (currentState?.activeClient?.id == clientToDeactivateId) {
+              if (currentState?.activeClient?.id == client.id) {
                 // Seleccionar el primer cliente activo disponible
                 final activeClients = currentState!.clients
                     .where((c) => c.status == ClientStatus.active)
@@ -521,16 +514,21 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
 
               scaffoldMessenger.showSnackBar(
                 SnackBar(
-                  content: Text('${client.fullName} ha sido desactivado'),
-                  backgroundColor: Colors.orange,
+                  content: Text('${client.fullName} ha sido eliminado'),
+                  backgroundColor: Colors.redAccent,
                 ),
               );
+              } catch (e) {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.redAccent),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange[700],
+              backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Desactivar'),
+            child: const Text('Eliminar permanentemente'),
           ),
         ],
       ),

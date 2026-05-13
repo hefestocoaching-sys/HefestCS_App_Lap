@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
+import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
+import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 
-class ClientSummaryScreen extends StatelessWidget {
+class ClientSummaryScreen extends ConsumerWidget {
   final Client client;
 
   const ClientSummaryScreen({super.key, required this.client});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -185,9 +188,106 @@ class ClientSummaryScreen extends StatelessWidget {
                 ],
               ),
             ),
+
+          const SizedBox(height: 32),
+
+          // Botón de Eliminar Cliente
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => _confirmAndDeleteClient(context, ref),
+              icon: const Icon(Icons.delete_forever),
+              label: const Text(
+                'ELIMINAR ASESORADO',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmAndDeleteClient(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: kCardColor,
+        title: const Text(
+          'Eliminar Asesorado',
+          style: TextStyle(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          '¿Estás seguro de que deseas eliminar permanentemente a ${client.profile.fullName}? Todos sus historiales, rutinas y seguimientos se perderán y esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar Permanentemente'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        // Marcar al cliente como eliminado en la base de datos local y remota
+        final repository = ref.read(clientRepositoryProvider);
+
+        // Si tienes una función explícita de borrado, la usamos (descomenta si es el caso):
+        await repository.deleteClient(client.id);
+        await ref.read(clientsProvider.notifier).refresh();
+
+        // Feedback al usuario y salir de la pantalla de resumen
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Asesorado eliminado permanentemente'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+          // Regresar a la lista de clientes
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   String _formatDate(DateTime date) {

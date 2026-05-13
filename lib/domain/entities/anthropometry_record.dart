@@ -22,6 +22,7 @@ class AnthropometryRecord {
   double? maxCalfCirc;
   double? neckCirc;
 
+  double? humerusDiameter;
   double? wristDiameter;
   double? kneeDiameter;
 
@@ -46,6 +47,7 @@ class AnthropometryRecord {
     this.midThighCirc,
     this.maxCalfCirc,
     this.neckCirc,
+    this.humerusDiameter,
     this.wristDiameter,
     this.kneeDiameter,
     this.individualMeasurements,
@@ -69,6 +71,7 @@ class AnthropometryRecord {
     double? midThighCirc,
     double? maxCalfCirc,
     double? neckCirc,
+    double? humerusDiameter,
     double? wristDiameter,
     double? kneeDiameter,
     Map<String, List<double?>>? individualMeasurements,
@@ -91,6 +94,7 @@ class AnthropometryRecord {
       midThighCirc: midThighCirc ?? this.midThighCirc,
       maxCalfCirc: maxCalfCirc ?? this.maxCalfCirc,
       neckCirc: neckCirc ?? this.neckCirc,
+      humerusDiameter: humerusDiameter ?? this.humerusDiameter,
       wristDiameter: wristDiameter ?? this.wristDiameter,
       kneeDiameter: kneeDiameter ?? this.kneeDiameter,
       individualMeasurements:
@@ -123,6 +127,7 @@ class AnthropometryRecord {
       'midThighCirc': finiteOrNull(midThighCirc),
       'maxCalfCirc': finiteOrNull(maxCalfCirc),
       'neckCirc': finiteOrNull(neckCirc),
+      'humerusDiameter': finiteOrNull(humerusDiameter),
       'wristDiameter': finiteOrNull(wristDiameter),
       'kneeDiameter': finiteOrNull(kneeDiameter),
       'individualMeasurements': individualMeasurements?.map(
@@ -150,6 +155,7 @@ class AnthropometryRecord {
       midThighCirc: (json['midThighCirc'] as num?)?.toDouble(),
       maxCalfCirc: (json['maxCalfCirc'] as num?)?.toDouble(),
       neckCirc: (json['neckCirc'] as num?)?.toDouble(),
+      humerusDiameter: (json['humerusDiameter'] as num?)?.toDouble(),
       wristDiameter: (json['wristDiameter'] as num?)?.toDouble(),
       kneeDiameter: (json['kneeDiameter'] as num?)?.toDouble(),
       individualMeasurements: json['individualMeasurements'] != null

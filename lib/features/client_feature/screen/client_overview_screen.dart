@@ -1178,12 +1178,8 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
                       },
                     ),
                   ),
-                  rightTitles: const AxisTitles(
-                    
-                  ),
-                  topTitles: const AxisTitles(
-                    
-                  ),
+                  rightTitles: const AxisTitles(),
+                  topTitles: const AxisTitles(),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -1213,12 +1209,8 @@ class _ClientOverviewContentState extends State<_ClientOverviewContent> {
                 borderData: FlBorderData(
                   show: true,
                   border: Border(
-                    left: BorderSide(
-                      color: kAppBarColor.withAlpha(60),
-                    ),
-                    bottom: BorderSide(
-                      color: kAppBarColor.withAlpha(60),
-                    ),
+                    left: BorderSide(color: kAppBarColor.withAlpha(60)),
+                    bottom: BorderSide(color: kAppBarColor.withAlpha(60)),
                   ),
                 ),
                 lineBarsData: [

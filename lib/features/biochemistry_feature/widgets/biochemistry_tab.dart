@@ -14,6 +14,9 @@ import 'package:hcs_app_lap/utils/widgets/record_history_panel.dart';
 import 'package:hcs_app_lap/utils/record_helpers.dart';
 import 'package:hcs_app_lap/utils/widgets/clinical_context_bar.dart';
 import 'package:hcs_app_lap/data/repositories/clinical_records_repository_provider.dart';
+import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
+import 'package:hcs_app_lap/domain/services/record_deletion_service_provider.dart';
+import 'package:hcs_app_lap/features/common_widgets/record_deletion_dialogs.dart';
 // Importante para las extensiones
 
 import '../../../domain/entities/biochemistry_record.dart';
@@ -522,20 +525,23 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
       return;
     }
 
-    // Detectar si es edición o nuevo registro
-    // ignore: unused_local_variable
-    final isEditing = SaveActionDetector.isEditingExistingDate(
-      client.biochemistry,
-      date,
-      (record) => record.date,
-    );
+    List<BioChemistryRecord> currentRecords = client.biochemistry;
+    final isEditing = _mode == _TabMode.editing;
+
+    // FIX: Prevenir "Bug de Fecha Fantasma"
+    // Si estamos editando y se cambió la fecha, quitar el original para no duplicarlo
+    if (isEditing && _selectedRecordDate != null) {
+      currentRecords = currentRecords
+          .where((r) => !DateUtils.isSameDay(r.date, _selectedRecordDate!))
+          .toList();
+    }
 
     // GUARD: Verificar que el widget siga montado antes de usar ref
     if (!mounted) return;
 
     await ref.read(clientsProvider.notifier).updateActiveClient((current) {
       final updatedRecords = upsertRecordByDate<BioChemistryRecord>(
-        existingRecords: current.biochemistry,
+        existingRecords: currentRecords,
         newRecord: newRecord,
         dateExtractor: (record) => record.date,
       );
@@ -587,6 +593,66 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
     if (mounted) {
       setState(() {});
     }
+  }
+
+  Future<void> _deleteRecordByDate(DateTime targetDate) async {
+    if (_client == null) return;
+
+    final confirmed = await showDeleteConfirmationDialog(
+      context: context,
+      date: targetDate,
+      recordType: 'Registro de Bioquímica',
+    );
+
+    if (!confirmed || !mounted) return;
+
+    try {
+      final deletionService = ref.read(recordDeletionServiceProvider);
+      await deletionService.deleteBiochemistryByDate(
+        clientId: _client!.id,
+        date: targetDate,
+        onError: (e) {
+          debugPrint('Error al borrar bioquímica: $e');
+        },
+      );
+
+      if (!mounted) return;
+
+      final filtered = _client!.biochemistry
+          .where((r) => !DateUtils.isSameDay(r.date, targetDate))
+          .toList();
+
+      final updatedClient = _client!.copyWith(biochemistry: filtered);
+      final repository = ref.read(clientRepositoryProvider);
+      await repository.saveClient(updatedClient);
+
+      await ref.read(clientsProvider.notifier).updateActiveClient((current) {
+        return current.copyWith(biochemistry: filtered);
+      });
+
+      if (!mounted) return;
+
+      setState(() {
+        _client = updatedClient;
+        if (_selectedRecordDate != null &&
+            DateUtils.isSameDay(_selectedRecordDate!, targetDate)) {
+          _selectedRecordDate = null;
+          _mode = _TabMode.idle;
+          _clearFields();
+        }
+      });
+
+      showDeleteSuccessSnackbar(context, targetDate, 'Bioquímica');
+    } catch (e) {
+      if (mounted) {
+        showDeleteErrorSnackbar(context, Exception('Error: $e'));
+      }
+    }
+  }
+
+  Future<void> _deleteSelectedRecord() async {
+    if (_selectedRecordDate == null) return;
+    await _deleteRecordByDate(_selectedRecordDate!);
   }
 
   // --- UI WIDGETS (Plantilla Clínica-Minimalista) ---
@@ -1772,7 +1838,7 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
 
     switch (_mode) {
       case _TabMode.view:
-        primaryButton = FloatingActionButton.extended(
+        final editButton = FloatingActionButton.extended(
           heroTag: 'bio_edit',
           onPressed: _enableEditMode,
           label: const Text(SaveMessages.buttonEditRecord),
@@ -1780,7 +1846,15 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
           backgroundColor: kPrimaryColor,
           foregroundColor: Colors.white,
         );
-        secondaryButton = FloatingActionButton.extended(
+        final deleteButton = FloatingActionButton.extended(
+          heroTag: 'bio_delete',
+          onPressed: _deleteSelectedRecord,
+          label: const Text('Borrar'),
+          icon: const Icon(Icons.delete_outline),
+          backgroundColor: Colors.red.shade700,
+          foregroundColor: Colors.white,
+        );
+        final backButton = FloatingActionButton.extended(
           heroTag: 'bio_cancel_view',
           onPressed: () {
             setState(() {
@@ -1798,7 +1872,16 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
           backgroundColor: Colors.grey.shade700,
           foregroundColor: Colors.white,
         );
-        break;
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            backButton,
+            const SizedBox(width: 8),
+            deleteButton,
+            const SizedBox(width: 8),
+            editButton,
+          ],
+        );
       case _TabMode.editing:
         primaryButton = FloatingActionButton.extended(
           heroTag: 'bio_save_edit',
@@ -2057,67 +2140,91 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
           'es',
         ).format(record.date).toUpperCase();
 
-        return InkWell(
-          onTap: () => _loadRecordInViewMode(record),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: 160,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? kPrimaryColor.withAlpha(51)
-                  : kCardColor.withAlpha(100),
+        return Stack(
+          children: [
+            InkWell(
+              onTap: () => _loadRecordInViewMode(record),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? kPrimaryColor : Colors.white.withAlpha(20),
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              child: Container(
+                width: 160,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? kPrimaryColor.withAlpha(51)
+                      : kCardColor.withAlpha(100),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? kPrimaryColor : Colors.white.withAlpha(20),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 14,
-                      color: isSelected ? kPrimaryColor : kTextColorSecondary,
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 14,
+                          color: isSelected ? kPrimaryColor : kTextColorSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          day,
+                          style: TextStyle(
+                            color: isSelected ? kPrimaryColor : kTextColor,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
                     Text(
-                      day,
-                      style: TextStyle(
-                        color: isSelected ? kPrimaryColor : kTextColor,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                      monthYear,
+                      style: const TextStyle(
+                        color: kTextColorSecondary,
+                        fontSize: 12,
                       ),
+                    ),
+                    const Divider(color: Colors.white10, height: 16),
+                    _buildBiochemMetric(
+                      'Glucosa',
+                      record.glucose != null
+                          ? '${record.glucose!.toStringAsFixed(1)} mg/dL'
+                          : '—',
+                    ),
+                    const SizedBox(height: 4),
+                    _buildBiochemMetric(
+                      'Colesterol',
+                      record.cholesterolTotal != null
+                          ? '${record.cholesterolTotal!.toStringAsFixed(1)} mg/dL'
+                          : '—',
                     ),
                   ],
                 ),
-                Text(
-                  monthYear,
-                  style: const TextStyle(
-                    color: kTextColorSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-                const Divider(color: Colors.white10, height: 16),
-                _buildBiochemMetric(
-                  'Glucosa',
-                  record.glucose != null
-                      ? '${record.glucose!.toStringAsFixed(1)} mg/dL'
-                      : '—',
-                ),
-                const SizedBox(height: 4),
-                _buildBiochemMetric(
-                  'Colesterol',
-                  record.cholesterolTotal != null
-                      ? '${record.cholesterolTotal!.toStringAsFixed(1)} mg/dL'
-                      : '—',
-                ),
-              ],
+              ),
             ),
-          ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(100),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.redAccent,
+                    size: 18,
+                  ),
+                  onPressed: () => _deleteRecordByDate(record.date),
+                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.all(6),
+                ),
+              ),
+            ),
+          ],
         );
       }),
     );

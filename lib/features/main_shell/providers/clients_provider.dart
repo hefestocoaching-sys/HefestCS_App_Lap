@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/config/feature_flags.dart';
 import 'package:hcs_app_lap/core/utils/update_lock.dart';
@@ -155,13 +154,13 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
       if (current == null) return;
       final active = current.activeClient;
       if (active == null) return;
-      state = AsyncValue.data(current.copyWith(isLoading: true));
       try {
         // Serialize writes per-client to avoid lost-update races.
         final clientId = active.id;
         final previous = _clientWriteLocks[clientId] ?? Future.value();
 
-        // Usar .then() en lugar de .whenComplete() para evitar problemas con async
+        // Keep editors responsive: serialize SQLite writes without toggling
+        // global loading for every field/dropdown change.
         final next = previous.then((_) async {
           final persisted = await _repository.getClientById(clientId) ?? active;
           final updated = transform(persisted);
@@ -170,8 +169,6 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
             persisted.training.extra,
           );
           mergedTrainingExtra.addAll(updated.training.extra);
-
-          debugPrint('✅ training.extra mergeado en updateActiveClient');
 
           final mergedNutrition = _safeMergeNutrition(
             persisted.nutrition,
@@ -186,6 +183,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
           final mergedClient = persisted.copyWith(
             profile: updated.profile,
             history: updated.history,
+            anthropometry: updated.anthropometry,
             nutrition: mergedNutrition,
             training: mergedTraining,
             trainingPlans: updated.trainingPlans,
@@ -197,7 +195,8 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
           await _repository.saveClient(mergedClient);
 
           // Refresh local state without reloading all clients.
-          final updatedClients = current.clients
+          final latestState = state.value ?? current;
+          final updatedClients = latestState.clients
               .map(
                 (client) =>
                     client.id == mergedClient.id ? mergedClient : client,
@@ -205,7 +204,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
               .toList();
           final sortedClients = _sortClients(updatedClients);
           state = AsyncValue.data(
-            current.copyWith(
+            latestState.copyWith(
               clients: sortedClients,
               activeClientId: mergedClient.id,
               isLoading: false,
@@ -217,7 +216,10 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
         await next;
       } catch (e) {
         state = AsyncValue.data(
-          current.copyWith(isLoading: false, error: e.toString()),
+          (state.value ?? current).copyWith(
+            isLoading: false,
+            error: e.toString(),
+          ),
         );
         rethrow; // ✅ Rethrow so the UI knows the save failed!
       }
@@ -257,6 +259,7 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
         final mergedClient = persisted.copyWith(
           profile: updated.profile,
           history: updated.history,
+          anthropometry: updated.anthropometry,
           nutrition: mergedNutrition,
           training: mergedTraining,
           trainingPlans: updated.trainingPlans,

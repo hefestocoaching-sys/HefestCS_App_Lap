@@ -21,7 +21,7 @@ class ClientPreferencesMonitor {
             return const ExercisePreferencesByMuscle();
           }
 
-          final data = doc.data() as Map<String, dynamic>?;
+          final data = doc.data();
           final extra = data?['extra'] as Map<String, dynamic>? ?? {};
           final rawPrefs =
               extra['exercisePreferencesByMuscle'] as Map<String, dynamic>?;
@@ -48,7 +48,7 @@ class ClientPreferencesMonitor {
         return const ExercisePreferencesByMuscle();
       }
 
-      final data = doc.data() as Map<String, dynamic>?;
+      final data = doc.data();
       final extra = data?['extra'] as Map<String, dynamic>? ?? {};
       final rawPrefs =
           extra['exercisePreferencesByMuscle'] as Map<String, dynamic>?;
@@ -57,8 +57,7 @@ class ClientPreferencesMonitor {
           ? ExercisePreferencesByMuscle.fromDynamic(rawPrefs)
           : const ExercisePreferencesByMuscle();
     } catch (e) {
-      debugPrint('Error fetching client preferences: $e');
-      return const ExercisePreferencesByMuscle();
+      rethrow;
     }
   }
 }

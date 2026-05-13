@@ -41,8 +41,9 @@ class _AnthropometryGraphsTabState extends ConsumerState<AnthropometryGraphsTab>
     'maxCalfCirc': 'Per. Pantorrilla (cm)',
   };
   final Map<String, String> _metricsDiameters = {
+    'humerusDiameter': 'Diám. Húmero (cm)',
     'wristDiameter': 'Diám. Muñeca (cm)',
-    'kneeDiameter': 'Diám. Rodilla (cm)',
+    'kneeDiameter': 'Diám. Fémur/Rodilla (cm)',
   };
   late final Map<String, String> _allMetrics;
 

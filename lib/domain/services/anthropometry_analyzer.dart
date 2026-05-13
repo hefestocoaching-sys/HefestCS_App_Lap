@@ -5,6 +5,8 @@ import 'package:hcs_app_lap/core/enums/gender.dart';
 import '../entities/anthropometry_analysis_result.dart';
 import '../entities/anthropometry_record.dart';
 
+// humerusDiameter se almacena para perfil antropométrico ISAK/diámetros,
+// pero no se integra en Rocha hasta validar la fórmula correspondiente.
 class AnthropometryAnalyzer {
   /// SUM6 preferente para Yuhasz: TR + SB + AB + TH + CA + (supraspinal o suprailiaco).
   double? sumOfSkinfolds(AnthropometryRecord r) {

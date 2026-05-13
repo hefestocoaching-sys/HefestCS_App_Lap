@@ -105,16 +105,17 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       // fórmulas TMB estén disponibles aunque no haya fecha activa.
       // Si no hay activeDateIso, el provider usará el último registro antropométrico.
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // ✅ CRITICAL: Check mounted before using ref to avoid StateError
+        if (!mounted) return;
+
         ref
             .read(dietaryProvider.notifier)
             .initialize(
               initialClient,
               forceReset: true,
-              activeDateIso: widget.activeDateIso.isNotEmpty
-                  ? widget.activeDateIso
-                  : null,
+              activeDateIso: _normalizedActiveDateIso(),
             );
-        if (widget.activeDateIso.isNotEmpty) {
+        if (_normalizedActiveDateIso() != null) {
           _loadClientData(initialClient);
         }
       });
@@ -125,15 +126,14 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       final newClient = next.value?.activeClient;
       if (newClient != null && newClient != prevClient) {
         // Re-inicializar siempre que cambie el cliente, con o sin fecha activa.
+        // CRÍTICO: forceReset: true para evitar copiar datos del cliente anterior
+        final targetDate =
+            _normalizeRecordDateIso(_selectedRecordDateIso) ??
+            _normalizedActiveDateIso();
         ref
             .read(dietaryProvider.notifier)
-            .initialize(
-              newClient,
-              activeDateIso: widget.activeDateIso.isNotEmpty
-                  ? widget.activeDateIso
-                  : null,
-            );
-        if (widget.activeDateIso.isNotEmpty) {
+            .initialize(newClient, forceReset: true, activeDateIso: targetDate);
+        if (targetDate != null) {
           setState(() {
             _loadClientData(newClient);
           });
@@ -170,6 +170,9 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       );
       // Usar addPostFrameCallback para evitar modificar state durante build
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // ✅ CRITICAL: Check mounted FIRST before using ref to avoid StateError
+        if (!mounted) return;
+
         if (widget.activeDateIso.isEmpty) {
           // Si activeDateIso es vacío, volver a modo idle (overview)
           setState(() {
@@ -179,15 +182,13 @@ class DietaryTabState extends ConsumerState<DietaryTab>
           widget.onViewStateChanged?.call(true);
         } else {
           final client = ref.read(clientsProvider).value?.activeClient;
-          if (client != null && mounted) {
+          final activeIso = _normalizedActiveDateIso();
+          if (client != null) {
             ref
                 .read(dietaryProvider.notifier)
-                .initialize(
-                  client,
-                  forceReset: true,
-                  activeDateIso: widget.activeDateIso,
-                );
+                .initialize(client, forceReset: true, activeDateIso: activeIso);
             setState(() {
+              _selectedRecordDateIso = activeIso;
               _loadClientData(client);
             });
           }
@@ -199,20 +200,59 @@ class DietaryTabState extends ConsumerState<DietaryTab>
   // -------------------------------------------------------------
   // LOAD DATA
   // -------------------------------------------------------------
+  String? _normalizeRecordDateIso(dynamic raw) {
+    if (raw == null) return null;
+
+    final value = raw.toString().trim();
+    if (value.isEmpty) return null;
+
+    final parsed = DateTime.tryParse(value);
+    if (parsed != null) {
+      return dateIsoFrom(parsed);
+    }
+
+    final match = RegExp(r'^(\d{4}-\d{2}-\d{2})').firstMatch(value);
+    if (match != null) {
+      final extracted = match.group(1)!;
+      final extractedDate = DateTime.tryParse(extracted);
+      if (extractedDate != null) {
+        return dateIsoFrom(extractedDate);
+      }
+    }
+
+    return null;
+  }
+
+  String? _normalizedActiveDateIso() {
+    return _normalizeRecordDateIso(widget.activeDateIso);
+  }
+
+  bool _isSameRecordDay(dynamic rawDateIso, String targetIso) {
+    final normalized = _normalizeRecordDateIso(rawDateIso);
+    return normalized == targetIso;
+  }
+
   void _loadClientData(Client? client) {
     if (client == null) return;
     final records = readNutritionRecordList(
       client.nutrition.extra[NutritionExtraKeys.evaluationRecords],
     );
-    final record =
-        nutritionRecordForDate(records, widget.activeDateIso) ??
-        latestNutritionRecordByDate(records);
+    final activeIso =
+        _normalizeRecordDateIso(_selectedRecordDateIso) ??
+        _normalizedActiveDateIso();
+    final record = activeIso == null
+        ? null
+        : nutritionRecordForDate(records, activeIso);
 
-    // Si no hay registro para esta fecha, iniciar en modo creating
-    if (nutritionRecordForDate(records, widget.activeDateIso) == null) {
+    if (activeIso == null) {
+      _mode = _TabMode.idle;
+      widget.onViewStateChanged?.call(true);
+    } else if (record == null) {
       _mode = _TabMode.creating;
+      _selectedRecordDateIso = activeIso;
     } else {
       _mode = _TabMode.view;
+      _selectedRecordDateIso = activeIso;
     }
     // Solo notificar si NO estamos en idle (overview)
     if (_mode != _TabMode.idle) {
@@ -433,13 +473,17 @@ class DietaryTabState extends ConsumerState<DietaryTab>
   }
 
   Future<void> _saveKcalToClient({bool showSnackbar = true}) async {
+    final normalizedTargetIso =
+        _normalizeRecordDateIso(_selectedRecordDateIso) ??
+        _normalizedActiveDateIso();
+
     // GUARD: Validar que activeDateIso sea un formato ISO válido
-    if (widget.activeDateIso.isEmpty) {
+    if (normalizedTargetIso == null) {
       if (showSnackbar) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error: Fecha no válida'),
+            content: Text('Error: Fecha no válida para guardar'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -447,24 +491,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       return;
     }
 
-    // Intentar parsear la fecha para validar formato
-    DateTime? targetDate;
-    try {
-      targetDate = DateTime.parse(widget.activeDateIso);
-    } catch (e) {
-      if (showSnackbar) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error: Formato de fecha inválido: ${widget.activeDateIso}',
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-      return;
-    }
+    final targetDate = DateTime.parse(normalizedTargetIso);
 
     if (!mounted) return;
     final blockedState = ref.read(nutritionBlockedProvider);
@@ -525,7 +552,10 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         final extra = Map<String, dynamic>.from(current.nutrition.extra);
         final records = readNutritionRecordList(extra[recordsKey]);
         records.removeWhere(
-          (record) => record['dateIso']?.toString() == widget.activeDateIso,
+          (record) => _isSameRecordDay(
+            record['dateIso'] ?? record['date'],
+            normalizedTargetIso,
+          ),
         );
 
         // NEW v2: Preparar datos de déficit porcentual
@@ -533,7 +563,7 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         const floorPct = 0.95;
 
         records.add({
-          'dateIso': widget.activeDateIso,
+          'dateIso': normalizedTargetIso,
           'selectedTmbFormulaKey': dietaryState.selectedTMBFormulaKey,
           'tmbValue': baseTMB,
           'avgGet': _calculateAverageGET(),
@@ -564,6 +594,16 @@ class DietaryTabState extends ConsumerState<DietaryTab>
           nutrition: current.nutrition.copyWith(extra: merged),
         );
       });
+
+      if (mounted) {
+        setState(() {
+          _selectedRecordDateIso = normalizedTargetIso;
+          _mode = _TabMode.view;
+        });
+
+        widget.onRecordSelected?.call(normalizedTargetIso);
+        widget.onViewStateChanged?.call(false);
+      }
 
       if (showSnackbar) {
         if (!mounted) return;
@@ -610,13 +650,12 @@ class DietaryTabState extends ConsumerState<DietaryTab>
   void resetDrafts() {
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
+    final targetDate =
+        _normalizeRecordDateIso(_selectedRecordDateIso) ??
+        _normalizedActiveDateIso();
     ref
         .read(dietaryProvider.notifier)
-        .initialize(
-          client,
-          forceReset: true,
-          activeDateIso: widget.activeDateIso,
-        );
+        .initialize(client, forceReset: true, activeDateIso: targetDate);
     if (mounted) {
       setState(() {
         _loadClientData(client);
@@ -759,16 +798,19 @@ class DietaryTabState extends ConsumerState<DietaryTab>
   // -------------------------------------------------------------
 
   void _loadRecordInViewMode(dynamic recordOrDateIso) {
-    final String recordDateIso;
+    final String? rawRecordDateIso;
 
     if (recordOrDateIso is String) {
-      recordDateIso = recordOrDateIso;
+      rawRecordDateIso = recordOrDateIso;
     } else if (recordOrDateIso is Map<String, dynamic>) {
-      recordDateIso =
+      rawRecordDateIso =
           recordOrDateIso['dateIso']?.toString() ?? widget.activeDateIso;
     } else {
-      recordDateIso = widget.activeDateIso;
+      rawRecordDateIso = widget.activeDateIso;
     }
+
+    final recordDateIso = _normalizeRecordDateIso(rawRecordDateIso);
+    if (recordDateIso == null) return;
 
     debugPrint('\n========================================');
     debugPrint('[DietaryTab] Loading record in view mode: $recordDateIso');
@@ -861,15 +903,14 @@ class DietaryTabState extends ConsumerState<DietaryTab>
 
     // Reinicializar con la fecha activa
     final client = ref.read(clientsProvider).value?.activeClient;
+    final activeIso = _normalizedActiveDateIso();
     if (client != null) {
       ref
           .read(dietaryProvider.notifier)
-          .initialize(
-            client,
-            forceReset: true,
-            activeDateIso: widget.activeDateIso,
-          );
-      _loadClientData(client);
+          .initialize(client, forceReset: true, activeDateIso: activeIso);
+      if (activeIso != null) {
+        _loadClientData(client);
+      }
     }
   }
 
@@ -899,12 +940,11 @@ class DietaryTabState extends ConsumerState<DietaryTab>
     }
   }
 
-  Future<void> _deleteSelectedRecord() async {
-    final dateIsoToDelete = _selectedRecordDateIso ?? widget.activeDateIso;
-    final dateTime = _safeParseDateIso(dateIsoToDelete);
-    if (dateTime == null) return;
+  Future<void> _deleteRecord(String dateIsoToDelete) async {
+    final targetIso = _normalizeRecordDateIso(dateIsoToDelete);
+    if (targetIso == null) return;
 
-    final targetIso = dateIsoFrom(dateTime);
+    final dateTime = DateTime.parse(targetIso);
 
     final confirmed = await showDeleteConfirmationDialog(
       context: context,
@@ -930,51 +970,43 @@ class DietaryTabState extends ConsumerState<DietaryTab>
 
       if (!mounted) return;
 
-      final clientRef = client;
-      // Remover registro localmente
-      final extra = Map<String, dynamic>.from(clientRef.nutrition.extra);
-      final records = readNutritionRecordList(
-        extra[NutritionExtraKeys.evaluationRecords],
-      );
-      final filtered = records.where((record) {
-        final iso = record['dateIso']?.toString();
-        if (iso == null) return true;
-        final parsed = _safeParseDateIso(iso);
-        if (parsed == null) {
-          final normalizedRaw = iso.trim();
-          if (normalizedRaw == dateIsoToDelete ||
-              normalizedRaw.startsWith(targetIso)) {
-            return false;
-          }
-          return true;
-        }
-        final normalized = dateIsoFrom(parsed);
-        return normalized != targetIso;
-      }).toList();
-      extra[NutritionExtraKeys.evaluationRecords] = filtered;
+      var filtered = <Map<String, dynamic>>[];
 
       await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+        final records = readNutritionRecordList(
+          prev.nutrition.extra[NutritionExtraKeys.evaluationRecords],
+        );
+        filtered = records.where((record) {
+          return !_isSameRecordDay(
+            record['dateIso'] ?? record['date'],
+            targetIso,
+          );
+        }).toList();
+
         final merged = Map<String, dynamic>.from(prev.nutrition.extra);
         merged[NutritionExtraKeys.evaluationRecords] = filtered;
         return prev.copyWith(nutrition: prev.nutrition.copyWith(extra: merged));
       });
 
       // Re inicializar provider para refrescar UI
-      ref
-          .read(dietaryProvider.notifier)
-          .initialize(
-            client,
-            forceReset: true,
-            activeDateIso: widget.activeDateIso,
-          );
+      final updatedClient = ref.read(clientsProvider).value?.activeClient;
+
+      if (updatedClient != null) {
+        ref
+            .read(dietaryProvider.notifier)
+            .initialize(updatedClient, forceReset: true);
+      }
 
       // Recargar datos después de borrar
-      setState(() {
-        _selectedRecordDateIso = null;
-        _loadClientData(client);
-      });
+      if (mounted) {
+        setState(() {
+          _selectedRecordDateIso = null;
+          _mode = _TabMode.idle;
+        });
 
-      _resetToIdle();
+        widget.onRecordSelected?.call('');
+        widget.onViewStateChanged?.call(true);
+      }
 
       // Mostrar confirmación
       if (mounted) {
@@ -985,6 +1017,14 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         showDeleteErrorSnackbar(context, Exception('Error: $e'));
       }
     }
+  }
+
+  Future<void> _deleteSelectedRecord() async {
+    final dateIsoToDelete =
+        _normalizeRecordDateIso(_selectedRecordDateIso) ??
+        _normalizedActiveDateIso();
+    if (dateIsoToDelete == null) return;
+    await _deleteRecord(dateIsoToDelete);
   }
 
   DateTime? _safeParseDateIso(String? value) {
@@ -1054,13 +1094,8 @@ class DietaryTabState extends ConsumerState<DietaryTab>
           heroTag: 'diet_save_edit',
           onPressed: blockedState.isBlocked
               ? null
-              : () {
-                  _saveKcalToClient();
-                  setState(() {
-                    _mode = _TabMode.view;
-                  });
-                  // Notificar al parent que volvió a view
-                  widget.onViewStateChanged?.call(false);
+              : () async {
+                  await _saveKcalToClient();
                 },
           label: const Text(SaveMessages.buttonSaveChanges),
           icon: const Icon(Icons.save),
@@ -1081,11 +1116,8 @@ class DietaryTabState extends ConsumerState<DietaryTab>
           heroTag: 'diet_save_new',
           onPressed: blockedState.isBlocked
               ? null
-              : () {
-                  _saveKcalToClient();
-                  setState(() {
-                    _mode = _TabMode.view;
-                  });
+              : () async {
+                  await _saveKcalToClient();
                 },
           label: const Text(SaveMessages.buttonCreateNew),
           icon: const Icon(Icons.save),
@@ -1095,11 +1127,26 @@ class DietaryTabState extends ConsumerState<DietaryTab>
         secondaryButton = FloatingActionButton.extended(
           heroTag: 'diet_cancel_new',
           onPressed: () {
-            setState(() {
-              _mode = _TabMode.view;
-            });
-            // Notificar al parent que volvió a view
-            widget.onViewStateChanged?.call(false);
+            final client = ref.read(clientsProvider).value?.activeClient;
+            final records = client != null
+                ? readNutritionRecordList(
+                    client.nutrition.extra[NutritionExtraKeys
+                        .evaluationRecords],
+                  )
+                : <Map<String, dynamic>>[];
+            final targetDate =
+                _normalizeRecordDateIso(_selectedRecordDateIso) ??
+                _normalizedActiveDateIso();
+
+            if (targetDate == null ||
+                nutritionRecordForDate(records, targetDate) == null) {
+              _resetToIdle();
+            } else {
+              setState(() {
+                _mode = _TabMode.view;
+              });
+              widget.onViewStateChanged?.call(false);
+            }
           },
           label: const Text('Cancelar'),
           icon: const Icon(Icons.close),
@@ -1139,14 +1186,12 @@ class DietaryTabState extends ConsumerState<DietaryTab>
       client.nutrition.extra[NutritionExtraKeys.evaluationRecords],
     );
 
-    Map<String, dynamic>? currentRecord;
-    if (_selectedRecordDateIso != null) {
-      currentRecord = nutritionRecordForDate(records, _selectedRecordDateIso!);
-    } else {
-      currentRecord =
-          nutritionRecordForDate(records, widget.activeDateIso) ??
-          latestNutritionRecordByDate(records);
-    }
+    final currentDateIso =
+        _normalizeRecordDateIso(_selectedRecordDateIso) ??
+        _normalizedActiveDateIso();
+    final currentRecord = currentDateIso == null
+        ? null
+        : nutritionRecordForDate(records, currentDateIso);
 
     debugPrint(
       '[DietaryTab.build] Final state: _selectedRecordDateIso=$_selectedRecordDateIso, _mode=$_mode, currentRecord=${currentRecord != null}, totalRecords=${records.length}',
@@ -1178,8 +1223,39 @@ class DietaryTabState extends ConsumerState<DietaryTab>
     final records = readNutritionRecordList(
       client.nutrition.extra[NutritionExtraKeys.evaluationRecords],
     );
-    final sortedRecords = [...records]
-      ..sort((a, b) => (b['dateIso'] ?? '').compareTo(a['dateIso'] ?? ''));
+    final byDay = <String, Map<String, dynamic>>{};
+
+    for (final record in records) {
+      final iso = _normalizeRecordDateIso(record['dateIso'] ?? record['date']);
+      if (iso == null) continue;
+
+      final existing = byDay[iso];
+
+      if (existing == null) {
+        byDay[iso] = record;
+        continue;
+      }
+
+      final existingComputed =
+          DateTime.tryParse(existing['computedAtIso']?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+
+      final currentComputed =
+          DateTime.tryParse(record['computedAtIso']?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+
+      if (currentComputed.isAfter(existingComputed)) {
+        byDay[iso] = record;
+      }
+    }
+
+    final sortedRecords =
+        byDay.entries.map((entry) {
+            final normalized = Map<String, dynamic>.from(entry.value);
+            normalized['dateIso'] = entry.key;
+            return normalized;
+          }).toList()
+          ..sort((a, b) => (b['dateIso'] ?? '').compareTo(a['dateIso'] ?? ''));
 
     widget.onViewStateChanged?.call(true);
 
@@ -1208,7 +1284,16 @@ class DietaryTabState extends ConsumerState<DietaryTab>
                     return InkWell(
                       onTap: () {
                         final todayIso = dateIsoFrom(DateTime.now());
-                        widget.onRecordSelected?.call(todayIso);
+                        final existingToday = nutritionRecordForDate(
+                          sortedRecords,
+                          todayIso,
+                        );
+
+                        if (existingToday != null) {
+                          _loadRecordInViewMode(todayIso);
+                        } else {
+                          widget.onRecordSelected?.call(todayIso);
+                        }
                       },
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
@@ -1271,47 +1356,65 @@ class DietaryTabState extends ConsumerState<DietaryTab>
                       (record['kcal'] as num?)?.toDouble() ??
                       0.0;
 
-                  return InkWell(
-                    onTap: () {
-                      _loadRecordInViewMode(dateIso);
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: kCardColor.withAlpha((255 * 0.30).round()),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade700),
+                  return Stack(
+                    children: [
+                      Positioned.fill(
+                        child: InkWell(
+                          onTap: () {
+                            _loadRecordInViewMode(dateIso);
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: kCardColor.withAlpha((255 * 0.30).round()),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade700),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  day,
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: kTextColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  monthYear,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: kTextColorSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${kcal.toStringAsFixed(0)} kcal',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: kTextColorSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            day,
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: kTextColor,
-                            ),
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.redAccent,
+                            size: 20,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            monthYear,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: kTextColorSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${kcal.toStringAsFixed(0)} kcal',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: kTextColorSecondary,
-                            ),
-                          ),
-                        ],
+                          onPressed: () => _deleteRecord(dateIso),
+                        ),
                       ),
-                    ),
+                    ],
                   );
                 },
               ),

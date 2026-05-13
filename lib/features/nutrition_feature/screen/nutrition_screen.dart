@@ -7,6 +7,7 @@ import 'package:hcs_app_lap/features/client_feature/models/client_summary_data.d
 import 'package:hcs_app_lap/core/contracts/saveable_module.dart';
 import 'package:hcs_app_lap/core/design/workspace_scaffold.dart';
 import 'package:hcs_app_lap/features/history_clinic_feature/widgets/clinic_client_header_with_tabs.dart';
+import 'package:hcs_app_lap/utils/date_helpers.dart';
 
 import '../widgets/dietary_tab.dart';
 import '../widgets/depletion_tab.dart';
@@ -84,8 +85,24 @@ class NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   void _onRecordSelected(String recordDateIso) {
+    String normalized = '';
+
+    final trimmed = recordDateIso.trim();
+
+    if (trimmed.isNotEmpty) {
+      final parsed = DateTime.tryParse(trimmed);
+      if (parsed != null) {
+        normalized = dateIsoFrom(parsed);
+      } else {
+        final match = RegExp(r'^(\d{4}-\d{2}-\d{2})').firstMatch(trimmed);
+        if (match != null) {
+          normalized = match.group(1)!;
+        }
+      }
+    }
+
     setState(() {
-      _selectedRecordDateIso = recordDateIso;
+      _selectedRecordDateIso = normalized;
     });
   }
 

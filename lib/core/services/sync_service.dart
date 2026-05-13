@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:hcs_app_lap/core/services/background_sync_service.dart';
 import 'package:hcs_app_lap/data/datasources/local/sync_queue_helper.dart';
 
 class SyncService {
@@ -9,6 +10,7 @@ class SyncService {
 
   Timer? _timer;
   bool _isRunning = false;
+  bool _isProcessing = false;
 
   void start() {
     if (_isRunning) return;
@@ -28,6 +30,8 @@ class SyncService {
 
   Future<void> _processPendingQueue() async {
     if (!_isRunning) return;
+    if (_isProcessing) return;
+    _isProcessing = true;
 
     try {
       final pending = await SyncQueueHelper.getPendingItems();
@@ -41,8 +45,12 @@ class SyncService {
           await SyncQueueHelper.markFailure(item['id'] as String, e.toString());
         }
       }
+
+      await BackgroundSyncService.instance.trySyncPendingData();
     } catch (e) {
       debugPrint('Error processing sync queue: $e');
+    } finally {
+      _isProcessing = false;
     }
   }
 

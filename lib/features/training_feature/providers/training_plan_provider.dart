@@ -2643,10 +2643,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
 
       debugPrint('✅ Cliente guardado en repositorio local');
 
-      // ✅ CRÍTICO: Esperar sincronización de Firestore
-      debugPrint('⏳ Esperando sincronización de Firestore (3 segundos)...');
-      await Future.delayed(const Duration(seconds: 3));
-      debugPrint('✅ Sincronización completa (asumida)');
+      debugPrint('Sync remoto queda en background; refrescando desde SQLite.');
 
       // Refrescar provider
       await ref.read(clientsProvider.notifier).refresh();

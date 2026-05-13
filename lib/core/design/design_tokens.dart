@@ -39,6 +39,7 @@ class DesignTokens {
   static const Color bgLight = Color(0xFFF8F9FA);
   static const Color bgWhite = Color(0xFFFFFFFF);
   static const Color bgDark = Color(0xFF121212);
+  static const Color bgDarkPrimary = Color(0xFF121212);
   static const Color bgDarkSecondary = Color(0xFF1E1E1E);
 
   /// Colores de Texto

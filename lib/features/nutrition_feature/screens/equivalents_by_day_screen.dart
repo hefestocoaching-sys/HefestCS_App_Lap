@@ -450,6 +450,26 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     final client = ref.read(clientsProvider).value?.activeClient;
     if (client == null) return;
 
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Eliminar registro'),
+        content: const Text('\u00bfDeseas eliminar este registro?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
     await ref.read(clientsProvider.notifier).updateActiveClient((current) {
       final extra = Map<String, dynamic>.from(current.nutrition.extra);
       final records = readNutritionRecordList(

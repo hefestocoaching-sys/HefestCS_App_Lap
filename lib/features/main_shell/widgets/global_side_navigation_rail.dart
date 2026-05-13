@@ -40,6 +40,7 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
       // Items cuando hay cliente activo
       return [
         NavItem(icon: Icons.home_outlined, label: 'Inicio', index: 0),
+        NavItem(icon: Icons.group_outlined, label: 'Clientes', index: 9),
         NavItem(icon: Icons.dashboard_outlined, label: 'Resumen', index: 10),
         NavItem(
           icon: Icons.medical_services_outlined,
@@ -120,9 +121,7 @@ class _GlobalSideNavigationRailState extends State<GlobalSideNavigationRail> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(
-                    color: Colors.white.withAlpha(20),
-                  ),
+                  bottom: BorderSide(color: Colors.white.withAlpha(20)),
                 ),
               ),
               child: _isExpanded

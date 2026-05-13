@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hcs_app_lap/utils/macro_ranges.dart';
+import 'package:hcs_app_lap/core/enums/day_type.dart';
 
 enum MacroType { protein, fat, carb }
 
@@ -36,6 +38,17 @@ class DailyMacroSettings {
   // Día (etiqueta para week)
   final String dayOfWeek;
 
+  // Si este día fue customizado manualmente (false = hereda de Lunes)
+  final bool isCustomizedFromBase;
+
+  // Nombres de los rangos seleccionados (ej: "Hipertrofia", "Salud")
+  final String proteinRangeName;
+  final String fatRangeName;
+
+  // Configuración del día de entrenamiento y estados custom
+  final bool isCustom;
+  final DayType? dayType;
+
   const DailyMacroSettings({
     this.goalType = 'Mantenimiento',
     this.proteinMin = 1.6,
@@ -54,23 +67,37 @@ class DailyMacroSettings {
     this.proteinType = 'Estándar (1.8 g/kg)',
     this.lipidRange = 'Moderado (0.8-1.0 g/kg)',
     this.dayOfWeek = '',
+    this.isCustomizedFromBase = false,
+    this.proteinRangeName = '',
+    this.fatRangeName = '',
+    this.isCustom = false,
+    this.dayType,
   });
 
   static const Map<String, Map<String, double>> rangesByGoal = {
     'Pérdida de grasa': {
-      'proteinMin': 1.8, 'proteinMax': 2.5,
-      'fatMin': 0.6, 'fatMax': 1.0,
-      'carbMin': 1.5, 'carbMax': 4.0,
+      'proteinMin': 1.8,
+      'proteinMax': 2.5,
+      'fatMin': 0.6,
+      'fatMax': 1.0,
+      'carbMin': 1.5,
+      'carbMax': 4.0,
     },
     'Hipertrofia': {
-      'proteinMin': 1.6, 'proteinMax': 2.2,
-      'fatMin': 0.8, 'fatMax': 1.2,
-      'carbMin': 3.0, 'carbMax': 7.0,
+      'proteinMin': 1.6,
+      'proteinMax': 2.2,
+      'fatMin': 0.8,
+      'fatMax': 1.2,
+      'carbMin': 3.0,
+      'carbMax': 7.0,
     },
     'Mantenimiento': {
-      'proteinMin': 1.6, 'proteinMax': 2.0,
-      'fatMin': 0.8, 'fatMax': 1.0,
-      'carbMin': 2.0, 'carbMax': 5.0,
+      'proteinMin': 1.6,
+      'proteinMax': 2.0,
+      'fatMin': 0.8,
+      'fatMax': 1.0,
+      'carbMin': 2.0,
+      'carbMax': 5.0,
     },
   };
 
@@ -114,6 +141,25 @@ class DailyMacroSettings {
     // Asegurar que los carbos estén en el rango válido
     carbSelected = carbSelected.clamp(carbMin, carbMax);
 
+    // Encontrar el nombre del rango de proteína
+    String proteinRangeName = MacroRanges.protein.keys.first;
+    for (final entry in MacroRanges.protein.entries) {
+      if (proteinSelected >= entry.value.min &&
+          proteinSelected <= entry.value.max) {
+        proteinRangeName = entry.key;
+        break;
+      }
+    }
+
+    // Encontrar el nombre del rango de grasas
+    String fatRangeName = MacroRanges.lipids.keys.first;
+    for (final entry in MacroRanges.lipids.entries) {
+      if (fatSelected >= entry.value.min && fatSelected <= entry.value.max) {
+        fatRangeName = entry.key;
+        break;
+      }
+    }
+
     return DailyMacroSettings(
       goalType: goalType,
       proteinMin: proteinMin,
@@ -128,6 +174,8 @@ class DailyMacroSettings {
       totalCalories: totalCalories,
       proteinType: 'Recomendado (${proteinSelected.toStringAsFixed(1)} g/kg)',
       lipidRange: 'Recomendado (${fatSelected.toStringAsFixed(1)} g/kg)',
+      proteinRangeName: proteinRangeName,
+      fatRangeName: fatRangeName,
     );
   }
 
@@ -149,6 +197,11 @@ class DailyMacroSettings {
     String? proteinType,
     String? lipidRange,
     String? dayOfWeek,
+    bool? isCustomizedFromBase,
+    String? proteinRangeName,
+    String? fatRangeName,
+    bool? isCustom,
+    DayType? dayType,
   }) {
     return DailyMacroSettings(
       goalType: goalType ?? this.goalType,
@@ -168,6 +221,11 @@ class DailyMacroSettings {
       proteinType: proteinType ?? this.proteinType,
       lipidRange: lipidRange ?? this.lipidRange,
       dayOfWeek: dayOfWeek ?? this.dayOfWeek,
+      isCustomizedFromBase: isCustomizedFromBase ?? this.isCustomizedFromBase,
+      proteinRangeName: proteinRangeName ?? this.proteinRangeName,
+      fatRangeName: fatRangeName ?? this.fatRangeName,
+      isCustom: isCustom ?? this.isCustom,
+      dayType: dayType ?? this.dayType,
     );
   }
 
@@ -190,6 +248,11 @@ class DailyMacroSettings {
       'proteinType': proteinType,
       'lipidRange': lipidRange,
       'dayOfWeek': dayOfWeek,
+      'isCustomizedFromBase': isCustomizedFromBase,
+      'proteinRangeName': proteinRangeName,
+      'fatRangeName': fatRangeName,
+      'isCustom': isCustom,
+      'dayType': dayType?.name,
     };
   }
 
@@ -205,13 +268,29 @@ class DailyMacroSettings {
       carbMin: (json['carbMin'] as num? ?? 2.0).toDouble(),
       carbMax: (json['carbMax'] as num? ?? 5.0).toDouble(),
       carbSelected: (json['carbSelected'] as num? ?? 3.0).toDouble(),
-      proteinColor: json['proteinColor'] != null ? Color(json['proteinColor'] as int) : Colors.white,
-      fatColor: json['fatColor'] != null ? Color(json['fatColor'] as int) : Colors.white,
-      carbColor: json['carbColor'] != null ? Color(json['carbColor'] as int) : Colors.white,
+      proteinColor: json['proteinColor'] != null
+          ? Color(json['proteinColor'] as int)
+          : Colors.white,
+      fatColor: json['fatColor'] != null
+          ? Color(json['fatColor'] as int)
+          : Colors.white,
+      carbColor: json['carbColor'] != null
+          ? Color(json['carbColor'] as int)
+          : Colors.white,
       totalCalories: (json['totalCalories'] as num? ?? 0.0).toDouble(),
       proteinType: json['proteinType'] as String? ?? 'Estándar (1.8 g/kg)',
       lipidRange: json['lipidRange'] as String? ?? 'Moderado (0.8-1.0 g/kg)',
       dayOfWeek: json['dayOfWeek'] as String? ?? '',
+      isCustomizedFromBase: json['isCustomizedFromBase'] as bool? ?? false,
+      proteinRangeName: json['proteinRangeName'] as String? ?? '',
+      fatRangeName: json['fatRangeName'] as String? ?? '',
+      isCustom: json['isCustom'] as bool? ?? false,
+      dayType: json['dayType'] != null
+          ? DayType.values.firstWhere(
+              (e) => e.name == json['dayType'],
+              orElse: () => DayType.values.first,
+            )
+          : null,
     );
   }
 }

@@ -116,6 +116,7 @@ class ClientRepository {
         client: client,
         deleted: deleted,
       );
+      await _local.markClientAsSynced(client.id);
     } on FirebaseException catch (e, st) {
       if (e.code == 'permission-denied') {
         _remoteSyncTemporarilyDisabled = true;

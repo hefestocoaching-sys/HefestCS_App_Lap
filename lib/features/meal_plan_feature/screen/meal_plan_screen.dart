@@ -363,6 +363,26 @@ class _MealPlanDaysCardState extends State<MealPlanDaysCard>
   }
 
   Future<void> _deleteMealPlanRecord(String dateIso) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Eliminar registro'),
+        content: const Text('\u00bfDeseas eliminar este registro?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     final records = readNutritionRecordList(
       widget.client.nutrition.extra[NutritionExtraKeys.mealPlanRecords],
     );

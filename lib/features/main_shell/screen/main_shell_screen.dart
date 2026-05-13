@@ -95,6 +95,11 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       await ref.read(clientsProvider.notifier).setActiveClientById(targetId);
+      
+      // Asegurar que visualmente se seleccione la pestaña del cliente en el menú lateral
+      if (_selectedIndexNotifier.value != _summaryIndex) {
+        _selectedIndexNotifier.value = _summaryIndex;
+      }
     });
   }
 

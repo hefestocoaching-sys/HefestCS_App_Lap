@@ -36,6 +36,11 @@ class LocalClientDataSourceImpl implements LocalClientDataSource {
   }
 
   @override
+  Future<List<Client>> getUnsyncedDeletedClients() {
+    return dbHelper.getUnsyncedDeletedClients();
+  }
+
+  @override
   Future<void> markClientAsSynced(String id) {
     return dbHelper.markClientAsSynced(id);
   }
