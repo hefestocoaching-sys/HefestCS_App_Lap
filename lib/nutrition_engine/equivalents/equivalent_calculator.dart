@@ -1,4 +1,4 @@
-import '../planning/meal_targets.dart';
+import 'package:hcs_app_lap/nutrition_engine/planning/meal_targets.dart';
 
 class MealEquivalents {
   final Map<String, double> equivalents; // grupo -> número de equivalentes

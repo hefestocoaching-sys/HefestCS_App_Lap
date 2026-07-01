@@ -1,0 +1,145 @@
+{
+  "fixture": "pairing_callsites_cycle_template_unknown",
+  "phase": "D1R8",
+  "type": "observational_post_d1c7",
+  "mode": "cycle_template_builder_proxy",
+  "notes": "Unknowns post D1-C7 vistos desde helpers strict y desde CycleTemplateBuilder.normalizeMuscleKey legacy.",
+  "cases": [
+    {
+      "id": "unknown_glute_quads",
+      "input": {
+        "firstPrimaryMuscle": "glute",
+        "secondPrimaryMuscle": "quads"
+      },
+      "expected": {
+        "normalization": {
+          "first": "glute",
+          "second": "quads",
+          "dayMuscles": ["glute", "quads"],
+          "primaryMuscle": "glute"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["glute", "quads"],
+          "blockPlan": {
+            "A": ["glute"],
+            "B": [],
+            "C": ["quads"],
+            "D": []
+          }
+        }
+      },
+      "notes": "D1-C7 helpers raw glute -> none, pero CycleTemplateBuilder.normalizeMuscleKey aun convierte glute -> glutes antes del call site."
+    },
+    {
+      "id": "unknown_unknown_muscle_lats",
+      "input": {
+        "firstPrimaryMuscle": "unknown_muscle",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "normalization": {
+          "first": "unknown_muscle",
+          "second": "lats",
+          "dayMuscles": ["unknown_muscle", "lats"],
+          "primaryMuscle": "unknown_muscle"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["unknown_muscle", "lats"],
+          "blockPlan": {
+            "A": ["unknown_muscle"],
+            "B": [],
+            "C": ["lats"],
+            "D": []
+          }
+        }
+      },
+      "notes": "unknown_muscle queda como raw en normalizador del builder, pero helpers strict retornan none/false."
+    },
+    {
+      "id": "unknown_back_mid_upper_pectorals",
+      "input": {
+        "firstPrimaryMuscle": "back_mid_upper",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "normalization": {
+          "first": "back_mid_upper",
+          "second": "pectorals",
+          "dayMuscles": ["back_mid_upper", "pectorals"],
+          "primaryMuscle": "back_mid_upper"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["back_mid_upper", "pectorals"],
+          "blockPlan": {
+            "A": ["back_mid_upper"],
+            "B": [],
+            "C": ["pectorals"],
+            "D": []
+          }
+        }
+      },
+      "notes": "back_mid_upper no clasifica como grupo strict."
+    },
+    {
+      "id": "unknown_mysterychest_lats",
+      "input": {
+        "firstPrimaryMuscle": "mysterychest",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "normalization": {
+          "first": "mysterychest",
+          "second": "lats",
+          "dayMuscles": ["mysterychest", "lats"],
+          "primaryMuscle": "mysterychest"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["mysterychest", "lats"],
+          "blockPlan": {
+            "A": ["mysterychest"],
+            "B": [],
+            "C": ["lats"],
+            "D": []
+          }
+        }
+      },
+      "notes": "mysterychest queda raw en normalizador del builder y helpers strict lo tratan como unknown."
+    }
+  ]
+}

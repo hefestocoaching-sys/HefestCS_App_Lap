@@ -19,7 +19,7 @@ import 'package:hcs_app_lap/domain/services/record_deletion_service_provider.dar
 import 'package:hcs_app_lap/features/common_widgets/record_deletion_dialogs.dart';
 // Importante para las extensiones
 
-import '../../../domain/entities/biochemistry_record.dart';
+import 'package:hcs_app_lap/domain/entities/biochemistry_record.dart';
 
 // Enum para los tres estados del formulario
 enum _TabMode {
@@ -551,10 +551,9 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
     // GUARD: Verificar de nuevo después del await
     if (!mounted) return;
 
-    // Push granular a Firestore (FIRE-AND-FORGET - no espera)
+    // Enqueue durable + push granular a Firestore (fast-path en background)
     final recordsRepo = ref.read(clinicalRecordsRepositoryProvider);
-    // No await - permite que se ejecute en segundo plano sin bloquear UI
-    recordsRepo.pushBiochemistryRecord(client.id, newRecord);
+    await recordsRepo.pushBiochemistryRecord(client.id, newRecord);
 
     // GUARD: Verificar mounted antes de setState
     if (!mounted) return;
@@ -2154,7 +2153,9 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
                       : kCardColor.withAlpha(100),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? kPrimaryColor : Colors.white.withAlpha(20),
+                    color: isSelected
+                        ? kPrimaryColor
+                        : Colors.white.withAlpha(20),
                     width: isSelected ? 2 : 1,
                   ),
                 ),
@@ -2166,7 +2167,9 @@ class BiochemistryTabState extends ConsumerState<BiochemistryTab>
                         Icon(
                           Icons.calendar_today,
                           size: 14,
-                          color: isSelected ? kPrimaryColor : kTextColorSecondary,
+                          color: isSelected
+                              ? kPrimaryColor
+                              : kTextColorSecondary,
                         ),
                         const SizedBox(width: 6),
                         Text(

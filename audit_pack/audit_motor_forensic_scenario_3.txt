@@ -1,0 +1,292 @@
+SCENARIO 3: intermediate 4 dias upper lower
+SUCCESS: false
+INPUT:
+{
+  "sex": "female",
+  "age": 29,
+  "trainingLevel": "intermediate",
+  "days": 4,
+  "splitId": "upperLower",
+  "phase": "accumulation",
+  "durationWeeks": 4,
+  "musclePriorities": {
+    "chest": 5,
+    "lats": 4,
+    "upper_back": 4,
+    "quads": 4,
+    "hamstrings": 3,
+    "deltoide_lateral": 4
+  },
+  "backFocus": "upper_back",
+  "hasCycleState": false,
+  "intensitySplit": {
+    "heavy": 20.0,
+    "medium": 60.0,
+    "light": 20.0
+  }
+}
+
+ETAPA A - entrada del motor
+{
+  "entrypoint": "MotorV3Orchestrator.generateProgram(userProfile, phase, durationWeeks, splitId, trainingDaysPerWeek, intensityProfilePercentSplit, client, exercises)",
+  "received": {
+    "userId": "forensic_s3",
+    "name": "Forensic S3",
+    "availableDays": 4
+  }
+}
+
+ETAPA B - _resolveVolumeTargets
+{
+  "volumeTargetInicial": {
+    "pectorals": 13,
+    "lats": 11,
+    "upper_back": 8,
+    "delts_lateral": 9,
+    "quads": 14,
+    "traps": 8,
+    "delts_front": 9,
+    "delts_rear": 9,
+    "biceps": 10,
+    "triceps": 10,
+    "hamstrings": 10,
+    "glutes": 11,
+    "calves": 7,
+    "abs": 6
+  },
+  "prioridadEfectivaPorMusculo": {
+    "pectorals": 5,
+    "lats": 4,
+    "upper_back": 4,
+    "quads": 4,
+    "hamstrings": 3,
+    "delts_lateral": 4
+  },
+  "landmarksUsados": {
+    "pectorals": {
+      "priority": 5,
+      "vme": 8,
+      "vop": 13,
+      "vmr": 22,
+      "target": 22
+    },
+    "lats": {
+      "priority": 4,
+      "vme": 6,
+      "vop": 11,
+      "vmr": 20,
+      "target": 15
+    },
+    "upper_back": {
+      "priority": 4,
+      "vme": 4,
+      "vop": 8,
+      "vmr": 14,
+      "target": 11
+    },
+    "quads": {
+      "priority": 4,
+      "vme": 8,
+      "vop": 14,
+      "vmr": 24,
+      "target": 18
+    },
+    "hamstrings": {
+      "priority": 3,
+      "vme": 6,
+      "vop": 10,
+      "vmr": 18,
+      "target": 14
+    },
+    "delts_lateral": {
+      "priority": 4,
+      "vme": 4,
+      "vop": 9,
+      "vmr": 18,
+      "target": 14
+    }
+  }
+}
+
+ETAPA C - expandBackMuscle
+{
+  "backFocus": "upper_back",
+  "targetTrasExpandBackMuscle": {
+    "pectorals": 13,
+    "lats": 11,
+    "upper_back": 8,
+    "delts_lateral": 9,
+    "quads": 14,
+    "traps": 8,
+    "delts_front": 9,
+    "delts_rear": 9,
+    "biceps": 10,
+    "triceps": 10,
+    "hamstrings": 10,
+    "glutes": 11,
+    "calves": 7,
+    "abs": 6
+  }
+}
+
+ETAPA D - split/frecuencia/state
+{
+  "splitResolved": "TrainingSplit.upperLower",
+  "cycleStateReadFromInput": {
+    "cycleWeek": null,
+    "cyclePhase": null,
+    "weeksInPhase": null,
+    "weeksSinceLastMicro": null
+  },
+  "effectiveFrequencyByMuscle": {}
+}
+
+ETAPA E - catalogo/pool
+{
+  "poolByMuscle": {}
+}
+
+ETAPA F - weeklyIntensityTargetsByMuscle
+{
+  "weeklyIntensityTargetsByMuscle": {
+    "pectorals": {
+      "heavy": 3,
+      "medium": 8,
+      "light": 2
+    },
+    "lats": {
+      "heavy": 0,
+      "medium": 9,
+      "light": 2
+    },
+    "upper_back": {
+      "heavy": 2,
+      "medium": 5,
+      "light": 1
+    },
+    "delts_lateral": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 2
+    },
+    "quads": {
+      "heavy": 3,
+      "medium": 8,
+      "light": 3
+    },
+    "traps": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 1
+    },
+    "delts_front": {
+      "heavy": 2,
+      "medium": 5,
+      "light": 2
+    },
+    "delts_rear": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 2
+    },
+    "biceps": {
+      "heavy": 0,
+      "medium": 8,
+      "light": 2
+    },
+    "triceps": {
+      "heavy": 0,
+      "medium": 8,
+      "light": 2
+    },
+    "hamstrings": {
+      "heavy": 2,
+      "medium": 6,
+      "light": 2
+    },
+    "glutes": {
+      "heavy": 2,
+      "medium": 7,
+      "light": 2
+    },
+    "calves": {
+      "heavy": 0,
+      "medium": 6,
+      "light": 1
+    },
+    "abs": {
+      "heavy": 0,
+      "medium": 0,
+      "light": 6
+    }
+  }
+}
+
+ETAPA G - buildBaseWeek
+{
+  "buildBaseWeekByDay": {}
+}
+
+ETAPA H - assignedTotals y diferencias
+{
+  "assignedTotals": {},
+  "diffTargetVsAssigned": {
+    "pectorals": -13,
+    "lats": -11,
+    "upper_back": -8,
+    "delts_lateral": -9,
+    "quads": -14,
+    "traps": -8,
+    "delts_front": -9,
+    "delts_rear": -9,
+    "biceps": -10,
+    "triceps": -10,
+    "hamstrings": -10,
+    "glutes": -11,
+    "calves": -7,
+    "abs": -6
+  }
+}
+
+PRIMER PUNTO DE FALLA: 5. builder/session allocation
+ERRORS: [Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true]
+WARNINGS: [[V3][P0.3] Se normalizo volumen en 2 musculos para respetar frecuencia contractual y cap diario.]
+STACK TRACE:
+Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true
+
+TRAZAS CLAVE POR ETAPA (extraidas de ejecucion real):
+{
+  "A": [
+    "👤 Perfil científico construido:",
+    "   - Age: 29",
+    "   - Experience: intermediate",
+    "   - Recovery: 5.0"
+  ],
+  "B": [
+    "[Motor V3] Prioridades normalizadas (6 músculos):",
+    "[Motor V3] VOLÚMENES INICIALES (VOP) - VERSIÓN 2.0:",
+    "  pectorals (P5 PRIMARIO): 13 sets/semana",
+    "  lats (P4 SECUNDARIO): 11 sets/semana",
+    "  upper_back (P4 SECUNDARIO): 8 sets/semana",
+    "  delts_lateral (P4 SECUNDARIO): 9 sets/semana",
+    "  quads (P4 SECUNDARIO): 14 sets/semana",
+    "  traps (P3 SECUNDARIO): 8 sets/semana",
+    "  delts_front (P3 SECUNDARIO): 9 sets/semana",
+    "  delts_rear (P3 SECUNDARIO): 9 sets/semana",
+    "  biceps (P3 SECUNDARIO): 10 sets/semana",
+    "  triceps (P3 SECUNDARIO): 10 sets/semana",
+    "  hamstrings (P3 SECUNDARIO): 10 sets/semana",
+    "  glutes (P3 SECUNDARIO): 11 sets/semana",
+    "  calves (P3 SECUNDARIO): 7 sets/semana",
+    "  abs (P3 SECUNDARIO): 6 sets/semana",
+    "[Motor V3] TOTAL: 135 sets/semana"
+  ],
+  "C": [],
+  "D": [
+    "[Motor V3] splitId=upperLower availableDays=4 resolvedSplit=TrainingSplit.upperLower"
+  ],
+  "E": [],
+  "F": [],
+  "G": [],
+  "H": []
+}

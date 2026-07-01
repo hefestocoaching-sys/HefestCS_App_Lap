@@ -1,0 +1,93 @@
+{
+  "fixture": "pairing_helpers_mixed",
+  "phase": "D1-C7",
+  "type": "strict",
+  "notes": "Combina canonicos, aliases validos y unknowns bajo contrato strict.",
+  "cases": [
+    {
+      "id": "canonical_alias_same_primary",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "chest"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "forbiddenSamePrimary",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "pectorals y chest colisionan como mismo primary."
+    },
+    {
+      "id": "canonical_unknown_none",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "unknown_muscle"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "unknown_muscle no encuentra regla aunque pasa raw."
+    },
+    {
+      "id": "alias_unknown_none",
+      "input": {
+        "firstPrimaryMuscle": "chest",
+        "secondPrimaryMuscle": "unknown_muscle"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "chest normaliza; unknown_muscle pasa raw sin regla."
+    },
+    {
+      "id": "glute_gluteos_strict_none",
+      "input": {
+        "firstPrimaryMuscle": "glute",
+        "secondPrimaryMuscle": "gluteos"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "glute queda unknown strict; gluteos normaliza a glutes, pero no hay combinacion valida porque un lado queda vacio."
+    },
+    {
+      "id": "unknown_unknown_none",
+      "input": {
+        "firstPrimaryMuscle": "unknown_muscle",
+        "secondPrimaryMuscle": "back_mid_upper"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Dos unknowns distintos pasan raw pero no matchean reglas."
+    }
+  ]
+}

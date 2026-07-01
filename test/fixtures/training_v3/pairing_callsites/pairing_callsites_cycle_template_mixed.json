@@ -1,0 +1,179 @@
+{
+  "fixture": "pairing_callsites_cycle_template_mixed",
+  "phase": "D1R8",
+  "type": "observational_post_d1c7",
+  "mode": "cycle_template_builder_proxy",
+  "notes": "Combinaciones mixtas canonico/alias/unknown/grupo observadas desde el proxy.",
+  "cases": [
+    {
+      "id": "mixed_canonical_alias_same_primary",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "chest"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "pectorals",
+          "dayMuscles": ["pectorals", "pectorals"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "forbiddenSamePrimary",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "forbiddenSamePrimary",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "pectorals"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": [],
+            "C": ["pectorals"],
+            "D": []
+          }
+        }
+      },
+      "notes": "El proxy conserva duplicado normalizado y lo manda a C; no se deduplica en este harness."
+    },
+    {
+      "id": "mixed_canonical_unknown",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "unknown_muscle"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "unknown_muscle",
+          "dayMuscles": ["pectorals", "unknown_muscle"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "unknown_muscle"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": [],
+            "C": ["unknown_muscle"],
+            "D": []
+          }
+        }
+      },
+      "notes": "unknown queda raw en normalizacion del builder, pero helpers strict no lo aceptan."
+    },
+    {
+      "id": "mixed_alias_unknown",
+      "input": {
+        "firstPrimaryMuscle": "chest",
+        "secondPrimaryMuscle": "unknown_muscle"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "unknown_muscle",
+          "dayMuscles": ["pectorals", "unknown_muscle"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "unknown_muscle"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": [],
+            "C": ["unknown_muscle"],
+            "D": []
+          }
+        }
+      },
+      "notes": "Alias valido + unknown."
+    },
+    {
+      "id": "mixed_group_canonical",
+      "input": {
+        "firstPrimaryMuscle": "back",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "normalization": {
+          "first": "back",
+          "second": "pectorals",
+          "dayMuscles": ["back", "pectorals"],
+          "primaryMuscle": "back"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["back", "pectorals"],
+          "blockPlan": {
+            "A": ["back"],
+            "B": ["pectorals"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "Grupo + canonico con antagonismo strict."
+    },
+    {
+      "id": "mixed_group_unknown",
+      "input": {
+        "firstPrimaryMuscle": "back",
+        "secondPrimaryMuscle": "unknown_muscle"
+      },
+      "expected": {
+        "normalization": {
+          "first": "back",
+          "second": "unknown_muscle",
+          "dayMuscles": ["back", "unknown_muscle"],
+          "primaryMuscle": "back"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["back", "unknown_muscle"],
+          "blockPlan": {
+            "A": ["back"],
+            "B": [],
+            "C": ["unknown_muscle"],
+            "D": []
+          }
+        }
+      },
+      "notes": "Grupo strict + unknown no forma pairing."
+    }
+  ]
+}

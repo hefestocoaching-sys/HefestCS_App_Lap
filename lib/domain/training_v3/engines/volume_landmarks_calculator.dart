@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../models/volume_landmarks.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
 
 /// Calculadora de landmarks de volumen para todos los músculos
 class VolumeLandmarksCalculator {

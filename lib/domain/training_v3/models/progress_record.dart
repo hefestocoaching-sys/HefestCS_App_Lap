@@ -5,7 +5,6 @@ part 'progress_record.g.dart';
 
 /// Registro histórico COMPLETO de una semana/músculo
 ///
-/// Captura TODO lo necesario para coach ML/IA:
 /// - Volumen prescrito vs realizado
 /// - Feedback del usuario (subjetivo)
 /// - Rendimiento objetivo (logs de ejercicios)

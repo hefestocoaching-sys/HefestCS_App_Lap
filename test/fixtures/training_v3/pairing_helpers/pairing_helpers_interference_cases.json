@@ -1,0 +1,110 @@
+{
+  "fixture": "pairing_helpers_interference_cases",
+  "phase": "D1-C7",
+  "type": "strict",
+  "notes": "Captura baja interferencia, ausencia de regla, sinergia y antagonismo bajo contrato strict.",
+  "cases": [
+    {
+      "id": "interference_low_pectorals_calves",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "calves"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "lowInterference",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Baja interferencia desde InterferenceMatrix."
+    },
+    {
+      "id": "interference_antagonist_pectorals_lats",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "Antagonismo tiene prioridad antes que baja interferencia/sinergia."
+    },
+    {
+      "id": "interference_synergy_pectorals_triceps",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "triceps"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "synergy",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Sinergia permitida."
+    },
+    {
+      "id": "interference_forbidden_same_primary",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "forbiddenSamePrimary",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Mismo primary esta prohibido."
+    },
+    {
+      "id": "interference_low_delts_front_hamstrings",
+      "input": {
+        "firstPrimaryMuscle": "delts_front",
+        "secondPrimaryMuscle": "hamstrings"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "lowInterference",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Baja interferencia canonica."
+    },
+    {
+      "id": "interference_none_mysterychest_lats",
+      "input": {
+        "firstPrimaryMuscle": "mysterychest",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Unknown raw no encuentra regla."
+    }
+  ]
+}

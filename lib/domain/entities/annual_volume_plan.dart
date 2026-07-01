@@ -1,4 +1,4 @@
-import 'weekly_muscle_volume.dart';
+import 'package:hcs_app_lap/domain/entities/weekly_muscle_volume.dart';
 
 class AnnualVolumePlan {
   final int year;

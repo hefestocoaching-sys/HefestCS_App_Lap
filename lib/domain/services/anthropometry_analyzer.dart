@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:hcs_app_lap/core/enums/gender.dart';
 
-import '../entities/anthropometry_analysis_result.dart';
-import '../entities/anthropometry_record.dart';
+import 'package:hcs_app_lap/domain/entities/anthropometry_analysis_result.dart';
+import 'package:hcs_app_lap/domain/entities/anthropometry_record.dart';
 
 // humerusDiameter se almacena para perfil antropométrico ISAK/diámetros,
 // pero no se integra en Rocha hasta validar la fórmula correspondiente.

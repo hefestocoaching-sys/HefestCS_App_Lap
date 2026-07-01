@@ -1,5 +1,5 @@
-import 'meal_distribution_config.dart';
-import 'meal_targets.dart';
+import 'package:hcs_app_lap/nutrition_engine/planning/meal_distribution_config.dart';
+import 'package:hcs_app_lap/nutrition_engine/planning/meal_targets.dart';
 
 /// Servicio de distribución de macros entre comidas del día.
 ///

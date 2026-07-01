@@ -13,7 +13,6 @@ import 'package:hcs_app_lap/utils/save_messages.dart';
 import 'package:hcs_app_lap/utils/widgets/record_history_panel.dart';
 import 'package:hcs_app_lap/utils/record_helpers.dart';
 import 'package:hcs_app_lap/data/repositories/clinical_records_repository_provider.dart';
-import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 import 'package:hcs_app_lap/domain/services/record_deletion_service_provider.dart';
 import 'package:hcs_app_lap/features/common_widgets/record_deletion_dialogs.dart';
 import 'package:hcs_app_lap/utils/widgets/hcs_input_decoration.dart';
@@ -46,8 +45,8 @@ class _MethodPill extends StatelessWidget {
     final color = isPending
         ? kTextColorSecondary
         : isMedian
-            ? kWarningColor
-            : kSuccessColor;
+        ? kWarningColor
+        : kSuccessColor;
 
     return Container(
       alignment: Alignment.center,
@@ -184,24 +183,19 @@ class AnthropometryMeasuresTabState
       'unit': 'cm',
       'threshold': 1.0,
     },
-      {
-        'key': 'humerusDiameter',
-        'label': 'Húmero biepicondilar',
-        'unit': 'cm',
-        'threshold': 1.0,
-      },
-      {
-        'key': 'wristDiameter',
-        'label': 'Muñeca',
-        'unit': 'cm',
-        'threshold': 1.0,
-      },
-      {
-        'key': 'kneeDiameter',
-        'label': 'Fémur/Rodilla biepicondilar',
-        'unit': 'cm',
-        'threshold': 1.0,
-      },
+    {
+      'key': 'humerusDiameter',
+      'label': 'Húmero biepicondilar',
+      'unit': 'cm',
+      'threshold': 1.0,
+    },
+    {'key': 'wristDiameter', 'label': 'Muñeca', 'unit': 'cm', 'threshold': 1.0},
+    {
+      'key': 'kneeDiameter',
+      'label': 'Fémur/Rodilla biepicondilar',
+      'unit': 'cm',
+      'threshold': 1.0,
+    },
   ];
 
   @override
@@ -478,8 +472,7 @@ class AnthropometryMeasuresTabState
     final candidates = client.anthropometry.where((record) {
       final recordDate = DateUtils.dateOnly(record.date);
       return recordDate.isBefore(formDate);
-    }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    }).toList()..sort((a, b) => b.date.compareTo(a.date));
 
     if (candidates.isEmpty) return null;
     return candidates.first;
@@ -494,8 +487,7 @@ class AnthropometryMeasuresTabState
     final candidates = client.anthropometry.where((record) {
       final recordDate = DateUtils.dateOnly(record.date);
       return recordDate.isBefore(targetDate);
-    }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    }).toList()..sort((a, b) => b.date.compareTo(a.date));
 
     if (candidates.isEmpty) return null;
     return candidates.first;
@@ -639,6 +631,12 @@ class AnthropometryMeasuresTabState
         setState(() => _client = activeClient);
       }
 
+      final client = activeClient ?? _client;
+      if (client == null) {
+        showErrorSnackbar(context, 'Error: Cliente no cargado');
+        return;
+      }
+
       final date = DateTime.tryParse(_dateController.text);
       if (date == null) {
         showErrorSnackbar(context, SaveMessages.errorInvalidDate);
@@ -673,8 +671,8 @@ class AnthropometryMeasuresTabState
         basicBodyFat = _calculateBasicBodyFat(
           weight,
           height,
-          _client?.age,
-          _client?.profile.gender,
+          client.age,
+          client.profile.gender,
         );
       } else {
         // Modo ISAK: requiere todas las mediciones
@@ -728,7 +726,7 @@ class AnthropometryMeasuresTabState
           : Map<String, List<double?>>.from(individualMeasurements);
 
       if (isRfm && waistValue != null && waistValue > 0) {
-        rfmValue = _calculateRfm(height, waistValue, _client?.profile.gender);
+        rfmValue = _calculateRfm(height, waistValue, client.profile.gender);
         if (rfmValue != null) {
           recordMeasurements['rfm'] = [rfmValue];
         }
@@ -756,19 +754,13 @@ class AnthropometryMeasuresTabState
         midThighCirc: _finalValues['midThighCirc'],
         maxCalfCirc: _finalValues['maxCalfCirc'],
         neckCirc: isRfm ? double.tryParse(_rfmNeckController.text) : null,
-      humerusDiameter: _finalValues['humerusDiameter'],
-      wristDiameter: _finalValues['wristDiameter'],
+        humerusDiameter: _finalValues['humerusDiameter'],
+        wristDiameter: _finalValues['wristDiameter'],
         kneeDiameter: _finalValues['kneeDiameter'],
         individualMeasurements: recordMeasurements.isEmpty
             ? null
             : recordMeasurements,
       );
-
-      final client = _client;
-      if (client == null) {
-        showErrorSnackbar(context, 'Error: Cliente no cargado');
-        return;
-      }
 
       List<AnthropometryRecord> currentRecords = client.anthropometry;
       final isEditing = _viewState == AnthropometryViewState.editingHistory;
@@ -787,30 +779,24 @@ class AnthropometryMeasuresTabState
         dateExtractor: (record) => record.date,
       );
 
-      // Actualizar cliente con nueva lista
-      final updatedClient = client.copyWith(anthropometry: updated);
-
-      // Guardar en BD local (y Firestore de fondo)
-      final repository = ref.read(clientRepositoryProvider);
-      await repository.saveClient(updatedClient);
-
-      // Actualizar estado global
+      // Persistir mediante el cliente activo real para no pisar historia clínica
       await ref.read(clientsProvider.notifier).updateActiveClient((current) {
         return current.copyWith(anthropometry: updated);
       });
 
       // Actualizar referencia local del cliente y volver a idle
       if (!mounted) return;
+      final refreshedClient = ref.read(clientsProvider).value?.activeClient;
       setState(() {
-        _client = updatedClient;
+        _client = refreshedClient ?? client.copyWith(anthropometry: updated);
         _selectedRecordDate = null;
         _viewState = AnthropometryViewState.idle;
         _isHistoryExpanded = false;
       });
 
-      // Push granular a Firestore (fire-and-forget)
+      // Enqueue durable + push granular a Firestore (fast-path en background)
       final recordsRepo = ref.read(clinicalRecordsRepositoryProvider);
-      recordsRepo.pushAnthropometryRecord(client.id, newRecord);
+      await recordsRepo.pushAnthropometryRecord(client.id, newRecord);
 
       if (!mounted) return;
 
@@ -1062,19 +1048,18 @@ class AnthropometryMeasuresTabState
 
       // Actualizar cliente
       final updatedClient = _client!.copyWith(anthropometry: filtered);
-      final repository = ref.read(clientRepositoryProvider);
-      await repository.saveClient(updatedClient);
 
-      // Actualizar estado global
+      // Actualizar estado global usando el cliente persistido real
       await ref.read(clientsProvider.notifier).updateActiveClient((current) {
         return current.copyWith(anthropometry: filtered);
       });
 
       if (!mounted) return;
+      final refreshedClient = ref.read(clientsProvider).value?.activeClient;
 
       // Limpiar UI y volver a idle
       setState(() {
-        _client = updatedClient;
+        _client = refreshedClient ?? updatedClient;
         if (_selectedRecordDate != null &&
             DateUtils.isSameDay(_selectedRecordDate!, targetDate)) {
           _selectedRecordDate = null;
@@ -1101,6 +1086,18 @@ class AnthropometryMeasuresTabState
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    ref.listen(clientsProvider, (previous, next) {
+      final nextClient = next.value?.activeClient;
+      if (nextClient == null || nextClient == _client) {
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _client = nextClient;
+      });
+    });
 
     final activeClient = ref.watch(clientsProvider).value?.activeClient;
     if (_client?.id != activeClient?.id && activeClient != null) {
@@ -1371,7 +1368,7 @@ class AnthropometryMeasuresTabState
               icon: Icons.science,
             ),
             const SizedBox(height: 12),
-              _buildMeasurementGroupReadOnly('Pliegues Cutáneos', 'mm', [
+            _buildMeasurementGroupReadOnly('Pliegues Cutáneos', 'mm', [
               {
                 'key': 'tricipitalFold',
                 'label': 'Tríceps',
@@ -1403,9 +1400,9 @@ class AnthropometryMeasuresTabState
                 'label': 'Pantorrilla',
                 'value': record.calfFold,
               },
-              ], record: record),
+            ], record: record),
             const SizedBox(height: 12),
-              _buildMeasurementGroupReadOnly('Perímetros', 'cm', [
+            _buildMeasurementGroupReadOnly('Perímetros', 'cm', [
               {
                 'key': 'armRelaxedCirc',
                 'label': 'Brazo Relajado',
@@ -1437,25 +1434,25 @@ class AnthropometryMeasuresTabState
                 'label': 'Pantorrilla',
                 'value': record.maxCalfCirc,
               },
-              ], record: record),
+            ], record: record),
             const SizedBox(height: 12),
-              _buildMeasurementGroupReadOnly('Diámetros', 'cm', [
-                {
-                  'key': 'humerusDiameter',
-                  'label': 'Húmero biepicondilar',
-                  'value': record.humerusDiameter,
-                },
-                {
-                  'key': 'wristDiameter',
-                  'label': 'Muñeca',
-                  'value': record.wristDiameter,
-                },
-                {
-                  'key': 'kneeDiameter',
-                  'label': 'Fémur/Rodilla biepicondilar',
-                  'value': record.kneeDiameter,
-                },
-              ], record: record),
+            _buildMeasurementGroupReadOnly('Diámetros', 'cm', [
+              {
+                'key': 'humerusDiameter',
+                'label': 'Húmero biepicondilar',
+                'value': record.humerusDiameter,
+              },
+              {
+                'key': 'wristDiameter',
+                'label': 'Muñeca',
+                'value': record.wristDiameter,
+              },
+              {
+                'key': 'kneeDiameter',
+                'label': 'Fémur/Rodilla biepicondilar',
+                'value': record.kneeDiameter,
+              },
+            ], record: record),
           ],
         ],
       ),
@@ -1598,10 +1595,8 @@ class AnthropometryMeasuresTabState
       final key = site['key'] as String;
       final value = site['value'] as double?;
       final measurements = record.individualMeasurements?[key];
-      final hasMeasurements = measurements
-              ?.whereType<double>()
-              .any((value) => value > 0) ??
-          false;
+      final hasMeasurements =
+          measurements?.whereType<double>().any((value) => value > 0) ?? false;
       return value != null || hasMeasurements;
     }).toList();
 
@@ -1740,22 +1735,22 @@ class AnthropometryMeasuresTabState
   }
 
   static const TextStyle _headerStyle = TextStyle(
-        color: kTextColorSecondary,
-        fontSize: 10,
-        fontWeight: FontWeight.w800,
-      );
+    color: kTextColorSecondary,
+    fontSize: 10,
+    fontWeight: FontWeight.w800,
+  );
 
   TextStyle get _readOnlyValueStyle => const TextStyle(
-        color: kTextColorSecondary,
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-      );
+    color: kTextColorSecondary,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+  );
 
   TextStyle get _readOnlyFinalStyle => const TextStyle(
-        color: kTextColor,
-        fontSize: 11,
-        fontWeight: FontWeight.w900,
-      );
+    color: kTextColor,
+    fontSize: 11,
+    fontWeight: FontWeight.w900,
+  );
 
   String _formatMeasurementValue(double? value, String unit) {
     if (value == null || value <= 0) return '—';
@@ -1765,7 +1760,10 @@ class AnthropometryMeasuresTabState
   String _finalMethodLabel(List<double?>? values) {
     if (values == null) return '—';
 
-    final valid = values.whereType<double>().where((value) => value > 0).toList();
+    final valid = values
+        .whereType<double>()
+        .where((value) => value > 0)
+        .toList();
 
     if (valid.length >= 3) return 'Mediana';
     if (valid.length == 2) return 'Promedio';
@@ -1909,9 +1907,9 @@ class AnthropometryMeasuresTabState
           ] else if (_measurementMethod == MeasurementMethod.basic) ...[
             _buildBasicSection(),
           ] else ...[
-                  _buildPreviousRecordComparisonBanner(),
-                  const SizedBox(height: 12),
-                  _buildMeasurementGroup(
+            _buildPreviousRecordComparisonBanner(),
+            const SizedBox(height: 12),
+            _buildMeasurementGroup(
               'Pliegues Cutáneos',
               'mm',
               _measurementSites
@@ -2295,31 +2293,31 @@ class AnthropometryMeasuresTabState
               Expanded(
                 flex: 2,
                 child: Center(
-                    child: Text(
-                      'ANTERIOR',
-                      style: TextStyle(
-                        color: Colors.white30,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  child: Text(
+                    'ANTERIOR',
+                    style: TextStyle(
+                      color: Colors.white30,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Text(
-                      'MED. 1',
-                      style: TextStyle(
-                        color: Colors.white30,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    'MED. 1',
+                    style: TextStyle(
+                      color: Colors.white30,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+              ),
+              SizedBox(width: 8),
               Expanded(
                 flex: 2,
                 child: Center(
@@ -2352,46 +2350,46 @@ class AnthropometryMeasuresTabState
                 flex: 2,
                 child: Center(
                   child: Text(
-                      'FINAL',
-                      style: TextStyle(
-                        color: kPrimaryColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    'FINAL',
+                    style: TextStyle(
+                      color: kPrimaryColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Text(
-                      'Δ',
-                      style: TextStyle(
-                        color: kInfoColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    'Δ',
+                    style: TextStyle(
+                      color: kInfoColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Text(
-                      'MÉTODO',
-                      style: TextStyle(
-                        color: Colors.white30,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Text(
+                    'MÉTODO',
+                    style: TextStyle(
+                      color: Colors.white30,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
         const Divider(color: Colors.white10, height: 1),
         const SizedBox(height: 8),
 
@@ -2401,15 +2399,15 @@ class AnthropometryMeasuresTabState
           final error = _errorMessages[key];
           final finalValue = _finalValues[key];
 
-      return _buildMeasurementRow(
-        site['label'],
-        key,
-        site['unit']?.toString() ?? unit,
-        _measurementControllers[key]!,
-        showThird: showThird,
-        error: error,
-        finalValue: finalValue,
-      );
+          return _buildMeasurementRow(
+            site['label'],
+            key,
+            site['unit']?.toString() ?? unit,
+            _measurementControllers[key]!,
+            showThird: showThird,
+            error: error,
+            finalValue: finalValue,
+          );
         }),
       ],
     );
@@ -2490,28 +2488,28 @@ class AnthropometryMeasuresTabState
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-              Expanded(
-                flex: 3,
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: AnthropometryDeltaChip(
-                  currentValue: finalValue,
-                  previousValue: previousValue,
-                  unit: unit,
-                  metricKey: metricKey,
-                  mode: AnthropometryDeltaChipMode.previousOnly,
-                ),
-              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: AnthropometryDeltaChip(
+              currentValue: finalValue,
+              previousValue: previousValue,
+              unit: unit,
+              metricKey: metricKey,
+              mode: AnthropometryDeltaChipMode.previousOnly,
+            ),
+          ),
           const SizedBox(width: 8),
           Expanded(
             flex: 2,
@@ -2528,10 +2526,10 @@ class AnthropometryMeasuresTabState
             child: _buildMeasurementInput(controllers[2], color3, !showThird),
           ),
           const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: Container(
-                  height: 38,
+          Expanded(
+            flex: 2,
+            child: Container(
+              height: 38,
               decoration: BoxDecoration(
                 color: finalValue != null
                     ? kPrimaryColor.withAlpha(25)
@@ -2553,34 +2551,34 @@ class AnthropometryMeasuresTabState
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                  ),
-                ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: AnthropometryDeltaChip(
-                  currentValue: finalValue,
-                  previousValue: previousValue,
-                  unit: unit,
-                  metricKey: metricKey,
-                  mode: AnthropometryDeltaChipMode.deltaOnly,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: _MethodPill(
-                  label: _currentFinalMethodLabel(
-                    showThird: showThird,
-                    finalValue: finalValue,
-                  ),
-                  isMedian: showThird && finalValue != null,
-                  isPending: finalValue == null,
-                ),
-              ),
-            ],
+            ),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: AnthropometryDeltaChip(
+              currentValue: finalValue,
+              previousValue: previousValue,
+              unit: unit,
+              metricKey: metricKey,
+              mode: AnthropometryDeltaChipMode.deltaOnly,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: _MethodPill(
+              label: _currentFinalMethodLabel(
+                showThird: showThird,
+                finalValue: finalValue,
+              ),
+              isMedian: showThird && finalValue != null,
+              isPending: finalValue == null,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,0 +1,68 @@
+{
+  "trainingLevel": "intermediate",
+  "phase": "accumulation",
+  "weekNumbers": [1, 2, 3, 4],
+  "feedback": {
+    "allowMRV": false
+  },
+  "baseVop": {
+    "pectorals": 10,
+    "lats": 10,
+    "quads": 10,
+    "glutes": 19,
+    "calves": 4
+  },
+  "mevByMuscle": {
+    "pectorals": 6,
+    "lats": 6,
+    "quads": 6,
+    "glutes": 6,
+    "calves": 8
+  },
+  "mrvByMuscle": {
+    "pectorals": 30,
+    "lats": 30,
+    "quads": 30,
+    "glutes": 20,
+    "calves": 30
+  },
+  "priorities": {
+    "pectorals": 5,
+    "lats": 3,
+    "quads": 1,
+    "glutes": 5,
+    "calves": 3
+  },
+  "phaseCases": {
+    "intensification": {
+      "weekNumber": 5,
+      "baseVop": {
+        "lats": 10
+      },
+      "mevByMuscle": {
+        "lats": 6
+      },
+      "mrvByMuscle": {
+        "lats": 30
+      },
+      "priorities": {
+        "lats": 3
+      }
+    },
+    "deload": {
+      "weekNumber": 6,
+      "baseVop": {
+        "lats": 20
+      },
+      "mevByMuscle": {
+        "lats": 6
+      },
+      "mrvByMuscle": {
+        "lats": 30
+      },
+      "priorities": {
+        "lats": 3
+      }
+    }
+  }
+}

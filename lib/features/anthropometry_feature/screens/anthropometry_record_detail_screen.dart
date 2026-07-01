@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hcs_app_lap/features/shared/record_detail/record_detail_shell.dart';
 import 'package:hcs_app_lap/features/shared/record_detail/record_tab_scaffold.dart';
-import '../widgets/anthropometry_record_header.dart';
+import 'package:hcs_app_lap/features/anthropometry_feature/widgets/anthropometry_record_header.dart';
 
 /// Pantalla de detalle del registro antropométrico.
 /// Estructura:

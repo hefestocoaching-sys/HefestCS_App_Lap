@@ -1,4 +1,4 @@
-import 'exercise_contribution_catalog.dart';
+import 'package:hcs_app_lap/domain/training/services/exercise_contribution_catalog.dart';
 
 class EffectiveSetsCalculator {
   // ejercicioKeyExtractor: función para obtener la key canónica del ejercicio (id o name normalized)

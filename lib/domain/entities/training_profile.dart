@@ -11,7 +11,7 @@ import 'package:hcs_app_lap/core/enums/training_focus.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
 import 'package:hcs_app_lap/core/enums/training_interview_enums.dart';
 import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
-import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/domain/entities/training_shared_types.dart';
 import 'package:hcs_app_lap/domain/entities/volume_tolerance_profile.dart';
 import 'package:hcs_app_lap/utils/deep_merge.dart';
 
@@ -153,9 +153,11 @@ class TrainingProfile extends Equatable {
     TrainingExtraKeys.backFocus,
   ];
 
-  bool hasInterviewChangedSincePlanGeneration(TrainingPlanConfig plan) {
+  bool hasInterviewChangedSincePlanGeneration(
+    TrainingProfileSnapshotSource plan,
+  ) {
     final snapshotExtra =
-        plan.trainingProfileSnapshot?.extra ?? const <String, dynamic>{};
+        plan.trainingProfileSnapshotExtra ?? const <String, dynamic>{};
     if (snapshotExtra.isEmpty && extra.isEmpty) {
       return false;
     }

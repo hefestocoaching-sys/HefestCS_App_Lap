@@ -14,6 +14,11 @@ class LocalClientDataSourceImpl implements LocalClientDataSource {
   }
 
   @override
+  Future<Client?> fetchClientIncludingDeleted(String id) {
+    return dbHelper.getClientByIdIncludingDeleted(id);
+  }
+
+  @override
   Future<List<Client>> getAllClients() {
     return dbHelper.getAllClients();
   }
@@ -25,9 +30,19 @@ class LocalClientDataSourceImpl implements LocalClientDataSource {
   }
 
   @override
+  Future<ClientOutboxWrite> saveClientWithOutbox(Client client) {
+    return dbHelper.upsertClientWithOutbox(client);
+  }
+
+  @override
   Future<void> deleteClient(String id) {
     // Usamos el borrado lógico
     return dbHelper.softDeleteClient(id);
+  }
+
+  @override
+  Future<ClientOutboxWrite> deleteClientWithOutbox(Client client) {
+    return dbHelper.softDeleteClientWithOutbox(client);
   }
 
   @override

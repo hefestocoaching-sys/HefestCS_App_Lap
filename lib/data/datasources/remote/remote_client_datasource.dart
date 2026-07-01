@@ -1,4 +1,4 @@
-import '../../../domain/entities/client.dart';
+import 'package:hcs_app_lap/domain/entities/client.dart';
 
 abstract class RemoteClientDataSource {
   Future<void> saveClient(Client client);

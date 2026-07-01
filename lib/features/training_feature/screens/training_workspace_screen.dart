@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
@@ -1786,7 +1788,7 @@ class _TrainingWorkspaceScreenState
                               );
                             });
                         if (!mounted) return;
-                        _v3TabController.animateTo(6);
+                        _v3TabController.animateTo(2);
                       },
                 icon: const Icon(Icons.arrow_forward),
                 label: const Text('Confirmar Landmarks y pasar a Intensidad'),
@@ -1830,7 +1832,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  // ignore: unused_element
+
   Widget _buildFieldRow(
     BuildContext context, {
     required List<Widget> children,
@@ -1851,7 +1853,6 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  // ignore: unused_element
   Widget _buildTextField(
     BuildContext context, {
     required TextEditingController controller,
@@ -1864,7 +1865,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  // ignore: unused_element
+
   Widget _buildSaveButton({
     required String label,
     required VoidCallback onPressed,
@@ -2151,7 +2152,7 @@ class _TrainingWorkspaceScreenState
     );
   }
 
-  // ignore: unused_element
+
   Future<void> _saveSetup(Client client) async {
     final setup = TrainingSetupV1(
       heightCm: _parseDouble(_heightController.text),
@@ -2169,7 +2170,6 @@ class _TrainingWorkspaceScreenState
     });
   }
 
-  // ignore: unused_element
   Future<void> _saveEvaluation(
     Client client,
     TrainingEvaluationSnapshotV1 current,
@@ -2239,7 +2239,6 @@ class _TrainingWorkspaceScreenState
     });
   }
 
-  // ignore: unused_element
   Future<void> _saveProgression(
     Client client,
     TrainingProgressionStateV1 current,
@@ -2260,7 +2259,6 @@ class _TrainingWorkspaceScreenState
         .saveProgressionState(clientId: client.id, progression: progression);
   }
 
-  // ignore: unused_element
   Future<void> _openPainRuleDialog(
     Client client,
     TrainingEvaluationSnapshotV1 evaluation,
@@ -2407,7 +2405,6 @@ class _TrainingWorkspaceScreenState
     }
   }
 
-  // ignore: unused_element
   Future<void> _handlePlanAction(
     BuildContext context, {
     required PlanAction action,

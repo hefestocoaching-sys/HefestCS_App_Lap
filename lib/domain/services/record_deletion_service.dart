@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:hcs_app_lap/data/repositories/clinical_records_repository.dart';
 import 'package:hcs_app_lap/data/datasources/remote/record_firestore_datasource.dart';
 
 /// Servicio para borrado seguro de registros por fecha.
@@ -13,7 +13,7 @@ import 'package:hcs_app_lap/data/datasources/remote/record_firestore_datasource.
 ///
 /// Uso:
 /// ```dart
-/// final service = RecordDeletionService(FirebaseFirestore.instance);
+/// final service = ref.read(recordDeletionServiceProvider);
 /// await service.deleteAnthropometryByDate(
 ///   clientId: 'client-123',
 ///   date: DateTime(2025, 01, 15),
@@ -21,16 +21,23 @@ import 'package:hcs_app_lap/data/datasources/remote/record_firestore_datasource.
 /// );
 /// ```
 class RecordDeletionService {
-  final RecordFirestoreDataSource _recordDataSource;
+  final ClinicalRecordsRepository _clinicalRecordsRepository;
+  final RecordRemoteDataSource? _legacyRecordDataSource;
+  final String? Function() _currentCoachIdProvider;
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
 
-  RecordDeletionService(FirebaseFirestore firestore)
-    : _recordDataSource = RecordFirestoreDataSource(firestore);
+  RecordDeletionService({
+    required ClinicalRecordsRepository clinicalRecordsRepository,
+    RecordRemoteDataSource? legacyRecordDataSource,
+    String? Function()? currentCoachIdProvider,
+  }) : _clinicalRecordsRepository = clinicalRecordsRepository,
+       _legacyRecordDataSource = legacyRecordDataSource,
+       _currentCoachIdProvider =
+           currentCoachIdProvider ?? _defaultCurrentCoachId;
 
-  /// Obtiene el ID del coach autenticado
+  /// Obtiene el ID del coach autenticado para rutas legacy sin outbox.
   String? _getAuthenticatedCoachId() {
-    final user = FirebaseAuth.instance.currentUser;
-    return user?.uid;
+    return _currentCoachIdProvider();
   }
 
   /// Borra el registro de antropometría para una fecha específica.
@@ -50,19 +57,9 @@ class RecordDeletionService {
     Function(Exception)? onError,
   }) async {
     try {
-      final coachId = _getAuthenticatedCoachId();
-      if (coachId == null) {
-        throw Exception('No authenticated user');
-      }
-
-      final dateKey = _dateFormat.format(date);
-
-      // Soft delete: marca el registro como eliminado
-      await _recordDataSource.deleteRecord(
-        coachId: coachId,
-        clientId: clientId,
-        domain: RecordDomain.anthropometry,
-        dateKey: dateKey,
+      await _clinicalRecordsRepository.deleteAnthropometryRecord(
+        clientId,
+        date,
       );
     } catch (e) {
       if (onError != null && e is Exception) {
@@ -89,19 +86,10 @@ class RecordDeletionService {
     Function(Exception)? onError,
   }) async {
     try {
-      final coachId = _getAuthenticatedCoachId();
-      if (coachId == null) {
-        throw Exception('No authenticated user');
-      }
-
-      final dateKey = _dateFormat.format(date);
-
-      // Soft delete: marca el registro como eliminado
-      await _recordDataSource.deleteRecord(
-        coachId: coachId,
+      await _deleteLegacyRemoteRecord(
         clientId: clientId,
         domain: RecordDomain.nutrition,
-        dateKey: dateKey,
+        date: date,
       );
     } catch (e) {
       if (onError != null && e is Exception) {
@@ -129,19 +117,10 @@ class RecordDeletionService {
     Function(Exception)? onError,
   }) async {
     try {
-      final coachId = _getAuthenticatedCoachId();
-      if (coachId == null) {
-        throw Exception('No authenticated user');
-      }
-
-      final dateKey = _dateFormat.format(date);
-
-      // Soft delete: marca el registro como eliminado
-      await _recordDataSource.deleteRecord(
-        coachId: coachId,
+      await _deleteLegacyRemoteRecord(
         clientId: clientId,
         domain: RecordDomain.training,
-        dateKey: dateKey,
+        date: date,
       );
     } catch (e) {
       if (onError != null && e is Exception) {
@@ -168,19 +147,9 @@ class RecordDeletionService {
     Function(Exception)? onError,
   }) async {
     try {
-      final coachId = _getAuthenticatedCoachId();
-      if (coachId == null) {
-        throw Exception('No authenticated user');
-      }
-
-      final dateKey = _dateFormat.format(date);
-
-      // Soft delete: marca el registro como eliminado
-      await _recordDataSource.deleteRecord(
-        coachId: coachId,
-        clientId: clientId,
-        domain: RecordDomain.biochemistry,
-        dateKey: dateKey,
+      await _clinicalRecordsRepository.deleteBiochemistryRecord(
+        clientId,
+        date,
       );
     } catch (e) {
       if (onError != null && e is Exception) {
@@ -190,4 +159,31 @@ class RecordDeletionService {
       }
     }
   }
+
+  Future<void> _deleteLegacyRemoteRecord({
+    required String clientId,
+    required RecordDomain domain,
+    required DateTime date,
+  }) async {
+    final coachId = _getAuthenticatedCoachId();
+    if (coachId == null) {
+      throw Exception('No authenticated user');
+    }
+
+    final recordDataSource = _legacyRecordDataSource;
+    if (recordDataSource == null) {
+      throw Exception('No remote record datasource');
+    }
+
+    await recordDataSource.deleteRecord(
+      coachId: coachId,
+      clientId: clientId,
+      domain: domain,
+      dateKey: _dateFormat.format(date),
+    );
+  }
+}
+
+String? _defaultCurrentCoachId() {
+  return FirebaseAuth.instance.currentUser?.uid;
 }

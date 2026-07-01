@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/utils/client_extensions.dart';
 import 'package:hcs_app_lap/domain/entities/tmb_recommendation.dart';
 
-import '../domain/entities/client.dart';
+import 'package:hcs_app_lap/domain/entities/client.dart';
 
 class DietaryCalculator {
   // ============================================

@@ -18,11 +18,11 @@ import 'package:hcs_app_lap/features/main_shell/screen/client_selection_screen.d
 import 'package:hcs_app_lap/features/main_shell/widgets/global_side_navigation_rail.dart';
 import 'package:hcs_app_lap/features/main_shell/widgets/save_indicator_widget.dart';
 import 'package:hcs_app_lap/features/main_shell/widgets/settings_screen.dart';
-import 'package:hcs_app_lap/features/history_clinic_feature/viewmodel/history_clinic_view_model.dart';
 import 'package:hcs_app_lap/core/navigation/client_open_origin.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/save_indicator_provider.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/core/contracts/saveable_module.dart';
+import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/core/config/feature_flag_service.dart';
@@ -159,6 +159,13 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     _showClientsScreenNotifier.value = false;
   }
 
+  bool _isMountedModule(SaveableModule module) {
+    if (module is State) {
+      return (module as State).mounted;
+    }
+    return true;
+  }
+
   Iterable<SaveableModule> _allModules() sync* {
     final useUnifiedPlan = ref
         .read(featureFlagServiceProvider)
@@ -175,7 +182,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       _biochemistryKey.currentState,
     ];
     for (final module in modules) {
-      if (module != null) {
+      if (module != null && _isMountedModule(module)) {
         yield module;
       }
     }
@@ -200,7 +207,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       _ => null,
     };
 
-    if (module != null) {
+    if (module != null && _isMountedModule(module)) {
       yield module;
     }
   }
@@ -230,6 +237,7 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
         '[MainShell][Save] Sincronizando ${modulesToSave.length} módulo(s)...',
       );
       for (final module in modulesToSave) {
+        if (!_isMountedModule(module)) continue;
         await module.saveIfDirty();
       }
 
@@ -243,6 +251,31 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
     } finally {
       _isSaving = false;
     }
+  }
+
+  Future<void> _applyMealPlanNutritionPatch(Client updated) async {
+    await ref
+        .read(clientsProvider.notifier)
+        .updateActiveClientNutrition((previous) {
+      final extra = Map<String, dynamic>.from(previous.extra);
+      final updatedExtra = updated.nutrition.extra;
+      if (updatedExtra.containsKey(NutritionExtraKeys.mealPlanRecords)) {
+        extra[NutritionExtraKeys.mealPlanRecords] =
+            updatedExtra[NutritionExtraKeys.mealPlanRecords];
+      }
+      if (updatedExtra.containsKey(
+        NutritionExtraKeys.selectedMealPlanRecordDateIso,
+      )) {
+        extra[NutritionExtraKeys.selectedMealPlanRecordDateIso] =
+            updatedExtra[NutritionExtraKeys.selectedMealPlanRecordDateIso];
+      }
+
+      return previous.copyWith(
+        extra: extra,
+        dailyMealPlans:
+            updated.nutrition.dailyMealPlans ?? previous.dailyMealPlans,
+      );
+    }, expectedClientId: updated.id);
   }
 
   void _resetAllDrafts() {
@@ -302,61 +335,14 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                       heroTag: null,
                       onPressed: () async {
                         await _saveActiveModuleIfNeeded();
-                        final clientToSave = ref
-                            .read(clientsProvider)
-                            .value
-                            ?.activeClient;
-                        if (clientToSave != null) {
-                          final client = clientToSave;
-                          await ref
-                              .read(clientsProvider.notifier)
-                              .updateActiveClient((prev) {
-                                final mergedNutritionExtra =
-                                    Map<String, dynamic>.from(
-                                      prev.nutrition.extra,
-                                    );
-                                mergedNutritionExtra.addAll(
-                                  client.nutrition.extra,
-                                );
-
-                                final mergedTrainingExtra =
-                                    Map<String, dynamic>.from(
-                                      prev.training.extra,
-                                    );
-                                mergedTrainingExtra.addAll(
-                                  client.training.extra,
-                                );
-
-                                // ✅ CRITICAL FIX: Usar client.training como base
-                                // Solo mergear extra para no perder cambios concurrentes
-                                final mergedTraining = client.training.copyWith(
-                                  extra: mergedTrainingExtra,
-                                );
-
-                                return prev.copyWith(
-                                  profile: client.profile,
-                                  history: client.history,
-                                  training: mergedTraining,
-                                  nutrition: prev.nutrition.copyWith(
-                                    extra: mergedNutritionExtra,
-                                    dailyMealPlans:
-                                        client.nutrition.dailyMealPlans ??
-                                        prev.nutrition.dailyMealPlans,
-                                  ),
-                                  trainingPlans: client.trainingPlans,
-                                  trainingWeeks: client.trainingWeeks,
-                                  trainingSessions: client.trainingSessions,
-                                );
-                              });
-                          if (!context.mounted) {
-                            return;
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Historia clinica guardada'),
-                            ),
-                          );
+                        if (!context.mounted) {
+                          return;
                         }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Historia clinica guardada'),
+                          ),
+                        );
                       },
                       label: const Text('Guardar Cliente'),
                       icon: const Icon(Icons.save),
@@ -423,13 +409,9 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
                                                           currentActiveClient,
                                                       onClientUpdated:
                                                           (updated) async {
-                                                            await ref
-                                                                .read(
-                                                                  historyClinicVmProvider,
-                                                                )
-                                                                .saveClient(
-                                                                  updated,
-                                                                );
+                                                            await _applyMealPlanNutritionPatch(
+                                                              updated,
+                                                            );
                                                           },
                                                     )
                                                   : const SizedBox.shrink(), // 6

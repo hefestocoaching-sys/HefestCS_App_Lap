@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field
+
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/core/enums/training_phase.dart';
@@ -2679,6 +2681,7 @@ class MotorV3Orchestrator {
     return freqByMuscle;
   }
 
+  // ignore: unused_element
   static List<String> _feasibilityErrors({
     required Map<String, int> targetVolume,
     required int daysPerWeek,
@@ -2998,10 +3001,8 @@ class MotorV3Orchestrator {
   static IntensificationRule? _intensificationRuleForZone(String zone) {
     switch (zone.trim().toLowerCase()) {
       case 'heavy':
-        return IntensificationRule(
+        return const IntensificationRule(
           type: IntensificationType.dropSet,
-          applyToLastSetOnly: true,
-          applyToLastTwoSets: false,
           parameters: {
             'drop_percentages': [0.25, 0.25],
             'to_failure': true,
@@ -3009,10 +3010,9 @@ class MotorV3Orchestrator {
           },
         );
       case 'medium':
-        return IntensificationRule(
+        return const IntensificationRule(
           type: IntensificationType.restPause,
           applyToLastSetOnly: false,
-          applyToLastTwoSets: false,
           parameters: {
             'rest_seconds_min': 20,
             'rest_seconds_max': 30,
@@ -3021,7 +3021,7 @@ class MotorV3Orchestrator {
           },
         );
       case 'light':
-        return IntensificationRule(
+        return const IntensificationRule(
           type: IntensificationType.isometricHold,
           applyToLastSetOnly: false,
           applyToLastTwoSets: true,

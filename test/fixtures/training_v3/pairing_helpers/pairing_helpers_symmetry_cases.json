@@ -1,0 +1,127 @@
+{
+  "fixture": "pairing_helpers_symmetry_cases",
+  "phase": "D1-C7",
+  "type": "strict",
+  "notes": "Captura simetria A/B vs B/A en el contrato strict.",
+  "cases": [
+    {
+      "id": "symmetry_pectorals_lats_ab",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "A/B antagonista."
+    },
+    {
+      "id": "symmetry_lats_pectorals_ba",
+      "input": {
+        "firstPrimaryMuscle": "lats",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "B/A antagonista."
+    },
+    {
+      "id": "symmetry_pectorals_calves_ab",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "calves"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "lowInterference",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Baja interferencia A/B."
+    },
+    {
+      "id": "symmetry_calves_pectorals_ba",
+      "input": {
+        "firstPrimaryMuscle": "calves",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "lowInterference",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Baja interferencia B/A."
+    },
+    {
+      "id": "symmetry_pectorals_triceps_ab",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "triceps"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "synergy",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Sinergia A/B."
+    },
+    {
+      "id": "symmetry_triceps_pectorals_ba",
+      "input": {
+        "firstPrimaryMuscle": "triceps",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "synergy",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Sinergia B/A por evaluacion bidireccional."
+    },
+    {
+      "id": "symmetry_same_primary",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "forbiddenSamePrimary",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Mismo primary prohibido."
+    }
+  ]
+}

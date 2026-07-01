@@ -1,0 +1,30 @@
+{
+  "trainingLevel": "intermediate",
+  "phase": "accumulation",
+  "weekNumbers": [1, 3],
+  "feedback": {},
+  "baseVop": {
+    "unknown_muscle": 12,
+    "back_mid_upper": 13,
+    "glute": 9,
+    "mysterychest": 7
+  },
+  "mevByMuscle": {
+    "unknown_muscle": 6,
+    "back_mid_upper": 6,
+    "glute": 6,
+    "mysterychest": 5
+  },
+  "mrvByMuscle": {
+    "unknown_muscle": 20,
+    "back_mid_upper": 20,
+    "glute": 18,
+    "mysterychest": 14
+  },
+  "priorities": {
+    "unknown_muscle": 5,
+    "back_mid_upper": 3,
+    "glute": 5,
+    "mysterychest": 1
+  }
+}

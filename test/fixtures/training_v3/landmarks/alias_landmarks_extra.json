@@ -1,0 +1,24 @@
+{
+  "muscleLandmarks": {
+    "chest": {
+      "vme": 10,
+      "vop": 14,
+      "vmr": 20
+    },
+    "quadriceps": {
+      "vme": 12,
+      "vop": 18,
+      "vmr": 24
+    },
+    "deltoide_anterior": {
+      "vme": 5,
+      "vop": 8,
+      "vmr": 10
+    },
+    "gluteos": {
+      "vme": 10,
+      "vop": 15,
+      "vmr": 20
+    }
+  }
+}

@@ -11,6 +11,17 @@ class SyncService {
   Timer? _timer;
   bool _isRunning = false;
   bool _isProcessing = false;
+  BackgroundSyncService? _backgroundSyncServiceOverride;
+
+  void setBackgroundSyncServiceForTest(
+    BackgroundSyncService backgroundSyncService,
+  ) {
+    _backgroundSyncServiceOverride = backgroundSyncService;
+  }
+
+  void clearBackgroundSyncServiceForTest() {
+    _backgroundSyncServiceOverride = null;
+  }
 
   void start() {
     if (_isRunning) return;
@@ -28,25 +39,34 @@ class SyncService {
     _isRunning = false;
   }
 
-  Future<void> _processPendingQueue() async {
-    if (!_isRunning) return;
+  Future<void> processPendingQueueOnce() => _processPendingQueue(force: true);
+
+  Future<void> _processPendingQueue({bool force = false}) async {
+    if (!force && !_isRunning) return;
     if (_isProcessing) return;
     _isProcessing = true;
 
     try {
       final pending = await SyncQueueHelper.getPendingItems();
+      final backgroundSyncService =
+          _backgroundSyncServiceOverride ?? BackgroundSyncService.instance;
 
       for (final item in pending) {
         try {
-          await _syncItem(item);
-          await SyncQueueHelper.markSuccess(item['id'] as String);
+          final outcome = await _syncItem(item);
+          if (outcome == SyncQueueProcessOutcome.retryableFailure) {
+            await SyncQueueHelper.markFailure(
+              item['id'] as String,
+              'sync failed',
+            );
+          }
         } catch (e) {
           debugPrint('Sync failed for ${item['id']}: $e');
           await SyncQueueHelper.markFailure(item['id'] as String, e.toString());
         }
       }
 
-      await BackgroundSyncService.instance.trySyncPendingData();
+      await backgroundSyncService.trySyncPendingData();
     } catch (e) {
       debugPrint('Error processing sync queue: $e');
     } finally {
@@ -54,17 +74,24 @@ class SyncService {
     }
   }
 
-  Future<void> _syncItem(Map<String, dynamic> item) async {
+  Future<SyncQueueProcessOutcome> _syncItem(Map<String, dynamic> item) async {
     final domain = item['domain'] as String;
-    final clientId = item['client_id'] as String;
-    final dateKey = item['date_key'] as String;
-    final payload = item['payload'] as String;
-
-    if (domain == 'anthropometry') {
-      // Parsear payload y subir...
-      debugPrint(
-        'Sync pending anthropometry for $clientId ($dateKey): ${payload.length} bytes',
-      );
+    if (domain == SyncQueueDomains.client) {
+      final backgroundSyncService =
+          _backgroundSyncServiceOverride ?? BackgroundSyncService.instance;
+      return backgroundSyncService.processClientOutboxItem(item);
     }
+
+    if (domain == SyncQueueDomains.anthropometryRecordUpsert ||
+        domain == SyncQueueDomains.biochemistryRecordUpsert ||
+        domain == SyncQueueDomains.anthropometryRecordDelete ||
+        domain == SyncQueueDomains.biochemistryRecordDelete) {
+      final backgroundSyncService =
+          _backgroundSyncServiceOverride ?? BackgroundSyncService.instance;
+      return backgroundSyncService.processClinicalRecordOutboxItem(item);
+    }
+
+    debugPrint('Skipping unsupported sync queue domain: $domain');
+    return SyncQueueProcessOutcome.pending;
   }
 }

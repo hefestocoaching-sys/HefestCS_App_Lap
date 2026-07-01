@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "fixture": "session_structure_pairing_cases",
+  "engine": "SessionStructureEngine",
+  "notes": [
+    "Fixture strict D1-C6 de pairing.",
+    "Cubre antagonista B, bajo solapamiento C y biserie D por sinergia.",
+    "La logica de pairing depende de PairingContract, AntagonistPairingEngine e InterferenceMatrix."
+  ],
+  "cases": [
+    {
+      "id": "pairing_antagonist_low_interference_synergy",
+      "api": "build",
+      "input": {
+        "exercises": [
+          {
+            "id": "pair_pec_heavy",
+            "name": "Pairing pectorals heavy",
+            "primaryMuscles": ["pectorals"],
+            "movementPattern": "horizontal_push",
+            "loadCategory": "heavy",
+            "fatigueScore": 3,
+            "stimulusScore": 100
+          },
+          {
+            "id": "pair_lats_medium",
+            "name": "Pairing lats medium",
+            "primaryMuscles": ["lats"],
+            "movementPattern": "vertical_pull",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 94
+          },
+          {
+            "id": "pair_calves_light",
+            "name": "Pairing calves light",
+            "primaryMuscles": ["calves"],
+            "movementPattern": "ankle_extension",
+            "loadCategory": "light",
+            "fatigueScore": 1,
+            "stimulusScore": 90
+          },
+          {
+            "id": "pair_abs_light",
+            "name": "Pairing abs light",
+            "primaryMuscles": ["abs"],
+            "movementPattern": "trunk_flexion",
+            "loadCategory": "light",
+            "fatigueScore": 1,
+            "stimulusScore": 88
+          },
+          {
+            "id": "pair_quads_medium",
+            "name": "Pairing quads medium",
+            "primaryMuscles": ["quads"],
+            "movementPattern": "squat",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 86
+          },
+          {
+            "id": "pair_glutes_light",
+            "name": "Pairing glutes light",
+            "primaryMuscles": ["glutes"],
+            "movementPattern": "hip_extension",
+            "loadCategory": "light",
+            "fatigueScore": 2,
+            "stimulusScore": 84
+          }
+        ]
+      },
+      "expected": {
+        "mainLiftId": "pair_pec_heavy",
+        "flattenedIds": ["pair_pec_heavy", "pair_lats_medium", "pair_calves_light", "pair_abs_light", "pair_quads_medium", "pair_glutes_light"],
+        "blocks": [
+          {
+            "blockLabel": "B",
+            "slotFirst": "B1",
+            "firstId": "pair_lats_medium",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "C",
+            "slotFirst": "C1",
+            "firstId": "pair_calves_light",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "C",
+            "slotFirst": "C2",
+            "firstId": "pair_abs_light",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "D",
+            "slotFirst": "D1",
+            "firstId": "pair_quads_medium",
+            "slotSecond": "D2",
+            "secondId": "pair_glutes_light",
+            "pairGroupId": "D_1",
+            "isBiserie": true
+          }
+        ],
+        "placements": [
+          {"exerciseId": "pair_pec_heavy", "blockLabel": "A", "slotLabel": "A", "pairGroupId": null, "isMainLift": true},
+          {"exerciseId": "pair_lats_medium", "blockLabel": "B", "slotLabel": "B1", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "pair_calves_light", "blockLabel": "C", "slotLabel": "C1", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "pair_abs_light", "blockLabel": "C", "slotLabel": "C2", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "pair_quads_medium", "blockLabel": "D", "slotLabel": "D1", "pairGroupId": "D_1", "isMainLift": false},
+          {"exerciseId": "pair_glutes_light", "blockLabel": "D", "slotLabel": "D2", "pairGroupId": "D_1", "isMainLift": false}
+        ]
+      },
+      "observedNotes": "lats va a B por antagonista; calves/abs van a C por baja interferencia; quads+glutes forman D1/D2."
+    }
+  ]
+}

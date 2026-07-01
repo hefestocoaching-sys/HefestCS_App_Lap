@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
-import '../equivalents/equivalent_calculator.dart';
-import 'meal_distribution_config.dart';
-import 'meal_distribution_service.dart';
-import 'meal_targets.dart';
-import 'nutrition_plan_result.dart';
+import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_calculator.dart';
+import 'package:hcs_app_lap/nutrition_engine/planning/meal_distribution_config.dart';
+import 'package:hcs_app_lap/nutrition_engine/planning/meal_distribution_service.dart';
+import 'package:hcs_app_lap/nutrition_engine/planning/meal_targets.dart';
+import 'package:hcs_app_lap/nutrition_engine/planning/nutrition_plan_result.dart';
 import 'package:hcs_app_lap/domain/entities/clinical_restriction_profile.dart';
 import 'package:hcs_app_lap/domain/entities/daily_nutrition_plan.dart';
 import 'package:uuid/uuid.dart';

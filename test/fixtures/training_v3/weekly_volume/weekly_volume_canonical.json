@@ -1,0 +1,32 @@
+{
+  "trainingLevel": "intermediate",
+  "phase": "accumulation",
+  "weekNumbers": [1, 2, 3, 4],
+  "feedback": {
+    "allowMRV": false
+  },
+  "baseVop": {
+    "pectorals": 10,
+    "lats": 12,
+    "quads": 14,
+    "glutes": 13
+  },
+  "mevByMuscle": {
+    "pectorals": 8,
+    "lats": 9,
+    "quads": 10,
+    "glutes": 9
+  },
+  "mrvByMuscle": {
+    "pectorals": 20,
+    "lats": 22,
+    "quads": 24,
+    "glutes": 21
+  },
+  "priorities": {
+    "pectorals": 5,
+    "lats": 3,
+    "quads": 1,
+    "glutes": 4
+  }
+}

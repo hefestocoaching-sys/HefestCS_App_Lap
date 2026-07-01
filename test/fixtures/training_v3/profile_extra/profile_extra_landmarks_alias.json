@@ -1,0 +1,45 @@
+{
+  "trainingExtraVersion": "d1r2-regression-baseline",
+  "effectiveTrainingLevel": "intermediate",
+  "trainingLevelDerived": "intermediate",
+  "daysPerWeek": 4,
+  "timePerSessionMinutes": 60,
+  "planDurationInWeeks": 4,
+  "priorityMusclesPrimary": ["chest", "quadriceps"],
+  "priorityMusclesSecondary": ["deltoide_anterior", "gluteos"],
+  "priorityMusclesTertiary": [],
+  "deltaVmeGlobal": 0,
+  "deltaVmrGlobal": 0,
+  "muscleLandmarks": {
+    "chest": {
+      "vme": 10,
+      "vop": 14,
+      "vmr": 20
+    },
+    "quadriceps": {
+      "vme": 12,
+      "vop": 18,
+      "vmr": 24
+    },
+    "deltoide_anterior": {
+      "vme": 5,
+      "vop": 8,
+      "vmr": 10
+    },
+    "gluteos": {
+      "vme": 10,
+      "vop": 15,
+      "vmr": 20
+    }
+  },
+  "vopSnapshot": {
+    "totalSetsByMuscle": {
+      "chest": 14,
+      "quadriceps": 18,
+      "deltoide_anterior": 8,
+      "gluteos": 15
+    },
+    "allMuscles": ["chest", "quadriceps", "deltoide_anterior", "gluteos"],
+    "schemaVersion": "d1r2-baseline"
+  }
+}

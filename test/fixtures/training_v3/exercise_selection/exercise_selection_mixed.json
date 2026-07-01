@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "fixture": "exercise_selection_mixed",
+  "engine": "ExerciseSelectionEngine",
+  "catalog": "minimal_fake_catalog_inside_regression_test",
+  "notes": [
+    "Fixture strict D1-C5 de entradas mezcladas canonical + alias + unknown.",
+    "La API selectExercises recibe un targetMuscle por llamada; no fusiona inputs multiples en una sola estructura.",
+    "pectorals y chest producen la misma seleccion si se llaman por separado."
+  ],
+  "cases": [
+    {
+      "id": "mixed_pectorals_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "pectorals",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high", "pec_mid"]
+      },
+      "observedNotes": "Canonical pectorals selecciona pectorals."
+    },
+    {
+      "id": "mixed_chest_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "chest",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high", "pec_mid"]
+      },
+      "observedNotes": "chest colisiona semanticamente con pectorals, pero cada llamada se evalua independiente."
+    },
+    {
+      "id": "mixed_lats_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "lats",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["lat_high", "lat_mid"]
+      },
+      "observedNotes": "Canonical lats selecciona lats."
+    },
+    {
+      "id": "mixed_quadriceps_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "quadriceps",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["quad_high", "quad_mid"]
+      },
+      "observedNotes": "quadriceps normaliza a quads."
+    },
+    {
+      "id": "mixed_unknown_muscle_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "unknown_muscle",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "unknown_muscle no selecciona fallback generico."
+    },
+    {
+      "id": "mixed_glute_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "glute",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "glute se descarta en selectExercises por adapter strict."
+    },
+    {
+      "id": "mixed_back_mid_upper_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "back_mid_upper",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "back_mid_upper no pasa como catalog key."
+    },
+    {
+      "id": "mixed_back_group_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "back",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["lat_high", "lat_mid"]
+      },
+      "observedNotes": "back se expande a lats + upper_back; el catalogo fake solo tiene lats."
+    }
+  ]
+}

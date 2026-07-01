@@ -423,7 +423,7 @@ Client _buildClientFromCase(_CaseSpec spec) {
       fullName: spec.fullName,
       email: '${spec.id}@audit.local',
       phone: '0000000000',
-      birthDate: DateTime(spec.asOfDate.year - spec.age, 1, 1),
+      birthDate: DateTime(spec.asOfDate.year - spec.age),
       age: spec.age,
       gender: spec.gender,
       country: 'MX',
@@ -727,7 +727,7 @@ dynamic _toJsonSafe(dynamic value) {
 String _buildIndexSummaryMarkdown(List<_CaseSummary> summaries) {
   final table = StringBuffer()
     ..writeln('# Index Summary - Motor V3 Generated Cases')
-    ..writeln('')
+    ..writeln()
     ..writeln(
       '| Caso | Tipo | ¿Genero plan? | ¿Validacion forense aprobo? | Split resultante | Musculos primarios | Frecuencia relevante | Errores bloqueantes | Warnings | Observacion corta |',
     )
@@ -743,7 +743,7 @@ String _buildIndexSummaryMarkdown(List<_CaseSummary> summaries) {
   }
 
   table
-    ..writeln('')
+    ..writeln()
     ..writeln('## Notas de ruta legacy detectadas')
     ..writeln(
       '- Se detecta ruta legacy interna en motor_v3_orchestrator._buildSessions con ExerciseSelectionEngine.selectExercises (no usada como entrypoint principal de app).',

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "fixture": "exercise_selection_canonical",
+  "engine": "ExerciseSelectionEngine",
+  "catalog": "minimal_fake_catalog_inside_regression_test",
+  "notes": [
+    "Fixture strict D1-C5: captura comportamiento canonico despues de migrar ExerciseSelectionEngine.",
+    "selectExercises usa MuscleKeyAdapterV3.toCatalogKeys y devuelve ids ordenados por stimulus desc, fatigue asc.",
+    "selectDeterministicCandidates usa MuscleRegistry.tryNormalizeMuscleKey para comparar musculos."
+  ],
+  "cases": [
+    {
+      "id": "canonical_pectorals_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "pectorals",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high", "pec_mid"]
+      },
+      "observedNotes": "Clave canonica pectorals conserva salida canonica del catalogo fake."
+    },
+    {
+      "id": "canonical_lats_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "lats",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["lat_high", "lat_mid"]
+      },
+      "observedNotes": "Clave canonica lats selecciona candidatos primarios lats."
+    },
+    {
+      "id": "canonical_quads_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "quads",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["quad_high", "quad_mid"]
+      },
+      "observedNotes": "Clave canonica quads conserva orden por score."
+    },
+    {
+      "id": "canonical_glutes_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "glutes",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["glute_high"]
+      },
+      "observedNotes": "Con un solo candidato disponible, el engine devuelve menos que targetExerciseCount sin fallback generico."
+    },
+    {
+      "id": "canonical_glutes_deterministic",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "glutes",
+        "intensityZone": "medium",
+        "availableEquipment": []
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["glute_high"]
+      },
+      "observedNotes": "La superficie deterministica strict conserva claves canonicas."
+    }
+  ]
+}

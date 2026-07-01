@@ -1,3 +1,4 @@
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart';
 import 'package:hcs_app_lap/domain/constants/volume_progression.dart';
 
 /// Planificador de volumen semanal determinístico (Motor V3)
@@ -18,18 +19,23 @@ class WeeklyVolumePlanner {
     required String phase,
     required Map<String, dynamic> feedback,
   }) {
+    final normalizedBaseVop = _normalizeMuscleIntMap(baseVop);
+    final normalizedMevByMuscle = _normalizeMuscleIntMap(mevByMuscle);
+    final normalizedMrvByMuscle = _normalizeMuscleIntMap(mrvByMuscle);
+    final normalizedPriorities = _normalizeMuscleIntMap(priorities);
+
     final weekVolume = <String, int>{};
     final weekTrace = <String, String>{};
 
     // Reset decision trace for this week if starting fresh
     if (weekNumber == 1) {
       _decisionTrace.clear();
-      _decisionTrace['baseVop'] = baseVop;
+      _decisionTrace['baseVop'] = Map<String, int>.from(normalizedBaseVop);
     }
 
     // 1. Base case: Week 1 is always Base VOP (adjusted by phase start if needed, but usually VOP)
     if (weekNumber == 1) {
-      baseVop.forEach((muscle, sets) {
+      normalizedBaseVop.forEach((muscle, sets) {
         weekVolume[muscle] = sets;
         weekTrace[muscle] = 'Week 1: Base VOP';
       });
@@ -38,11 +44,11 @@ class WeeklyVolumePlanner {
     }
 
     // 2. Progression logic for subsequent weeks
-    for (final muscle in baseVop.keys) {
-      final startSets = baseVop[muscle] ?? 10; // Fallback safe
-      final currentMev = mevByMuscle[muscle] ?? 8;
-      final currentMrv = mrvByMuscle[muscle] ?? 20; // Default safe cap
-      final priority = priorities[muscle] ?? 3; // Default secondary
+    for (final muscle in normalizedBaseVop.keys) {
+      final startSets = normalizedBaseVop[muscle] ?? 10; // Fallback safe
+      final currentMev = normalizedMevByMuscle[muscle] ?? 8;
+      final currentMrv = normalizedMrvByMuscle[muscle] ?? 20;
+      final priority = normalizedPriorities[muscle] ?? 3;
 
       int newSets = startSets;
       String decision = '';
@@ -166,6 +172,16 @@ class WeeklyVolumePlanner {
 
     _recordTrace(weekNumber, weekVolume, weekTrace);
     return weekVolume;
+  }
+
+  static Map<String, int> _normalizeMuscleIntMap(Map<String, int> source) {
+    final normalized = <String, int>{};
+    for (final entry in source.entries) {
+      final canonical = tryNormalizeMuscleKey(entry.key);
+      if (canonical == null) continue;
+      normalized[canonical] = entry.value;
+    }
+    return normalized;
   }
 
   static int _calculateAccumulationVolume(

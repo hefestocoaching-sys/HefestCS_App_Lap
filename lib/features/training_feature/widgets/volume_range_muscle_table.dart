@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
-import 'muscle_detail_modal.dart';
+import 'package:hcs_app_lap/features/training_feature/widgets/muscle_detail_modal.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 
 /// @deprecated Usar VolumeRangeMuscleTableV3 en su lugar

@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "fixture": "session_structure_order_cases",
+  "engine": "SessionStructureEngine",
+  "notes": [
+    "Fixture strict D1-C6 de orden deterministico.",
+    "No hay input explicito de prioridad; el orden depende de ExerciseOrderingEngine score y FatigueBalancer.",
+    "El main lift se selecciona despues de ordenar, no por orden de entrada."
+  ],
+  "cases": [
+    {
+      "id": "order_high_score_first_despite_input_order",
+      "api": "build",
+      "input": {
+        "exercises": [
+          {
+            "id": "order_low_abs_light",
+            "name": "Order low abs light",
+            "primaryMuscles": ["abs"],
+            "movementPattern": "trunk_flexion",
+            "loadCategory": "light",
+            "fatigueScore": 1,
+            "stimulusScore": 70
+          },
+          {
+            "id": "order_high_quads_heavy",
+            "name": "Order high quads heavy",
+            "primaryMuscles": ["quads"],
+            "movementPattern": "squat",
+            "loadCategory": "heavy",
+            "fatigueScore": 3,
+            "stimulusScore": 96
+          },
+          {
+            "id": "order_medium_hamstrings_medium",
+            "name": "Order medium hamstrings",
+            "primaryMuscles": ["hamstrings"],
+            "movementPattern": "hip_hinge",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 88
+          },
+          {
+            "id": "order_light_calves_light",
+            "name": "Order light calves",
+            "primaryMuscles": ["calves"],
+            "movementPattern": "ankle_extension",
+            "loadCategory": "light",
+            "fatigueScore": 1,
+            "stimulusScore": 60
+          }
+        ]
+      },
+      "expected": {
+        "mainLiftId": "order_high_quads_heavy",
+        "flattenedIds": ["order_high_quads_heavy", "order_medium_hamstrings_medium", "order_low_abs_light", "order_light_calves_light"],
+        "blocks": [
+          {
+            "blockLabel": "B",
+            "slotFirst": "B1",
+            "firstId": "order_medium_hamstrings_medium",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "C",
+            "slotFirst": "C1",
+            "firstId": "order_low_abs_light",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "C",
+            "slotFirst": "C2",
+            "firstId": "order_light_calves_light",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          }
+        ],
+        "placements": [
+          {"exerciseId": "order_high_quads_heavy", "blockLabel": "A", "slotLabel": "A", "pairGroupId": null, "isMainLift": true},
+          {"exerciseId": "order_medium_hamstrings_medium", "blockLabel": "B", "slotLabel": "B1", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "order_low_abs_light", "blockLabel": "C", "slotLabel": "C1", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "order_light_calves_light", "blockLabel": "C", "slotLabel": "C2", "pairGroupId": null, "isMainLift": false}
+        ]
+      },
+      "observedNotes": "El input empieza con abs, pero quads heavy queda como main por score."
+    }
+  ]
+}

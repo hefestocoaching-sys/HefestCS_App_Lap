@@ -1,0 +1,153 @@
+{
+  "id": "d1r2-frozen-plan-baseline",
+  "name": "D1R2 Frozen Plan Baseline",
+  "clientId": "fixture-client",
+  "startDate": "2026-01-01T00:00:00.000Z",
+  "phase": "accumulation",
+  "splitId": "upper_lower_4d",
+  "microcycleLengthInWeeks": 4,
+  "weeks": [],
+  "state": {
+    "source": "d1r2-regression-fixture",
+    "freezePlanSnapshotSchemaVersion": "baseline-only"
+  },
+  "trainingProfileSnapshot": {
+    "id": "fixture-profile",
+    "date": "2026-01-01T00:00:00.000Z",
+    "gender": null,
+    "age": 35,
+    "bodyWeight": null,
+    "isCompetitor": false,
+    "competitionCategory": null,
+    "usesAnabolics": false,
+    "pharmacologyProtocol": null,
+    "peakWeekHistory": null,
+    "globalGoal": "generalFitness",
+    "trainingFocus": null,
+    "trainingLevel": "intermediate",
+    "daysPerWeek": 4,
+    "timePerSessionMinutes": 60,
+    "yearsTrainingContinuous": 4,
+    "sessionDurationMinutes": 60,
+    "restBetweenSetsSeconds": 120,
+    "avgSleepHours": 7.5,
+    "equipment": ["barbell", "dumbbell", "machine", "cable"],
+    "movementRestrictions": [],
+    "perceivedStress": "moderate",
+    "recoveryQuality": "good",
+    "sorenessLevel": null,
+    "motivationLevel": null,
+    "priorityMusclesPrimary": ["pectorals", "chest", "quadriceps"],
+    "priorityMusclesSecondary": [
+      "deltoide_anterior",
+      "glute",
+      "unknown_muscle"
+    ],
+    "priorityMusclesTertiary": ["back_mid_upper"],
+    "baseVolumePerMuscle": {
+      "pectorals": 14,
+      "chest": 15,
+      "quadriceps": 18,
+      "deltoide_anterior": 8,
+      "glute": 8,
+      "unknown_muscle": 2,
+      "back_mid_upper": 5
+    },
+    "seriesDistribution": {},
+    "pastVolumeTolerance": {},
+    "blockLengthWeeks": 4,
+    "currentWeekIndex": 0,
+    "extra": {
+      "trainingExtraVersion": "d1r2-regression-baseline",
+      "effectiveTrainingLevel": "intermediate",
+      "trainingLevelDerived": "intermediate",
+      "daysPerWeek": 4,
+      "timePerSessionMinutes": 60,
+      "planDurationInWeeks": 4,
+      "priorityMusclesPrimary": ["pectorals", "chest", "quadriceps"],
+      "priorityMusclesSecondary": [
+        "deltoide_anterior",
+        "glute",
+        "unknown_muscle"
+      ],
+      "priorityMusclesTertiary": ["back_mid_upper"],
+      "deltaVmeGlobal": 0,
+      "deltaVmrGlobal": 0,
+      "muscleLandmarks": {
+        "pectorals": {
+          "vme": 10,
+          "vop": 14,
+          "vmr": 20
+        },
+        "chest": {
+          "vme": 11,
+          "vop": 15,
+          "vmr": 21
+        },
+        "quadriceps": {
+          "vme": 12,
+          "vop": 18,
+          "vmr": 24
+        },
+        "deltoide_anterior": {
+          "vme": 5,
+          "vop": 8,
+          "vmr": 10
+        },
+        "glute": {
+          "vme": 7,
+          "vop": 8,
+          "vmr": 9
+        },
+        "unknown_muscle": {
+          "vme": 1,
+          "vop": 2,
+          "vmr": 3
+        },
+        "back_mid_upper": {
+          "vme": 4,
+          "vop": 5,
+          "vmr": 6
+        }
+      },
+      "vopSnapshot": {
+        "totalSetsByMuscle": {
+          "pectorals": 14,
+          "chest": 15,
+          "quadriceps": 18,
+          "deltoide_anterior": 8,
+          "glute": 8,
+          "unknown_muscle": 2,
+          "back_mid_upper": 5
+        },
+        "allMuscles": [
+          "pectorals",
+          "chest",
+          "quadriceps",
+          "deltoide_anterior",
+          "glute",
+          "unknown_muscle",
+          "back_mid_upper"
+        ],
+        "schemaVersion": "d1r2-baseline"
+      }
+    },
+    "prSquat": null,
+    "prBench": null,
+    "prDeadlift": null
+  },
+  "volumePerMuscle": {
+    "pectorals": 15,
+    "quads": 18,
+    "delts_front": 8,
+    "glutes": 8,
+    "unknown_muscle": 2,
+    "back_mid_upper": 5
+  },
+  "weeklyVolumeTarget": 56,
+  "landmarks": {
+    "source": "trainingProfileSnapshot.extra.muscleLandmarks",
+    "schemaVersion": "d1r2-baseline"
+  },
+  "meta": null
+}

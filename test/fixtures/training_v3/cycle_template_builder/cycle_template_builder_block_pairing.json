@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "fixture": "cycle_template_builder_block_pairing",
+  "engine": "CycleTemplateBuilder",
+  "mode": "buildBaseWeek_real",
+  "catalog": "harness_fake_catalog",
+  "notes": [
+    "Block/pairing cases that exercise A/B/C/D under buildBaseWeek real execution.",
+    "This file freezes antagonist, synergy, low-interference, same-primary and none paths as they appear in the real builder."
+  ],
+  "cases": [
+    {
+      "id": "pairing_antagonist_real",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "pectorals": 5,
+          "lats": 4,
+          "triceps": 3,
+          "delts_rear": 2
+        },
+        "targetVolumeByMuscle": {
+          "pectorals": 4,
+          "lats": 4,
+          "triceps": 4,
+          "delts_rear": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "lats": ["lat_pulldown_wide", "lat_row_chest_supported"],
+          "triceps": ["triceps_pushdown_cable"],
+          "delts_rear": ["rear_delt_raise_dumbbell"]
+        }
+      },
+      "expected": {
+        "outcome": "success",
+        "weekId": null,
+        "weekName": null,
+        "normalizedTargetVolumeByMuscle": {
+          "pectorals": 4,
+          "lats": 4,
+          "triceps": 4,
+          "delts_rear": 4
+        },
+        "daysCount": 1,
+        "sessionsCount": 1,
+        "totalExercises": 4,
+        "warnings": [],
+        "sessions": [
+          {
+            "id": "day_1",
+            "dayNumber": 1,
+            "name": "Day 1",
+            "primaryMuscles": ["pectorals", "lats", "triceps", "delts_rear"],
+            "estimatedDurationMinutes": 50,
+            "totalSets": 16,
+            "exerciseCount": 4,
+            "structureMetadata": null,
+            "exerciseIds": ["pec_press_barbell", "lat_pulldown_wide", "rear_delt_raise_dumbbell", "triceps_pushdown_cable"],
+            "muscleKeys": ["pectorals", "lats", "delts_rear", "triceps"],
+            "primaryMusclesByExercise": ["pectorals", "lats", "delts_rear", "triceps"],
+            "blockLabels": ["A", "B", "C", "D"],
+            "slotLabels": ["A", "B1", "C1", "D2"],
+            "pairGroupIds": [null, null, null, null],
+            "isMainLift": [true, false, false, false],
+            "setCounts": [4, 4, 4, 4],
+            "loadCategories": ["heavy", "heavy", "medium", "light"],
+            "movementPatterns": ["horizontal_push", "vertical_pull", "rear_raise", "pushdown"]
+          }
+        ]
+      },
+      "notes": "Antagonist pairing should appear at least once in the real builder session."
+    },
+    {
+      "id": "pairing_synergy_real",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "quads": 5,
+          "glutes": 4,
+          "calves": 3
+        },
+        "targetVolumeByMuscle": {
+          "quads": 4,
+          "glutes": 4,
+          "calves": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "quads": ["quad_squat_barbell", "quad_extension_machine"],
+          "glutes": ["glute_bridge_barbell", "glute_hinge_cable"],
+          "calves": ["calf_raise_machine"]
+        }
+      },
+      "expected": {
+        "outcome": "success",
+        "weekId": null,
+        "weekName": null,
+        "normalizedTargetVolumeByMuscle": {
+          "quads": 4,
+          "glutes": 4,
+          "calves": 4
+        },
+        "daysCount": 1,
+        "sessionsCount": 1,
+        "totalExercises": 3,
+        "warnings": [],
+        "sessions": [
+          {
+            "id": "day_1",
+            "dayNumber": 1,
+            "name": "Day 1",
+            "primaryMuscles": ["quads", "glutes", "calves"],
+            "estimatedDurationMinutes": 40,
+            "totalSets": 12,
+            "exerciseCount": 3,
+            "structureMetadata": null,
+            "exerciseIds": ["quad_squat_barbell", "glute_bridge_barbell", "calf_raise_machine"],
+            "muscleKeys": ["quads", "glutes", "calves"],
+            "primaryMusclesByExercise": ["quads", "glutes", "calves"],
+            "blockLabels": ["A", "C", "B"],
+            "slotLabels": ["A", "C1", "B1"],
+            "pairGroupIds": [null, null, null],
+            "isMainLift": [true, false, false],
+            "setCounts": [4, 4, 4],
+            "loadCategories": ["heavy", "heavy", "light"],
+            "movementPatterns": ["squat", "hip_thrust", "calf_raise"]
+          }
+        ]
+      },
+      "notes": "Synergy between quads and glutes should remain observable in the builder snapshot."
+    },
+    {
+      "id": "pairing_low_interference_real",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "pectorals": 5,
+          "delts_rear": 4
+        },
+        "targetVolumeByMuscle": {
+          "pectorals": 4,
+          "delts_rear": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "delts_rear": ["rear_delt_raise_dumbbell"]
+        }
+      },
+      "expected": {
+        "outcome": "success",
+        "weekId": null,
+        "weekName": null,
+        "normalizedTargetVolumeByMuscle": {
+          "pectorals": 4,
+          "delts_rear": 4
+        },
+        "daysCount": 1,
+        "sessionsCount": 1,
+        "totalExercises": 2,
+        "warnings": [],
+        "sessions": [
+          {
+            "id": "day_1",
+            "dayNumber": 1,
+            "name": "Day 1",
+            "primaryMuscles": ["pectorals", "delts_rear"],
+            "estimatedDurationMinutes": 30,
+            "totalSets": 8,
+            "exerciseCount": 2,
+            "structureMetadata": null,
+            "exerciseIds": ["pec_press_barbell", "rear_delt_raise_dumbbell"],
+            "muscleKeys": ["pectorals", "delts_rear"],
+            "primaryMusclesByExercise": ["pectorals", "delts_rear"],
+            "blockLabels": ["A", "C"],
+            "slotLabels": ["A", "C1"],
+            "pairGroupIds": [null, null],
+            "isMainLift": [true, false],
+            "setCounts": [4, 4],
+            "loadCategories": ["heavy", "medium"],
+            "movementPatterns": ["horizontal_push", "rear_raise"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "pairing_same_primary_real",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "pectorals": 5,
+          "chest": 4
+        },
+        "targetVolumeByMuscle": {
+          "pectorals": 8,
+          "chest": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "[V3][P0.2][INFEASIBLE] muscle=\"pectorals\" target=12 exceeds maxAssignable=10 (baseFreq=1, finalFreq=1, effectiveFreq=1, dailyCap=10, context=cycle_template_builder).",
+        "normalizedTargetVolumeByMuscle": {
+          "pectorals": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"]
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "pairing_none_real",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "pectorals": 5,
+          "abs": 4
+        },
+        "targetVolumeByMuscle": {
+          "pectorals": 4,
+          "abs": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "abs": ["abs_crunch_mat"]
+        }
+      },
+      "expected": {
+        "outcome": "success",
+        "weekId": null,
+        "weekName": null,
+        "normalizedTargetVolumeByMuscle": {
+          "pectorals": 4,
+          "abs": 4
+        },
+        "daysCount": 1,
+        "sessionsCount": 1,
+        "totalExercises": 2,
+        "warnings": [],
+        "sessions": [
+          {
+            "id": "day_1",
+            "dayNumber": 1,
+            "name": "Day 1",
+            "primaryMuscles": ["pectorals", "abs"],
+            "estimatedDurationMinutes": 30,
+            "totalSets": 8,
+            "exerciseCount": 2,
+            "structureMetadata": null,
+            "exerciseIds": ["pec_press_barbell", "abs_crunch_mat"],
+            "muscleKeys": ["pectorals", "abs"],
+            "primaryMusclesByExercise": ["pectorals", "abs"],
+            "blockLabels": ["A", "B"],
+            "slotLabels": ["A", "B1"],
+            "pairGroupIds": [null, null],
+            "isMainLift": [true, false],
+            "setCounts": [4, 4]
+          }
+        ]
+      }
+    }
+  ]
+}

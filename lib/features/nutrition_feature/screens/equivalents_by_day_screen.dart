@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
 import 'package:hcs_app_lap/core/contracts/saveable_module.dart';
+import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
 import 'package:hcs_app_lap/features/nutrition_feature/providers/equivalents_by_day_provider.dart';
@@ -26,11 +27,18 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     with SingleTickerProviderStateMixin
     implements SaveableModule {
   _EquivalentsMode _mode = _EquivalentsMode.idle;
+  Client? _activeClient;
+  late DateTime _activeDate;
+  late EquivalentsByDayState _equivalentsState;
   String? _selectedRecordDateIso;
   String? _lastLoadedRecordIso;
 
   late TabController _tabController;
   late final ProviderSubscription _clientSubscription;
+  late final ProviderSubscription _dateSubscription;
+  late final ProviderSubscription _equivalentsSubscription;
+  late final ClientsNotifier _clientsNotifier;
+  late final EquivalentsByDayNotifier _equivalentsNotifier;
 
   final days = const [
     'Lunes',
@@ -45,22 +53,38 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
   @override
   void initState() {
     super.initState();
+    _clientsNotifier = ref.read(clientsProvider.notifier);
+    _equivalentsNotifier = ref.read(equivalentsByDayProvider.notifier);
+    _activeClient = ref.read(clientsProvider).value?.activeClient;
+    _activeDate = ref.read(globalDateProvider);
+    _equivalentsState = ref.read(equivalentsByDayProvider);
     _tabController = TabController(length: days.length, vsync: this);
     // Load equivalents when active client changes, outside build.
     _clientSubscription = ref.listenManual(clientsProvider, (previous, next) {
       final client = next.value?.activeClient;
+      _activeClient = client;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ref.read(equivalentsByDayProvider.notifier).loadFromClient(client);
+        _equivalentsNotifier.loadFromClient(client);
       });
     });
+    _dateSubscription = ref.listenManual(globalDateProvider, (previous, next) {
+      _activeDate = next;
+    });
+    _equivalentsSubscription = ref.listenManual(equivalentsByDayProvider, (
+      previous,
+      next,
+    ) {
+      _equivalentsState = next;
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final client = ref.read(clientsProvider).value?.activeClient;
-      ref.read(equivalentsByDayProvider.notifier).loadFromClient(client);
+      if (!mounted) return;
+      _equivalentsNotifier.loadFromClient(_activeClient);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final client = ref.read(clientsProvider).value?.activeClient;
+      if (!mounted) return;
+      final client = _activeClient;
       if (client == null || !mounted) return;
       final persisted = client
           .nutrition
@@ -78,31 +102,33 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
   @override
   void dispose() {
     _clientSubscription.close();
+    _dateSubscription.close();
+    _equivalentsSubscription.close();
     _tabController.dispose();
     super.dispose();
   }
 
   @override
   Future<void> saveIfDirty() async {
-    final state = ref.read(equivalentsByDayProvider);
+    final state = _equivalentsState;
     if (!state.isDirty) return;
 
-    final client = ref.read(clientsProvider).value?.activeClient;
+    final client = _activeClient;
     if (client == null) return;
 
     final records = readNutritionRecordList(
       client.nutrition.extra[NutritionExtraKeys.equivalentsRecords],
     );
-    final activeDateIso = dateIsoFrom(ref.read(globalDateProvider));
+    final activeDateIso = dateIsoFrom(_activeDate);
     final displayedDateIso = _resolveDisplayedEquivalentsDateIso(
       records,
       activeDateIso,
     );
 
-    final notifier = ref.read(equivalentsByDayProvider.notifier);
+    final notifier = _equivalentsNotifier;
     final payload = notifier.toJson();
 
-    await ref.read(clientsProvider.notifier).updateActiveClient((current) {
+    await _clientsNotifier.updateActiveClient((current) {
       final mergedExtra = Map<String, dynamic>.from(current.nutrition.extra);
       final updatedRecords = readNutritionRecordList(
         mergedExtra[NutritionExtraKeys.equivalentsRecords],
@@ -130,10 +156,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
 
   @override
   void resetDrafts() {
-    final client = ref.read(clientsProvider).value?.activeClient;
-    ref
-        .read(equivalentsByDayProvider.notifier)
-        .loadFromClient(client, force: true);
+    _equivalentsNotifier.loadFromClient(_activeClient, force: true);
   }
 
   @override
@@ -163,7 +186,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
             nutritionRecordForDate(records, displayedDateIso) ??
             latestNutritionRecordByDate(records);
         final payload = record?['equivalentsByDay'];
-        ref.read(equivalentsByDayProvider.notifier).loadFromPayload(payload);
+        _equivalentsNotifier.loadFromPayload(payload);
         _lastLoadedRecordIso = displayedDateIso;
       });
     }
@@ -395,7 +418,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
   }
 
   void _selectRecord(String dateIso) {
-    ref.read(clientsProvider.notifier).updateActiveClient((current) {
+    _clientsNotifier.updateActiveClient((current) {
       final extra = Map<String, dynamic>.from(current.nutrition.extra);
       extra[NutritionExtraKeys.selectedEquivalentsRecordDateIso] = dateIso;
       return current.copyWith(
@@ -410,11 +433,11 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
   }
 
   Future<void> _createNewEquivalentsRecord(String dateIso) async {
-    final client = ref.read(clientsProvider).value?.activeClient;
+    final client = _activeClient;
     if (client == null) return;
 
     // Nuevo registro: iniciar tabla vacía (sin preselección automática).
-    final notifier = ref.read(equivalentsByDayProvider.notifier);
+    final notifier = _equivalentsNotifier;
     notifier.loadFromPayload(const {
       'version': 1,
       'dayEquivalents': <String, dynamic>{},
@@ -422,7 +445,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
     });
     final payload = notifier.toJson();
 
-    ref.read(clientsProvider.notifier).updateActiveClient((current) {
+    _clientsNotifier.updateActiveClient((current) {
       final extra = Map<String, dynamic>.from(current.nutrition.extra);
       final records = readNutritionRecordList(
         extra[NutritionExtraKeys.equivalentsRecords],
@@ -447,7 +470,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
   }
 
   Future<void> _deleteEquivalentsRecord(String dateIso) async {
-    final client = ref.read(clientsProvider).value?.activeClient;
+    final client = _activeClient;
     if (client == null) return;
 
     final confirm = await showDialog<bool>(
@@ -470,7 +493,7 @@ class _EquivalentsByDayScreenState extends ConsumerState<EquivalentsByDayScreen>
 
     if (confirm != true || !mounted) return;
 
-    await ref.read(clientsProvider.notifier).updateActiveClient((current) {
+    await _clientsNotifier.updateActiveClient((current) {
       final extra = Map<String, dynamic>.from(current.nutrition.extra);
       final records = readNutritionRecordList(
         extra[NutritionExtraKeys.equivalentsRecords],

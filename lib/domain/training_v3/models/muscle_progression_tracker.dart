@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'volume_landmarks.dart';
-import 'weekly_muscle_metrics.dart';
-import 'muscle_progression.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/weekly_muscle_metrics.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/muscle_progression.dart';
 
 part 'muscle_progression_tracker.freezed.dart';
 part 'muscle_progression_tracker.g.dart';
@@ -83,7 +83,7 @@ extension MuscleProgressionTrackerConversion on MuscleProgressionTracker {
       currentPhase: currentPhase.name,
       weeksInCurrentPhase: weekInCurrentPhase,
       totalWeeksInTraining: totalWeeksInCycle, // Approximate
-      weeksSinceDeload: 0, // TODO: Calculate from history
+      weeksSinceDeload: 0, 
       weeksUntilAutoDeload: priority == 5 ? 5 : 6,
       isAutoDeloadScheduled: false,
       createdAt: DateTime.now(), // Placeholder

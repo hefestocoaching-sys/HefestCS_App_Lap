@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/weekly_muscle_analysis.dart';
 
-import 'weekly_muscle_analysis_repository.dart';
+import 'package:hcs_app_lap/domain/training_v3/repositories/weekly_muscle_analysis_repository.dart';
 
 /// Firebase implementation of WeeklyMuscleAnalysisRepository
 ///

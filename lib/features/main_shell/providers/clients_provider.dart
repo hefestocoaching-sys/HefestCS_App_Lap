@@ -4,7 +4,10 @@ import 'package:hcs_app_lap/core/utils/update_lock.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository.dart';
 import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
+import 'package:hcs_app_lap/domain/entities/client_profile.dart';
+import 'package:hcs_app_lap/domain/entities/clinical_history.dart';
 import 'package:hcs_app_lap/domain/entities/nutrition_settings.dart';
+import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/services/database_helper.dart';
 
 class ClientsState {
@@ -145,6 +148,95 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
     }
   }
 
+  Future<Client?> updateClientStatusById({
+    required String clientId,
+    required bool isActive,
+    bool makeActive = false,
+  }) async {
+    Client? savedClient;
+
+    await UpdateLock.instance.safeClientUpdate(() async {
+      final current = state.value;
+      if (current == null) return;
+
+      try {
+        final previous = _clientWriteLocks[clientId] ?? Future.value();
+        final next = previous.then((_) async {
+          final persisted = await _repository.getClientById(clientId);
+          if (persisted == null) return;
+
+          final nextStatus = isActive
+              ? ClientStatus.active
+              : ClientStatus.inactive;
+          final updatedClient = persisted.status == nextStatus
+              ? persisted
+              : persisted.copyWith(status: nextStatus);
+
+          if (persisted.status != nextStatus) {
+            await _repository.saveClient(updatedClient);
+          }
+
+          savedClient =
+              await _repository.getClientById(clientId) ?? updatedClient;
+
+          final latestState = state.value ?? current;
+          final hadClient = latestState.clients.any((c) => c.id == clientId);
+          final updatedClients = hadClient
+              ? latestState.clients
+                    .map(
+                      (client) =>
+                          client.id == clientId ? savedClient! : client,
+                    )
+                    .toList()
+              : [...latestState.clients, savedClient!];
+          final sortedClients = _sortClients(updatedClients);
+
+          String? nextActiveClientId = latestState.activeClientId;
+          if (isActive && makeActive) {
+            nextActiveClientId = clientId;
+          } else if (!isActive && nextActiveClientId == clientId) {
+            nextActiveClientId = null;
+          }
+          nextActiveClientId = _resolveActiveClientId(
+            sortedClients,
+            nextActiveClientId,
+          );
+
+          await _persistActiveClientId(nextActiveClientId);
+          state = AsyncValue.data(
+            ClientsState(
+              clients: sortedClients,
+              activeClientId: nextActiveClientId,
+              error: latestState.error,
+            ),
+          );
+        });
+
+        _clientWriteLocks[clientId] = next;
+        await next;
+      } catch (e) {
+        state = AsyncValue.data(
+          (state.value ?? current).copyWith(
+            isLoading: false,
+            error: e.toString(),
+          ),
+        );
+        rethrow;
+      }
+    });
+
+    return savedClient;
+  }
+
+  /// Applies a patch to the freshest persisted active client.
+  ///
+  /// The transform must be based on the `prev` argument received here. Do not
+  /// return full `Client` snapshots captured earlier by UI state, and do not
+  /// copy whole sections from an external `updated` client unless this is an
+  /// explicit, validated replacement flow. Domain changes should prefer the
+  /// granular helpers below so unrelated sections keep the fresh `prev` value.
+  /// Migrated clinical-history tabs must continue using their section-specific
+  /// patch helpers against `prev`, not stale drafts.
   Future<void> updateActiveClient(Client Function(Client) transform) async {
     if (FeatureFlags.useLegacyClientUpdate) {
       return _updateActiveClientLegacy(transform);
@@ -224,6 +316,54 @@ class ClientsNotifier extends AsyncNotifier<ClientsState> {
         rethrow; // ✅ Rethrow so the UI knows the save failed!
       }
     });
+  }
+
+  Future<Client?> updateActiveClientProfile(
+    ClientProfile Function(ClientProfile previous) transform,
+  ) async {
+    Client? savedClient;
+    await updateActiveClient((prev) {
+      savedClient = prev.copyWith(profile: transform(prev.profile));
+      return savedClient!;
+    });
+    return savedClient;
+  }
+
+  Future<Client?> updateActiveClientHistory(
+    ClinicalHistory Function(ClinicalHistory previous) transform,
+  ) async {
+    Client? savedClient;
+    await updateActiveClient((prev) {
+      savedClient = prev.copyWith(history: transform(prev.history));
+      return savedClient!;
+    });
+    return savedClient;
+  }
+
+  Future<Client?> updateActiveClientNutrition(
+    NutritionSettings Function(NutritionSettings previous) transform, {
+    String? expectedClientId,
+  }) async {
+    Client? savedClient;
+    await updateActiveClient((prev) {
+      if (expectedClientId != null && prev.id != expectedClientId) {
+        return prev;
+      }
+      savedClient = prev.copyWith(nutrition: transform(prev.nutrition));
+      return savedClient!;
+    });
+    return savedClient;
+  }
+
+  Future<Client?> updateActiveClientTraining(
+    TrainingProfile Function(TrainingProfile previous) transform,
+  ) async {
+    Client? savedClient;
+    await updateActiveClient((prev) {
+      savedClient = prev.copyWith(training: transform(prev.training));
+      return savedClient!;
+    });
+    return savedClient;
   }
 
   Future<void> _updateActiveClientLegacy(

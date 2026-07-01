@@ -1,0 +1,179 @@
+{
+  "fixture": "pairing_callsites_biserie_cases",
+  "phase": "D1R8",
+  "type": "observational_post_d1c7",
+  "mode": "cycle_template_builder_proxy",
+  "notes": "Casos de allowed/rejected biserie vistos desde helpers y bloque proxy del builder.",
+  "cases": [
+    {
+      "id": "biserie_antagonist_allowed",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "lats",
+          "dayMuscles": ["pectorals", "lats"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "lats"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": ["lats"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "Antagonist biserie permitida y bloque B."
+    },
+    {
+      "id": "biserie_synergy_allowed",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "triceps"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "triceps",
+          "dayMuscles": ["pectorals", "triceps"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "triceps"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": [],
+            "C": [],
+            "D": ["triceps"]
+          }
+        }
+      },
+      "notes": "PairingContract permite synergy, pero el block plan muscular del builder no la manda a B y triceps es accesorio."
+    },
+    {
+      "id": "biserie_low_interference_allowed",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "calves"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "calves",
+          "dayMuscles": ["pectorals", "calves"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "lowInterference",
+          "isAllowedBiserie": true,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "lowInterference",
+          "isAllowedBiserie": true,
+          "areAntagonists": false,
+          "isLowInterference": true,
+          "orderedMuscles": ["pectorals", "calves"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": ["calves"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "Low interference entra a B porque _isLowInterference local tambien lo reconoce."
+    },
+    {
+      "id": "biserie_forbidden_same_primary_rejected",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "chest"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "pectorals",
+          "dayMuscles": ["pectorals", "pectorals"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "forbiddenSamePrimary",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "forbiddenSamePrimary",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "pectorals"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": [],
+            "C": ["pectorals"],
+            "D": []
+          }
+        }
+      },
+      "notes": "Same primary rechaza biserie."
+    },
+    {
+      "id": "biserie_none_rejected",
+      "input": {
+        "firstPrimaryMuscle": "calves",
+        "secondPrimaryMuscle": "abs"
+      },
+      "expected": {
+        "normalization": {
+          "first": "calves",
+          "second": "abs",
+          "dayMuscles": ["calves", "abs"],
+          "primaryMuscle": "calves"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["calves", "abs"],
+          "blockPlan": {
+            "A": ["calves"],
+            "B": [],
+            "C": [],
+            "D": ["abs"]
+          }
+        }
+      },
+      "notes": "none rechaza biserie; abs queda D por accesorio."
+    }
+  ]
+}

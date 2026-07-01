@@ -203,10 +203,21 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
     // ref.get() fuerza una lectura de red y falla sin internet.
     // ref.set() con merge escribe en la caché local de Firestore y se
     // sincroniza automáticamente cuando vuelve la conectividad.
-    await ref.set({
+    final tombstonePayload = <String, dynamic>{
       'deleted': true,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+      'deletedAt': FieldValue.serverTimestamp(),
+    };
+    final invalidPath = findInvalidFirestorePath(tombstonePayload);
+    if (invalidPath != null) {
+      throw StateError(
+        '[SAVE][CLINICAL_RECORD_DELETE_PAYLOAD_INVALID] '
+        'clientId=$clientId domain=${domain.collectionName} '
+        'dateKey=$dateKey invalidPath=$invalidPath',
+      );
+    }
+
+    await ref.set(tombstonePayload, SetOptions(merge: true));
   }
 
   /// Helper: Convierte DateTime a dateKey (yyyy-MM-dd).

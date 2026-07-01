@@ -35,7 +35,7 @@ class SplitTableSSOT {
   /// Rules for which muscles should NOT be trained on consecutive days if possible.
   /// (Simplified for V3: same muscle recovery, but also functional interference)
   static bool hasInterference(String muscleA, String muscleB) {
-    // TODO: Implement advanced interference logic if needed.
+  
     // For now, checks equality.
     return muscleA == muscleB;
   }

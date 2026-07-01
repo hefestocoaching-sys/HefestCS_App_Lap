@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'exercise_feedback.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/exercise_feedback.dart';
 
 part 'weekly_muscle_analysis.freezed.dart';
 part 'weekly_muscle_analysis.g.dart';

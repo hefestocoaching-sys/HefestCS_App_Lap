@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
-import 'features/auth/presentation/auth_gate.dart';
+import 'package:hcs_app_lap/features/auth/presentation/auth_gate.dart';
 
 class HcsAppLap extends StatelessWidget {
   const HcsAppLap({super.key});

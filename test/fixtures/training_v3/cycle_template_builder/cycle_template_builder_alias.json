@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "fixture": "cycle_template_builder_alias",
+  "engine": "CycleTemplateBuilder",
+  "mode": "buildBaseWeek_real",
+  "catalog": "harness_fake_catalog",
+  "notes": [
+    "Alias case for buildBaseWeek real execution.",
+    "Input keys are legacy aliases that the builder currently normalizes.",
+    "This fixture freezes the alias path before the strict migration."
+  ],
+  "cases": [
+    {
+      "id": "alias_upper_lower_week",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "chest": 5,
+          "quadriceps": 4,
+          "gluteos": 3,
+          "deltoide_anterior": 2
+        },
+        "targetVolumeByMuscle": {
+          "chest": 4,
+          "quadriceps": 4,
+          "gluteos": 4,
+          "deltoide_anterior": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "chest": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "quadriceps": ["quad_squat_barbell", "quad_extension_machine"],
+          "gluteos": ["glute_bridge_barbell", "glute_hinge_cable"],
+          "deltoide_anterior": ["front_press_dumbbell", "front_raise_cable"]
+        }
+      },
+      "expected": {
+        "outcome": "success",
+        "weekId": null,
+        "weekName": null,
+        "normalizedTargetVolumeByMuscle": {
+          "pectorals": 4,
+          "quads": 4,
+          "glutes": 4,
+          "delts_front": 4
+        },
+        "daysCount": 1,
+        "sessionsCount": 1,
+        "totalExercises": 4,
+        "warnings": [],
+        "sessions": [
+          {
+            "id": "day_1",
+            "dayNumber": 1,
+            "name": "Day 1",
+            "primaryMuscles": ["pectorals", "quads", "glutes", "delts_front"],
+            "estimatedDurationMinutes": 50,
+            "totalSets": 16,
+            "exerciseCount": 4,
+            "structureMetadata": null,
+            "exerciseIds": ["pec_press_barbell", "quad_squat_barbell", "glute_bridge_barbell", "front_press_dumbbell"],
+            "muscleKeys": ["pectorals", "quads", "glutes", "delts_front"],
+            "primaryMusclesByExercise": ["pectorals", "quads", "glutes", "delts_front"],
+            "blockLabels": ["A", "D", "C", "D"],
+            "slotLabels": ["A", "D1", "C1", "D2"],
+            "pairGroupIds": [null, null, null, null],
+            "isMainLift": [true, false, false, false],
+            "setCounts": [4, 4, 4, 4],
+            "loadCategories": ["heavy", "heavy", "heavy", "heavy"],
+            "movementPatterns": ["horizontal_push", "squat", "hip_thrust", "vertical_push"]
+          }
+        ]
+      },
+      "notes": "Alias canonicalization must collapse chest/quadriceps/gluteos/deltoide_anterior into SSOT keys."
+    }
+  ]
+}

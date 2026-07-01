@@ -4,6 +4,7 @@ import 'package:hcs_app_lap/core/constants/history_extra_keys.dart';
 import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/clinical_history.dart';
+import 'package:hcs_app_lap/features/history_clinic_feature/tabs/clinical_tab_client_patches.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/utils/widgets/shared_form_widgets.dart';
 import 'package:hcs_app_lap/utils/widgets/info_card.dart';
@@ -23,9 +24,11 @@ class GynecoTabState extends ConsumerState<GynecoTab>
   bool get wantKeepAlive => true;
 
   Client? _client;
+  late ClinicalHistory _baseHistory;
   late ClinicalHistory _draftHistory;
   bool _isDirty = false;
   bool _controllersReady = false;
+  String? _loadedRevision;
 
   String _safeString(dynamic value) => value?.toString() ?? '';
   bool _safeBool(dynamic value) {
@@ -78,7 +81,10 @@ class GynecoTabState extends ConsumerState<GynecoTab>
   }
 
   void _initializeFromClient(Client client) {
+    _client = client;
+    _baseHistory = client.history;
     _draftHistory = client.history;
+    _loadedRevision = gynecoTabRevision(client);
     _contraceptiveTypeController = TextEditingController(
       text: _safeString(
         _draftHistory.extra[HistoryExtraKeys.contraceptiveType],
@@ -107,11 +113,20 @@ class GynecoTabState extends ConsumerState<GynecoTab>
   Map<String, dynamic> _copyExtra() =>
       Map<String, dynamic>.from(_draftHistory.extra);
 
-  Future<Client?> saveIfDirty() async {
-    if (!_isDirty || _client == null) return null;
-    final updatedClient = _client!.copyWith(history: _draftHistory);
-    _isDirty = false;
-    return updatedClient;
+  Future<void> saveIfDirty() async {
+    if (!_isDirty || _client == null) return;
+    Client? savedClient;
+    await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+      savedClient = applyGynecoTabPatch(
+        activeClient: prev,
+        baseHistory: _baseHistory,
+        draftHistory: _draftHistory,
+      );
+      return savedClient!;
+    });
+    if (savedClient != null) {
+      _initializeFromClient(savedClient!);
+    }
   }
 
   void resetDrafts() {
@@ -125,18 +140,23 @@ class GynecoTabState extends ConsumerState<GynecoTab>
   }
 
   Future<void> _saveDraft() async {
-    final client = _client;
-    if (client == null) return;
-    final updatedClient = client.copyWith(history: _draftHistory);
+    if (_client == null) return;
+    Client? savedClient;
     try {
-      await ref
-          .read(clientsProvider.notifier)
-          .updateActiveClient(
-            (prev) => prev.copyWith(history: updatedClient.history),
-          );
+      await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+        savedClient = applyGynecoTabPatch(
+          activeClient: prev,
+          baseHistory: _baseHistory,
+          draftHistory: _draftHistory,
+        );
+        return savedClient!;
+      });
 
       if (!mounted) return;
-      _isDirty = false;
+      if (savedClient != null) {
+        _initializeFromClient(savedClient!);
+        setState(() {});
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Datos gineco guardados'),
@@ -170,12 +190,15 @@ class GynecoTabState extends ConsumerState<GynecoTab>
     // Solo recargar si cambia el cliente activo (diferente ID = diferente paciente).
     // NO recargar cuando otra sección guarda datos del mismo cliente.
     ref.listen(clientsProvider, (previous, next) {
-      final prevId = previous?.value?.activeClient?.id;
       final nextClient = next.value?.activeClient;
-      final nextId = nextClient?.id;
       if (nextClient == null) return;
-      if (_client == null || prevId != nextId) {
-        _client = nextClient;
+      final current = _client;
+      final shouldReload =
+          current == null ||
+          current.id != nextClient.id ||
+          (!_isDirty && _loadedRevision != gynecoTabRevision(nextClient));
+      _client = nextClient;
+      if (shouldReload) {
         _initializeFromClient(nextClient);
         if (mounted) setState(() {});
       }

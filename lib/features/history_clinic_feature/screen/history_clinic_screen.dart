@@ -7,7 +7,6 @@ import 'package:hcs_app_lap/features/history_clinic_feature/tabs/general_evaluat
 import 'package:hcs_app_lap/features/history_clinic_feature/tabs/personal_data_tab.dart';
 import 'package:hcs_app_lap/features/history_clinic_feature/tabs/gyneco_tab.dart';
 
-import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/core/contracts/saveable_module.dart';
 import 'package:hcs_app_lap/core/design/workspace_scaffold.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
@@ -84,53 +83,24 @@ class HistoryClinicScreenState extends ConsumerState<HistoryClinicScreen>
   }
 
   Future<void> _saveTabIfNeeded(int tabIndex) async {
-    Client? updated;
     switch (tabIndex) {
       case 0:
-        updated = await _personalTabKey.currentState?.saveIfDirty();
+        await _personalTabKey.currentState?.saveIfDirty();
         break;
       case 1:
-        updated = await _backgroundTabKey.currentState?.saveIfDirty();
+        await _backgroundTabKey.currentState?.saveIfDirty();
         break;
       case 2:
-        updated = await _generalTabKey.currentState?.saveIfDirty();
+        await _generalTabKey.currentState?.saveIfDirty();
         break;
       case 3:
         // Tab 3: Placeholder (entrevista migrada)
-        updated = null;
         break;
       case 4:
-        updated = await _gynecoTabKey.currentState?.saveIfDirty();
+        await _gynecoTabKey.currentState?.saveIfDirty();
         break;
       default:
-        updated = null;
-    }
-
-    if (updated != null) {
-      final updatedClient = updated;
-      await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
-        final mergedNutritionExtra = Map<String, dynamic>.from(
-          prev.nutrition.extra,
-        );
-        mergedNutritionExtra.addAll(updatedClient.nutrition.extra);
-
-        final mergedTrainingExtra = Map<String, dynamic>.from(
-          prev.training.extra,
-        );
-        mergedTrainingExtra.addAll(updatedClient.training.extra);
-
-        return prev.copyWith(
-          profile: updatedClient.profile,
-          history: updatedClient.history,
-          training: updatedClient.training.copyWith(extra: mergedTrainingExtra),
-          nutrition: prev.nutrition.copyWith(
-            extra: mergedNutritionExtra,
-            dailyMealPlans:
-                updatedClient.nutrition.dailyMealPlans ??
-                prev.nutrition.dailyMealPlans,
-          ),
-        );
-      });
+        break;
     }
   }
 

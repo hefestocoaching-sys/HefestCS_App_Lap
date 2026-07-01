@@ -13,8 +13,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'firebase_options.dart';
-import 'app.dart'; // Asumiendo que HcsAppLap está definido en app.dart
+import 'package:hcs_app_lap/firebase_options.dart';
+import 'package:hcs_app_lap/app.dart'; // Asumiendo que HcsAppLap está definido en app.dart
 
 Future<void> _loadEnvIfAvailable() async {
   const envFile = '.env';

@@ -1,5 +1,5 @@
-import 'effective_sets_calculator.dart';
-import 'exercise_contribution_catalog.dart';
+import 'package:hcs_app_lap/domain/training/services/effective_sets_calculator.dart';
+import 'package:hcs_app_lap/domain/training/services/exercise_contribution_catalog.dart';
 
 class VolumeBudgetBalancer {
   // Reduce sets en ejercicios que contribuyen al músculo excedido.

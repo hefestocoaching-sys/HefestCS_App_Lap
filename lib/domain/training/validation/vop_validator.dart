@@ -1,4 +1,5 @@
-import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
 import 'package:hcs_app_lap/domain/training/training_cycle.dart';
 
 const Map<String, List<String>> indirectCoverageMap = {
@@ -50,7 +51,11 @@ class VopValidator {
     final plannedStimulusByMuscle = <String, double>{};
     for (final planned in plannedExercises) {
       planned.stimulusContribution.forEach((key, value) {
-        final muscle = normalizeMuscleKey(key);
+        final muscle = muscle_registry.tryNormalizeMuscleKey(key);
+        if (muscle == null) {
+          return;
+        }
+
         final next = (value * planned.plannedSets).toDouble();
         plannedStimulusByMuscle[muscle] =
             (plannedStimulusByMuscle[muscle] ?? 0) + next;
@@ -58,7 +63,11 @@ class VopValidator {
     }
 
     for (final rawMuscle in cycle.baseExercisesByMuscle.keys) {
-      final muscle = normalizeMuscleKey(rawMuscle);
+      final muscle = muscle_registry.tryNormalizeMuscleKey(rawMuscle);
+      if (muscle == null) {
+        // SSOT estricto: unknowns se descartan sin raw fallback.
+        continue;
+      }
 
       // 1️⃣ Verificar cobertura directa o indirecta
       final directVop = directVopByMuscle[muscle];
@@ -72,7 +81,7 @@ class VopValidator {
       }
 
       if (!covered) {
-        final indirectSources = indirectCoverageMap[muscle] ?? [];
+        final indirectSources = _normalizedIndirectSourcesFor(muscle);
 
         double indirectStimulus = 0;
         for (final src in indirectSources) {
@@ -96,5 +105,28 @@ class VopValidator {
       // Downgrade to warning to avoid blocking plan generation when data is incomplete.
       return;
     }
+  }
+
+  static List<String> _normalizedIndirectSourcesFor(String muscle) {
+    final normalizedSources = <String>[];
+
+    for (final entry in indirectCoverageMap.entries) {
+      final normalizedKey = muscle_registry.tryNormalizeMuscleKey(entry.key);
+      if (normalizedKey != muscle) {
+        continue;
+      }
+
+      for (final rawSource in entry.value) {
+        final normalizedSource = muscle_registry.tryNormalizeMuscleKey(
+          rawSource,
+        );
+        if (normalizedSource == null) {
+          continue;
+        }
+        normalizedSources.add(normalizedSource);
+      }
+    }
+
+    return normalizedSources;
   }
 }

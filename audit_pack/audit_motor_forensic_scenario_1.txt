@@ -1,0 +1,274 @@
+SCENARIO 1: novice 3 dias pocas prioridades sin back explicito
+SUCCESS: false
+INPUT:
+{
+  "sex": "female",
+  "age": 22,
+  "trainingLevel": "novice",
+  "days": 3,
+  "splitId": "fullBody",
+  "phase": "accumulation",
+  "durationWeeks": 4,
+  "musclePriorities": {
+    "chest": 3,
+    "quads": 4,
+    "glutes": 4,
+    "deltoide_lateral": 3
+  },
+  "backFocus": "upper_back",
+  "hasCycleState": false,
+  "intensitySplit": {
+    "heavy": 20.0,
+    "medium": 60.0,
+    "light": 20.0
+  }
+}
+
+ETAPA A - entrada del motor
+{
+  "entrypoint": "MotorV3Orchestrator.generateProgram(userProfile, phase, durationWeeks, splitId, trainingDaysPerWeek, intensityProfilePercentSplit, client, exercises)",
+  "received": {
+    "userId": "forensic_s1",
+    "name": "Forensic S1",
+    "availableDays": 3
+  }
+}
+
+ETAPA B - _resolveVolumeTargets
+{
+  "volumeTargetInicial": {
+    "quads": 12,
+    "glutes": 10,
+    "pectorals": 11,
+    "lats": 10,
+    "upper_back": 7,
+    "traps": 7,
+    "delts_front": 8,
+    "delts_lateral": 8,
+    "delts_rear": 8,
+    "biceps": 8,
+    "triceps": 9,
+    "hamstrings": 9,
+    "calves": 6,
+    "abs": 6
+  },
+  "prioridadEfectivaPorMusculo": {
+    "pectorals": 3,
+    "quads": 4,
+    "glutes": 4,
+    "delts_lateral": 3
+  },
+  "landmarksUsados": {
+    "pectorals": {
+      "priority": 3,
+      "vme": 7,
+      "vop": 11,
+      "vmr": 19,
+      "target": 14
+    },
+    "quads": {
+      "priority": 4,
+      "vme": 7,
+      "vop": 12,
+      "vmr": 21,
+      "target": 16
+    },
+    "glutes": {
+      "priority": 4,
+      "vme": 5,
+      "vop": 10,
+      "vmr": 18,
+      "target": 14
+    },
+    "delts_lateral": {
+      "priority": 3,
+      "vme": 4,
+      "vop": 8,
+      "vmr": 16,
+      "target": 12
+    }
+  }
+}
+
+ETAPA C - expandBackMuscle
+{
+  "backFocus": "upper_back",
+  "targetTrasExpandBackMuscle": {
+    "quads": 12,
+    "glutes": 10,
+    "pectorals": 11,
+    "lats": 10,
+    "upper_back": 7,
+    "traps": 7,
+    "delts_front": 8,
+    "delts_lateral": 8,
+    "delts_rear": 8,
+    "biceps": 8,
+    "triceps": 9,
+    "hamstrings": 9,
+    "calves": 6,
+    "abs": 6
+  }
+}
+
+ETAPA D - split/frecuencia/state
+{
+  "splitResolved": "TrainingSplit.fullBody",
+  "cycleStateReadFromInput": {
+    "cycleWeek": null,
+    "cyclePhase": null,
+    "weeksInPhase": null,
+    "weeksSinceLastMicro": null
+  },
+  "effectiveFrequencyByMuscle": {}
+}
+
+ETAPA E - catalogo/pool
+{
+  "poolByMuscle": {}
+}
+
+ETAPA F - weeklyIntensityTargetsByMuscle
+{
+  "weeklyIntensityTargetsByMuscle": {
+    "quads": {
+      "heavy": 3,
+      "medium": 7,
+      "light": 2
+    },
+    "glutes": {
+      "heavy": 2,
+      "medium": 6,
+      "light": 2
+    },
+    "pectorals": {
+      "heavy": 2,
+      "medium": 7,
+      "light": 2
+    },
+    "lats": {
+      "heavy": 0,
+      "medium": 8,
+      "light": 2
+    },
+    "upper_back": {
+      "heavy": 2,
+      "medium": 4,
+      "light": 1
+    },
+    "traps": {
+      "heavy": 0,
+      "medium": 6,
+      "light": 1
+    },
+    "delts_front": {
+      "heavy": 2,
+      "medium": 5,
+      "light": 1
+    },
+    "delts_lateral": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 1
+    },
+    "delts_rear": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 1
+    },
+    "biceps": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 1
+    },
+    "triceps": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 2
+    },
+    "hamstrings": {
+      "heavy": 2,
+      "medium": 5,
+      "light": 2
+    },
+    "calves": {
+      "heavy": 0,
+      "medium": 5,
+      "light": 1
+    },
+    "abs": {
+      "heavy": 0,
+      "medium": 0,
+      "light": 6
+    }
+  }
+}
+
+ETAPA G - buildBaseWeek
+{
+  "buildBaseWeekByDay": {}
+}
+
+ETAPA H - assignedTotals y diferencias
+{
+  "assignedTotals": {},
+  "diffTargetVsAssigned": {
+    "quads": -12,
+    "glutes": -10,
+    "pectorals": -11,
+    "lats": -10,
+    "upper_back": -7,
+    "traps": -7,
+    "delts_front": -8,
+    "delts_lateral": -8,
+    "delts_rear": -8,
+    "biceps": -8,
+    "triceps": -9,
+    "hamstrings": -9,
+    "calves": -6,
+    "abs": -6
+  }
+}
+
+PRIMER PUNTO DE FALLA: 5. builder/session allocation
+ERRORS: [Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true]
+WARNINGS: [[V3][P0.3] Se normalizo volumen en 2 musculos para respetar frecuencia contractual y cap diario.]
+STACK TRACE:
+Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true
+
+TRAZAS CLAVE POR ETAPA (extraidas de ejecucion real):
+{
+  "A": [
+    "👤 Perfil científico construido:",
+    "   - Age: 22",
+    "   - Experience: novice",
+    "   - Recovery: 6.5"
+  ],
+  "B": [
+    "[Motor V3] Prioridades normalizadas (4 músculos):",
+    "[Motor V3] VOLÚMENES INICIALES (VOP) - VERSIÓN 2.0:",
+    "  quads (P4 SECUNDARIO): 12 sets/semana",
+    "  glutes (P4 SECUNDARIO): 10 sets/semana",
+    "  pectorals (P3 SECUNDARIO): 11 sets/semana",
+    "  lats (P3 SECUNDARIO): 10 sets/semana",
+    "  upper_back (P3 SECUNDARIO): 7 sets/semana",
+    "  traps (P3 SECUNDARIO): 7 sets/semana",
+    "  delts_front (P3 SECUNDARIO): 8 sets/semana",
+    "  delts_lateral (P3 SECUNDARIO): 8 sets/semana",
+    "  delts_rear (P3 SECUNDARIO): 8 sets/semana",
+    "  biceps (P3 SECUNDARIO): 8 sets/semana",
+    "  triceps (P3 SECUNDARIO): 9 sets/semana",
+    "  hamstrings (P3 SECUNDARIO): 9 sets/semana",
+    "  calves (P3 SECUNDARIO): 6 sets/semana",
+    "  abs (P3 SECUNDARIO): 6 sets/semana",
+    "[Motor V3] TOTAL: 119 sets/semana"
+  ],
+  "C": [],
+  "D": [
+    "[Motor V3] splitId=fullBody availableDays=3 resolvedSplit=TrainingSplit.fullBody"
+  ],
+  "E": [],
+  "F": [],
+  "G": [],
+  "H": []
+}

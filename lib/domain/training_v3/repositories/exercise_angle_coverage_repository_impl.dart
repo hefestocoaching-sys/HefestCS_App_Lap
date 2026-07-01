@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/exercise_angle_coverage.dart';
-import 'exercise_angle_coverage_repository.dart';
+import 'package:hcs_app_lap/domain/training_v3/repositories/exercise_angle_coverage_repository.dart';
 
 /// Implementación de Firestore para ExerciseAngleCoverageRepository.
 class ExerciseAngleCoverageRepositoryImpl
@@ -9,7 +9,7 @@ class ExerciseAngleCoverageRepositoryImpl
   final FirebaseFirestore _firestore;
 
   ExerciseAngleCoverageRepositoryImpl({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   String _getCollectionPath(String userId) => 'users/$userId/angle_coverage';
 
@@ -17,8 +17,9 @@ class ExerciseAngleCoverageRepositoryImpl
   Future<void> saveCoverage(ExerciseAngleCoverage coverage) async {
     try {
       final docId = 'w${coverage.weekNumber}_${coverage.muscle}';
-      final docRef =
-          _firestore.collection(_getCollectionPath(coverage.userId)).doc(docId);
+      final docRef = _firestore
+          .collection(_getCollectionPath(coverage.userId))
+          .doc(docId);
 
       await docRef.set(coverage.toJson(), SetOptions(merge: true));
 

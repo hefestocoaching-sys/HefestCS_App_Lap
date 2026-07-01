@@ -1,7 +1,7 @@
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/core/enums/training_level.dart';
-import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/training/models/supported_muscles.dart';
 import 'package:hcs_app_lap/domain/training_v3/constants/muscle_volume_landmarks_ssot.dart';
@@ -117,10 +117,15 @@ class LandmarkEngine {
   static Map<String, Map<String, int>> serializeByCanonicalKey(
     Map<MuscleGroup, Landmarks> landmarksByMuscle,
   ) {
-    return {
-      for (final entry in landmarksByMuscle.entries)
-        normalizeMuscleKey(entry.key.canonicalKey): entry.value.toMap(),
-    };
+    final out = <String, Map<String, int>>{};
+
+    for (final entry in landmarksByMuscle.entries) {
+      final canonical = tryNormalizeMuscleKey(entry.key.canonicalKey);
+      if (canonical == null) continue;
+      out[canonical] = entry.value.toMap();
+    }
+
+    return out;
   }
 
   static Map<String, Landmarks> parseByCanonicalKey(dynamic raw) {
@@ -129,10 +134,13 @@ class LandmarkEngine {
 
     raw.forEach((key, value) {
       if (value is Map) {
+        final canonical = tryNormalizeMuscleKey(key.toString());
+        if (canonical == null) return;
+
         final typed = value.map(
           (innerKey, innerValue) => MapEntry(innerKey.toString(), innerValue),
         );
-        out[normalizeMuscleKey(key.toString())] = Landmarks.fromMap(typed);
+        out[canonical] = Landmarks.fromMap(typed);
       }
     });
 
@@ -141,10 +149,7 @@ class LandmarkEngine {
 
   static Map<String, int> extractVopByCanonicalKey(dynamic raw) {
     final parsed = parseByCanonicalKey(raw);
-    return {
-      for (final entry in parsed.entries)
-        normalizeMuscleKey(entry.key): entry.value.vop,
-    };
+    return {for (final entry in parsed.entries) entry.key: entry.value.vop};
   }
 
   static Map<MuscleGroup, Landmarks> _parsePersistedLandmarks(dynamic raw) {

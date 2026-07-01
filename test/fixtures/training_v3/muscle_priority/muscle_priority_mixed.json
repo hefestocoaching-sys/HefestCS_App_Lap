@@ -1,0 +1,22 @@
+{
+  "split": "fullBody",
+  "availableDays": 3,
+  "musclePriorities": {
+    "pectorals": 4,
+    "chest": 5,
+    "lats": 4,
+    "quadriceps": 3,
+    "glute": 4,
+    "unknown_muscle": 5,
+    "back_mid_upper": 2
+  },
+  "frequencyByMuscle": {
+    "pectorals": 1,
+    "chest": 3,
+    "lats": 2,
+    "quadriceps": 1,
+    "glute": 2,
+    "unknown_muscle": 1,
+    "back_mid_upper": 1
+  }
+}

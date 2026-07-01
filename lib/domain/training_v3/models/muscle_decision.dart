@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'muscle_progression_tracker.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/muscle_progression_tracker.dart';
 
 part 'muscle_decision.freezed.dart';
 part 'muscle_decision.g.dart';

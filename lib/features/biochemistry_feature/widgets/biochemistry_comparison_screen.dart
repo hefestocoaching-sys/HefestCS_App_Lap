@@ -9,7 +9,7 @@ import 'package:hcs_app_lap/utils/biochemistry_analyzer.dart';
 import 'package:hcs_app_lap/utils/widgets/module_card_container.dart';
 import 'package:intl/intl.dart';
 
-import '../../../utils/widgets/bio_analysis_result.dart';
+import 'package:hcs_app_lap/utils/widgets/bio_analysis_result.dart';
 
 class BiochemistryComparisonScreen extends ConsumerStatefulWidget {
   const BiochemistryComparisonScreen({super.key});
@@ -413,10 +413,7 @@ class _BiochemistryComparisonScreenState
         2: FlexColumnWidth(2),
       },
       border: const TableBorder.symmetric(
-        inside: BorderSide(
-          color: kTextColorSecondary,
-          width: 0.5,
-        ),
+        inside: BorderSide(color: kTextColorSecondary, width: 0.5),
         outside: BorderSide(color: kAppBarColor, width: 2),
       ),
       children: [

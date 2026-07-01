@@ -2,9 +2,9 @@
 
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import '../models/muscle_decision.dart';
-import '../models/muscle_progression_tracker.dart';
-import '../models/weekly_muscle_analysis.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/muscle_decision.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/muscle_progression_tracker.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/weekly_muscle_analysis.dart';
 
 /// Weekly per-muscle decision engine.
 class WeeklyAdaptationEngine {

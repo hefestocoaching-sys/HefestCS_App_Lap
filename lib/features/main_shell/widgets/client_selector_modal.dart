@@ -3,14 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:hcs_app_lap/data/repositories/client_repository_provider.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/client_profile.dart';
 import 'package:hcs_app_lap/domain/entities/clinical_history.dart';
 import 'package:hcs_app_lap/domain/entities/nutrition_settings.dart';
 import 'package:hcs_app_lap/domain/entities/training_profile.dart';
-import 'package:hcs_app_lap/core/navigation/client_navigation.dart';
-import 'package:hcs_app_lap/core/navigation/client_open_origin.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/main_shell/widgets/empty_state_onboarding.dart';
 import 'package:hcs_app_lap/features/main_shell/widgets/invitation_code_dialog.dart';
@@ -457,11 +454,11 @@ class _ClientSelectorModalState extends ConsumerState<ClientSelectorModal> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: kCardColor,
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-            const SizedBox(width: 8),
-            const Text(
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+            SizedBox(width: 8),
+            Text(
               'Eliminar Cliente',
               style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
             ),

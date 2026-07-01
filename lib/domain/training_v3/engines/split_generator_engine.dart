@@ -73,10 +73,6 @@ class SplitGeneratorEngine {
     }
   }
 
-  /// Genera PPL modificado para 5 días (subóptimo)
-  static SplitConfig _generatePPL5Days() {
-    return SplitConfig.pushPullLegs5x();
-  }
 
   /// Recomienda el split óptimo basado en volumen total
   ///

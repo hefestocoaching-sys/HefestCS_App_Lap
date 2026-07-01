@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "fixture": "session_structure_intensity_cases",
+  "engine": "SessionStructureEngine",
+  "notes": [
+    "SessionStructureEngine no recibe intensityZone como input.",
+    "La intensidad observable en esta superficie entra por loadCategory: heavy, medium, light.",
+    "Este fixture congela que loadCategory participa en el score de ExerciseOrderingEngine."
+  ],
+  "cases": [
+    {
+      "id": "intensity_load_category_ordering",
+      "api": "build",
+      "input": {
+        "exercises": [
+          {
+            "id": "int_heavy_pec",
+            "name": "Intensity heavy pectorals",
+            "primaryMuscles": ["pectorals"],
+            "movementPattern": "horizontal_push",
+            "loadCategory": "heavy",
+            "fatigueScore": 3,
+            "stimulusScore": 92
+          },
+          {
+            "id": "int_medium_lats",
+            "name": "Intensity medium lats",
+            "primaryMuscles": ["lats"],
+            "movementPattern": "vertical_pull",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 88
+          },
+          {
+            "id": "int_light_calves",
+            "name": "Intensity light calves",
+            "primaryMuscles": ["calves"],
+            "movementPattern": "ankle_extension",
+            "loadCategory": "light",
+            "fatigueScore": 1,
+            "stimulusScore": 82
+          }
+        ]
+      },
+      "expected": {
+        "mainLiftId": "int_heavy_pec",
+        "flattenedIds": ["int_heavy_pec", "int_medium_lats", "int_light_calves"],
+        "blocks": [
+          {
+            "blockLabel": "B",
+            "slotFirst": "B1",
+            "firstId": "int_medium_lats",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "C",
+            "slotFirst": "C1",
+            "firstId": "int_light_calves",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          }
+        ],
+        "placements": [
+          {"exerciseId": "int_heavy_pec", "blockLabel": "A", "slotLabel": "A", "pairGroupId": null, "isMainLift": true},
+          {"exerciseId": "int_medium_lats", "blockLabel": "B", "slotLabel": "B1", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "int_light_calves", "blockLabel": "C", "slotLabel": "C1", "pairGroupId": null, "isMainLift": false}
+        ]
+      },
+      "observedNotes": "heavy queda como main por score; medium va a B por antagonista; light calves va a C por baja interferencia."
+    }
+  ]
+}

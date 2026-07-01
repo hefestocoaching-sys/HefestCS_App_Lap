@@ -36,30 +36,40 @@ class PairingContract {
     required String firstPrimaryMuscle,
     required String secondPrimaryMuscle,
   }) {
-    final left = _canonical(firstPrimaryMuscle);
-    final right = _canonical(secondPrimaryMuscle);
+    final leftMuscles = _resolveMusclesStrict(firstPrimaryMuscle);
+    final rightMuscles = _resolveMusclesStrict(secondPrimaryMuscle);
 
-    if (left.isEmpty || right.isEmpty) {
+    if (leftMuscles.isEmpty || rightMuscles.isEmpty) {
       return PairingType.none;
     }
-    if (left == right) {
-      return PairingType.forbiddenSamePrimary;
-    }
-    if (AntagonistPairingEngine.areAntagonists(left, right)) {
-      return PairingType.antagonist;
+
+    var hasSamePrimary = false;
+    var hasAntagonist = false;
+    var hasSynergy = false;
+    var hasLowInterference = false;
+
+    for (final left in leftMuscles) {
+      for (final right in rightMuscles) {
+        if (left == right) {
+          hasSamePrimary = true;
+          continue;
+        }
+        if (AntagonistPairingEngine.areAntagonists(left, right)) {
+          hasAntagonist = true;
+        }
+        if (_isSynergy(left, right)) {
+          hasSynergy = true;
+        }
+        if (_isLowInterference(left, right)) {
+          hasLowInterference = true;
+        }
+      }
     }
 
-    final lowL = InterferenceMatrix.lowInterference[left] ?? const <String>[];
-    final lowR = InterferenceMatrix.lowInterference[right] ?? const <String>[];
-    if (lowL.contains(right) || lowR.contains(left)) {
-      return PairingType.lowInterference;
-    }
-
-    final synL = _synergy[left] ?? const <String>{};
-    final synR = _synergy[right] ?? const <String>{};
-    if (synL.contains(right) || synR.contains(left)) {
-      return PairingType.synergy;
-    }
+    if (hasSamePrimary) return PairingType.forbiddenSamePrimary;
+    if (hasAntagonist) return PairingType.antagonist;
+    if (hasSynergy) return PairingType.synergy;
+    if (hasLowInterference) return PairingType.lowInterference;
 
     return PairingType.none;
   }
@@ -77,15 +87,29 @@ class PairingContract {
         type == PairingType.synergy;
   }
 
-  static String _canonical(String raw) {
-    final normalized = muscle_registry.normalize(raw);
-    if (normalized != null) {
-      return normalized;
+  static List<String> _resolveMusclesStrict(String raw) {
+    final canonical = muscle_registry.tryNormalizeMuscleKey(raw);
+    if (canonical != null) {
+      return [canonical];
     }
-    final expanded = muscle_registry.expandGroup(raw);
-    if (expanded.isNotEmpty) {
-      return expanded.first;
+
+    final expanded = muscle_registry.expandMuscleGroupStrict(raw);
+    if (expanded != null) {
+      return expanded;
     }
-    return raw.trim().toLowerCase();
+
+    return const [];
+  }
+
+  static bool _isLowInterference(String left, String right) {
+    final lowL = InterferenceMatrix.lowInterference[left] ?? const <String>[];
+    final lowR = InterferenceMatrix.lowInterference[right] ?? const <String>[];
+    return lowL.contains(right) || lowR.contains(left);
+  }
+
+  static bool _isSynergy(String left, String right) {
+    final synL = _synergy[left] ?? const <String>{};
+    final synR = _synergy[right] ?? const <String>{};
+    return synL.contains(right) || synR.contains(left);
   }
 }

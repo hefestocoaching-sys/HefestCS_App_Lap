@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "fixture": "exercise_selection_catalog_edge_cases",
+  "engine": "ExerciseSelectionEngine",
+  "catalog": "minimal_fake_catalog_inside_regression_test",
+  "notes": [
+    "Fixture strict D1-C5 de bordes de catalogo.",
+    "Cubre musculo valido sin ejercicios, musculo valido con pocos ejercicios, alias y unknown.",
+    "Incluye selectExercisesForMuscle porque es parte del surface publico aunque no usa MuscleRegistry."
+  ],
+  "cases": [
+    {
+      "id": "edge_valid_no_exercises_triceps",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "triceps",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "triceps es canonico pero el catalogo fake no tiene ejercicios; lanza sin fallback."
+    },
+    {
+      "id": "edge_valid_few_exercises_calves",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "calves",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["calves_only"]
+      },
+      "observedNotes": "calves tiene un solo candidato y devuelve menos que targetExerciseCount."
+    },
+    {
+      "id": "edge_alias_chest",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "chest",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high", "pec_mid"]
+      },
+      "observedNotes": "Alias valido chest selecciona pectorals."
+    },
+    {
+      "id": "edge_unknown_mysterychest",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "mysterychest",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "Unknown mysterychest no pasa."
+    },
+    {
+      "id": "edge_group_back",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "back",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["lat_high", "lat_mid"]
+      },
+      "observedNotes": "Grupo back expande a lats + upper_back; solo lats tiene candidatos en el fake catalog."
+    },
+    {
+      "id": "edge_select_for_muscle_empty_pool",
+      "api": "selectExercisesForMuscle",
+      "input": {
+        "poolIds": [],
+        "targetSets": 5
+      },
+      "expected": {
+        "outcome": "success",
+        "selected": []
+      },
+      "observedNotes": "selectExercisesForMuscle retorna lista vacia si el pool esta vacio."
+    },
+    {
+      "id": "edge_select_for_muscle_single_pool",
+      "api": "selectExercisesForMuscle",
+      "input": {
+        "poolIds": ["calves_only"],
+        "targetSets": 5
+      },
+      "expected": {
+        "outcome": "success",
+        "selected": [
+          {
+            "id": "calves_only",
+            "sets": 5,
+            "notes": ""
+          }
+        ]
+      },
+      "observedNotes": "Distribuye hasta 5 sets por ejercicio seleccionado."
+    }
+  ]
+}

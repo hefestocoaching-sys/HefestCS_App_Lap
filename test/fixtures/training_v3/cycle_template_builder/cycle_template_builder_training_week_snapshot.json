@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "fixture": "cycle_template_builder_training_week_snapshot",
+  "engine": "CycleTemplateBuilder",
+  "mode": "buildBaseWeek_real",
+  "catalog": "harness_fake_catalog",
+  "notes": [
+    "Detailed training week snapshot captured from the real builder.",
+    "This file is the closest observability baseline for D1R9 before the strict migration."
+  ],
+  "cases": [
+    {
+      "id": "week_snapshot_full_body_real",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "pectorals": 5,
+          "lats": 4,
+          "quads": 3,
+          "glutes": 2
+        },
+        "targetVolumeByMuscle": {
+          "pectorals": 4,
+          "lats": 4,
+          "quads": 4,
+          "glutes": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "lats": ["lat_pulldown_wide", "lat_row_chest_supported"],
+          "quads": ["quad_squat_barbell", "quad_extension_machine"],
+          "glutes": ["glute_bridge_barbell", "glute_hinge_cable"]
+        }
+      },
+      "expected": {
+        "outcome": "success",
+        "weekId": null,
+        "weekName": null,
+        "normalizedTargetVolumeByMuscle": {
+          "pectorals": 4,
+          "lats": 4,
+          "quads": 4,
+          "glutes": 4
+        },
+        "daysCount": 1,
+        "sessionsCount": 1,
+        "totalExercises": 4,
+        "warnings": [],
+        "sessions": [
+          {
+            "id": "day_1",
+            "dayNumber": 1,
+            "name": "Day 1",
+            "primaryMuscles": ["pectorals", "lats", "quads", "glutes"],
+            "estimatedDurationMinutes": 50,
+            "totalSets": 16,
+            "exerciseCount": 4,
+            "structureMetadata": null,
+            "exerciseIds": ["pec_press_barbell", "lat_pulldown_wide", "glute_bridge_barbell", "quad_squat_barbell"],
+            "muscleKeys": ["pectorals", "lats", "glutes", "quads"],
+            "primaryMusclesByExercise": ["pectorals", "lats", "glutes", "quads"],
+            "blockLabels": ["A", "B", "C", "D"],
+            "slotLabels": ["A", "B1", "C1", "D1"],
+            "pairGroupIds": [null, null, null, null],
+            "isMainLift": [true, false, false, false],
+            "setCounts": [4, 4, 4, 4],
+            "loadCategories": ["heavy", "heavy", "heavy", "heavy"],
+            "movementPatterns": ["horizontal_push", "vertical_pull", "hip_thrust", "squat"]
+          }
+        ]
+      }
+    }
+  ]
+}

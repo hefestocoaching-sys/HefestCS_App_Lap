@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/transaction.dart' as app;
+import 'package:hcs_app_lap/domain/entities/transaction.dart' as app;
 
 /// Repositorio para gestionar transacciones financieras
 class TransactionRepository {

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "fixture": "exercise_selection_alias",
+  "engine": "ExerciseSelectionEngine",
+  "catalog": "minimal_fake_catalog_inside_regression_test",
+  "notes": [
+    "Fixture strict D1-C5 de aliases validos minimos.",
+    "selectExercises llega por MuscleKeyAdapterV3.toCatalogKeys; selectDeterministicCandidates normaliza con MuscleRegistry.tryNormalizeMuscleKey.",
+    "Los aliases validos deben conservar la seleccion canonica."
+  ],
+  "cases": [
+    {
+      "id": "alias_chest_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "chest",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high", "pec_mid"]
+      },
+      "observedNotes": "chest se expande a pectorals en la superficie selectExercises."
+    },
+    {
+      "id": "alias_quadriceps_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "quadriceps",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["quad_high", "quad_mid"]
+      },
+      "observedNotes": "quadriceps se normaliza a quads."
+    },
+    {
+      "id": "alias_gluteos_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "gluteos",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["glute_high"]
+      },
+      "observedNotes": "gluteos se normaliza a glutes."
+    },
+    {
+      "id": "alias_deltoide_anterior_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "deltoide_anterior",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["delt_front_high"]
+      },
+      "observedNotes": "deltoide_anterior se normaliza a delts_front."
+    },
+    {
+      "id": "alias_chest_deterministic",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "chest",
+        "intensityZone": "medium",
+        "availableEquipment": []
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high", "pec_mid", "pec_low"]
+      },
+      "observedNotes": "chest tambien se normaliza a pectorals en la superficie deterministica strict."
+    },
+    {
+      "id": "alias_gluteos_deterministic",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "gluteos",
+        "intensityZone": "medium",
+        "availableEquipment": []
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["glute_high"]
+      },
+      "observedNotes": "gluteos normaliza a glutes con la API strict."
+    }
+  ]
+}

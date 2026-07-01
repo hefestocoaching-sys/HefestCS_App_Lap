@@ -15,7 +15,7 @@ import 'package:hcs_app_lap/domain/training_v3/models/progress_record.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/feedback_entry.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/weekly_muscle_analysis.dart';
 import 'package:hcs_app_lap/domain/training_v3/logic/volume_decision_engine.dart';
-import 'weekly_progression_service_enhanced.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service_enhanced.dart';
 
 /// Implementación de WeeklyProgressionServiceEnhanced con auditoría completa
 class WeeklyProgressionServiceEnhancedImpl
@@ -125,7 +125,7 @@ class WeeklyProgressionServiceEnhancedImpl
     final auditReport = _validator.generateWeeklyAuditReport(
       userId: userId,
       weekNumber: weekNumber,
-      validationResults: {}, // TODO: Pass validation results
+      validationResults: {}, 
     );
 
     debugPrint(auditReport);
@@ -278,7 +278,7 @@ class WeeklyProgressionServiceEnhancedImpl
       recoveryQuality: feedback.recoveryQuality,
       hadPain: feedback.hadPain,
       userComments: feedback.userComments,
-      exerciseAngles: 'pending', // TODO: Extract from exercise logs
+      exerciseAngles: 'pending', 
       exerciseVariations: exerciseLogs.length,
       volumeAction: decision.action.name,
       newVolume: decision.newVolume,

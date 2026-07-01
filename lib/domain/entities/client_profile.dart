@@ -1,5 +1,5 @@
-import '../../core/enums/gender.dart';
-import '../../core/enums/client_level.dart';
+import 'package:hcs_app_lap/core/enums/gender.dart';
+import 'package:hcs_app_lap/core/enums/client_level.dart';
 
 class ClientProfile {
   final String id;
@@ -81,13 +81,19 @@ class ClientProfile {
       fullName: json['fullName'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
-      birthDate: json['birthDate'] != null ? DateTime.tryParse(json['birthDate']) : null,
+      birthDate: json['birthDate'] != null
+          ? DateTime.tryParse(json['birthDate'])
+          : null,
       age: json['age'] as int?,
-      gender: (json['gender'] != null) ? Gender.values.byName(json['gender']) : null,
+      gender: (json['gender'] != null)
+          ? Gender.values.byName(json['gender'])
+          : null,
       maritalStatus: json['maritalStatus'] as String?,
       country: json['country'] ?? '',
       occupation: json['occupation'] ?? '',
-      level: (json['level'] != null) ? ClientLevel.values.byName(json['level']) : null,
+      level: (json['level'] != null)
+          ? ClientLevel.values.byName(json['level'])
+          : null,
       objective: json['objective'] ?? '',
     );
   }

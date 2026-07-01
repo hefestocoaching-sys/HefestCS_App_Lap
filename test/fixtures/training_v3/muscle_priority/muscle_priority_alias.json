@@ -1,0 +1,16 @@
+{
+  "split": "fullBody",
+  "availableDays": 2,
+  "musclePriorities": {
+    "chest": 5,
+    "quadriceps": 4,
+    "deltoide_anterior": 3,
+    "gluteos": 2
+  },
+  "frequencyByMuscle": {
+    "chest": 1,
+    "quadriceps": 2,
+    "deltoide_anterior": 1,
+    "gluteos": 3
+  }
+}

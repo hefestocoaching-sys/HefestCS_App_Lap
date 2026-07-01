@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/daily_meal_plan.dart';
 import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
-import 'package:hcs_app_lap/features/history_clinic_feature/viewmodel/history_clinic_view_model.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
 import 'package:hcs_app_lap/features/meal_plan_feature/widgets/daily_meal_plan_tab.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
@@ -46,8 +45,10 @@ class MealPlanScreenState extends ConsumerState<MealPlanScreen>
   @override
   Widget build(BuildContext context) {
     Future<void> handleClientUpdated(Client updated) async {
-      widget.onClientUpdated(updated);
-      await ref.read(historyClinicVmProvider).saveClient(updated);
+      final result = widget.onClientUpdated(updated);
+      if (result is Future) {
+        await result;
+      }
     }
 
     final activeDateIso = dateIsoFrom(ref.watch(globalDateProvider));

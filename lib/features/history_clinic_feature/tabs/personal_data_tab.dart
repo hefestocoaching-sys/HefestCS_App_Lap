@@ -6,6 +6,7 @@ import 'package:hcs_app_lap/core/enums/gender.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/client_profile.dart';
 import 'package:hcs_app_lap/domain/entities/nutrition_settings.dart';
+import 'package:hcs_app_lap/features/history_clinic_feature/tabs/clinical_tab_client_patches.dart';
 import 'package:hcs_app_lap/ui/clinic_section_surface.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/features/main_shell/widgets/invitation_code_dialog.dart';
@@ -27,12 +28,15 @@ class PersonalDataTabState extends ConsumerState<PersonalDataTab>
   bool get wantKeepAlive => true;
 
   Client? _client;
+  late ClientProfile _baseProfile;
   late ClientProfile _draftProfile;
+  late NutritionSettings _baseNutrition;
   late NutritionSettings _draftNutrition;
 
   bool _isDirty = false;
   bool _isCustomObjective = false;
   bool _controllersReady = false;
+  String? _loadedRevision;
 
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');
 
@@ -118,8 +122,12 @@ class PersonalDataTabState extends ConsumerState<PersonalDataTab>
   }
 
   void _loadFromClient(Client client) {
+    _client = client;
+    _baseProfile = client.profile;
     _draftProfile = client.profile;
+    _baseNutrition = client.nutrition;
     _draftNutrition = client.nutrition;
+    _loadedRevision = personalDataTabRevision(client);
 
     // ✅ BUGFIX: Si los controladores ya existen, solo actualiza valores
     // Esto evita crear nuevos controladores que descarten datos no guardados
@@ -306,16 +314,23 @@ class PersonalDataTabState extends ConsumerState<PersonalDataTab>
     );
   }
 
-  Future<Client?> saveIfDirty() async {
-    if (!_isDirty || _client == null) return null;
+  Future<void> saveIfDirty() async {
+    if (!_isDirty || _client == null) return;
     _applyControllerChanges();
-    final updated = _client!.copyWith(
-      profile: _draftProfile,
-      nutrition: _draftNutrition,
-    );
-    _client = updated;
-    _isDirty = false;
-    return updated;
+    Client? savedClient;
+    await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+      savedClient = applyPersonalDataTabPatch(
+        activeClient: prev,
+        baseProfile: _baseProfile,
+        draftProfile: _draftProfile,
+        baseNutrition: _baseNutrition,
+        draftNutrition: _draftNutrition,
+      );
+      return savedClient!;
+    });
+    if (savedClient != null) {
+      _loadFromClient(savedClient!);
+    }
   }
 
   void resetDrafts() {
@@ -329,28 +344,34 @@ class PersonalDataTabState extends ConsumerState<PersonalDataTab>
   }
 
   Future<void> _saveDraft() async {
-    final client = _client;
-    if (client == null) return;
+    if (_client == null) return;
     _applyControllerChanges();
 
-    final invitationCode = (client.invitationCode?.isNotEmpty ?? false)
-        ? client.invitationCode
-        : InvitationCodeGenerator.generate();
-
-    final updatedClient = client.copyWith(
-      profile: _draftProfile,
-      nutrition: _draftNutrition,
-      invitationCode: invitationCode,
-    );
+    final generatedInvitationCode = InvitationCodeGenerator.generate();
+    Client? savedClient;
 
     try {
-      await ref
-          .read(clientsProvider.notifier)
-          .updateActiveClient((prev) => updatedClient.copyWith(id: prev.id));
+      await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+        final invitationCode = (prev.invitationCode?.isNotEmpty ?? false)
+            ? prev.invitationCode
+            : generatedInvitationCode;
+        savedClient = applyPersonalDataTabPatch(
+          activeClient: prev,
+          baseProfile: _baseProfile,
+          draftProfile: _draftProfile,
+          baseNutrition: _baseNutrition,
+          draftNutrition: _draftNutrition,
+          invitationCode: invitationCode,
+        );
+        return savedClient!;
+      });
 
       // SOLO si no hay error:
-      _isDirty = false;
       if (mounted) {
+        if (savedClient != null) {
+          _loadFromClient(savedClient!);
+          setState(() {});
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Datos personales guardados')),
         );
@@ -374,12 +395,15 @@ class PersonalDataTabState extends ConsumerState<PersonalDataTab>
     // Solo recargar si cambia el cliente activo (diferente ID = diferente paciente).
     // NO recargar cuando otra sección guarda datos del mismo cliente.
     ref.listen(clientsProvider, (previous, next) {
-      final prevId = previous?.value?.activeClient?.id;
       final nextClient = next.value?.activeClient;
-      final nextId = nextClient?.id;
       if (nextClient == null) return;
-      if (_client == null || prevId != nextId) {
-        _client = nextClient;
+      final current = _client;
+      final shouldReload =
+          current == null ||
+          current.id != nextClient.id ||
+          (!_isDirty && _loadedRevision != personalDataTabRevision(nextClient));
+      _client = nextClient;
+      if (shouldReload) {
         _loadFromClient(nextClient);
         if (mounted) setState(() {});
       }

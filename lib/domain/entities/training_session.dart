@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'exercise_prescription.dart';
+import 'package:hcs_app_lap/domain/entities/exercise_prescription.dart';
 
 class TrainingSession extends Equatable {
   final String id;

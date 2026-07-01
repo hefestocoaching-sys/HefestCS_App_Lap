@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/appointment.dart';
+import 'package:hcs_app_lap/domain/entities/appointment.dart';
 
 /// Repositorio para gestionar citas (Firestore + caché local)
 class AppointmentRepository {

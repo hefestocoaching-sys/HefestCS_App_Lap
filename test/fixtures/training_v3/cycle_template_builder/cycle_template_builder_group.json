@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "fixture": "cycle_template_builder_group",
+  "engine": "CycleTemplateBuilder",
+  "mode": "buildBaseWeek_real",
+  "catalog": "harness_fake_catalog",
+  "notes": [
+    "Legacy group tokens are not strict-normalized by CycleTemplateBuilder today.",
+    "This fixture freezes the current failure mode for group inputs."
+  ],
+  "cases": [
+    {
+      "id": "group_back_fails",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "back": 5
+        },
+        "targetVolumeByMuscle": {
+          "back": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "back": ["back_pulldown_raw"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"back\"",
+        "normalizedTargetVolumeByMuscle": {
+          "lats": 4,
+          "upper_back": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "lats,upper_back": ["back_pulldown_raw"]
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "group_shoulders_fails",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "shoulders": 5
+        },
+        "targetVolumeByMuscle": {
+          "shoulders": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "shoulders": ["shoulders_press_raw"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"shoulders\"",
+        "normalizedTargetVolumeByMuscle": {
+          "delts_front": 4,
+          "delts_lateral": 4,
+          "delts_rear": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "delts_front,delts_lateral,delts_rear": ["shoulders_press_raw"]
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "group_arms_fails",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "arms": 5
+        },
+        "targetVolumeByMuscle": {
+          "arms": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "arms": ["arms_curl_raw"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"arms\"",
+        "normalizedTargetVolumeByMuscle": {
+          "biceps": 4,
+          "triceps": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "biceps,triceps": ["arms_curl_raw"]
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "group_legs_fails",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "legs": 5
+        },
+        "targetVolumeByMuscle": {
+          "legs": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "legs": ["legs_squat_raw"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"legs\"",
+        "normalizedTargetVolumeByMuscle": {
+          "quads": 4,
+          "hamstrings": 4,
+          "glutes": 4,
+          "calves": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "quads,hamstrings,glutes,calves": ["legs_squat_raw"]
+        },
+        "warnings": []
+      }
+    }
+  ]
+}

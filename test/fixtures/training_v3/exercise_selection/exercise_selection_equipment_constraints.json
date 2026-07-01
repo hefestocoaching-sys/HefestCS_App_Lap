@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "fixture": "exercise_selection_equipment_constraints",
+  "engine": "ExerciseSelectionEngine",
+  "catalog": "minimal_fake_catalog_inside_regression_test",
+  "notes": [
+    "Fixture strict D1-C5 de restricciones de equipo.",
+    "availableEquipment vacio permite todo; si no esta vacio, el equipo requerido debe cruzar con el disponible.",
+    "No hay fallback generico cuando el filtro de equipo deja cero candidatos."
+  ],
+  "cases": [
+    {
+      "id": "equipment_pectorals_machine_only",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "pectorals",
+        "targetExerciseCount": 2,
+        "availableEquipment": ["machine"],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_low"]
+      },
+      "observedNotes": "Solo queda el candidato con machine."
+    },
+    {
+      "id": "equipment_pectorals_cable_none",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "pectorals",
+        "targetExerciseCount": 2,
+        "availableEquipment": ["cable"],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "No hay pectorals con cable en el catalogo fake; no hay fallback."
+    },
+    {
+      "id": "equipment_lats_cable",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "lats",
+        "targetExerciseCount": 2,
+        "availableEquipment": ["cable"],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["lat_high"]
+      },
+      "observedNotes": "Filtro de equipo conserva solo lat_high."
+    },
+    {
+      "id": "equipment_quads_barbell",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "quads",
+        "targetExerciseCount": 2,
+        "availableEquipment": ["barbell"],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["quad_high"]
+      },
+      "observedNotes": "Filtro de equipo conserva solo quad_high."
+    },
+    {
+      "id": "equipment_glutes_deterministic_barbell",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "glutes",
+        "intensityZone": "medium",
+        "availableEquipment": ["barbell"]
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["glute_high"]
+      },
+      "observedNotes": "La superficie deterministica tambien aplica availableEquipment."
+    },
+    {
+      "id": "equipment_glutes_deterministic_cable_none",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "glutes",
+        "intensityZone": "medium",
+        "availableEquipment": ["cable"]
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_ZONE_CANDIDATES]"
+      },
+      "observedNotes": "Sin equipo compatible, la superficie deterministica lanza sin fallback."
+    }
+  ]
+}

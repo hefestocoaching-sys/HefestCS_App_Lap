@@ -1,28 +1,47 @@
-import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
 
 class AntagonistPairingEngine {
+  static const Map<String, Set<String>> _pairs = {
+    'pectorals': {'lats', 'upper_back'},
+    'lats': {'pectorals'},
+    'upper_back': {'pectorals'},
+    'biceps': {'triceps'},
+    'triceps': {'biceps'},
+    'quads': {'hamstrings'},
+    'hamstrings': {'quads'},
+  };
+
   static bool areAntagonists(String a, String b) {
-    final left = _normalize(a);
-    final right = _normalize(b);
+    final leftMuscles = _resolveMusclesStrict(a);
+    final rightMuscles = _resolveMusclesStrict(b);
 
-    const pairs = <String, Set<String>>{
-      'pectorals': {'lats', 'upper_back'},
-      'lats': {'pectorals'},
-      'upper_back': {'pectorals'},
-      'biceps': {'triceps'},
-      'triceps': {'biceps'},
-      'quads': {'hamstrings'},
-      'hamstrings': {'quads'},
-    };
+    if (leftMuscles.isEmpty || rightMuscles.isEmpty) {
+      return false;
+    }
 
-    return pairs[left]?.contains(right) ?? false;
+    for (final left in leftMuscles) {
+      for (final right in rightMuscles) {
+        if (_pairs[left]?.contains(right) ?? false) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
-  static String _normalize(String key) {
-    final normalized = normalizeMuscleKey(key);
-    if (normalized == 'traps_upper') {
-      return 'traps';
+  static List<String> _resolveMusclesStrict(String raw) {
+    final canonical = muscle_registry.tryNormalizeMuscleKey(raw);
+    if (canonical != null) {
+      return [canonical];
     }
-    return normalized;
+
+    final expanded = muscle_registry.expandMuscleGroupStrict(raw);
+    if (expanded != null) {
+      return expanded;
+    }
+
+    return const [];
   }
 }

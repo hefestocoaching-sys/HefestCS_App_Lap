@@ -1,6 +1,14 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:hcs_app_lap/data/datasources/local/database_helper.dart';
 
+class SyncQueueDomains {
+  static const client = 'client';
+  static const anthropometryRecordUpsert = 'anthropometry_record_upsert';
+  static const biochemistryRecordUpsert = 'biochemistry_record_upsert';
+  static const anthropometryRecordDelete = 'anthropometry_record_delete';
+  static const biochemistryRecordDelete = 'biochemistry_record_delete';
+}
+
 class SyncQueueHelper {
   static const String _tableName = 'sync_queue';
 
@@ -31,14 +39,34 @@ class SyncQueueHelper {
     required String payload,
   }) async {
     final db = await DatabaseHelper.instance.database;
-    await db.insert(_tableName, {
-      'id': '${domain}_${clientId}_$dateKey',
+    await enqueueOn(
+      db,
+      id: '${domain}_${clientId}_$dateKey',
+      domain: domain,
+      clientId: clientId,
+      dateKey: dateKey,
+      payload: payload,
+    );
+  }
+
+  static Future<void> enqueueOn(
+    DatabaseExecutor executor, {
+    required String id,
+    required String domain,
+    required String clientId,
+    required String dateKey,
+    required String payload,
+  }) async {
+    await executor.insert(_tableName, {
+      'id': id,
       'domain': domain,
       'client_id': clientId,
       'date_key': dateKey,
       'payload': payload,
       'retry_count': 0,
       'created_at': DateTime.now().toIso8601String(),
+      'last_attempt': null,
+      'error_message': null,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -53,6 +81,18 @@ class SyncQueueHelper {
       orderBy: 'created_at ASC',
       limit: limit,
     );
+  }
+
+  static Future<Map<String, dynamic>?> getItemById(String id) async {
+    final db = await DatabaseHelper.instance.database;
+    final result = await db.query(
+      _tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (result.isEmpty) return null;
+    return result.first;
   }
 
   static Future<void> markSuccess(String id) async {

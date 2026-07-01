@@ -1,0 +1,34 @@
+AUDITORIA FORENSE MOTOR V3 - RESUMEN
+ENTRYPOINT REAL: lib/domain/training_v3/services/motor_v3_orchestrator.dart :: MotorV3Orchestrator.generateProgram(...)
+DEPENDENCIAS MINIMAS: UserProfile valido, phase, durationWeeks, splitId/trainingDays, exercises o catalogo cargado, client opcional para cycle state/backFocus/intensity split.
+
+SCENARIO 1: novice 3 dias pocas prioridades sin back explicito
+SUCCESS: false
+PRIMER PUNTO DE FALLA: 5. builder/session allocation
+DIFERENCIAS target-vs-assigned: {"quads":-12,"glutes":-10,"pectorals":-11,"lats":-10,"upper_back":-7,"traps":-7,"delts_front":-8,"delts_lateral":-8,"delts_rear":-8,"biceps":-8,"triceps":-9,"hamstrings":-9,"calves":-6,"abs":-6}
+ERRORS: [Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true]
+
+SCENARIO 2: novice 4 dias con back prioridad
+SUCCESS: false
+PRIMER PUNTO DE FALLA: 5. builder/session allocation
+DIFERENCIAS target-vs-assigned: {"lats":-3,"upper_back":-3,"pectorals":-10,"quads":-11,"traps":-6,"delts_front":-7,"delts_lateral":-7,"delts_rear":-7,"biceps":-8,"triceps":-8,"hamstrings":-8,"glutes":-9,"calves":-5,"abs":-5}
+ERRORS: [Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true]
+
+SCENARIO 3: intermediate 4 dias upper lower
+SUCCESS: false
+PRIMER PUNTO DE FALLA: 5. builder/session allocation
+DIFERENCIAS target-vs-assigned: {"pectorals":-13,"lats":-11,"upper_back":-8,"delts_lateral":-9,"quads":-14,"traps":-8,"delts_front":-9,"delts_rear":-9,"biceps":-10,"triceps":-10,"hamstrings":-10,"glutes":-11,"calves":-7,"abs":-6}
+ERRORS: [Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true]
+
+SCENARIO 4: intermediate 5 dias torso prioridades multiples
+SUCCESS: false
+PRIMER PUNTO DE FALLA: 5. builder/session allocation
+DIFERENCIAS target-vs-assigned: {"pectorals":-13,"lats":-11,"delts_lateral":-9,"upper_back":-8,"biceps":-10,"triceps":-10,"traps":-8,"delts_front":-9,"delts_rear":-9,"quads":-14,"hamstrings":-10,"glutes":-11,"calves":-7,"abs":-6}
+ERRORS: [Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true]
+
+SCENARIO 5: advanced 6 dias alta frecuencia con cycle state
+SUCCESS: false
+PRIMER PUNTO DE FALLA: 5. builder/session allocation
+DIFERENCIAS target-vs-assigned: {"pectorals":-16,"lats":-5,"upper_back":-4,"delts_lateral":-11,"biceps":-11,"triceps":-12,"quads":-17,"hamstrings":-12,"traps":-9,"delts_front":-11,"delts_rear":-11,"glutes":-13,"calves":-8,"abs":-7}
+ERRORS: [Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true]
+

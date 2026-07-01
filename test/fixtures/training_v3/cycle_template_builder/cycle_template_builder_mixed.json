@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "fixture": "cycle_template_builder_mixed",
+  "engine": "CycleTemplateBuilder",
+  "mode": "buildBaseWeek_real",
+  "catalog": "harness_fake_catalog",
+  "notes": [
+    "Mixed canonical, alias and raw inputs for buildBaseWeek real execution.",
+    "This fixture freezes the current split between canonicalized and raw paths."
+  ],
+  "cases": [
+    {
+      "id": "mixed_canonical_alias_success",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "pectorals": 5,
+          "chest": 5,
+          "gluteos": 4,
+          "glutes": 4
+        },
+        "targetVolumeByMuscle": {
+          "pectorals": 4,
+          "chest": 4,
+          "gluteos": 4,
+          "glutes": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "chest": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "gluteos": ["glute_bridge_barbell", "glute_hinge_cable"],
+          "glutes": ["glute_bridge_barbell", "glute_hinge_cable"]
+        }
+      },
+      "expected": {
+        "outcome": "success",
+        "weekId": null,
+        "weekName": null,
+        "normalizedTargetVolumeByMuscle": {
+          "pectorals": 8,
+          "glutes": 8
+        },
+        "daysCount": 1,
+        "sessionsCount": 1,
+        "totalExercises": 2,
+        "warnings": [],
+        "sessions": [
+          {
+            "id": "day_1",
+            "dayNumber": 1,
+            "name": "Day 1",
+            "primaryMuscles": ["pectorals", "glutes"],
+            "estimatedDurationMinutes": 30,
+            "totalSets": 16,
+            "exerciseCount": 2,
+            "structureMetadata": null,
+            "exerciseIds": ["pec_press_barbell", "glute_bridge_barbell"],
+            "muscleKeys": ["pectorals", "glutes"],
+            "primaryMusclesByExercise": ["pectorals", "glutes"],
+            "blockLabels": ["A", "C"],
+            "slotLabels": ["A", "C1"],
+            "pairGroupIds": [null, null],
+            "isMainLift": [true, false],
+            "setCounts": [8, 8],
+            "loadCategories": ["heavy", "heavy"],
+            "movementPatterns": ["horizontal_push", "hip_thrust"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "mixed_canonical_unknown_failure",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "pectorals": 5,
+          "unknown_muscle": 4
+        },
+        "targetVolumeByMuscle": {
+          "pectorals": 4,
+          "unknown_muscle": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "unknown_muscle": ["unknown_muscle_raise"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"unknown_muscle\"",
+        "normalizedTargetVolumeByMuscle": {
+          "pectorals": 4,
+          "unknown_muscle": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"],
+          "unknown_muscle": ["unknown_muscle_raise"]
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "mixed_group_canonical_failure",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "back": 5,
+          "pectorals": 4
+        },
+        "targetVolumeByMuscle": {
+          "back": 4,
+          "pectorals": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "back": ["back_pulldown_raw"],
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"back\"",
+        "normalizedTargetVolumeByMuscle": {
+          "lats": 4,
+          "upper_back": 4,
+          "pectorals": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "lats,upper_back": ["back_pulldown_raw"],
+          "pectorals": ["pec_press_barbell", "pec_fly_dumbbell"]
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "mixed_group_unknown_failure",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "shoulders": 5,
+          "unknown_muscle": 4
+        },
+        "targetVolumeByMuscle": {
+          "shoulders": 4,
+          "unknown_muscle": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "shoulders": ["shoulders_press_raw"],
+          "unknown_muscle": ["unknown_muscle_raise"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"unknown_muscle\"",
+        "normalizedTargetVolumeByMuscle": {
+          "delts_front": 4,
+          "delts_lateral": 4,
+          "delts_rear": 4,
+          "unknown_muscle": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "delts_front,delts_lateral,delts_rear": ["shoulders_press_raw"],
+          "unknown_muscle": ["unknown_muscle_raise"]
+        },
+        "warnings": []
+      }
+    }
+  ]
+}

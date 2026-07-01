@@ -1,0 +1,30 @@
+{
+  "trainingLevel": "intermediate",
+  "phase": "accumulation",
+  "weekNumbers": [1, 3],
+  "feedback": {},
+  "baseVop": {
+    "chest": 10,
+    "quadriceps": 14,
+    "gluteos": 13,
+    "deltoide_anterior": 8
+  },
+  "mevByMuscle": {
+    "chest": 8,
+    "quadriceps": 10,
+    "gluteos": 9,
+    "deltoide_anterior": 6
+  },
+  "mrvByMuscle": {
+    "chest": 20,
+    "quadriceps": 24,
+    "gluteos": 21,
+    "deltoide_anterior": 14
+  },
+  "priorities": {
+    "chest": 5,
+    "quadriceps": 1,
+    "gluteos": 4,
+    "deltoide_anterior": 3
+  }
+}

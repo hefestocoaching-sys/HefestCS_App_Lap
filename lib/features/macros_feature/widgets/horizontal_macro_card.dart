@@ -164,7 +164,6 @@ class _HorizontalMacroCardState extends State<HorizontalMacroCard> {
         ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Header + Badge
           SizedBox(
@@ -674,7 +673,6 @@ class _InlineDropdown extends StatelessWidget {
           color: enabled ? color.withAlpha(150) : color.withAlpha(60),
         ),
         isDense: true,
-        isExpanded: false,
         underline: const SizedBox.shrink(),
         style: TextStyle(
           color: enabled ? color : color.withAlpha(100),

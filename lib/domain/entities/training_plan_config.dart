@@ -1,8 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:hcs_app_lap/core/enums/training_phase.dart';
+import 'package:hcs_app_lap/domain/entities/training_profile.dart';
+import 'package:hcs_app_lap/domain/entities/training_shared_types.dart';
 import 'package:hcs_app_lap/domain/entities/training_week.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_plan_meta.dart';
-import 'training_profile.dart';
 
 /// Entidad persistida de plan de entrenamiento
 ///
@@ -21,7 +22,8 @@ import 'training_profile.dart';
 ///
 /// NOTA: Esta entidad V2 es la SSOT (Single Source of Truth) para UI.
 /// NO existe duplicado para Motor V3. Todos usan esta clase.
-class TrainingPlanConfig extends Equatable {
+class TrainingPlanConfig extends Equatable
+    implements TrainingProfileSnapshotSource {
   final String id;
   final String name;
   final String clientId;
@@ -132,6 +134,10 @@ class TrainingPlanConfig extends Equatable {
   Map<String, dynamic> toJson() => toMap();
   factory TrainingPlanConfig.fromJson(Map<String, dynamic> json) =>
       TrainingPlanConfig.fromMap(json);
+
+  @override
+  Map<String, dynamic>? get trainingProfileSnapshotExtra =>
+      trainingProfileSnapshot?.extra;
 
   // --- COPY WITH ---
 

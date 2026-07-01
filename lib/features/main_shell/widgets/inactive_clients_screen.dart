@@ -142,14 +142,12 @@ class InactiveClientsScreen extends ConsumerWidget {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
 
-              // Actualizar el cliente con status = active
-              final updatedClient = client.copyWith(
-                status: ClientStatus.active,
-              );
-
               await ref
                   .read(clientsProvider.notifier)
-                  .updateActiveClient((prev) => updatedClient);
+                  .updateClientStatusById(
+                    clientId: client.id,
+                    isActive: true,
+                  );
 
               scaffoldMessenger.showSnackBar(
                 SnackBar(

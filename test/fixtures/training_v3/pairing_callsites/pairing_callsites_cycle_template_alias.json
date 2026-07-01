@@ -1,0 +1,145 @@
+{
+  "fixture": "pairing_callsites_cycle_template_alias",
+  "phase": "D1R8",
+  "type": "observational_post_d1c7",
+  "mode": "cycle_template_builder_proxy",
+  "notes": "Aliases validos observados a traves de CycleTemplateBuilder.normalizeMuscleKey.",
+  "cases": [
+    {
+      "id": "alias_chest_lats",
+      "input": {
+        "firstPrimaryMuscle": "chest",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "lats",
+          "dayMuscles": ["pectorals", "lats"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "lats"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": ["lats"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "chest normaliza a pectorals antes del proxy de bloques."
+    },
+    {
+      "id": "alias_quadriceps_hamstrings",
+      "input": {
+        "firstPrimaryMuscle": "quadriceps",
+        "secondPrimaryMuscle": "hamstrings"
+      },
+      "expected": {
+        "normalization": {
+          "first": "quads",
+          "second": "hamstrings",
+          "dayMuscles": ["quads", "hamstrings"],
+          "primaryMuscle": "quads"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["quads", "hamstrings"],
+          "blockPlan": {
+            "A": ["quads"],
+            "B": ["hamstrings"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "quadriceps normaliza a quads."
+    },
+    {
+      "id": "alias_gluteos_quads",
+      "input": {
+        "firstPrimaryMuscle": "gluteos",
+        "secondPrimaryMuscle": "quads"
+      },
+      "expected": {
+        "normalization": {
+          "first": "glutes",
+          "second": "quads",
+          "dayMuscles": ["glutes", "quads"],
+          "primaryMuscle": "glutes"
+        },
+        "directHelpers": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["glutes", "quads"],
+          "blockPlan": {
+            "A": ["glutes"],
+            "B": [],
+            "C": ["quads"],
+            "D": []
+          }
+        }
+      },
+      "notes": "gluteos sigue siendo alias valido a glutes."
+    },
+    {
+      "id": "alias_deltoide_anterior_deltoide_posterior",
+      "input": {
+        "firstPrimaryMuscle": "deltoide_anterior",
+        "secondPrimaryMuscle": "deltoide_posterior"
+      },
+      "expected": {
+        "normalization": {
+          "first": "delts_front",
+          "second": "delts_rear",
+          "dayMuscles": ["delts_front", "delts_rear"],
+          "primaryMuscle": "delts_front"
+        },
+        "directHelpers": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "none",
+          "isAllowedBiserie": false,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["delts_front", "delts_rear"],
+          "blockPlan": {
+            "A": ["delts_front"],
+            "B": [],
+            "C": ["delts_rear"],
+            "D": []
+          }
+        }
+      },
+      "notes": "Aliases de delts normalizan, sin pairing valido actual."
+    }
+  ]
+}

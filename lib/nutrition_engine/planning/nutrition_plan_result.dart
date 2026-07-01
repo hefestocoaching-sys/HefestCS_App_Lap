@@ -1,6 +1,6 @@
-import 'meal_targets.dart';
-import '../equivalents/equivalent_calculator.dart';
-import '../equivalents/smae_distribution_engine.dart';
+import 'package:hcs_app_lap/nutrition_engine/planning/meal_targets.dart';
+import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_calculator.dart';
+import 'package:hcs_app_lap/nutrition_engine/equivalents/smae_distribution_engine.dart';
 
 class NutritionPlanResult {
   final double kcalTargetDay;

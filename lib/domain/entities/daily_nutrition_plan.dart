@@ -3,7 +3,6 @@ import 'package:hcs_app_lap/domain/entities/clinical_restriction_profile.dart';
 import 'package:hcs_app_lap/domain/entities/daily_meal_plan.dart';
 import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_definition.dart';
 import 'package:hcs_app_lap/nutrition_engine/planning/meal_targets.dart';
-import 'package:hcs_app_lap/nutrition_engine/validation/nutrition_plan_validator.dart';
 
 class DailyNutritionPlan {
   final String id;
@@ -135,10 +134,6 @@ class DailyNutritionPlan {
     }
 
     return {'kcal': kcal, 'protein': protein, 'carbs': carbs, 'fat': fat};
-  }
-
-  ValidationResult validate({double tolerance = 0.05}) {
-    return NutritionPlanValidator.validatePlan(this, tolerance: tolerance);
   }
 
   Map<String, dynamic> toJson() {

@@ -219,7 +219,7 @@ class SessionStructureEngine {
     final mainLift = usable.first;
     final remaining = usable.skip(1).toList();
     final blocks = <SessionBlock>[];
-    final mainMuscle = _primaryMuscle(mainLift);
+    final mainMuscle = _tryPrimaryMuscle(mainLift);
 
     final antagonists = <Exercise>[];
     final lowInterference = <Exercise>[];
@@ -234,15 +234,18 @@ class SessionStructureEngine {
         continue;
       }
 
-      final currentMuscle = _primaryMuscle(exercise);
-      if (AntagonistPairingEngine.areAntagonists(mainMuscle, currentMuscle)) {
+      final currentMuscle = _tryPrimaryMuscle(exercise);
+      if (mainMuscle != null &&
+          currentMuscle != null &&
+          AntagonistPairingEngine.areAntagonists(mainMuscle, currentMuscle)) {
         antagonists.add(exercise);
         continue;
       }
 
-      final lowList =
-          InterferenceMatrix.lowInterference[mainMuscle] ?? const <String>[];
-      if (lowList.contains(currentMuscle)) {
+      final lowList = mainMuscle == null
+          ? const <String>[]
+          : InterferenceMatrix.lowInterference[mainMuscle] ?? const <String>[];
+      if (currentMuscle != null && lowList.contains(currentMuscle)) {
         lowInterference.add(exercise);
         continue;
       }
@@ -260,14 +263,16 @@ class SessionStructureEngine {
 
     final bMuscles = blocks
         .where((block) => block.blockLabel == 'B')
-        .expand((block) => block.exercises.map(_primaryMuscle))
+        .expand((block) => block.exercises.map(_tryPrimaryMuscle))
+        .whereType<String>()
         .toSet();
 
     final blockC = <Exercise>[];
     final blockD = <Exercise>[];
 
     bool isCompatibleForC(Exercise exercise) {
-      final muscle = _primaryMuscle(exercise);
+      final muscle = _tryPrimaryMuscle(exercise);
+      if (mainMuscle == null || muscle == null) return false;
       final lowMain =
           InterferenceMatrix.lowInterference[mainMuscle] ?? const <String>[];
       final withMain =
@@ -330,8 +335,11 @@ class SessionStructureEngine {
       }
 
       final partnerIndex = working.indexWhere((candidate) {
-        final firstMuscle = _primaryMuscle(first);
-        final candidateMuscle = _primaryMuscle(candidate);
+        final firstMuscle = _tryPrimaryMuscle(first);
+        final candidateMuscle = _tryPrimaryMuscle(candidate);
+        if (firstMuscle == null || candidateMuscle == null) {
+          return false;
+        }
         if (!PairingContract.isAllowedBiserie(
           firstPrimaryMuscle: firstMuscle,
           secondPrimaryMuscle: candidateMuscle,
@@ -428,19 +436,16 @@ class SessionStructureEngine {
     return metadata['category']?.toString() == 'isolation';
   }
 
-  static String _primaryMuscle(Exercise exercise) {
-    String normalize(String raw) {
-      final canonical = muscle_registry.normalize(raw);
+  static String? _tryPrimaryMuscle(Exercise exercise) {
+    for (final raw in exercise.primaryMuscles) {
+      final canonical = muscle_registry.tryNormalizeMuscleKey(raw);
       if (canonical != null) return canonical;
-      final expanded = muscle_registry.expandGroup(raw);
-      if (expanded.isNotEmpty) return expanded.first;
-      return raw.trim().toLowerCase();
     }
 
-    if (exercise.primaryMuscles.isNotEmpty) {
-      return normalize(exercise.primaryMuscles.first);
-    }
-    return normalize(exercise.muscleKey);
+    final fallback = muscle_registry.tryNormalizeMuscleKey(exercise.muscleKey);
+    if (fallback != null) return fallback;
+
+    return null;
   }
 
   static int _fatigueScore(Exercise exercise) {

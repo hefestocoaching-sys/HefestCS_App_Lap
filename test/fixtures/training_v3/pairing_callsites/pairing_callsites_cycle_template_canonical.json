@@ -1,0 +1,145 @@
+{
+  "fixture": "pairing_callsites_cycle_template_canonical",
+  "phase": "D1R8",
+  "type": "observational_post_d1c7",
+  "mode": "cycle_template_builder_proxy",
+  "notes": "Proxy de call site para CycleTemplateBuilder: usa normalizeMuscleKey publico y replica orden/bloques privados observados sin tocar produccion.",
+  "cases": [
+    {
+      "id": "canonical_pectorals_lats",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "lats",
+          "dayMuscles": ["pectorals", "lats"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "lats"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": ["lats"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "Antagonista canonico entra a bloque B."
+    },
+    {
+      "id": "canonical_quads_hamstrings",
+      "input": {
+        "firstPrimaryMuscle": "quads",
+        "secondPrimaryMuscle": "hamstrings"
+      },
+      "expected": {
+        "normalization": {
+          "first": "quads",
+          "second": "hamstrings",
+          "dayMuscles": ["quads", "hamstrings"],
+          "primaryMuscle": "quads"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["quads", "hamstrings"],
+          "blockPlan": {
+            "A": ["quads"],
+            "B": ["hamstrings"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "Antagonista canonico entra a bloque B."
+    },
+    {
+      "id": "canonical_biceps_triceps",
+      "input": {
+        "firstPrimaryMuscle": "biceps",
+        "secondPrimaryMuscle": "triceps"
+      },
+      "expected": {
+        "normalization": {
+          "first": "biceps",
+          "second": "triceps",
+          "dayMuscles": ["biceps", "triceps"],
+          "primaryMuscle": "biceps"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["biceps", "triceps"],
+          "blockPlan": {
+            "A": ["biceps"],
+            "B": ["triceps"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "Antagonista canonico entre accesorios entra a bloque B."
+    },
+    {
+      "id": "canonical_glutes_quads",
+      "input": {
+        "firstPrimaryMuscle": "glutes",
+        "secondPrimaryMuscle": "quads"
+      },
+      "expected": {
+        "normalization": {
+          "first": "glutes",
+          "second": "quads",
+          "dayMuscles": ["glutes", "quads"],
+          "primaryMuscle": "glutes"
+        },
+        "directHelpers": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["glutes", "quads"],
+          "blockPlan": {
+            "A": ["glutes"],
+            "B": [],
+            "C": ["quads"],
+            "D": []
+          }
+        }
+      },
+      "notes": "Sinergia valida no entra a B en el plan muscular porque el call site exige antagonist o lowInterference para B."
+    }
+  ]
+}

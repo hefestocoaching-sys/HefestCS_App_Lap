@@ -12,7 +12,7 @@ import 'package:hcs_app_lap/core/utils/app_logger.dart';
 /// GARANTÍA:
 /// - Todas las keys retornadas están en `canonicalMuscles` del registry
 /// - Nunca inventa nuevos músculos
-/// - Si no reconoce una key, la retorna como-está (con warning en logs)
+/// - Si no reconoce una key, retorna null (con warning en logs)
 ///
 class ExercisePreferenceMuscleKeyMapper {
   ExercisePreferenceMuscleKeyMapper._();
@@ -30,8 +30,8 @@ class ExercisePreferenceMuscleKeyMapper {
   static String? toCanonicalKey(String preferenceKey) {
     if (preferenceKey.isEmpty) return null;
 
-    // Primero intentar normalization del registry (SSOT)
-    final canonical = registry.normalize(preferenceKey);
+    // Primero intentar normalizacion estricta del registry (SSOT)
+    final canonical = registry.tryNormalizeMuscleKey(preferenceKey);
     if (canonical != null) {
       if (preferenceKey.toLowerCase() != canonical) {
         logger.debug('Exercise preference key normalized', {

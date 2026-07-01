@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../domain/training/models/muscle_priorities.dart';
+import 'package:hcs_app_lap/domain/training/models/muscle_priorities.dart';
 
 /// Widget to configure priorities for the 14 canonical muscles.
 ///

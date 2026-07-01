@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "fixture": "cycle_template_builder_unknown",
+  "engine": "CycleTemplateBuilder",
+  "mode": "buildBaseWeek_real",
+  "catalog": "harness_fake_catalog",
+  "notes": [
+    "Unknown and raw passthrough cases for buildBaseWeek real execution.",
+    "This fixture freezes current behavior for glute normalization and raw unknown keys."
+  ],
+  "cases": [
+    {
+      "id": "unknown_glute_current_behavior",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "glute": 5
+        },
+        "targetVolumeByMuscle": {
+          "glute": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "glutes": ["glute_bridge_barbell", "glute_hinge_cable"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"glute\"",
+        "normalizedTargetVolumeByMuscle": {
+          "glute": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "glutes": ["glute_bridge_barbell", "glute_hinge_cable"]
+        },
+        "warnings": []
+      },
+      "notes": "Now the builder rejects raw 'glute' as unknown (strict SSOT)."
+    },
+    {
+      "id": "unknown_unknown_muscle_fails",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "unknown_muscle": 5
+        },
+        "targetVolumeByMuscle": {
+          "unknown_muscle": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "unknown_muscle": ["unknown_muscle_raise"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"unknown_muscle\"",
+        "normalizedTargetVolumeByMuscle": {
+          "unknown_muscle": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "unknown_muscle": ["unknown_muscle_raise"]
+        },
+        "warnings": []
+      },
+      "notes": "unknown_muscle stays raw in the builder and the selection step fails today."
+    },
+    {
+      "id": "unknown_back_mid_upper_fails",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "back_mid_upper": 5
+        },
+        "targetVolumeByMuscle": {
+          "back_mid_upper": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "back_mid_upper": ["back_mid_upper_row"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"back_mid_upper\"",
+        "normalizedTargetVolumeByMuscle": {
+          "back_mid_upper": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "back_mid_upper": ["back_mid_upper_row"]
+        },
+        "warnings": []
+      },
+      "notes": "back_mid_upper remains raw and currently fails at buildBaseWeek selection time."
+    },
+    {
+      "id": "unknown_mysterychest_fails",
+      "input": {
+        "availableDays": 1,
+        "split": "fullBody",
+        "trainingLevel": "intermediate",
+        "sessionDuration": 90,
+        "musclePriorities": {
+          "mysterychest": 5
+        },
+        "targetVolumeByMuscle": {
+          "mysterychest": 4
+        },
+        "mesocycleExercisePoolByMuscle": {
+          "mysterychest": ["mysterychest_press"]
+        }
+      },
+      "expected": {
+        "outcome": "failure",
+        "error": "Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key=\"mysterychest\"",
+        "normalizedTargetVolumeByMuscle": {
+          "mysterychest": 4
+        },
+        "normalizedPoolKeysByMuscle": {
+          "mysterychest": ["mysterychest_press"]
+        },
+        "warnings": []
+      },
+      "notes": "mysterychest also remains raw and fails like the other unknowns."
+    }
+  ]
+}

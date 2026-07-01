@@ -9,9 +9,9 @@ import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart'
 import 'package:hcs_app_lap/features/main_shell/providers/global_date_provider.dart';
 import 'package:hcs_app_lap/features/client_feature/models/client_summary_data.dart';
 
-import '../widgets/anthropometry_measures_tab.dart';
-import '../widgets/anthropometry_graphs_tab.dart';
-import '../widgets/anthropometry_interpretation_tab.dart';
+import 'package:hcs_app_lap/features/anthropometry_feature/widgets/anthropometry_measures_tab.dart';
+import 'package:hcs_app_lap/features/anthropometry_feature/widgets/anthropometry_graphs_tab.dart';
+import 'package:hcs_app_lap/features/anthropometry_feature/widgets/anthropometry_interpretation_tab.dart';
 
 class AnthropometryScreen extends ConsumerStatefulWidget {
   const AnthropometryScreen({super.key});

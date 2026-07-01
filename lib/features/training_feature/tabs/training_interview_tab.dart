@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:hcs_app_lap/core/constants/training_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
+import 'package:hcs_app_lap/domain/entities/training_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/landmark_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_flow_stage.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
@@ -114,12 +115,15 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
       ),
     );
 
-    final updatedTraining = TrainingProfileFormMapper.apply(
-      base: currentClient.training,
-      input: values,
-      volume: volume,
-    );
-    final updatedClient = currentClient.copyWith(training: updatedTraining);
+    TrainingProfile applyInterviewPatch(TrainingProfile previous) {
+      return TrainingProfileFormMapper.apply(
+        base: previous,
+        input: values,
+        volume: volume,
+      );
+    }
+
+    final updatedTraining = applyInterviewPatch(currentClient.training);
 
     final interviewStatus = evaluateTrainingInterview(updatedTraining.extra);
     if (interviewStatus != TrainingInterviewStatus.valid) {
@@ -130,11 +134,13 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
     }
 
     try {
-      await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
-        return prev.copyWith(training: updatedClient.training);
-      });
+      final savedClient = await ref
+          .read(clientsProvider.notifier)
+          .updateActiveClientTraining(applyInterviewPatch);
+      final fallbackClient = currentClient.copyWith(training: updatedTraining);
+      final resultClient = savedClient ?? fallbackClient;
 
-      if (!mounted) return updatedClient;
+      if (!mounted) return resultClient;
 
       await _computeAndPersistLandmarks();
       _isDirty = false;
@@ -149,7 +155,7 @@ class TrainingInterviewTabState extends ConsumerState<TrainingInterviewTab>
         );
       }
 
-      return updatedClient;
+      return resultClient;
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

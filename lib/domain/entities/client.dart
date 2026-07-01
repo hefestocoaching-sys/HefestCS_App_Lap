@@ -8,27 +8,27 @@ import 'package:hcs_app_lap/domain/entities/training_history.dart';
 import 'package:hcs_app_lap/domain/services/latest_record_resolver.dart';
 import 'package:hcs_app_lap/domain/training/training_cycle.dart';
 
-import 'anthropometry_record.dart';
-import 'biochemistry_record.dart';
-import 'client_profile.dart';
-import 'clinical_history.dart';
-import 'daily_macro_settings.dart';
-import 'daily_tracking_record.dart';
-import 'exercise_log_entry.dart';
-import 'glute_specialization_profile.dart';
-import 'mobility_assessment.dart';
-import 'movement_pattern_assessment.dart';
-import 'psychological_training_profile.dart';
-import 'strength_assessment.dart';
-import 'training_evaluation.dart';
-import 'emi2_profile.dart';
-import 'volume_tolerance_profile.dart';
-import 'nutrition_settings.dart';
-import 'session_summary_log.dart';
-import 'training_plan_config.dart';
-import 'training_profile.dart';
-import 'training_session.dart';
-import 'training_week.dart';
+import 'package:hcs_app_lap/domain/entities/anthropometry_record.dart';
+import 'package:hcs_app_lap/domain/entities/biochemistry_record.dart';
+import 'package:hcs_app_lap/domain/entities/client_profile.dart';
+import 'package:hcs_app_lap/domain/entities/clinical_history.dart';
+import 'package:hcs_app_lap/domain/entities/daily_macro_settings.dart';
+import 'package:hcs_app_lap/domain/entities/daily_tracking_record.dart';
+import 'package:hcs_app_lap/domain/entities/exercise_log_entry.dart';
+import 'package:hcs_app_lap/domain/entities/glute_specialization_profile.dart';
+import 'package:hcs_app_lap/domain/entities/mobility_assessment.dart';
+import 'package:hcs_app_lap/domain/entities/movement_pattern_assessment.dart';
+import 'package:hcs_app_lap/domain/entities/psychological_training_profile.dart';
+import 'package:hcs_app_lap/domain/entities/strength_assessment.dart';
+import 'package:hcs_app_lap/domain/entities/training_evaluation.dart';
+import 'package:hcs_app_lap/domain/entities/emi2_profile.dart';
+import 'package:hcs_app_lap/domain/entities/volume_tolerance_profile.dart';
+import 'package:hcs_app_lap/domain/entities/nutrition_settings.dart';
+import 'package:hcs_app_lap/domain/entities/session_summary_log.dart';
+import 'package:hcs_app_lap/domain/entities/training_plan_config.dart';
+import 'package:hcs_app_lap/domain/entities/training_profile.dart';
+import 'package:hcs_app_lap/domain/entities/training_session.dart';
+import 'package:hcs_app_lap/domain/entities/training_week.dart';
 
 /// Estado del cliente dentro del sistema.
 enum ClientStatus { active, inactive, archived }

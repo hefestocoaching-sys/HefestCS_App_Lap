@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/constants/history_extra_keys.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/clinical_history.dart';
+import 'package:hcs_app_lap/features/history_clinic_feature/tabs/clinical_tab_client_patches.dart';
 import 'package:hcs_app_lap/features/main_shell/providers/clients_provider.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/utils/widgets/chip_group_card.dart';
@@ -20,10 +21,12 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
   bool get wantKeepAlive => true;
 
   Client? _client;
+  late ClinicalHistory _baseHistory;
   late ClinicalHistory _draftHistory;
   late List<String> _hereditarySelected;
   late List<String> _pathologicalSelected;
   bool _isDirty = false;
+  String? _loadedRevision;
 
   List<String> _safeStringList(dynamic value) =>
       value is List ? value.map((e) => e.toString()).toList() : [];
@@ -75,7 +78,10 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
   }
 
   void _loadFromClient(Client client) {
+    _client = client;
+    _baseHistory = client.history;
     _draftHistory = client.history;
+    _loadedRevision = backgroundTabRevision(client);
     _hereditarySelected = _safeStringList(
       client.history.extra[HistoryExtraKeys.hereditaryFamilyHistory],
     );
@@ -109,11 +115,20 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
     _markDirty();
   }
 
-  Future<Client?> saveIfDirty() async {
-    if (!_isDirty || _client == null) return null;
-    final updatedClient = _client!.copyWith(history: _draftHistory);
-    _isDirty = false;
-    return updatedClient;
+  Future<void> saveIfDirty() async {
+    if (!_isDirty || _client == null) return;
+    Client? savedClient;
+    await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+      savedClient = applyBackgroundTabPatch(
+        activeClient: prev,
+        baseHistory: _baseHistory,
+        draftHistory: _draftHistory,
+      );
+      return savedClient!;
+    });
+    if (savedClient != null) {
+      _loadFromClient(savedClient!);
+    }
   }
 
   void resetDrafts() {
@@ -127,18 +142,23 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
   }
 
   Future<void> _saveDraft() async {
-    final client = _client;
-    if (client == null) return;
-    final updatedClient = client.copyWith(history: _draftHistory);
+    if (_client == null) return;
+    Client? savedClient;
     try {
-      await ref
-          .read(clientsProvider.notifier)
-          .updateActiveClient(
-            (prev) => prev.copyWith(history: updatedClient.history),
-          );
+      await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+        savedClient = applyBackgroundTabPatch(
+          activeClient: prev,
+          baseHistory: _baseHistory,
+          draftHistory: _draftHistory,
+        );
+        return savedClient!;
+      });
 
       if (!mounted) return;
-      _isDirty = false;
+      if (savedClient != null) {
+        _loadFromClient(savedClient!);
+        setState(() {});
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Antecedentes guardados'),
@@ -164,14 +184,17 @@ class BackgroundTabState extends ConsumerState<BackgroundTab>
     // NO recargar cuando otra sección (antropometría, nutrición, etc.) guarda datos
     // del mismo cliente — eso sobreescribiría el borrador de historia clínica.
     ref.listen(clientsProvider, (previous, next) {
-      final prevId = previous?.value?.activeClient?.id;
       final nextClient = next.value?.activeClient;
-      final nextId = nextClient?.id;
       if (nextClient == null) return;
 
       // Solo recargar si cambió el ID del cliente activo o si no hay cliente cargado aún
-      if (_client == null || prevId != nextId) {
-        _client = nextClient;
+      final current = _client;
+      final shouldReload =
+          current == null ||
+          current.id != nextClient.id ||
+          (!_isDirty && _loadedRevision != backgroundTabRevision(nextClient));
+      _client = nextClient;
+      if (shouldReload) {
         _loadFromClient(nextClient);
         if (mounted) setState(() {});
       }

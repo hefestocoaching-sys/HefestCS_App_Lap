@@ -14,12 +14,12 @@ import 'package:hcs_app_lap/features/training_feature/domain/training_interview_
 import 'package:intl/intl.dart';
 
 // ENTREVISTA DE ENTRENAMIENTO (SSOT)
-import '../tabs/training_interview_tab.dart';
+import 'package:hcs_app_lap/features/training_feature/tabs/training_interview_tab.dart';
 
 // IMPORTS DE WIDGETS LEGACY (deprecados, mantener por compatibilidad temporal)
-import '../widgets/volume_capacity_scientific_view.dart';
-import '../widgets/series_distribution_editor.dart';
-import '../widgets/weekly_plan_detail_view.dart';
+import 'package:hcs_app_lap/features/training_feature/widgets/volume_capacity_scientific_view.dart';
+import 'package:hcs_app_lap/features/training_feature/widgets/series_distribution_editor.dart';
+import 'package:hcs_app_lap/features/training_feature/widgets/weekly_plan_detail_view.dart';
 
 /// Pantalla unificada de entrenamiento Motor V3
 ///

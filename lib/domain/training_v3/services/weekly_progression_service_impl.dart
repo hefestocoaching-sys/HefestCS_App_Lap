@@ -13,7 +13,7 @@ import 'package:hcs_app_lap/domain/training_v3/repositories/muscle_progression_r
 import 'package:hcs_app_lap/domain/training_v3/repositories/weekly_muscle_analysis_repository.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/weekly_feedback_collector.dart';
 
-import 'weekly_progression_service.dart';
+import 'package:hcs_app_lap/domain/training_v3/services/weekly_progression_service.dart';
 
 /// Implementation of WeeklyProgressionService
 ///

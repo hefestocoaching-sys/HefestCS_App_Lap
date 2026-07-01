@@ -3,10 +3,10 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:hcs_app_lap/core/constants/history_extra_keys.dart";
 import "package:hcs_app_lap/core/constants/nutrition_extra_keys.dart";
 import "package:hcs_app_lap/domain/entities/client.dart";
-import "package:hcs_app_lap/domain/entities/client_profile.dart";
 import "package:hcs_app_lap/domain/entities/clinical_history.dart";
 import "package:hcs_app_lap/domain/entities/nutrition_settings.dart";
 import "package:hcs_app_lap/domain/entities/training_profile.dart";
+import "package:hcs_app_lap/features/history_clinic_feature/tabs/clinical_tab_client_patches.dart";
 import "package:hcs_app_lap/features/main_shell/providers/clients_provider.dart";
 import "package:hcs_app_lap/ui/clinic_section_surface.dart";
 import "package:hcs_app_lap/utils/widgets/shared_form_widgets.dart";
@@ -136,13 +136,16 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
   bool get wantKeepAlive => true;
 
   Client? _client;
-  late ClientProfile _draftProfile;
+  late ClinicalHistory _baseHistory;
   late ClinicalHistory _draftHistory;
+  late NutritionSettings _baseNutrition;
   late NutritionSettings _draftNutrition;
+  late TrainingProfile _baseTraining;
   late TrainingProfile _draftTraining;
 
   bool _isDirty = false;
   bool _controllersReady = false;
+  String? _loadedRevision;
 
   bool _hasAllergies = false;
   bool _usesMedications = false;
@@ -226,10 +229,14 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
   }
 
   void _initializeFromClient(Client client) {
-    _draftProfile = client.profile;
+    _client = client;
+    _baseHistory = client.history;
     _draftHistory = client.history;
+    _baseNutrition = client.nutrition;
     _draftNutrition = client.nutrition;
+    _baseTraining = client.training;
     _draftTraining = client.training;
+    _loadedRevision = generalEvaluationTabRevision(client);
     _resetMealEntries();
 
     String? normalizeOption(String? value, List<String> options) {
@@ -445,16 +452,24 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
     _markDirty();
   }
 
-  Future<Client?> saveIfDirty() async {
-    if (!_isDirty || _client == null) return null;
-    final updatedClient = _client!.copyWith(
-      profile: _draftProfile,
-      history: _draftHistory,
-      nutrition: _draftNutrition,
-      training: _draftTraining,
-    );
-    _isDirty = false;
-    return updatedClient;
+  Future<void> saveIfDirty() async {
+    if (!_isDirty || _client == null) return;
+    Client? savedClient;
+    await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
+      savedClient = applyGeneralEvaluationTabPatch(
+        activeClient: prev,
+        baseHistory: _baseHistory,
+        draftHistory: _draftHistory,
+        baseNutrition: _baseNutrition,
+        draftNutrition: _draftNutrition,
+        baseTraining: _baseTraining,
+        draftTraining: _draftTraining,
+      );
+      return savedClient!;
+    });
+    if (savedClient != null) {
+      _initializeFromClient(savedClient!);
+    }
   }
 
   void resetDrafts() {
@@ -469,45 +484,26 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
 
   Future<void> _saveDraft() async {
     if (_client == null) return;
-    final mergedHistoryExtra = {
-      ..._client!.history.extra,
-      ..._draftHistory.extra,
-    };
-    final mergedNutritionExtra = {
-      ..._client!.nutrition.extra,
-      ..._draftNutrition.extra,
-    };
-    final updatedClient = _client!.copyWith(
-      profile: _draftProfile,
-      history: _draftHistory.copyWith(extra: mergedHistoryExtra),
-      nutrition: _draftNutrition.copyWith(extra: mergedNutritionExtra),
-      training: _draftTraining,
-    );
+    Client? savedClient;
     try {
       await ref.read(clientsProvider.notifier).updateActiveClient((prev) {
-        final mergedHistoryExtraFromPrev = {
-          ...prev.history.extra,
-          ...updatedClient.history.extra,
-        };
-        final mergedNutritionExtraFromPrev = {
-          ...prev.nutrition.extra,
-          ...updatedClient.nutrition.extra,
-        };
-        return prev.copyWith(
-          profile: updatedClient.profile,
-          history: updatedClient.history.copyWith(
-            extra: mergedHistoryExtraFromPrev,
-          ),
-          nutrition: updatedClient.nutrition.copyWith(
-            extra: mergedNutritionExtraFromPrev,
-          ),
-          training: updatedClient.training,
+        savedClient = applyGeneralEvaluationTabPatch(
+          activeClient: prev,
+          baseHistory: _baseHistory,
+          draftHistory: _draftHistory,
+          baseNutrition: _baseNutrition,
+          draftNutrition: _draftNutrition,
+          baseTraining: _baseTraining,
+          draftTraining: _draftTraining,
         );
+        return savedClient!;
       });
 
       if (!mounted) return;
-      _client = updatedClient;
-      _isDirty = false;
+      if (savedClient != null) {
+        _initializeFromClient(savedClient!);
+        setState(() {});
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Evaluación general guardada'),
@@ -560,12 +556,16 @@ class GeneralEvaluationTabState extends ConsumerState<GeneralEvaluationTab>
     // Solo recargar si cambia el cliente activo (diferente ID = diferente paciente).
     // NO recargar cuando otra sección guarda datos del mismo cliente.
     ref.listen(clientsProvider, (previous, next) {
-      final prevId = previous?.value?.activeClient?.id;
       final nextClient = next.value?.activeClient;
-      final nextId = nextClient?.id;
       if (nextClient == null) return;
-      if (_client == null || prevId != nextId) {
-        _client = nextClient;
+      final current = _client;
+      final shouldReload =
+          current == null ||
+          current.id != nextClient.id ||
+          (!_isDirty &&
+              _loadedRevision != generalEvaluationTabRevision(nextClient));
+      _client = nextClient;
+      if (shouldReload) {
         _initializeFromClient(nextClient);
         if (mounted) setState(() {});
       }

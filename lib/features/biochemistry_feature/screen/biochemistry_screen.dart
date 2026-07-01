@@ -4,8 +4,8 @@ import 'package:hcs_app_lap/core/contracts/saveable_module.dart';
 import 'package:hcs_app_lap/utils/theme.dart';
 import 'package:hcs_app_lap/utils/widgets/module_header.dart';
 
-import '../widgets/biochemistry_tab.dart';
-import '../widgets/biochemistry_comparison_screen.dart';
+import 'package:hcs_app_lap/features/biochemistry_feature/widgets/biochemistry_tab.dart';
+import 'package:hcs_app_lap/features/biochemistry_feature/widgets/biochemistry_comparison_screen.dart';
 
 class BiochemistryScreen extends ConsumerStatefulWidget {
   const BiochemistryScreen({super.key});

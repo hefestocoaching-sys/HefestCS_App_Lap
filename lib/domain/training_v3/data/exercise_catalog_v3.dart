@@ -50,6 +50,18 @@ class ExerciseCatalogV3 {
   static Future<void> ensureLoaded() async {
     if (_baseLoaded) return;
 
+    // If tests have injected a filtered test catalog, skip loading runtime assets.
+    // This allows test suites to call `loadFromExercises` without the heavy
+    // runtime catalog validation step. `loadFromExercises` is marked
+    // deprecated/test-only, but this early-return keeps tests fast and stable.
+    if (_testFilteredExercisesByMuscle.isNotEmpty) {
+      _baseLoaded = true;
+      debugPrint(
+        '[ExerciseCatalogV3] Using test-injected exercises (skip runtime load)',
+      );
+      return;
+    }
+
     final runtimeRaw = await _loadRequiredJson(runtimeCatalogPath);
     final patternsRaw = await _loadRequiredJson(patternRegistryPath);
     final defaultsRaw = await _loadRequiredJson(muscleZoneDefaultsPath);

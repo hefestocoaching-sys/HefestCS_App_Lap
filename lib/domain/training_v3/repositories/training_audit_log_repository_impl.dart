@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_audit_log.dart';
-import 'training_audit_log_repository.dart';
+import 'package:hcs_app_lap/domain/training_v3/repositories/training_audit_log_repository.dart';
 
 /// Implementación de Firestore para TrainingAuditLogRepository.
 class TrainingAuditLogRepositoryImpl implements TrainingAuditLogRepository {

@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_split.dart';
 
 class MusclePriorityEngine {
@@ -36,15 +36,11 @@ class MusclePriorityEngine {
     required Map<String, int> musclePriorities,
     required Map<String, int> frequencyByMuscle,
   }) {
-    final normalizedPriorities = <String, int>{
-      for (final entry in musclePriorities.entries)
-        normalizeMuscleKey(entry.key): entry.value,
-    };
-
-    final normalizedFrequency = <String, int>{
-      for (final entry in frequencyByMuscle.entries)
-        normalizeMuscleKey(entry.key): max(1, entry.value),
-    };
+    final normalizedPriorities = _normalizeMuscleIntMap(musclePriorities);
+    final normalizedFrequency = _normalizeMuscleIntMap(
+      frequencyByMuscle,
+      minValue: 1,
+    );
 
     final allMuscles = normalizedPriorities.keys.toSet()
       ..addAll(normalizedFrequency.keys);
@@ -84,6 +80,23 @@ class MusclePriorityEngine {
       final rotatedPrimary = _rotate(primary, day - 1);
       final ordered = <String>[...rotatedPrimary, ...secondary, ...tertiary];
       out[day] = _filterBySplit(ordered, split: split, day: day);
+    }
+
+    return out;
+  }
+
+  static Map<String, int> _normalizeMuscleIntMap(
+    Map<String, int> source, {
+    int? minValue,
+  }) {
+    final out = <String, int>{};
+
+    for (final entry in source.entries) {
+      final canonical = tryNormalizeMuscleKey(entry.key);
+      if (canonical == null) continue;
+      out[canonical] = minValue == null
+          ? entry.value
+          : max(minValue, entry.value);
     }
 
     return out;

@@ -1,0 +1,46 @@
+{
+  "trainingExtraVersion": "d1r2-regression-baseline",
+  "effectiveTrainingLevel": "intermediate",
+  "trainingLevelDerived": "intermediate",
+  "daysPerWeek": 4,
+  "timePerSessionMinutes": 60,
+  "planDurationInWeeks": 4,
+  "priorityMusclesPrimary": ["pectorals", "quads"],
+  "priorityMusclesSecondary": ["lats", "glutes"],
+  "priorityMusclesTertiary": [],
+  "deltaVmeGlobal": 0,
+  "deltaVmrGlobal": 0,
+  "muscleLandmarks": {
+    "pectorals": {
+      "vme": 10,
+      "vop": 14,
+      "vmr": 20,
+      "vmrExtended": 22
+    },
+    "lats": {
+      "vme": 8,
+      "vop": 12,
+      "vmr": 16
+    },
+    "quads": {
+      "vme": 12,
+      "vop": 18,
+      "vmr": 24
+    },
+    "glutes": {
+      "vme": 10,
+      "vop": 15,
+      "vmr": 20
+    }
+  },
+  "vopSnapshot": {
+    "totalSetsByMuscle": {
+      "pectorals": 14,
+      "lats": 12,
+      "quads": 18,
+      "glutes": 15
+    },
+    "allMuscles": ["pectorals", "lats", "quads", "glutes"],
+    "schemaVersion": "d1r2-baseline"
+  }
+}

@@ -47,10 +47,43 @@ class ExerciseSelectionEngine {
   static const int _maxSetsPerExercise = 5;
   static const int _maxExercisesPerMusclePerSession = 2;
 
+  static String? _tryNormalizeSelectionMuscle(String raw) {
+    return muscle_registry.tryNormalizeMuscleKey(raw);
+  }
+
+  static bool _matchesSelectionMuscle(
+    Iterable<String> rawMuscles,
+    String canonicalMuscle,
+  ) {
+    return rawMuscles.any(
+      (muscle) => _tryNormalizeSelectionMuscle(muscle) == canonicalMuscle,
+    );
+  }
+
+  static List<String> _readStringList(dynamic raw) {
+    if (raw is! List) return const <String>[];
+    return raw
+        .map((entry) => entry?.toString().trim() ?? '')
+        .where((entry) => entry.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  static Set<String> _strictPrimaryMuscleSet(Map<String, dynamic> exercise) {
+    final rawMuscles = <String>{
+      ..._readStringList(exercise['primary_muscles']),
+      ..._readStringList(exercise['primaryMuscles']),
+    };
+    final normalized = <String>{};
+    for (final raw in rawMuscles) {
+      final canonical = _tryNormalizeSelectionMuscle(raw);
+      if (canonical != null) normalized.add(canonical);
+    }
+    return normalized;
+  }
+
+  @Deprecated('Use strict selection helpers instead.')
   static String normalizeMuscleKey(String raw) {
-    final key = raw.trim().toLowerCase();
-    if (key.isEmpty) return key;
-    return muscle_registry.normalize(key) ?? key;
+    return _tryNormalizeSelectionMuscle(raw) ?? '';
   }
 
   /// P0.1 Selection Rule: selects exercises and distributes sets respecting hard caps
@@ -154,11 +187,8 @@ class ExerciseSelectionEngine {
     }
 
     bool targetsMuscle(Map<String, dynamic> exercise) {
-      final primary =
-          (exercise['primaryMuscles'] as List?)?.cast<String>() ??
-          (exercise['primary_muscles'] as List?)?.cast<String>() ??
-          const <String>[];
-      return primary.any((p) => catalogKeys.contains(p));
+      final primary = _strictPrimaryMuscleSet(exercise);
+      return primary.any(catalogKeys.contains);
     }
 
     bool intensityCompatible(String id) {
@@ -398,7 +428,9 @@ class ExerciseSelectionEngine {
       );
     }
 
-    final normalizedMuscle = normalizeMuscleKey(muscleKey);
+    final normalizedMuscle = _tryNormalizeSelectionMuscle(muscleKey);
+    if (normalizedMuscle == null) return const <Exercise>[];
+
     final preferredPattern = preferredMovementPattern?.trim().toLowerCase();
     final normalizedSlot = requiredSlotRole?.trim().toUpperCase();
     final normalizedAllowedPatterns = allowedMovementPatterns
@@ -432,9 +464,7 @@ class ExerciseSelectionEngine {
 
     final filtered = pool.where((ex) {
       if (restrictedExerciseIds.contains(ex.id)) return false;
-      if (!ex.primaryMuscles.any(
-        (m) => normalizeMuscleKey(m) == normalizedMuscle,
-      )) {
+      if (!_matchesSelectionMuscle(ex.primaryMuscles, normalizedMuscle)) {
         return false;
       }
       if (!ExerciseCatalogV3.allowsZone(ex.id, normalizedZone)) return false;
@@ -508,8 +538,9 @@ class ExerciseSelectionEngine {
     final fallback = <Exercise>[];
     final seen = <String>{};
     for (final source in pool) {
-      final sourceMuscleMatches = source.primaryMuscles.any(
-        (m) => normalizeMuscleKey(m) == normalizedMuscle,
+      final sourceMuscleMatches = _matchesSelectionMuscle(
+        source.primaryMuscles,
+        normalizedMuscle,
       );
       if (!sourceMuscleMatches) continue;
 
@@ -521,8 +552,9 @@ class ExerciseSelectionEngine {
       );
       for (final candidate in candidates) {
         if (restrictedExerciseIds.contains(candidate.id)) continue;
-        if (!candidate.primaryMuscles.any(
-          (m) => normalizeMuscleKey(m) == normalizedMuscle,
+        if (!_matchesSelectionMuscle(
+          candidate.primaryMuscles,
+          normalizedMuscle,
         )) {
           continue;
         }
@@ -668,8 +700,8 @@ class ExerciseSelectionEngine {
     final baseExercise = exerciseDatabase[exerciseId];
     if (baseExercise == null) return [];
 
-    final baseMuscles =
-        (baseExercise['primary_muscles'] as List?)?.cast<String>() ?? [];
+    final baseMuscles = _strictPrimaryMuscleSet(baseExercise);
+    if (baseMuscles.isEmpty) return [];
     final baseType = baseExercise['type'] as String?;
 
     // Buscar ejercicios similares (mismo músculo + tipo)
@@ -684,10 +716,9 @@ class ExerciseSelectionEngine {
 
   static bool _hasSameMuscles(
     Map<String, dynamic> exercise,
-    List<String> targetMuscles,
+    Set<String> targetMuscles,
   ) {
-    final muscles =
-        (exercise['primary_muscles'] as List?)?.cast<String>() ?? [];
-    return muscles.any((m) => targetMuscles.contains(m));
+    final muscles = _strictPrimaryMuscleSet(exercise);
+    return muscles.any(targetMuscles.contains);
   }
 }

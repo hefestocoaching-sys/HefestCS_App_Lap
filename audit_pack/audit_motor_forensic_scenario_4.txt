@@ -1,0 +1,301 @@
+SCENARIO 4: intermediate 5 dias torso prioridades multiples
+SUCCESS: false
+INPUT:
+{
+  "sex": "male",
+  "age": 35,
+  "trainingLevel": "intermediate",
+  "days": 5,
+  "splitId": "fullBody",
+  "phase": "accumulation",
+  "durationWeeks": 4,
+  "musclePriorities": {
+    "chest": 5,
+    "lats": 5,
+    "upper_back": 4,
+    "deltoide_lateral": 5,
+    "biceps": 4,
+    "triceps": 4,
+    "quads": 3
+  },
+  "backFocus": "upper_back",
+  "hasCycleState": false,
+  "intensitySplit": {
+    "heavy": 30.0,
+    "medium": 50.0,
+    "light": 20.0
+  }
+}
+
+ETAPA A - entrada del motor
+{
+  "entrypoint": "MotorV3Orchestrator.generateProgram(userProfile, phase, durationWeeks, splitId, trainingDaysPerWeek, intensityProfilePercentSplit, client, exercises)",
+  "received": {
+    "userId": "forensic_s4",
+    "name": "Forensic S4",
+    "availableDays": 5
+  }
+}
+
+ETAPA B - _resolveVolumeTargets
+{
+  "volumeTargetInicial": {
+    "pectorals": 13,
+    "lats": 11,
+    "delts_lateral": 9,
+    "upper_back": 8,
+    "biceps": 10,
+    "triceps": 10,
+    "traps": 8,
+    "delts_front": 9,
+    "delts_rear": 9,
+    "quads": 14,
+    "hamstrings": 10,
+    "glutes": 11,
+    "calves": 7,
+    "abs": 6
+  },
+  "prioridadEfectivaPorMusculo": {
+    "pectorals": 5,
+    "lats": 5,
+    "upper_back": 4,
+    "delts_lateral": 5,
+    "biceps": 4,
+    "triceps": 4,
+    "quads": 3
+  },
+  "landmarksUsados": {
+    "pectorals": {
+      "priority": 5,
+      "vme": 8,
+      "vop": 13,
+      "vmr": 22,
+      "target": 22
+    },
+    "lats": {
+      "priority": 5,
+      "vme": 6,
+      "vop": 11,
+      "vmr": 20,
+      "target": 20
+    },
+    "upper_back": {
+      "priority": 4,
+      "vme": 4,
+      "vop": 8,
+      "vmr": 14,
+      "target": 11
+    },
+    "delts_lateral": {
+      "priority": 5,
+      "vme": 4,
+      "vop": 9,
+      "vmr": 18,
+      "target": 18
+    },
+    "biceps": {
+      "priority": 4,
+      "vme": 6,
+      "vop": 10,
+      "vmr": 16,
+      "target": 12
+    },
+    "triceps": {
+      "priority": 4,
+      "vme": 6,
+      "vop": 10,
+      "vmr": 18,
+      "target": 14
+    },
+    "quads": {
+      "priority": 3,
+      "vme": 8,
+      "vop": 14,
+      "vmr": 24,
+      "target": 18
+    }
+  }
+}
+
+ETAPA C - expandBackMuscle
+{
+  "backFocus": "upper_back",
+  "targetTrasExpandBackMuscle": {
+    "pectorals": 13,
+    "lats": 11,
+    "delts_lateral": 9,
+    "upper_back": 8,
+    "biceps": 10,
+    "triceps": 10,
+    "traps": 8,
+    "delts_front": 9,
+    "delts_rear": 9,
+    "quads": 14,
+    "hamstrings": 10,
+    "glutes": 11,
+    "calves": 7,
+    "abs": 6
+  }
+}
+
+ETAPA D - split/frecuencia/state
+{
+  "splitResolved": "TrainingSplit.fullBody",
+  "cycleStateReadFromInput": {
+    "cycleWeek": null,
+    "cyclePhase": null,
+    "weeksInPhase": null,
+    "weeksSinceLastMicro": null
+  },
+  "effectiveFrequencyByMuscle": {}
+}
+
+ETAPA E - catalogo/pool
+{
+  "poolByMuscle": {}
+}
+
+ETAPA F - weeklyIntensityTargetsByMuscle
+{
+  "weeklyIntensityTargetsByMuscle": {
+    "pectorals": {
+      "heavy": 4,
+      "medium": 6,
+      "light": 3
+    },
+    "lats": {
+      "heavy": 0,
+      "medium": 9,
+      "light": 2
+    },
+    "delts_lateral": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 2
+    },
+    "upper_back": {
+      "heavy": 2,
+      "medium": 4,
+      "light": 2
+    },
+    "biceps": {
+      "heavy": 0,
+      "medium": 8,
+      "light": 2
+    },
+    "triceps": {
+      "heavy": 0,
+      "medium": 8,
+      "light": 2
+    },
+    "traps": {
+      "heavy": 0,
+      "medium": 6,
+      "light": 2
+    },
+    "delts_front": {
+      "heavy": 3,
+      "medium": 4,
+      "light": 2
+    },
+    "delts_rear": {
+      "heavy": 0,
+      "medium": 7,
+      "light": 2
+    },
+    "quads": {
+      "heavy": 4,
+      "medium": 7,
+      "light": 3
+    },
+    "hamstrings": {
+      "heavy": 3,
+      "medium": 5,
+      "light": 2
+    },
+    "glutes": {
+      "heavy": 3,
+      "medium": 6,
+      "light": 2
+    },
+    "calves": {
+      "heavy": 0,
+      "medium": 6,
+      "light": 1
+    },
+    "abs": {
+      "heavy": 0,
+      "medium": 0,
+      "light": 6
+    }
+  }
+}
+
+ETAPA G - buildBaseWeek
+{
+  "buildBaseWeekByDay": {}
+}
+
+ETAPA H - assignedTotals y diferencias
+{
+  "assignedTotals": {},
+  "diffTargetVsAssigned": {
+    "pectorals": -13,
+    "lats": -11,
+    "delts_lateral": -9,
+    "upper_back": -8,
+    "biceps": -10,
+    "triceps": -10,
+    "traps": -8,
+    "delts_front": -9,
+    "delts_rear": -9,
+    "quads": -14,
+    "hamstrings": -10,
+    "glutes": -11,
+    "calves": -7,
+    "abs": -6
+  }
+}
+
+PRIMER PUNTO DE FALLA: 5. builder/session allocation
+ERRORS: [Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true]
+WARNINGS: [[V3][P0.3] Se normalizo volumen en 2 musculos para respetar frecuencia contractual y cap diario.]
+STACK TRACE:
+Error generando programa: Bad state: [ExerciseCatalogV3] encogimiento_con_barra heavyRole=forbidden contradicts allowedIntensityZones.heavy=true
+
+TRAZAS CLAVE POR ETAPA (extraidas de ejecucion real):
+{
+  "A": [
+    "👤 Perfil científico construido:",
+    "   - Age: 35",
+    "   - Experience: intermediate",
+    "   - Recovery: 5.0"
+  ],
+  "B": [
+    "[Motor V3] Prioridades normalizadas (7 músculos):",
+    "[Motor V3] VOLÚMENES INICIALES (VOP) - VERSIÓN 2.0:",
+    "  pectorals (P5 PRIMARIO): 13 sets/semana",
+    "  lats (P5 PRIMARIO): 11 sets/semana",
+    "  delts_lateral (P5 PRIMARIO): 9 sets/semana",
+    "  upper_back (P4 SECUNDARIO): 8 sets/semana",
+    "  biceps (P4 SECUNDARIO): 10 sets/semana",
+    "  triceps (P4 SECUNDARIO): 10 sets/semana",
+    "  traps (P3 SECUNDARIO): 8 sets/semana",
+    "  delts_front (P3 SECUNDARIO): 9 sets/semana",
+    "  delts_rear (P3 SECUNDARIO): 9 sets/semana",
+    "  quads (P3 SECUNDARIO): 14 sets/semana",
+    "  hamstrings (P3 SECUNDARIO): 10 sets/semana",
+    "  glutes (P3 SECUNDARIO): 11 sets/semana",
+    "  calves (P3 SECUNDARIO): 7 sets/semana",
+    "  abs (P3 SECUNDARIO): 6 sets/semana",
+    "[Motor V3] TOTAL: 135 sets/semana"
+  ],
+  "C": [],
+  "D": [
+    "[Motor V3] splitId=fullBody availableDays=5 resolvedSplit=TrainingSplit.fullBody"
+  ],
+  "E": [],
+  "F": [],
+  "G": [],
+  "H": []
+}

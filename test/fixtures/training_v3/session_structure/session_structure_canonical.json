@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "fixture": "session_structure_canonical",
+  "engine": "SessionStructureEngine",
+  "notes": [
+    "Fixture strict D1-C6: captura comportamiento esperado despues de migrar SessionStructureEngine.",
+    "Los canonicos se usan como primaryMuscles directos.",
+    "La estructura para canonicos se preserva bajo normalizacion strict."
+  ],
+  "cases": [
+    {
+      "id": "canonical_push_pull_lower",
+      "api": "build",
+      "input": {
+        "exercises": [
+          {
+            "id": "can_pec_heavy",
+            "name": "Canonical pectorals heavy",
+            "primaryMuscles": ["pectorals"],
+            "movementPattern": "horizontal_push",
+            "loadCategory": "heavy",
+            "fatigueScore": 3,
+            "stimulusScore": 100
+          },
+          {
+            "id": "can_lat_medium",
+            "name": "Canonical lats medium",
+            "primaryMuscles": ["lats"],
+            "movementPattern": "vertical_pull",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 88
+          },
+          {
+            "id": "can_quad_medium",
+            "name": "Canonical quads medium",
+            "primaryMuscles": ["quads"],
+            "movementPattern": "squat",
+            "loadCategory": "medium",
+            "fatigueScore": 3,
+            "stimulusScore": 84
+          },
+          {
+            "id": "can_glute_light",
+            "name": "Canonical glutes light",
+            "primaryMuscles": ["glutes"],
+            "movementPattern": "hip_extension",
+            "loadCategory": "light",
+            "fatigueScore": 2,
+            "stimulusScore": 78
+          }
+        ]
+      },
+      "expected": {
+        "mainLiftId": "can_pec_heavy",
+        "flattenedIds": ["can_pec_heavy", "can_lat_medium", "can_quad_medium", "can_glute_light"],
+        "blocks": [
+          {
+            "blockLabel": "B",
+            "slotFirst": "B1",
+            "firstId": "can_lat_medium",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "D",
+            "slotFirst": "D1",
+            "firstId": "can_quad_medium",
+            "slotSecond": "D2",
+            "secondId": "can_glute_light",
+            "pairGroupId": "D_1",
+            "isBiserie": true
+          }
+        ],
+        "placements": [
+          {"exerciseId": "can_pec_heavy", "blockLabel": "A", "slotLabel": "A", "pairGroupId": null, "isMainLift": true},
+          {"exerciseId": "can_lat_medium", "blockLabel": "B", "slotLabel": "B1", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "can_quad_medium", "blockLabel": "D", "slotLabel": "D1", "pairGroupId": "D_1", "isMainLift": false},
+          {"exerciseId": "can_glute_light", "blockLabel": "D", "slotLabel": "D2", "pairGroupId": "D_1", "isMainLift": false}
+        ]
+      },
+      "observedNotes": "pectorals queda como A; lats se clasifica antagonista en B; quads + glutes forman biserie D por sinergia."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:hcs_app_lap/core/enums/muscle_group.dart';
 import 'package:hcs_app_lap/domain/models/rir_target.dart';
-import 'rep_range.dart';
+import 'package:hcs_app_lap/domain/entities/rep_range.dart';
 
 class ExercisePrescription extends Equatable {
   final String id;

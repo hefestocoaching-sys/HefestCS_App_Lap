@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hcs_app_lap/core/design/workspace_scaffold.dart';
-import '../widgets/anthropometry_record_tile.dart';
-import 'anthropometry_record_detail_screen.dart';
+import 'package:hcs_app_lap/features/anthropometry_feature/widgets/anthropometry_record_tile.dart';
+import 'package:hcs_app_lap/features/anthropometry_feature/screens/anthropometry_record_detail_screen.dart';
 
 /// Vista de registros antropométricos (lista por fecha).
 /// Punto de entrada: WorkspaceScaffold → ListView de registros.

@@ -4,9 +4,9 @@ import 'package:hcs_app_lap/domain/entities/clinical_conditions.dart';
 import 'package:hcs_app_lap/core/constants/nutrition_extra_keys.dart';
 import 'package:hcs_app_lap/utils/date_helpers.dart';
 
-import 'daily_macro_settings.dart';
-import 'daily_meal_plan.dart';
-import 'daily_nutrition_plan.dart';
+import 'package:hcs_app_lap/domain/entities/daily_macro_settings.dart';
+import 'package:hcs_app_lap/domain/entities/daily_meal_plan.dart';
+import 'package:hcs_app_lap/domain/entities/daily_nutrition_plan.dart';
 
 class NutritionSettings {
   final String? planType; // "Mensual", etc.
@@ -81,7 +81,7 @@ class NutritionSettings {
       dailyKcal: dailyKcal ?? this.dailyKcal,
       weeklyMacroSettings: weeklyMacroSettings ?? this.weeklyMacroSettings,
       dailyMealPlans: dailyMealPlans ?? this.dailyMealPlans,
-        nutritionPlansV3: nutritionPlansV3 ?? this.nutritionPlansV3,
+      nutritionPlansV3: nutritionPlansV3 ?? this.nutritionPlansV3,
       clinicalRestrictionProfile:
           clinicalRestrictionProfile ?? this.clinicalRestrictionProfile,
       extra: extra ?? this.extra,
@@ -120,8 +120,8 @@ class NutritionSettings {
     }
 
     final extra = Map<String, dynamic>.from(json['extra'] as Map? ?? {});
-    final rawPlans = json['nutritionPlansV3'] ??
-      extra[NutritionExtraKeys.nutritionPlansV3];
+    final rawPlans =
+        json['nutritionPlansV3'] ?? extra[NutritionExtraKeys.nutritionPlansV3];
 
     return NutritionSettings(
       planType: json['planType'] as String?,
@@ -198,10 +198,10 @@ class NutritionSettings {
       extra.hashCode;
 }
 
-    List<PlanSnapshot>? _parsePlanSnapshots(dynamic raw) {
-      if (raw is! List) return null;
-      return raw
+List<PlanSnapshot>? _parsePlanSnapshots(dynamic raw) {
+  if (raw is! List) return null;
+  return raw
       .whereType<Map>()
       .map((entry) => PlanSnapshot.fromJson(Map<String, dynamic>.from(entry)))
       .toList();
-    }
+}

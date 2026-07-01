@@ -1,0 +1,93 @@
+{
+  "fixture": "pairing_helpers_alias",
+  "phase": "D1-C7",
+  "type": "strict",
+  "notes": "Aliases validos normalizados por MuscleRegistry strict API.",
+  "cases": [
+    {
+      "id": "alias_chest_lats_antagonist",
+      "input": {
+        "firstPrimaryMuscle": "chest",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "chest se normaliza como pectorals en ambos helpers."
+    },
+    {
+      "id": "alias_quadriceps_hamstrings_antagonist",
+      "input": {
+        "firstPrimaryMuscle": "quadriceps",
+        "secondPrimaryMuscle": "hamstrings"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "quadriceps se normaliza como quads en ambos helpers."
+    },
+    {
+      "id": "alias_gluteos_quads_synergy",
+      "input": {
+        "firstPrimaryMuscle": "gluteos",
+        "secondPrimaryMuscle": "quads"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "synergy",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "gluteos se normaliza como glutes; PairingContract devuelve synergy."
+    },
+    {
+      "id": "alias_deltoide_anterior_deltoide_posterior_none",
+      "input": {
+        "firstPrimaryMuscle": "deltoide_anterior",
+        "secondPrimaryMuscle": "deltoide_posterior"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "Aliases de delts normalizan, pero no existe pairing actual para front/rear delts."
+    },
+    {
+      "id": "alias_abdomen_calves_none",
+      "input": {
+        "firstPrimaryMuscle": "abdomen",
+        "secondPrimaryMuscle": "calves"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "abdomen se normaliza como abs; no hay pairing actual abs/calves."
+    }
+  ]
+}

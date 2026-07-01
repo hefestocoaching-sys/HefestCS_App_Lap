@@ -1,11 +1,12 @@
-ERROR: Bad state: [P0 COVERAGE FAIL] muscle=abs target=0 assigned=1
-STACK: #0      CycleTemplateBuilder._validateSessionCoverage (package:hcs_app_lap/domain/training_v3/services/cycle_template_builder.dart:927:9)
-#1      CycleTemplateBuilder.buildBaseWeek (package:hcs_app_lap/domain/training_v3/services/cycle_template_builder.dart:482:7)
-#2      main.<anonymous closure>.<anonymous closure> (file:///C:/Users/pedro/StudioProjects/hcs_app_lap/test/domain/training_v3/p0_verification_test.dart:82:53)
+ERROR: Bad state: [V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key="deltoids"
+STACK: #0      CycleTemplateBuilder._resolveToCanonicalMuscles (package:hcs_app_lap/domain/training_v3/services/cycle_template_builder.dart:1719:5)
+#1      CycleTemplateBuilder._canonicalizeVolumeMap (package:hcs_app_lap/domain/training_v3/services/cycle_template_builder.dart:1125:24)
+#2      CycleTemplateBuilder.buildBaseWeek (package:hcs_app_lap/domain/training_v3/services/cycle_template_builder.dart:117:35)
+#3      main.<anonymous closure>.<anonymous closure> (file:///C:/Users/pedro/StudioProjects/hcs_app_lap/test/domain/training_v3/p0_verification_test.dart:82:53)
 <asynchronous suspension>
-#3      Declarer.test.<anonymous closure>.<anonymous closure> (package:test_api/src/backend/declarer.dart:253:15)
+#4      Declarer.test.<anonymous closure>.<anonymous closure> (package:test_api/src/backend/declarer.dart:253:15)
 <asynchronous suspension>
-#4      Declarer.test.<anonymous closure> (package:test_api/src/backend/declarer.dart:250:11)
+#5      Declarer.test.<anonymous closure> (package:test_api/src/backend/declarer.dart:250:11)
 <asynchronous suspension>
-#5      Invoker._waitForOutstandingCallbacks.<anonymous closure> (package:test_api/src/backend/invoker.dart:318:9)
+#6      Invoker._waitForOutstandingCallbacks.<anonymous closure> (package:test_api/src/backend/invoker.dart:318:9)
 <asynchronous suspension>

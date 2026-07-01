@@ -1,0 +1,16 @@
+{
+  "split": "fullBody",
+  "availableDays": 2,
+  "musclePriorities": {
+    "unknown_muscle": 5,
+    "back_mid_upper": 2,
+    "glute": 4,
+    "mysterychest": 1
+  },
+  "frequencyByMuscle": {
+    "unknown_muscle": 1,
+    "back_mid_upper": 1,
+    "glute": 2,
+    "mysterychest": 1
+  }
+}

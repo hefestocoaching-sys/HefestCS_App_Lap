@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
-import '../entities/exercise.dart';
+import 'package:hcs_app_lap/domain/entities/exercise.dart';
 
 class ExerciseSelector {
   /// Selecciona ejercicios para un músculo con variabilidad determinística

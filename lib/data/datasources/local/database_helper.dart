@@ -9,6 +9,7 @@ import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/entities/training_interview.dart';
 import 'package:hcs_app_lap/features/training_feature/domain/training_interview_validator.dart';
 import 'package:hcs_app_lap/data/datasources/local/sync_queue_helper.dart';
+import 'package:hcs_app_lap/data/datasources/local/local_client_datasource.dart';
 import 'package:hcs_app_lap/core/utils/json_helpers.dart';
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
 
@@ -293,28 +294,86 @@ class DatabaseHelper {
 
   Future<void> upsertClient(Client client) async {
     await _runWithRetry(() async {
-      // Offload JSON encoding to isolate before starting transaction
-      final clientJson = await _wrapClientJson(client);
-
       final db = await database;
-      final batch = db.batch();
+      await db.transaction((txn) async {
+        final clientJson = await _wrapClientJson(client);
 
-      batch.insert(
-        'clients',
-        clientJson,
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+        await txn.insert(
+          'clients',
+          clientJson,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
 
-      final lastInterview = await getActiveTrainingInterview(client.id);
-      final newInterview = _buildInterviewFromClient(client, lastInterview);
+        final lastInterview = await _getActiveTrainingInterviewOn(
+          txn,
+          client.id,
+        );
+        final newInterview = _buildInterviewFromClient(client, lastInterview);
 
-      batch.insert(
-        'training_interviews',
-        newInterview.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+        await txn.insert(
+          'training_interviews',
+          newInterview.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      });
+    });
+  }
 
-      await batch.commit(noResult: true);
+  Future<ClientOutboxWrite> upsertClientWithOutbox(Client client) async {
+    return _runWithRetry(() async {
+      final db = await database;
+      return db.transaction((txn) async {
+        final clientJson = await _wrapClientJson(client);
+        await txn.insert(
+          'clients',
+          clientJson,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        final lastInterview = await _getActiveTrainingInterviewOn(
+          txn,
+          client.id,
+        );
+        final persistedUpdatedAt = DateTime.parse(
+          clientJson['updatedAt'] as String,
+        );
+        final persistedClient = client.copyWith(updatedAt: persistedUpdatedAt);
+        final newInterview = _buildInterviewFromClient(
+          persistedClient,
+          lastInterview,
+        );
+
+        await txn.insert(
+          'training_interviews',
+          newInterview.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+
+        final operationId = const Uuid().v4();
+        final queueItemId = 'client_${client.id}_';
+        final queuePayload = <String, dynamic>{
+          'action': 'upsert',
+          'operationId': operationId,
+          'updatedAt': persistedClient.updatedAt.toIso8601String(),
+          'client': persistedClient.toJson(),
+        };
+
+        await SyncQueueHelper.enqueueOn(
+          txn,
+          id: queueItemId,
+          domain: 'client',
+          clientId: client.id,
+          dateKey: '',
+          payload: jsonEncode(queuePayload),
+        );
+
+        return ClientOutboxWrite(
+          persistedClient: persistedClient,
+          queueItemId: queueItemId,
+          operationId: operationId,
+          action: 'upsert',
+        );
+      });
     });
   }
 
@@ -323,6 +382,19 @@ class DatabaseHelper {
     final result = await db.query(
       'clients',
       where: 'id = ? AND isDeleted = 0',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (result.isEmpty) return null;
+    return await _unwrapClientJson(result.first);
+  }
+
+  Future<Client?> getClientByIdIncludingDeleted(String id) async {
+    final db = await database;
+    final result = await db.query(
+      'clients',
+      where: 'id = ?',
       whereArgs: [id],
       limit: 1,
     );
@@ -343,16 +415,73 @@ class DatabaseHelper {
   Future<void> softDeleteClient(String id) async {
     await _runWithRetry(() async {
       final db = await database;
+      final nowIso = DateTime.now().toIso8601String();
+      final current = await getClientByIdIncludingDeleted(id);
+      Map<String, dynamic>? jsonPayload;
+      if (current != null) {
+        jsonPayload = Map<String, dynamic>.from(current.toJson());
+        jsonPayload['updatedAt'] = nowIso;
+      }
       await db.update(
         'clients',
         {
+          if (jsonPayload != null) 'json': jsonEncode(jsonPayload),
           "isDeleted": 1,
           "isSynced": 0,
-          "updatedAt": DateTime.now().toIso8601String(),
+          "updatedAt": nowIso,
         },
         where: "id = ?",
         whereArgs: [id],
       );
+    });
+  }
+
+  Future<ClientOutboxWrite> softDeleteClientWithOutbox(Client client) async {
+    return _runWithRetry(() async {
+      final db = await database;
+      return db.transaction((txn) async {
+        final nowIso = DateTime.now().toIso8601String();
+        final jsonPayload = Map<String, dynamic>.from(client.toJson())
+          ..['updatedAt'] = nowIso;
+
+        await txn.update(
+          'clients',
+          {
+            'json': jsonEncode(jsonPayload),
+            'isDeleted': 1,
+            'isSynced': 0,
+            'updatedAt': nowIso,
+          },
+          where: 'id = ?',
+          whereArgs: [client.id],
+        );
+
+        final operationId = const Uuid().v4();
+        final queueItemId = 'client_${client.id}_';
+        final queuePayload = <String, dynamic>{
+          'action': 'delete',
+          'operationId': operationId,
+          'updatedAt': nowIso,
+          'client': jsonPayload,
+          'deleted': true,
+        };
+
+        await SyncQueueHelper.enqueueOn(
+          txn,
+          id: queueItemId,
+          domain: 'client',
+          clientId: client.id,
+          dateKey: '',
+          payload: jsonEncode(queuePayload),
+        );
+
+        return ClientOutboxWrite(
+          persistedClient: client.copyWith(updatedAt: DateTime.parse(nowIso)),
+          queueItemId: queueItemId,
+          operationId: operationId,
+          action: 'delete',
+        );
+      });
     });
   }
 
@@ -440,6 +569,22 @@ class DatabaseHelper {
       logger.error('Database query failed: training_interviews', e, stackTrace);
       rethrow;
     }
+
+    if (result.isEmpty) return null;
+    return TrainingInterview.fromMap(result.first);
+  }
+
+  Future<TrainingInterview?> _getActiveTrainingInterviewOn(
+    DatabaseExecutor executor,
+    String clientId,
+  ) async {
+    final result = await executor.query(
+      'training_interviews',
+      where: 'client_id = ?',
+      whereArgs: [clientId],
+      orderBy: 'version DESC',
+      limit: 1,
+    );
 
     if (result.isEmpty) return null;
     return TrainingInterview.fromMap(result.first);

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:flutter/services.dart';
-import '../../../domain/entities/exercise.dart';
+import 'package:hcs_app_lap/domain/entities/exercise.dart';
 
 class ExerciseCatalogLoader {
   @Deprecated(

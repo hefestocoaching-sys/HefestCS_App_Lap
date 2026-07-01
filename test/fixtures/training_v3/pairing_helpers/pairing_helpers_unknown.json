@@ -1,0 +1,76 @@
+{
+  "fixture": "pairing_helpers_unknown",
+  "phase": "D1-C7",
+  "type": "strict",
+  "notes": "Unknowns no pasan como raw y retornan none/false.",
+  "cases": [
+    {
+      "id": "unknown_muscle_lats_none",
+      "input": {
+        "firstPrimaryMuscle": "unknown_muscle",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "unknown_muscle no normaliza ni expande en strict; retorna none/false."
+    },
+    {
+      "id": "back_mid_upper_pectorals_none",
+      "input": {
+        "firstPrimaryMuscle": "back_mid_upper",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "back_mid_upper no normaliza ni expande en strict; retorna none/false."
+    },
+    {
+      "id": "mysterychest_lats_none",
+      "input": {
+        "firstPrimaryMuscle": "mysterychest",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "mysterychest no normaliza ni expande en strict; retorna none/false."
+    },
+    {
+      "id": "glute_quads_strict_none",
+      "input": {
+        "firstPrimaryMuscle": "glute",
+        "secondPrimaryMuscle": "quads"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "glute no es alias strict valido y no se convierte a glutes."
+    }
+  ]
+}

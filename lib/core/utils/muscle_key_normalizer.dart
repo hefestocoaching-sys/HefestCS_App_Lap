@@ -15,6 +15,10 @@ import 'package:hcs_app_lap/core/registry/muscle_registry.dart' as registry;
 ///
 /// NO inventa músculos nuevos. Solo mapea variantes a las 14 claves canónicas.
 /// Para grupos, retorna el token estándar canónico ("back", "shoulders", etc.).
+/// ADAPTER LEGACY PERMISIVO: se conserva para compatibilidad con consumidores
+/// existentes. Si la clave no es reconocida, puede devolver raw.toLowerCase().
+/// El codigo nuevo debe usar la API estricta de MuscleRegistry:
+/// tryNormalizeMuscleKey, normalizeMuscleKeyOrThrow o expandMuscleGroupStrict.
 String normalizeMuscleKey(String raw) {
   // Usar MuscleRegistry como SSOT
   final canonical = registry.normalize(raw);

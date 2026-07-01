@@ -1,0 +1,24 @@
+{
+  "muscleLandmarks": {
+    "unknown_muscle": {
+      "vme": 1,
+      "vop": 2,
+      "vmr": 3
+    },
+    "back_mid_upper": {
+      "vme": 4,
+      "vop": 5,
+      "vmr": 6
+    },
+    "glute": {
+      "vme": 7,
+      "vop": 8,
+      "vmr": 9
+    },
+    "mysterychest": {
+      "vme": 10,
+      "vop": 11,
+      "vmr": 12
+    }
+  }
+}

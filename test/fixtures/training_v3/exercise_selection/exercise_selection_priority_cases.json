@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "fixture": "exercise_selection_priority_cases",
+  "engine": "ExerciseSelectionEngine",
+  "catalog": "minimal_fake_catalog_inside_regression_test",
+  "notes": [
+    "ExerciseSelectionEngine no recibe un enum de prioridad alta/media/baja en selectExercises.",
+    "El comportamiento observable equivalente queda controlado por targetExerciseCount y por el orden stimulus/fatigue.",
+    "recentExerciseIds no supera el orden por stimulus; solo decide despues de score, fatiga y preferredMovementPattern."
+  ],
+  "cases": [
+    {
+      "id": "priority_high_target_two",
+      "api": "selectExercises",
+      "input": {
+        "priorityLabel": "high",
+        "targetMuscle": "pectorals",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high", "pec_mid"]
+      },
+      "observedNotes": "Prioridad alta: targetExerciseCount 2 devuelve dos mejores candidatos."
+    },
+    {
+      "id": "priority_medium_target_one",
+      "api": "selectExercises",
+      "input": {
+        "priorityLabel": "medium",
+        "targetMuscle": "pectorals",
+        "targetExerciseCount": 1,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high"]
+      },
+      "observedNotes": "Prioridad media: targetExerciseCount 1 devuelve el mejor candidato por score."
+    },
+    {
+      "id": "priority_low_few_available",
+      "api": "selectExercises",
+      "input": {
+        "priorityLabel": "low",
+        "targetMuscle": "calves",
+        "targetExerciseCount": 1,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["calves_only"]
+      },
+      "observedNotes": "Prioridad baja: un solo candidato disponible."
+    },
+    {
+      "id": "priority_recent_does_not_override_stimulus",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "pectorals",
+        "intensityZone": "medium",
+        "availableEquipment": [],
+        "recentExerciseIds": ["pec_high"]
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": ["pec_high", "pec_mid", "pec_low"]
+      },
+      "observedNotes": "pec_high sigue primero porque el sort prioriza compatibility/stimulus antes de recent."
+    }
+  ]
+}

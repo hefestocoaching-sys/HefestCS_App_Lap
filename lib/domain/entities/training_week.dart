@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:hcs_app_lap/core/enums/training_phase.dart';
-import 'training_session.dart';
+import 'package:hcs_app_lap/domain/entities/training_session.dart';
 
 class TrainingWeek extends Equatable {
   final String id;

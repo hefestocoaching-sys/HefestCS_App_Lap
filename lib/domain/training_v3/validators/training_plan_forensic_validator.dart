@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:hcs_app_lap/core/utils/muscle_key_normalizer.dart';
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
 import 'package:hcs_app_lap/domain/constants/volume_to_frequency_rule.dart';
 import 'package:hcs_app_lap/domain/policies/pairing_contract.dart';
 import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
@@ -50,7 +51,10 @@ class TrainingPlanForensicValidator {
       );
     }
     final planExtra = _extractPlanExtraMap(planConfig);
-    final volumeLandmarksByMuscle = _extractVolumeLandmarks(planExtra);
+    final volumeLandmarksByMuscle = _extractVolumeLandmarks(
+      planExtra,
+      issues: issues,
+    );
     final businessPhaseByWeek = _extractBusinessPhaseByWeek(planExtra);
     final primaryOverVmrAllowed = _primaryOverVmrAllowed(planExtra);
 
@@ -71,12 +75,21 @@ class TrainingPlanForensicValidator {
       );
     }
 
+    final expectedVolumeSource = expectedWeeklyVolumeByMuscle == null
+        ? 'planConfig.volumePerMuscle'
+        : 'expectedWeeklyVolumeByMuscle';
     final expectedVolume = _normalizeExpectedVolume(
       expectedWeeklyVolumeByMuscle ?? _extractExpectedVolume(planConfig),
+      issues: issues,
+      source: expectedVolumeSource,
     );
-    final priorityMap = _normalizePriorityMap(
-      musclePriorities ?? _extractMusclePriorities(planExtra),
-    );
+    final priorityMap = musclePriorities == null
+        ? _extractMusclePriorities(planExtra, issues: issues)
+        : _normalizePriorityMap(
+            musclePriorities,
+            issues: issues,
+            source: 'musclePriorities',
+          );
 
     final weeklySetsByMuscle = <int, Map<String, int>>{};
     final weeklyFrequencyByMuscle = <int, Map<String, int>>{};
@@ -220,15 +233,23 @@ class TrainingPlanForensicValidator {
             }
           }
 
-          final primaryMuscle = ex.primaryMuscle.isNotEmpty
-              ? normalizeMuscleKey(ex.primaryMuscle)
-              : normalizeMuscleKey(
-                  catalogExercise.primaryMuscles.isNotEmpty
-                      ? catalogExercise.primaryMuscles.first
-                      : '',
-                );
+          final rawPrimaryMuscle = ex.primaryMuscle.isNotEmpty
+              ? ex.primaryMuscle
+              : catalogExercise.primaryMuscles.isNotEmpty
+              ? catalogExercise.primaryMuscles.first
+              : '';
+          final primaryMuscle = _tryNormalizeMuscleKeyForAudit(
+            rawPrimaryMuscle,
+            issues: issues,
+            source: ex.primaryMuscle.isNotEmpty
+                ? 'exercise.primaryMuscle'
+                : 'catalog.primaryMuscles',
+            weekNumber: weekNumber,
+            dayNumber: dayNumber,
+            exerciseId: ex.exerciseId,
+          );
 
-          if (primaryMuscle.isNotEmpty) {
+          if (primaryMuscle != null) {
             setsByMuscle[primaryMuscle] =
                 (setsByMuscle[primaryMuscle] ?? 0) + ex.setCount;
             sessionSetsByMuscle[primaryMuscle] =
@@ -251,7 +272,8 @@ class TrainingPlanForensicValidator {
           final movementPattern = ExerciseCatalogV3.getMovementPattern(
             ex.exerciseId,
           );
-          if (!_isPatternMuscleCoherent(primaryMuscle, movementPattern)) {
+          if (primaryMuscle != null &&
+              !_isPatternMuscleCoherent(primaryMuscle, movementPattern)) {
             issues.add(
               _ForensicIssue.blocking(
                 rule: '2.10_selector_coherence',
@@ -275,7 +297,7 @@ class TrainingPlanForensicValidator {
               weekBusinessPhase: weekBusinessPhase,
               weekNumber: weekNumber,
               dayNumber: dayNumber,
-              muscle: primaryMuscle,
+              muscle: primaryMuscle ?? '',
             );
             if (intensityIssue != null) {
               issues.add(intensityIssue);
@@ -520,6 +542,8 @@ class TrainingPlanForensicValidator {
           final leftMuscle = _resolvePrimaryMuscle(left);
           final rightMuscle = _resolvePrimaryMuscle(right);
 
+          if (leftMuscle.isEmpty || rightMuscle.isEmpty) continue;
+
           if (leftMuscle.isNotEmpty && leftMuscle == rightMuscle) {
             issues.add(
               _ForensicIssue.blocking(
@@ -693,22 +717,25 @@ class TrainingPlanForensicValidator {
   }
 
   static Map<String, Map<String, dynamic>> _extractVolumeLandmarks(
-    Map<String, dynamic> extra,
-  ) {
+    Map<String, dynamic> extra, {
+    required List<_ForensicIssue> issues,
+  }) {
     final raw = extra['volume_landmarks_by_muscle'];
     if (raw is! Map) return const <String, Map<String, dynamic>>{};
-    return raw.map((key, value) {
-      if (value is Map) {
-        return MapEntry(
-          normalizeMuscleKey(key.toString()),
-          Map<String, dynamic>.from(value),
-        );
-      }
-      return MapEntry(
-        normalizeMuscleKey(key.toString()),
-        const <String, dynamic>{},
+    final out = <String, Map<String, dynamic>>{};
+    for (final entry in raw.entries) {
+      final key = _tryNormalizeMuscleKeyForAudit(
+        entry.key.toString(),
+        issues: issues,
+        source: 'extra.volume_landmarks_by_muscle',
       );
-    });
+      if (key == null) continue;
+      final value = entry.value;
+      out[key] = value is Map
+          ? Map<String, dynamic>.from(value)
+          : const <String, dynamic>{};
+    }
+    return out;
   }
 
   static Map<int, String> _extractBusinessPhaseByWeek(
@@ -739,25 +766,49 @@ class TrainingPlanForensicValidator {
     return false;
   }
 
-  static Map<String, int> _extractMusclePriorities(Map<String, dynamic> extra) {
+  static Map<String, int> _extractMusclePriorities(
+    Map<String, dynamic> extra, {
+    required List<_ForensicIssue> issues,
+  }) {
     final raw = extra['musclePriorities'] ?? extra['priorityMuscles'];
     if (raw is Map) {
-      return raw.map(
-        (key, value) => MapEntry(
-          normalizeMuscleKey(key.toString()),
-          value is num ? value.toInt() : int.tryParse(value.toString()) ?? 0,
-        ),
-      );
+      final out = <String, int>{};
+      for (final entry in raw.entries) {
+        final key = _tryNormalizeMuscleKeyForAudit(
+          entry.key.toString(),
+          issues: issues,
+          source: 'extra.musclePriorities',
+        );
+        if (key == null) continue;
+        final value = entry.value;
+        out[key] = value is num
+            ? value.toInt()
+            : int.tryParse(value.toString()) ?? 0;
+      }
+      return out;
     }
     return const <String, int>{};
   }
 
-  static Map<String, int> _normalizePriorityMap(Map<String, int> raw) {
+  static Map<String, int> _normalizePriorityMap(
+    Map<dynamic, dynamic> raw, {
+    required List<_ForensicIssue> issues,
+    required String source,
+  }) {
     final out = <String, int>{};
     for (final entry in raw.entries) {
-      final key = normalizeMuscleKey(entry.key);
-      if (key.isEmpty) continue;
-      out[key] = entry.value;
+      final key = _tryNormalizeMuscleKeyForAudit(
+        entry.key.toString(),
+        issues: issues,
+        source: source,
+      );
+      if (key == null) continue;
+      final value = entry.value;
+      out[key] = value is int
+          ? value
+          : value is num
+          ? value.round()
+          : int.tryParse(value?.toString() ?? '') ?? 0;
     }
     return out;
   }
@@ -780,7 +831,10 @@ class TrainingPlanForensicValidator {
       final exercises = _extractExercises(session);
       var total = 0;
       for (final exercise in exercises) {
-        if (normalizeMuscleKey(exercise.primaryMuscle) != muscle) continue;
+        if (muscle_registry.tryNormalizeMuscleKey(exercise.primaryMuscle) !=
+            muscle) {
+          continue;
+        }
         total += exercise.setCount;
       }
       if (dayNumber > 0 && total > 0) {
@@ -877,7 +931,7 @@ class TrainingPlanForensicValidator {
 
       final sorted = List<double>.from(actualShares)
         ..sort((a, b) => b.compareTo(a));
-      final target = const [0.40, 0.30, 0.30];
+      const target = [0.40, 0.30, 0.30];
       for (var i = 0; i < 3; i++) {
         if ((sorted[i] - target[i]).abs() > 0.05) {
           return _ForensicIssue.blocking(
@@ -1244,14 +1298,55 @@ class TrainingPlanForensicValidator {
 
   static String _resolvePrimaryMuscle(_ExtractedExercise ex) {
     if (ex.primaryMuscle.isNotEmpty) {
-      return normalizeMuscleKey(ex.primaryMuscle);
+      return muscle_registry.tryNormalizeMuscleKey(ex.primaryMuscle) ?? '';
     }
     final catalogExercise = ExerciseCatalogV3.getById(ex.exerciseId);
     final raw =
         (catalogExercise != null && catalogExercise.primaryMuscles.isNotEmpty)
         ? catalogExercise.primaryMuscles.first
         : '';
-    return normalizeMuscleKey(raw);
+    return muscle_registry.tryNormalizeMuscleKey(raw) ?? '';
+  }
+
+  static String? _tryNormalizeMuscleKeyForAudit(
+    String raw, {
+    required List<_ForensicIssue> issues,
+    required String source,
+    int? weekNumber,
+    int? dayNumber,
+    String? exerciseId,
+  }) {
+    if (raw.trim().isEmpty) return null;
+    final canonical = muscle_registry.tryNormalizeMuscleKey(raw);
+    if (canonical != null) return canonical;
+
+    _addUnknownMuscleKeyIssue(
+      issues: issues,
+      source: source,
+      weekNumber: weekNumber,
+      dayNumber: dayNumber,
+      exerciseId: exerciseId,
+    );
+    return null;
+  }
+
+  static void _addUnknownMuscleKeyIssue({
+    required List<_ForensicIssue> issues,
+    required String source,
+    int? weekNumber,
+    int? dayNumber,
+    String? exerciseId,
+  }) {
+    issues.add(
+      _ForensicIssue.warning(
+        rule: '2.10_selector_coherence',
+        weekNumber: weekNumber,
+        dayNumber: dayNumber,
+        exerciseId: exerciseId,
+        message:
+            'Clave muscular desconocida descartada por SSOT estricto en $source.',
+      ),
+    );
   }
 
   static String? _inferZone({required int min, required int max}) {
@@ -1265,17 +1360,25 @@ class TrainingPlanForensicValidator {
     return VolumeToFrequencyRule.frequencyForWeeklyVolume(weeklySets);
   }
 
-  static Map<String, int> _extractExpectedVolume(dynamic planConfig) {
+  static Map<dynamic, dynamic> _extractExpectedVolume(dynamic planConfig) {
     final raw = _readDynamic(planConfig, ['volumePerMuscle']);
     if (raw is! Map) return const <String, int>{};
-    return _normalizeExpectedVolume(raw);
+    return raw;
   }
 
-  static Map<String, int> _normalizeExpectedVolume(Map<dynamic, dynamic> raw) {
+  static Map<String, int> _normalizeExpectedVolume(
+    Map<dynamic, dynamic> raw, {
+    required List<_ForensicIssue> issues,
+    required String source,
+  }) {
     final out = <String, int>{};
     for (final entry in raw.entries) {
-      final key = normalizeMuscleKey(entry.key.toString());
-      if (key.isEmpty) continue;
+      final key = _tryNormalizeMuscleKeyForAudit(
+        entry.key.toString(),
+        issues: issues,
+        source: source,
+      );
+      if (key == null) continue;
       final value = entry.value;
       final parsed = value is int
           ? value

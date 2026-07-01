@@ -1,3 +1,6 @@
+import 'package:hcs_app_lap/core/registry/muscle_registry.dart'
+    as muscle_registry;
+
 enum MuscleGroup { chest, back, deltoids, arms, legs, glutes, calves, core }
 
 /// Resolves the mapping between MuscleGroup (logical groups) and the exact
@@ -6,14 +9,6 @@ enum MuscleGroup { chest, back, deltoids, arms, legs, glutes, calves, core }
 /// Important: the V3 catalog uses canonical muscle keys directly.
 /// Avoid expanding to legacy granular keys that no longer exist.
 class MuscleToCatalogResolver {
-  static const Map<String, String> _legacyToCanonical = {
-    'chest': 'pectorals',
-    'quadriceps': 'quads',
-    'deltoide_anterior': 'delts_front',
-    'deltoide_lateral': 'delts_lateral',
-    'deltoide_posterior': 'delts_rear',
-  };
-
   static const Map<MuscleGroup, List<String>> _groupToKeysMap = {
     MuscleGroup.chest: ['pectorals'],
 
@@ -42,40 +37,8 @@ class MuscleToCatalogResolver {
 
   /// Expands a canonical muscle to its JSON keys.
   static List<String> expandMuscleKey(String canonicalMuscle) {
-    final normalized = _toCanonical(canonicalMuscle);
-
-    switch (normalized) {
-      case 'pectorals':
-        return ['pectorals'];
-      case 'lats':
-        return ['lats'];
-      case 'upper_back':
-        return ['upper_back'];
-      case 'traps':
-        return ['traps'];
-      case 'delts_front':
-        return ['delts_front'];
-      case 'delts_lateral':
-        return ['delts_lateral'];
-      case 'delts_rear':
-        return ['delts_rear'];
-      case 'biceps':
-        return ['biceps'];
-      case 'triceps':
-        return ['triceps'];
-      case 'quads':
-        return ['quads'];
-      case 'hamstrings':
-        return ['hamstrings'];
-      case 'glutes':
-        return ['glutes'];
-      case 'calves':
-        return ['calves'];
-      case 'abs':
-        return ['abs'];
-      default:
-        return [normalized];
-    }
+    return muscle_registry.expandMuscleGroupStrict(canonicalMuscle) ??
+        const <String>[];
   }
 
   /// Expands multiple canonical muscles to JSON keys.
@@ -88,12 +51,15 @@ class MuscleToCatalogResolver {
   }
 
   /// Converts a JSON key to its canonical muscle (for logging).
+  ///
+  /// Legacy non-null wrapper: returns an empty string for unknown keys instead
+  /// of passing raw input through.
   static String toCanonicalMuscle(String jsonKey) {
-    return _toCanonical(jsonKey);
+    return tryToCanonicalMuscle(jsonKey) ?? '';
   }
 
-  static String _toCanonical(String key) {
-    final normalized = key.trim().toLowerCase();
-    return _legacyToCanonical[normalized] ?? normalized;
+  /// Strict canonical conversion. Unknown keys return null.
+  static String? tryToCanonicalMuscle(String jsonKey) {
+    return muscle_registry.tryNormalizeMuscleKey(jsonKey);
   }
 }

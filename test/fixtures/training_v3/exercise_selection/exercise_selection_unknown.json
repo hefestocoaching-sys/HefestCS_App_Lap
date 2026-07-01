@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "fixture": "exercise_selection_unknown",
+  "engine": "ExerciseSelectionEngine",
+  "catalog": "minimal_fake_catalog_inside_regression_test",
+  "notes": [
+    "Fixture strict D1-C5 de unknowns definidos para MUSCLE SSOT.",
+    "selectExercises descarta unknowns al resolver catalogKeys vacio y lanza STRICT_NO_FALLBACK.",
+    "selectDeterministicCandidates descarta unknowns con MuscleRegistry.tryNormalizeMuscleKey y retorna lista vacia."
+  ],
+  "cases": [
+    {
+      "id": "unknown_muscle_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "unknown_muscle",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "unknown_muscle no genera catalogKeys en selectExercises."
+    },
+    {
+      "id": "back_mid_upper_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "back_mid_upper",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "back_mid_upper no pasa como musculo valido en selectExercises."
+    },
+    {
+      "id": "mysterychest_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "mysterychest",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "mysterychest no pasa como alias valido."
+    },
+    {
+      "id": "glute_select",
+      "api": "selectExercises",
+      "input": {
+        "targetMuscle": "glute",
+        "targetExerciseCount": 2,
+        "availableEquipment": [],
+        "injuryHistory": {}
+      },
+      "expected": {
+        "outcome": "throws",
+        "errorContains": "[ExerciseSelection][STRICT_NO_FALLBACK]"
+      },
+      "observedNotes": "glute no es alias strict en selectExercises."
+    },
+    {
+      "id": "unknown_muscle_deterministic_canonical_pool",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "unknown_muscle",
+        "intensityZone": "medium",
+        "poolVariant": "canonical_only",
+        "availableEquipment": []
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": []
+      },
+      "observedNotes": "Con pool canonico, unknown_muscle se descarta antes de filtrar candidatos."
+    },
+    {
+      "id": "unknown_muscle_deterministic_raw_pool",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "unknown_muscle",
+        "intensityZone": "medium",
+        "poolVariant": "with_raw_unknown",
+        "availableEquipment": []
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": []
+      },
+      "observedNotes": "Raw passthrough eliminado: raw_unknown_high no se selecciona aunque el pool tenga primaryMuscles unknown_muscle."
+    },
+    {
+      "id": "glute_deterministic_strict_drop",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "glute",
+        "intensityZone": "medium",
+        "availableEquipment": []
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": []
+      },
+      "observedNotes": "glute queda descartado; solo gluteos o glutes deben seleccionar glutes."
+    },
+    {
+      "id": "back_mid_upper_deterministic_raw_pool",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "back_mid_upper",
+        "intensityZone": "medium",
+        "poolVariant": "with_raw_unknown",
+        "availableEquipment": []
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": []
+      },
+      "observedNotes": "back_mid_upper no matchea aunque exista como primaryMuscles raw en el pool."
+    },
+    {
+      "id": "mysterychest_deterministic_raw_pool",
+      "api": "selectDeterministicCandidates",
+      "input": {
+        "muscleKey": "mysterychest",
+        "intensityZone": "medium",
+        "poolVariant": "with_raw_unknown",
+        "availableEquipment": []
+      },
+      "expected": {
+        "outcome": "success",
+        "selectedIds": []
+      },
+      "observedNotes": "mysterychest no matchea aunque exista como primaryMuscles raw en el pool."
+    }
+  ]
+}

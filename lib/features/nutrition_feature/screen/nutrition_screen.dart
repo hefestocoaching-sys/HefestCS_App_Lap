@@ -9,8 +9,8 @@ import 'package:hcs_app_lap/core/design/workspace_scaffold.dart';
 import 'package:hcs_app_lap/features/history_clinic_feature/widgets/clinic_client_header_with_tabs.dart';
 import 'package:hcs_app_lap/utils/date_helpers.dart';
 
-import '../widgets/dietary_tab.dart';
-import '../widgets/depletion_tab.dart';
+import 'package:hcs_app_lap/features/nutrition_feature/widgets/dietary_tab.dart';
+import 'package:hcs_app_lap/features/nutrition_feature/widgets/depletion_tab.dart';
 
 class NutritionScreen extends ConsumerStatefulWidget {
   const NutritionScreen({super.key});

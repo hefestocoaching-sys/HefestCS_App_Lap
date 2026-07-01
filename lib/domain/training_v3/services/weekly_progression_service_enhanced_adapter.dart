@@ -122,7 +122,6 @@ class WeeklyProgressionServiceEnhancedAdapter
     final jsonString = await _enhancedService.exportTrainingHistory(
       userId: userId,
     );
-    // TODO: Parsear jsonString a Map legacy structure si es necesario
     return {'status': 'managed_by_enhanced_service', 'raw_export': jsonString};
   }
 

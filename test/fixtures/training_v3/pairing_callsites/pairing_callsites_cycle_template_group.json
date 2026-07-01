@@ -1,0 +1,179 @@
+{
+  "fixture": "pairing_callsites_cycle_template_group",
+  "phase": "D1R8",
+  "type": "observational_post_d1c7",
+  "mode": "cycle_template_builder_proxy",
+  "notes": "Grupos strict en helpers D1-C7 vistos desde el proxy de CycleTemplateBuilder.",
+  "cases": [
+    {
+      "id": "group_back_pectorals",
+      "input": {
+        "firstPrimaryMuscle": "back",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "normalization": {
+          "first": "back",
+          "second": "pectorals",
+          "dayMuscles": ["back", "pectorals"],
+          "primaryMuscle": "back"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["back", "pectorals"],
+          "blockPlan": {
+            "A": ["back"],
+            "B": ["pectorals"],
+            "C": [],
+            "D": []
+          }
+        }
+      },
+      "notes": "back no se expande en normalizeMuscleKey del builder, pero helpers strict si expanden al evaluar pairing."
+    },
+    {
+      "id": "group_shoulders_triceps",
+      "input": {
+        "firstPrimaryMuscle": "shoulders",
+        "secondPrimaryMuscle": "triceps"
+      },
+      "expected": {
+        "normalization": {
+          "first": "shoulders",
+          "second": "triceps",
+          "dayMuscles": ["shoulders", "triceps"],
+          "primaryMuscle": "shoulders"
+        },
+        "directHelpers": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["shoulders", "triceps"],
+          "blockPlan": {
+            "A": ["shoulders"],
+            "B": [],
+            "C": [],
+            "D": ["triceps"]
+          }
+        }
+      },
+      "notes": "Synergy de grupo valida, pero el bloque B del builder no acepta synergy-only y triceps es accesorio."
+    },
+    {
+      "id": "group_legs_biceps",
+      "input": {
+        "firstPrimaryMuscle": "legs",
+        "secondPrimaryMuscle": "biceps"
+      },
+      "expected": {
+        "normalization": {
+          "first": "legs",
+          "second": "biceps",
+          "dayMuscles": ["legs", "biceps"],
+          "primaryMuscle": "legs"
+        },
+        "directHelpers": {
+          "pairingType": "lowInterference",
+          "isAllowedBiserie": true,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "lowInterference",
+          "isAllowedBiserie": true,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["legs", "biceps"],
+          "blockPlan": {
+            "A": ["legs"],
+            "B": [],
+            "C": [],
+            "D": ["biceps"]
+          }
+        }
+      },
+      "notes": "PairingContract detecta lowInterference por expansion strict; _isLowInterference local del builder no expande grupos."
+    },
+    {
+      "id": "group_arms_quads",
+      "input": {
+        "firstPrimaryMuscle": "arms",
+        "secondPrimaryMuscle": "quads"
+      },
+      "expected": {
+        "normalization": {
+          "first": "arms",
+          "second": "quads",
+          "dayMuscles": ["arms", "quads"],
+          "primaryMuscle": "arms"
+        },
+        "directHelpers": {
+          "pairingType": "lowInterference",
+          "isAllowedBiserie": true,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "lowInterference",
+          "isAllowedBiserie": true,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["arms", "quads"],
+          "blockPlan": {
+            "A": ["arms"],
+            "B": [],
+            "C": ["quads"],
+            "D": []
+          }
+        }
+      },
+      "notes": "lowInterference de grupo no entra a B porque _isLowInterference local no expande grupos."
+    },
+    {
+      "id": "group_back_shoulders",
+      "input": {
+        "firstPrimaryMuscle": "back",
+        "secondPrimaryMuscle": "shoulders"
+      },
+      "expected": {
+        "normalization": {
+          "first": "back",
+          "second": "shoulders",
+          "dayMuscles": ["back", "shoulders"],
+          "primaryMuscle": "back"
+        },
+        "directHelpers": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "synergy",
+          "isAllowedBiserie": true,
+          "areAntagonists": false,
+          "isLowInterference": false,
+          "orderedMuscles": ["back", "shoulders"],
+          "blockPlan": {
+            "A": ["back"],
+            "B": [],
+            "C": ["shoulders"],
+            "D": []
+          }
+        }
+      },
+      "notes": "back/shoulders es synergy por combinaciones strict, pero no entra a B en el proxy del builder."
+    }
+  ]
+}

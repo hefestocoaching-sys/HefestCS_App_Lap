@@ -1,0 +1,81 @@
+{
+  "fixture": "pairing_callsites_order_cases",
+  "phase": "D1R8",
+  "type": "observational_post_d1c7",
+  "mode": "cycle_template_builder_proxy",
+  "notes": "Orden deterministico proxy para casos validos y grupos strict.",
+  "cases": [
+    {
+      "id": "order_canonical_antagonist_low_rest",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "lats",
+        "primaryMuscle": "pectorals",
+        "dayMuscles": ["quads", "calves", "lats", "pectorals"]
+      },
+      "expected": {
+        "normalization": {
+          "first": "pectorals",
+          "second": "lats",
+          "dayMuscles": ["quads", "calves", "lats", "pectorals"],
+          "primaryMuscle": "pectorals"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["pectorals", "lats", "calves", "quads"],
+          "blockPlan": {
+            "A": ["pectorals"],
+            "B": ["lats", "calves"],
+            "C": ["quads"],
+            "D": []
+          }
+        }
+      },
+      "notes": "Orden esperado: primary, antagonista, lowInterference, resto."
+    },
+    {
+      "id": "order_group_back_with_valid_and_accessory",
+      "input": {
+        "firstPrimaryMuscle": "back",
+        "secondPrimaryMuscle": "pectorals",
+        "primaryMuscle": "back",
+        "dayMuscles": ["shoulders", "pectorals", "biceps", "back"]
+      },
+      "expected": {
+        "normalization": {
+          "first": "back",
+          "second": "pectorals",
+          "dayMuscles": ["shoulders", "pectorals", "biceps", "back"],
+          "primaryMuscle": "back"
+        },
+        "directHelpers": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true
+        },
+        "cycleTemplateProxy": {
+          "pairingType": "antagonist",
+          "isAllowedBiserie": true,
+          "areAntagonists": true,
+          "isLowInterference": false,
+          "orderedMuscles": ["back", "pectorals", "shoulders", "biceps"],
+          "blockPlan": {
+            "A": ["back"],
+            "B": ["pectorals"],
+            "C": ["shoulders"],
+            "D": ["biceps"]
+          }
+        }
+      },
+      "notes": "Grupo back ordena pectorals por antagonismo strict; shoulders queda C y biceps D por accesorio."
+    }
+  ]
+}

@@ -29,40 +29,52 @@ class VolumeValidator {
     'advanced': {'vme': 12, 'mav': 18, 'mrv': 24},
   };
 
+  static const Set<String> _legacyAggregateGroups = {
+    'back',
+    'shoulders',
+    'legs',
+    'arms',
+  };
+
+  static const String _unknownMuscleLabel = 'unknown';
+
   static Map<String, int> _normalizeVolumeMap(Map<String, int> volumeByMuscle) {
     final normalized = <String, int>{};
-    const legacyAggregateGroups = {'back', 'shoulders', 'legs', 'arms'};
 
     volumeByMuscle.forEach((muscle, sets) {
       if (sets <= 0) return;
 
-      final rawNormalized = muscle.trim().toLowerCase();
-      if (legacyAggregateGroups.contains(rawNormalized)) {
-        normalized[rawNormalized] = (normalized[rawNormalized] ?? 0) + sets;
-        return;
-      }
-
-      final canonical = muscle_registry.normalize(muscle);
+      final canonical = muscle_registry.tryNormalizeMuscleKey(muscle);
       if (canonical != null) {
         normalized[canonical] = (normalized[canonical] ?? 0) + sets;
         return;
       }
 
-      final expanded = muscle_registry.expandGroup(muscle);
-      if (expanded.isNotEmpty) {
-        if (expanded.length == 1) {
-          final key = expanded.first;
-          normalized[key] = (normalized[key] ?? 0) + sets;
-          return;
-        }
+      final legacyAggregateGroup = _tryNormalizeLegacyAggregateGroup(muscle);
+      if (legacyAggregateGroup != null) {
+        normalized[legacyAggregateGroup] =
+            (normalized[legacyAggregateGroup] ?? 0) + sets;
+        return;
+      }
 
-        final per = sets ~/ expanded.length;
-        var rem = sets % expanded.length;
-        for (final key in expanded) {
-          final add = per + (rem > 0 ? 1 : 0);
-          normalized[key] = (normalized[key] ?? 0) + add;
-          if (rem > 0) rem--;
-        }
+      final expanded = muscle_registry.expandMuscleGroupStrict(muscle);
+      if (expanded == null || expanded.isEmpty) {
+        // SSOT estricto: unknowns se ignoran sin raw fallback.
+        return;
+      }
+
+      if (expanded.length == 1) {
+        final key = expanded.first;
+        normalized[key] = (normalized[key] ?? 0) + sets;
+        return;
+      }
+
+      final per = sets ~/ expanded.length;
+      var rem = sets % expanded.length;
+      for (final key in expanded) {
+        final add = per + (rem > 0 ? 1 : 0);
+        normalized[key] = (normalized[key] ?? 0) + add;
+        if (rem > 0) rem--;
       }
     });
 
@@ -165,7 +177,8 @@ class VolumeValidator {
     required int volume,
     required String trainingLevel,
   }) {
-    final canonical = muscle_registry.normalize(muscle) ?? muscle;
+    final canonical = _tryNormalizeMuscleOrLegacyAggregateGroup(muscle);
+    final muscleLabel = canonical ?? _unknownMuscleLabel;
     final landmarks = _getVolumeLandmarks(canonical, trainingLevel);
     final vme = landmarks['vme']!;
     final mav = landmarks['mav']!;
@@ -176,7 +189,7 @@ class VolumeValidator {
       return {
         'status': 'error',
         'message':
-            '$canonical: Volumen ($volume sets) por debajo de VME ($vme sets). Sin estímulo suficiente.',
+            '$muscleLabel: Volumen ($volume sets) por debajo de VME ($vme sets). Sin estímulo suficiente.',
         'recommendation': 'Aumentar a mínimo $vme sets',
       };
     }
@@ -186,7 +199,7 @@ class VolumeValidator {
       return {
         'status': 'error',
         'message':
-            '$canonical: Volumen ($volume sets) excede MRV ($mrv sets). Riesgo de sobreentrenamiento.',
+            '$muscleLabel: Volumen ($volume sets) excede MRV ($mrv sets). Riesgo de sobreentrenamiento.',
         'recommendation': 'Reducir a máximo $mrv sets',
       };
     }
@@ -196,7 +209,7 @@ class VolumeValidator {
       return {
         'status': 'warning',
         'message':
-            '$canonical: Volumen ($volume sets) por debajo de MAV ($mav sets). Subóptimo para hipertrofia.',
+            '$muscleLabel: Volumen ($volume sets) por debajo de MAV ($mav sets). Subóptimo para hipertrofia.',
         'recommendation':
             'Considerar aumentar a $mav sets para resultados óptimos',
       };
@@ -205,7 +218,7 @@ class VolumeValidator {
     // OK: Entre MAV-MRV (óptimo)
     return {
       'status': 'ok',
-      'message': '$canonical: Volumen óptimo ($volume sets entre MAV-MRV)',
+      'message': '$muscleLabel: Volumen óptimo ($volume sets entre MAV-MRV)',
       'recommendation': 'Continuar',
     };
   }
@@ -273,7 +286,7 @@ class VolumeValidator {
   }
 
   /// Obtiene landmarks de volumen (duplicado del VolumeEngine para independencia)
-  static Map<String, int> _getVolumeLandmarks(String muscle, String level) {
+  static Map<String, int> _getVolumeLandmarks(String? muscle, String level) {
     final landmarksByMuscle = {
       'back': {
         'novice': {'vme': 10, 'mav': 18, 'mrv': 24},
@@ -354,12 +367,11 @@ class VolumeValidator {
       },
     };
 
-    final canonical = muscle_registry.normalize(muscle) ?? muscle;
     final safeLevel = _defaultLandmarksByLevel.containsKey(level)
         ? level
         : TrainingLevelKey.intermediate;
 
-    final byMuscle = landmarksByMuscle[canonical];
+    final byMuscle = muscle == null ? null : landmarksByMuscle[muscle];
     if (byMuscle == null) {
       return _defaultLandmarksByLevel[safeLevel]!;
     }
@@ -401,5 +413,25 @@ class VolumeValidator {
     final score =
         (optimalMuscles * 1.0 + acceptableMuscles * 0.5) / totalMuscles;
     return score.clamp(0.0, 1.0);
+  }
+
+  static String? _tryNormalizeMuscleOrLegacyAggregateGroup(String muscle) {
+    final canonical = muscle_registry.tryNormalizeMuscleKey(muscle);
+    if (canonical != null) return canonical;
+
+    return _tryNormalizeLegacyAggregateGroup(muscle);
+  }
+
+  static String? _tryNormalizeLegacyAggregateGroup(String muscle) {
+    final normalized = muscle.trim().toLowerCase();
+    if (!_legacyAggregateGroups.contains(normalized)) {
+      return null;
+    }
+
+    final expanded = muscle_registry.expandMuscleGroupStrict(normalized);
+    if (expanded == null || expanded.isEmpty) {
+      return null;
+    }
+    return normalized;
   }
 }

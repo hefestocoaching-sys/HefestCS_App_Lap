@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "fixture": "session_structure_alias",
+  "engine": "SessionStructureEngine",
+  "notes": [
+    "Fixture strict D1-C6 de aliases validos minimos.",
+    "SessionStructureEngine usa normalizacion strict para decisiones musculares, pero los Exercise.primaryMuscles quedan raw en los objetos.",
+    "Aliases validos siguen funcionando sin agregar aliases nuevos."
+  ],
+  "cases": [
+    {
+      "id": "alias_lower_push_structure",
+      "api": "build",
+      "input": {
+        "exercises": [
+          {
+            "id": "alias_chest_heavy",
+            "name": "Alias chest heavy",
+            "primaryMuscles": ["chest"],
+            "movementPattern": "horizontal_push",
+            "loadCategory": "heavy",
+            "fatigueScore": 3,
+            "stimulusScore": 95
+          },
+          {
+            "id": "alias_quadriceps_medium",
+            "name": "Alias quadriceps medium",
+            "primaryMuscles": ["quadriceps"],
+            "movementPattern": "squat",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 90
+          },
+          {
+            "id": "alias_gluteos_light",
+            "name": "Alias gluteos light",
+            "primaryMuscles": ["gluteos"],
+            "movementPattern": "hip_extension",
+            "loadCategory": "light",
+            "fatigueScore": 2,
+            "stimulusScore": 86
+          },
+          {
+            "id": "alias_delt_front_medium",
+            "name": "Alias deltoide anterior medium",
+            "primaryMuscles": ["deltoide_anterior"],
+            "movementPattern": "vertical_push",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 82
+          }
+        ]
+      },
+      "expected": {
+        "mainLiftId": "alias_chest_heavy",
+        "flattenedIds": ["alias_chest_heavy", "alias_quadriceps_medium", "alias_gluteos_light", "alias_delt_front_medium"],
+        "blocks": [
+          {
+            "blockLabel": "D",
+            "slotFirst": "D1",
+            "firstId": "alias_quadriceps_medium",
+            "slotSecond": "D2",
+            "secondId": "alias_gluteos_light",
+            "pairGroupId": "D_1",
+            "isBiserie": true
+          },
+          {
+            "blockLabel": "D",
+            "slotFirst": "D2",
+            "firstId": "alias_delt_front_medium",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          }
+        ],
+        "placements": [
+          {"exerciseId": "alias_chest_heavy", "blockLabel": "A", "slotLabel": "A", "pairGroupId": null, "isMainLift": true},
+          {"exerciseId": "alias_quadriceps_medium", "blockLabel": "D", "slotLabel": "D1", "pairGroupId": "D_1", "isMainLift": false},
+          {"exerciseId": "alias_gluteos_light", "blockLabel": "D", "slotLabel": "D2", "pairGroupId": "D_1", "isMainLift": false},
+          {"exerciseId": "alias_delt_front_medium", "blockLabel": "D", "slotLabel": "D2", "pairGroupId": null, "isMainLift": false}
+        ]
+      },
+      "observedNotes": "chest/quadriceps/gluteos/deltoide_anterior funcionan por normalizacion strict; primaryMuscles de salida siguen raw."
+    }
+  ]
+}

@@ -5,8 +5,12 @@ import 'package:hcs_app_lap/domain/entities/exercise.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
+import 'package:hcs_app_lap/domain/training_v3/data/exercise_catalog_v3.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  ExerciseCatalogV3.loadFromExercises(_exercises());
+  _primeTestCatalogMetadata();
   group('MotorV3Orchestrator cycle-state regression', () {
     test(
       'prioriza activePlanId sobre plan mas reciente para heredar estado',
@@ -52,7 +56,7 @@ void main() {
         final result = await MotorV3Orchestrator.generateProgram(
           userProfile: _profile(),
           phase: 'accumulation',
-          durationWeeks: 4,
+          durationWeeks: 2,
           client: client,
           exercises: _exercises(),
         );
@@ -96,7 +100,7 @@ void main() {
         final result = await MotorV3Orchestrator.generateProgram(
           userProfile: _profile(id: 'u2'),
           phase: 'accumulation',
-          durationWeeks: 4,
+          durationWeeks: 2,
           client: client,
           exercises: _exercises(),
         );
@@ -128,20 +132,20 @@ UserProfile _profile({String id = 'u1'}) {
     gender: 'male',
     heightCm: 175,
     weightKg: 80,
-    yearsTraining: 3,
-    trainingLevel: 'intermediate',
-    availableDays: 4,
+    yearsTraining: 0,
+    trainingLevel: 'novice',
+    availableDays: 3,
     sessionDuration: 60,
     primaryGoal: 'hypertrophy',
     musclePriorities: const {
-      'pectorals': 5,
-      'lats': 4,
-      'quads': 4,
-      'hamstrings': 3,
-      'delts_lateral': 3,
-      'triceps': 3,
-      'biceps': 3,
-      'calves': 2,
+      'pectorals': 3,
+      'lats': 2,
+      'quads': 2,
+      'hamstrings': 1,
+      'delts_lateral': 1,
+      'triceps': 1,
+      'biceps': 1,
+      'calves': 1,
     },
     availableEquipment: const ['barbell', 'dumbbell', 'cable', 'machine'],
     createdAt: now,
@@ -150,6 +154,7 @@ UserProfile _profile({String id = 'u1'}) {
 }
 
 List<Exercise> _exercises() {
+  const allZones = <String, bool>{'heavy': true, 'medium': true, 'light': true};
   return [
     Exercise(
       id: 'bench_press',
@@ -160,6 +165,8 @@ List<Exercise> _exercises() {
       secondaryMuscles: const ['triceps'],
       equipment: 'barbell',
       difficulty: 'intermediate',
+      movementPattern: 'horizontal_push',
+      allowedIntensityZones: allZones,
     ),
     Exercise(
       id: 'incline_press',
@@ -170,6 +177,8 @@ List<Exercise> _exercises() {
       secondaryMuscles: const ['triceps'],
       equipment: 'dumbbell',
       difficulty: 'intermediate',
+      movementPattern: 'horizontal_push',
+      allowedIntensityZones: allZones,
     ),
     Exercise(
       id: 'lat_pulldown',
@@ -180,6 +189,21 @@ List<Exercise> _exercises() {
       secondaryMuscles: const ['biceps'],
       equipment: 'cable',
       difficulty: 'beginner',
+      movementPattern: 'vertical_pull',
+      allowedIntensityZones: allZones,
+    ),
+    Exercise(
+      id: 'lat_row_chest_supported',
+      externalId: 'ext_lat_row_chest_supported',
+      name: 'Lat Row Chest Supported',
+      muscleKey: 'lats',
+      primaryMuscles: const ['lats'],
+      secondaryMuscles: const ['biceps'],
+      equipment: 'machine',
+      difficulty: 'intermediate',
+      movementPattern: 'horizontal_pull',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'lat_row_chest_supported',
     ),
     Exercise(
       id: 'row',
@@ -190,6 +214,21 @@ List<Exercise> _exercises() {
       secondaryMuscles: const ['biceps'],
       equipment: 'cable',
       difficulty: 'beginner',
+      movementPattern: 'horizontal_pull',
+      allowedIntensityZones: allZones,
+    ),
+    Exercise(
+      id: 'upper_back_row_machine',
+      externalId: 'ext_upper_back_row_machine',
+      name: 'Upper Back Row Machine',
+      muscleKey: 'upper_back',
+      primaryMuscles: const ['upper_back'],
+      secondaryMuscles: const ['biceps'],
+      equipment: 'machine',
+      difficulty: 'intermediate',
+      movementPattern: 'horizontal_pull',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'upper_back_row_machine',
     ),
     Exercise(
       id: 'squat',
@@ -200,6 +239,21 @@ List<Exercise> _exercises() {
       secondaryMuscles: const ['glutes'],
       equipment: 'barbell',
       difficulty: 'intermediate',
+      movementPattern: 'squat',
+      allowedIntensityZones: allZones,
+    ),
+    Exercise(
+      id: 'quad_extension_machine',
+      externalId: 'ext_quad_extension_machine',
+      name: 'Quad Extension Machine',
+      muscleKey: 'quads',
+      primaryMuscles: const ['quads'],
+      secondaryMuscles: const [],
+      equipment: 'machine',
+      difficulty: 'intermediate',
+      movementPattern: 'knee_extension',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'quad_extension_machine',
     ),
     Exercise(
       id: 'leg_curl',
@@ -210,6 +264,8 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'machine',
       difficulty: 'beginner',
+      movementPattern: 'knee_flexion',
+      allowedIntensityZones: allZones,
     ),
     Exercise(
       id: 'lateral_raise',
@@ -220,6 +276,8 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
+      movementPattern: 'lateral_raise',
+      allowedIntensityZones: allZones,
     ),
     Exercise(
       id: 'front_raise',
@@ -230,6 +288,8 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
+      movementPattern: 'front_raise',
+      allowedIntensityZones: allZones,
     ),
     Exercise(
       id: 'rear_delt_fly',
@@ -240,6 +300,8 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'cable',
       difficulty: 'beginner',
+      movementPattern: 'rear_raise',
+      allowedIntensityZones: allZones,
     ),
     Exercise(
       id: 'shrug',
@@ -250,6 +312,21 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
+      movementPattern: 'shrug',
+      allowedIntensityZones: allZones,
+    ),
+    Exercise(
+      id: 'traps_shrug_cable',
+      externalId: 'ext_traps_shrug_cable',
+      name: 'Traps Shrug Cable',
+      muscleKey: 'traps',
+      primaryMuscles: const ['traps'],
+      secondaryMuscles: const [],
+      equipment: 'cable',
+      difficulty: 'beginner',
+      movementPattern: 'shrug',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'traps_shrug_cable',
     ),
     Exercise(
       id: 'triceps_extension',
@@ -260,6 +337,21 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'cable',
       difficulty: 'beginner',
+      movementPattern: 'pushdown',
+      allowedIntensityZones: allZones,
+    ),
+    Exercise(
+      id: 'triceps_pushdown_cable',
+      externalId: 'ext_triceps_pushdown_cable',
+      name: 'Triceps Pushdown Cable',
+      muscleKey: 'triceps',
+      primaryMuscles: const ['triceps'],
+      secondaryMuscles: const [],
+      equipment: 'cable',
+      difficulty: 'beginner',
+      movementPattern: 'pushdown',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'triceps_pushdown_cable',
     ),
     Exercise(
       id: 'biceps_curl',
@@ -270,6 +362,61 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'dumbbell',
       difficulty: 'beginner',
+      movementPattern: 'curl',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'biceps_curl_dumbbell',
+    ),
+    Exercise(
+      id: 'biceps_curl_cable',
+      externalId: 'ext_biceps_curl_cable',
+      name: 'Biceps Curl Cable',
+      muscleKey: 'biceps',
+      primaryMuscles: const ['biceps'],
+      secondaryMuscles: const [],
+      equipment: 'cable',
+      difficulty: 'beginner',
+      movementPattern: 'curl',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'biceps_curl_cable',
+    ),
+    Exercise(
+      id: 'hamstrings_curl_seated',
+      externalId: 'ext_hamstrings_curl_seated',
+      name: 'Hamstrings Curl Seated',
+      muscleKey: 'hamstrings',
+      primaryMuscles: const ['hamstrings'],
+      secondaryMuscles: const [],
+      equipment: 'machine',
+      difficulty: 'beginner',
+      movementPattern: 'knee_flexion',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'hamstrings_curl_seated',
+    ),
+    Exercise(
+      id: 'delts_lateral_raise_cable',
+      externalId: 'ext_delts_lateral_raise_cable',
+      name: 'Delts Lateral Raise Cable',
+      muscleKey: 'delts_lateral',
+      primaryMuscles: const ['delts_lateral'],
+      secondaryMuscles: const [],
+      equipment: 'cable',
+      difficulty: 'beginner',
+      movementPattern: 'lateral_raise',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'delts_lateral_raise_cable',
+    ),
+    Exercise(
+      id: 'delts_rear_fly_dumbbell',
+      externalId: 'ext_delts_rear_fly_dumbbell',
+      name: 'Delts Rear Fly Dumbbell',
+      muscleKey: 'delts_rear',
+      primaryMuscles: const ['delts_rear'],
+      secondaryMuscles: const [],
+      equipment: 'dumbbell',
+      difficulty: 'beginner',
+      movementPattern: 'rear_raise',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'delts_rear_fly_dumbbell',
     ),
     Exercise(
       id: 'standing_calf_raise',
@@ -280,16 +427,21 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'machine',
       difficulty: 'beginner',
+      movementPattern: 'ankle_extension',
+      allowedIntensityZones: allZones,
     ),
     Exercise(
-      id: 'hip_thrust',
-      externalId: 'ext_hip_thrust',
-      name: 'Hip Thrust',
-      muscleKey: 'glutes',
-      primaryMuscles: const ['glutes'],
+      id: 'calves_raise_seated',
+      externalId: 'ext_calves_raise_seated',
+      name: 'Calves Raise Seated',
+      muscleKey: 'calves',
+      primaryMuscles: const ['calves'],
       secondaryMuscles: const [],
-      equipment: 'barbell',
-      difficulty: 'intermediate',
+      equipment: 'machine',
+      difficulty: 'beginner',
+      movementPattern: 'ankle_extension',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'calves_raise_seated',
     ),
     Exercise(
       id: 'crunch',
@@ -300,8 +452,51 @@ List<Exercise> _exercises() {
       secondaryMuscles: const [],
       equipment: 'bodyweight',
       difficulty: 'beginner',
+      movementPattern: 'trunk_flexion',
+      allowedIntensityZones: allZones,
+    ),
+    Exercise(
+      id: 'abs_crunch_cable',
+      externalId: 'ext_abs_crunch_cable',
+      name: 'Abs Crunch Cable',
+      muscleKey: 'abs',
+      primaryMuscles: const ['abs'],
+      secondaryMuscles: const [],
+      equipment: 'cable',
+      difficulty: 'beginner',
+      movementPattern: 'trunk_flexion',
+      allowedIntensityZones: allZones,
+      equivalenceGroup: 'abs_crunch_cable',
     ),
   ];
+}
+
+void _primeTestCatalogMetadata() {
+  const slotRoles = <String>['A', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2'];
+  for (final exercise in _exercises()) {
+    final metadata = ExerciseCatalogV3.getMetadataById(exercise.id);
+    if (metadata == null) continue;
+    metadata
+      ..['movementPattern'] = exercise.movementPattern
+      ..['loadCategory'] = exercise.loadCategory
+      ..['fatigueScore'] = exercise.fatigueScore
+      ..['stimulusScore'] = exercise.stimulusScore
+      ..['allowedIntensityZones'] = exercise.allowedIntensityZones
+      ..['equivalenceGroup'] = exercise.equivalenceGroup
+      ..['slotRoles'] = slotRoles
+      ..['heavyRole'] = 'forbidden'
+      ..['aEligibility'] = 'secondary'
+      ..['secondaryHeavyEligibility'] = true
+      ..['exerciseOrderClass'] = 9
+      ..['conflictPatterns'] = const <String>[]
+      ..['rotationGroup'] = exercise.equivalenceGroup.isNotEmpty
+          ? exercise.equivalenceGroup
+          : exercise.id
+      ..['angleTag'] = exercise.movementPattern
+      ..['variantTier'] = 1
+      ..['canPromoteToHeavyNextBlock'] = true
+      ..['canDemoteToMediumNextBlock'] = true;
+  }
 }
 
 class _FakeTraining {

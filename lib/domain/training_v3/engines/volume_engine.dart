@@ -1,7 +1,7 @@
 // lib/domain/training_v3/engines/volume_engine.dart
 
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
-import '../models/volume_landmarks.dart';
+import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
 
 /// Motor de cálculo de volumen óptimo por músculo
 ///

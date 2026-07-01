@@ -1082,7 +1082,11 @@ class CycleTemplateBuilder {
   }
 
   static String normalizeMuscleKey(String k) {
-    return muscle_registry.normalize(k) ?? k.trim().toLowerCase();
+    final normalized = muscle_registry.tryNormalizeMuscleKey(k);
+    if (normalized == null) {
+      throw StateError('[V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key="$k"');
+    }
+    return normalized;
   }
 
   static bool _isUpperMuscle(String muscle) =>
@@ -1118,8 +1122,10 @@ class CycleTemplateBuilder {
   static Map<String, int> _canonicalizeVolumeMap(Map<String, int> source) {
     final canonical = <String, int>{};
     for (final entry in source.entries) {
-      final normalized = normalizeMuscleKey(entry.key);
-      canonical[normalized] = (canonical[normalized] ?? 0) + entry.value;
+      final resolved = _resolveToCanonicalMuscles(entry.key);
+      for (final m in resolved) {
+        canonical[m] = (canonical[m] ?? 0) + entry.value;
+      }
     }
     return canonical;
   }
@@ -1129,11 +1135,11 @@ class CycleTemplateBuilder {
   ) {
     final canonical = <String, List<String>>{};
     for (final entry in source.entries) {
-      final normalized = normalizeMuscleKey(entry.key);
-      final current = canonical.putIfAbsent(normalized, () => <String>[]);
-      for (final exerciseId in entry.value) {
-        if (!current.contains(exerciseId)) {
-          current.add(exerciseId);
+      final resolved = _resolveToCanonicalMuscles(entry.key);
+      for (final m in resolved) {
+        final current = canonical.putIfAbsent(m, () => <String>[]);
+        for (final exerciseId in entry.value) {
+          if (!current.contains(exerciseId)) current.add(exerciseId);
         }
       }
     }
@@ -1595,12 +1601,14 @@ class CycleTemplateBuilder {
   static Map<String, int> _canonicalizePriorityMap(Map<String, int> source) {
     final canonical = <String, int>{};
     for (final entry in source.entries) {
-      final normalized = normalizeMuscleKey(entry.key);
-      final previous = canonical[normalized];
-      if (previous == null) {
-        canonical[normalized] = entry.value;
-      } else {
-        canonical[normalized] = min(previous, entry.value);
+      final resolved = _resolveToCanonicalMuscles(entry.key);
+      for (final m in resolved) {
+        final previous = canonical[m];
+        if (previous == null) {
+          canonical[m] = entry.value;
+        } else {
+          canonical[m] = min(previous, entry.value);
+        }
       }
     }
     return canonical;
@@ -1611,18 +1619,20 @@ class CycleTemplateBuilder {
   ) {
     final canonical = <String, _MuscleFreqConfig>{};
     for (final entry in source.entries) {
-      final normalized = normalizeMuscleKey(entry.key);
-      final current = canonical[normalized];
-      if (current == null) {
-        canonical[normalized] = _MuscleFreqConfig(
-          weeklySets: entry.value.weeklySets,
-          frequency: entry.value.frequency,
-        );
-      } else {
-        canonical[normalized] = _MuscleFreqConfig(
-          weeklySets: current.weeklySets + entry.value.weeklySets,
-          frequency: max(current.frequency, entry.value.frequency),
-        );
+      final resolved = _resolveToCanonicalMuscles(entry.key);
+      for (final m in resolved) {
+        final current = canonical[m];
+        if (current == null) {
+          canonical[m] = _MuscleFreqConfig(
+            weeklySets: entry.value.weeklySets,
+            frequency: entry.value.frequency,
+          );
+        } else {
+          canonical[m] = _MuscleFreqConfig(
+            weeklySets: current.weeklySets + entry.value.weeklySets,
+            frequency: max(current.frequency, entry.value.frequency),
+          );
+        }
       }
     }
     return canonical;
@@ -1697,6 +1707,16 @@ class CycleTemplateBuilder {
       'biceps',
       'delts_rear',
     }.contains(muscle);
+  }
+
+  static List<String> _resolveToCanonicalMuscles(String raw) {
+    final norm = muscle_registry.tryNormalizeMuscleKey(raw);
+    if (norm != null) return <String>[norm];
+
+    final expanded = muscle_registry.expandMuscleGroupStrict(raw);
+    if (expanded != null && expanded.isNotEmpty) return expanded;
+
+    throw StateError('[V3][MUSCLE_NORMALIZE_FAIL] unknown muscle key="$raw"');
   }
 
   static int _effectiveFrequencyForMuscle({

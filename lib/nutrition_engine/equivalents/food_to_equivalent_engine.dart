@@ -1,8 +1,8 @@
 import 'package:hcs_app_lap/domain/entities/clinical_restriction_profile.dart';
 import 'package:hcs_app_lap/domain/entities/daily_meal_plan.dart';
 import 'package:hcs_app_lap/domain/services/clinical_restriction_validator.dart';
-import 'equivalent_definition.dart';
-import 'equivalent_result.dart';
+import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_definition.dart';
+import 'package:hcs_app_lap/nutrition_engine/equivalents/equivalent_result.dart';
 
 class FoodToEquivalentEngine {
   /// Tolerancias de validación P0

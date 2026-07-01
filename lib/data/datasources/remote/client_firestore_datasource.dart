@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -38,6 +39,30 @@ abstract class ClientRemoteDataSource {
     DateTime? since,
     int? limit,
   });
+}
+
+void validateRemoteClientPayloadOrThrow({
+  required String clientId,
+  required Map<String, dynamic> fullPayload,
+}) {
+  final invalidPath = findInvalidFirestorePath(fullPayload);
+  if (invalidPath != null) {
+    final invalidPaths = listInvalidFirestorePaths(fullPayload, limit: 12);
+    final auditFindings = listFirestoreAuditFindings(fullPayload, limit: 12);
+    logger.warning(
+      'Remote client sync blocked due to invalid Firestore payload',
+      {
+        'clientId': clientId,
+        'invalidPath': invalidPath,
+        'invalidPaths': invalidPaths,
+        'auditFindings': auditFindings,
+      },
+    );
+    throw StateError(
+      '[SAVE][REMOTE_PAYLOAD_INVALID] '
+      'clientId=$clientId invalidPath=$invalidPath',
+    );
+  }
 }
 
 class ClientFirestoreDataSource implements ClientRemoteDataSource {
@@ -185,8 +210,6 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
         .collection('clients')
         .doc(client.id);
 
-    // ESTRUCTURA ESTANDARIZADA: {payload, schemaVersion, updatedAt, deleted}
-    // El payload contiene el Client.toJson() completo, sanitizado para Firestore
     final clientJson = client.toJson();
     final sanitizedPayload = sanitizeForFirestore(clientJson);
     final remotePayload = Map<String, dynamic>.from(sanitizedPayload)
@@ -233,6 +256,11 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       'deleted': deleted,
     };
 
+    validateRemoteClientPayloadOrThrow(
+      clientId: client.id,
+      fullPayload: fullPayload,
+    );
+
     final jsonStr = _safeJsonEncode(fullPayload);
     if (jsonStr.length > 900000) {
       logger.warning('Client document exceeds Firestore size limit', {
@@ -244,27 +272,16 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       );
     }
 
-    String? invalidPath;
-    List<String> invalidPaths = const [];
-    List<String> auditFindings = const [];
     if (_enableFirestoreAudit) {
-      invalidPath = findInvalidFirestorePath(fullPayload);
-      invalidPaths = listInvalidFirestorePaths(fullPayload, limit: 12);
-      auditFindings = listFirestoreAuditFindings(fullPayload, limit: 12);
-      final hasAuditFindings =
-          invalidPath != null ||
-          invalidPaths.isNotEmpty ||
-          auditFindings.isNotEmpty;
-      if (hasAuditFindings) {
-        logger.debug('Firestore payload audit findings detected', {
-          'invalidPath': invalidPath,
-          'invalidPaths': invalidPaths,
-          'auditFindings': auditFindings,
+      if (rawInvalidPaths.isNotEmpty || rawAuditFindings.isNotEmpty) {
+        logger.debug('Firestore raw payload audit findings detected', {
+          'invalidPaths': rawInvalidPaths,
+          'auditFindings': rawAuditFindings,
         });
       }
 
-      final training = fullPayload['payload'] as Map<String, dynamic>;
-      final trainingPayload = training['training'] as Map<String, dynamic>?;
+      final trainingMap = fullPayload['payload'] as Map<String, dynamic>;
+      final trainingPayload = trainingMap['training'] as Map<String, dynamic>?;
       logger.debug('Preparing client upsert for Firestore', {
         'clientId': client.id,
         'trainingExtraKeys': client.training.extra.keys.toList(),
@@ -272,65 +289,25 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       });
     }
 
-    if (_enableFirestoreAudit) {
-      final hasAuditIssues =
-          rawInvalidPaths.isNotEmpty ||
-          rawAuditFindings.isNotEmpty ||
-          invalidPath != null ||
-          invalidPaths.isNotEmpty ||
-          auditFindings.isNotEmpty;
-      if (hasAuditIssues) {
-        logger.warning(
-          'Skipping remote client sync due to invalid Firestore payload',
-          {
-            'hasRawInvalidPaths': rawInvalidPaths.isNotEmpty,
-            'hasRawAuditFindings': rawAuditFindings.isNotEmpty,
-            'hasInvalidPath': invalidPath != null,
-            'hasInvalidPaths': invalidPaths.isNotEmpty,
-            'hasAuditFindings': auditFindings.isNotEmpty,
-          },
-        );
-        return;
-      }
-    }
-
     try {
-      // ✅ OBLIGATORIO: SetOptions(merge: true) para no perder datos en concurrencia
       await ref.set(fullPayload, SetOptions(merge: true));
       logger.info('Client synced to Firestore', {'clientId': client.id});
     } on FirebaseException catch (e, st) {
-      final failInvalidPath = findInvalidFirestorePath(fullPayload);
-      final failInvalidPaths = listInvalidFirestorePaths(
-        fullPayload,
-        limit: 12,
-      );
-      final failAuditFindings = listFirestoreAuditFindings(
-        fullPayload,
-        limit: 12,
-      );
       logger.error('Firestore upsert failed', e, st);
-      logger.debug('Firestore payload audit findings after failure', {
-        'clientId': client.id,
-        'invalidPath': failInvalidPath,
-        'invalidPaths': failInvalidPaths,
-        'auditFindings': failAuditFindings,
-      });
-      logger.debug('Firestore payload keys', {
-        'keys': fullPayload.keys.toList(),
-      });
-
       if (e.code == 'permission-denied') {
-        final authUser = FirebaseAuth.instance.currentUser;
-        logger.warning('Firestore permission denied during client upsert', {
-          'path': 'coaches/$coachId/clients/${client.id}',
-          'authUid': authUser?.uid,
-          'authEmail': authUser?.email,
-          'isAnonymous': authUser?.isAnonymous,
-          'projectId': _firestore.app.options.projectId,
-          'host': _firestore.settings.host,
-          'sslEnabled': _firestore.settings.sslEnabled,
-        });
-        return;
+        _logPermissionDenied(
+          coachId: coachId,
+          client: client,
+          deleted: deleted,
+          stackTrace: st,
+          errorCode: e.code,
+          errorMessage: e.message,
+        );
+        throw FirebaseException(
+          plugin: e.plugin,
+          code: e.code,
+          message: e.message,
+        );
       }
 
       rethrow;
@@ -341,19 +318,20 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
               false);
 
       if (isPermissionDenied) {
-        final authUser = FirebaseAuth.instance.currentUser;
-        logger.warning('Firestore permission denied during client upsert', {
-          'path': 'coaches/$coachId/clients/${client.id}',
-          'authUid': authUser?.uid,
-          'authEmail': authUser?.email,
-          'isAnonymous': authUser?.isAnonymous,
-          'projectId': _firestore.app.options.projectId,
-          'host': _firestore.settings.host,
-          'sslEnabled': _firestore.settings.sslEnabled,
-          'errorCode': e.code,
-          'errorMessage': e.message,
-        });
-        return;
+        _logPermissionDenied(
+          coachId: coachId,
+          client: client,
+          deleted: deleted,
+          stackTrace: st,
+          errorCode: e.code,
+          errorMessage: e.message,
+          errorType: e.runtimeType.toString(),
+        );
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'permission-denied',
+          message: e.message,
+        );
       }
 
       logger.error('Firestore upsert failed', e, st);
@@ -362,18 +340,18 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       final message = e.toString().toLowerCase();
       if (message.contains('permission-denied') ||
           message.contains('insufficient permissions')) {
-        final authUser = FirebaseAuth.instance.currentUser;
-        logger.warning('Firestore permission denied during client upsert', {
-          'path': 'coaches/$coachId/clients/${client.id}',
-          'authUid': authUser?.uid,
-          'authEmail': authUser?.email,
-          'isAnonymous': authUser?.isAnonymous,
-          'projectId': _firestore.app.options.projectId,
-          'host': _firestore.settings.host,
-          'sslEnabled': _firestore.settings.sslEnabled,
-          'errorType': e.runtimeType.toString(),
-        });
-        return;
+        _logPermissionDenied(
+          coachId: coachId,
+          client: client,
+          deleted: deleted,
+          stackTrace: st,
+          errorType: e.runtimeType.toString(),
+        );
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'permission-denied',
+          message: e.toString(),
+        );
       }
 
       logger.error('Firestore upsert failed', e, st);
@@ -450,6 +428,36 @@ class ClientFirestoreDataSource implements ClientRemoteDataSource {
       );
     }).toList();
   }
+}
+
+void _logPermissionDenied({
+  required String coachId,
+  required Client client,
+  required bool deleted,
+  required StackTrace? stackTrace,
+  String? errorCode,
+  String? errorMessage,
+  String? errorType,
+}) {
+  User? authUser;
+  try {
+    authUser = FirebaseAuth.instance.currentUser;
+  } catch (_) {
+    authUser = null;
+  }
+
+  logger.warning('Firestore permission denied during client upsert', {
+    'path': 'coaches/$coachId/clients/${client.id}',
+    'authUid': authUser?.uid,
+    'authEmail': authUser?.email,
+    'isAnonymous': authUser?.isAnonymous,
+    'projectId': FirebaseFirestore.instance.app.options.projectId,
+    'deleted': deleted,
+    'errorCode': errorCode,
+    'errorMessage': errorMessage,
+    'errorType': errorType,
+    'stackTrace': stackTrace?.toString(),
+  });
 }
 
 String _safeJsonEncode(Object value) {

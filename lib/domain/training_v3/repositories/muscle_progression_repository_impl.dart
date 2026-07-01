@@ -7,7 +7,7 @@ import 'package:hcs_app_lap/domain/training_v3/models/muscle_progression_tracker
 import 'package:hcs_app_lap/domain/training_v3/models/volume_landmarks.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/weekly_muscle_metrics.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/progress_record.dart';
-import 'muscle_progression_repository.dart';
+import 'package:hcs_app_lap/domain/training_v3/repositories/muscle_progression_repository.dart';
 
 /// Firebase implementation of MuscleProgressionRepository.
 class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
@@ -138,8 +138,6 @@ class MuscleProgressionRepositoryImpl implements MuscleProgressionRepository {
       }
 
       try {
-        // FIXME: Debugging persistence crash. Temporarily disabling commit to prove control.
-        // await batch.commit();
         debugPrint('[MuscleProgressionRepo] SKIPPED TRACKER INIT (Debugging)');
       } catch (e) {
         debugPrint(

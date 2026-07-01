@@ -95,7 +95,6 @@ class VolumeFeasibilityNormalizer {
       dailyCap: safeCap,
       splitId: splitId,
       daysPerWeek: daysPerWeek,
-      blockingError: null,
     );
   }
 }

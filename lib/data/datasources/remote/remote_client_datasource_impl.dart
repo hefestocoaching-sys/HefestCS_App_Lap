@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/domain/entities/client.dart';
-import './remote_client_datasource.dart';
+import 'package:hcs_app_lap/data/datasources/remote/remote_client_datasource.dart';
 import 'package:hcs_app_lap/utils/firestore_sanitizer.dart';
 
 class RemoteClientDataSourceImpl implements RemoteClientDataSource {

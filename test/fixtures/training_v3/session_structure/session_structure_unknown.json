@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "fixture": "session_structure_unknown",
+  "engine": "SessionStructureEngine",
+  "notes": [
+    "Fixture strict D1-C6 de unknowns.",
+    "unknown_muscle, back_mid_upper y mysterychest no actuan como musculos validos.",
+    "glute no se convierte a glutes; gluteos sigue siendo el alias valido para glutes."
+  ],
+  "cases": [
+    {
+      "id": "unknown_raw_passthrough_structure",
+      "api": "build",
+      "input": {
+        "exercises": [
+          {
+            "id": "unk_unknown_heavy",
+            "name": "Unknown muscle heavy",
+            "primaryMuscles": ["unknown_muscle"],
+            "movementPattern": "unknown_pattern_a",
+            "loadCategory": "heavy",
+            "fatigueScore": 3,
+            "stimulusScore": 95
+          },
+          {
+            "id": "unk_back_mid_medium",
+            "name": "Back mid upper medium",
+            "primaryMuscles": ["back_mid_upper"],
+            "movementPattern": "unknown_pattern_b",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 88
+          },
+          {
+            "id": "unk_mystery_medium",
+            "name": "Mystery chest medium",
+            "primaryMuscles": ["mysterychest"],
+            "movementPattern": "unknown_pattern_c",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 84
+          },
+          {
+            "id": "unk_glute_light",
+            "name": "Glute light",
+            "primaryMuscles": ["glute"],
+            "movementPattern": "hip_extension",
+            "loadCategory": "light",
+            "fatigueScore": 2,
+            "stimulusScore": 80
+          }
+        ]
+      },
+      "expected": {
+        "mainLiftId": "unk_unknown_heavy",
+        "flattenedIds": ["unk_unknown_heavy", "unk_back_mid_medium", "unk_mystery_medium", "unk_glute_light"],
+        "blocks": [
+          {
+            "blockLabel": "D",
+            "slotFirst": "D1",
+            "firstId": "unk_back_mid_medium",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "D",
+            "slotFirst": "D2",
+            "firstId": "unk_mystery_medium",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "D",
+            "slotFirst": "D2",
+            "firstId": "unk_glute_light",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          }
+        ],
+        "placements": [
+          {"exerciseId": "unk_unknown_heavy", "blockLabel": "A", "slotLabel": "A", "pairGroupId": null, "isMainLift": true},
+          {"exerciseId": "unk_back_mid_medium", "blockLabel": "D", "slotLabel": "D1", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "unk_mystery_medium", "blockLabel": "D", "slotLabel": "D2", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "unk_glute_light", "blockLabel": "D", "slotLabel": "D2", "pairGroupId": null, "isMainLift": false}
+        ]
+      },
+      "observedNotes": "Unknowns no se descartan como ejercicios, pero no clasifican como musculos validos para pairing/interferencia. glute queda en D sin tratarse como glutes."
+    },
+    {
+      "id": "glute_does_not_pair_as_glutes",
+      "api": "build",
+      "input": {
+        "exercises": [
+          {
+            "id": "strict_glute_pec_heavy",
+            "name": "Strict glute pectorals heavy",
+            "primaryMuscles": ["pectorals"],
+            "movementPattern": "horizontal_push",
+            "loadCategory": "heavy",
+            "fatigueScore": 3,
+            "stimulusScore": 100
+          },
+          {
+            "id": "strict_glute_quad_medium",
+            "name": "Strict glute quads medium",
+            "primaryMuscles": ["quads"],
+            "movementPattern": "squat",
+            "loadCategory": "medium",
+            "fatigueScore": 2,
+            "stimulusScore": 90
+          },
+          {
+            "id": "strict_glute_raw_light",
+            "name": "Strict raw glute light",
+            "primaryMuscles": ["glute"],
+            "movementPattern": "hip_extension",
+            "loadCategory": "light",
+            "fatigueScore": 2,
+            "stimulusScore": 84
+          }
+        ]
+      },
+      "expected": {
+        "mainLiftId": "strict_glute_pec_heavy",
+        "flattenedIds": ["strict_glute_pec_heavy", "strict_glute_quad_medium", "strict_glute_raw_light"],
+        "blocks": [
+          {
+            "blockLabel": "D",
+            "slotFirst": "D1",
+            "firstId": "strict_glute_quad_medium",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          },
+          {
+            "blockLabel": "D",
+            "slotFirst": "D2",
+            "firstId": "strict_glute_raw_light",
+            "slotSecond": null,
+            "secondId": null,
+            "pairGroupId": null,
+            "isBiserie": false
+          }
+        ],
+        "placements": [
+          {"exerciseId": "strict_glute_pec_heavy", "blockLabel": "A", "slotLabel": "A", "pairGroupId": null, "isMainLift": true},
+          {"exerciseId": "strict_glute_quad_medium", "blockLabel": "D", "slotLabel": "D1", "pairGroupId": null, "isMainLift": false},
+          {"exerciseId": "strict_glute_raw_light", "blockLabel": "D", "slotLabel": "D2", "pairGroupId": null, "isMainLift": false}
+        ]
+      },
+      "observedNotes": "quads + glute no forman biserie; glute no clasifica como glutes bajo strict."
+    }
+  ]
+}

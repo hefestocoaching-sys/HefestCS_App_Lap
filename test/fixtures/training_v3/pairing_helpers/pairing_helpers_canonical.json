@@ -1,0 +1,110 @@
+{
+  "fixture": "pairing_helpers_canonical",
+  "phase": "D1-C7",
+  "type": "strict",
+  "notes": "Contrato strict con musculos canonicos usando MuscleRegistry.",
+  "cases": [
+    {
+      "id": "canonical_pectorals_lats_antagonist",
+      "input": {
+        "firstPrimaryMuscle": "pectorals",
+        "secondPrimaryMuscle": "lats"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "Par antagonista canonico."
+    },
+    {
+      "id": "canonical_quads_hamstrings_antagonist",
+      "input": {
+        "firstPrimaryMuscle": "quads",
+        "secondPrimaryMuscle": "hamstrings"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "Par antagonista canonico."
+    },
+    {
+      "id": "canonical_biceps_triceps_antagonist",
+      "input": {
+        "firstPrimaryMuscle": "biceps",
+        "secondPrimaryMuscle": "triceps"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "Par antagonista canonico."
+    },
+    {
+      "id": "canonical_delts_front_delts_rear_none",
+      "input": {
+        "firstPrimaryMuscle": "delts_front",
+        "secondPrimaryMuscle": "delts_rear"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "No hay regla actual de antagonismo ni sinergia para este par."
+    },
+    {
+      "id": "canonical_glutes_quads_synergy",
+      "input": {
+        "firstPrimaryMuscle": "glutes",
+        "secondPrimaryMuscle": "quads"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "synergy",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "PairingContract permite sinergia glutes/quads; AntagonistPairingEngine no lo marca antagonista."
+    },
+    {
+      "id": "canonical_calves_abs_none",
+      "input": {
+        "firstPrimaryMuscle": "calves",
+        "secondPrimaryMuscle": "abs"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "none",
+          "isAllowedBiserie": false
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "No existe pairing actual entre calves y abs."
+    }
+  ]
+}

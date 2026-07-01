@@ -1,0 +1,18 @@
+{
+  "split": "fullBody",
+  "availableDays": 3,
+  "musclePriorities": {
+    "pectorals": 5,
+    "lats": 4,
+    "quads": 4,
+    "glutes": 3,
+    "delts_lateral": 2
+  },
+  "frequencyByMuscle": {
+    "pectorals": 2,
+    "lats": 1,
+    "quads": 3,
+    "glutes": 2,
+    "delts_lateral": 1
+  }
+}

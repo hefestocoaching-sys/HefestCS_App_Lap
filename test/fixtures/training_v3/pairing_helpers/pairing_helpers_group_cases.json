@@ -1,0 +1,93 @@
+{
+  "fixture": "pairing_helpers_group_cases",
+  "phase": "D1-C7",
+  "type": "strict",
+  "notes": "Grupos strict expandidos con MuscleRegistry y evaluados por combinaciones listaA x listaB.",
+  "cases": [
+    {
+      "id": "group_back_pectorals_antagonist",
+      "input": {
+        "firstPrimaryMuscle": "back",
+        "secondPrimaryMuscle": "pectorals"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "antagonist",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": true
+        }
+      },
+      "notes": "back expande a lats + upper_back; ambos helpers detectan antagonismo contra pectorals."
+    },
+    {
+      "id": "group_shoulders_triceps_synergy",
+      "input": {
+        "firstPrimaryMuscle": "shoulders",
+        "secondPrimaryMuscle": "triceps"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "synergy",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "shoulders expande a delts_front + delts_lateral + delts_rear; delts_front/triceps genera synergy."
+    },
+    {
+      "id": "group_legs_biceps_low_interference",
+      "input": {
+        "firstPrimaryMuscle": "legs",
+        "secondPrimaryMuscle": "biceps"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "lowInterference",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "legs expande a quads + hamstrings + glutes + calves; al menos una combinacion tiene baja interferencia con biceps."
+    },
+    {
+      "id": "group_arms_quads_low_interference",
+      "input": {
+        "firstPrimaryMuscle": "arms",
+        "secondPrimaryMuscle": "quads"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "lowInterference",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "arms expande a biceps + triceps; biceps/quads tiene baja interferencia."
+    },
+    {
+      "id": "group_back_shoulders_synergy",
+      "input": {
+        "firstPrimaryMuscle": "back",
+        "secondPrimaryMuscle": "shoulders"
+      },
+      "expected": {
+        "pairingContract": {
+          "type": "synergy",
+          "isAllowedBiserie": true
+        },
+        "antagonistPairingEngine": {
+          "areAntagonists": false
+        }
+      },
+      "notes": "back y shoulders se expanden; lats/delts_rear y upper_back/delts_rear generan synergy."
+    }
+  ]
+}
