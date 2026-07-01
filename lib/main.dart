@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,9 +49,16 @@ Future<void> main() async {
   // Activar Firebase App Check (solo plataformas soportadas)
   if (Platform.isAndroid || Platform.isIOS) {
     try {
+      final AndroidAppCheckProvider androidProvider = kDebugMode
+          ? const AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider();
+      final AppleAppCheckProvider appleProvider = kDebugMode
+          ? const AppleDebugProvider()
+          : const AppleDeviceCheckProvider();
+
       await FirebaseAppCheck.instance.activate(
-        providerAndroid: const AndroidDebugProvider(),
-        providerApple: const AppleDebugProvider(),
+        providerAndroid: androidProvider,
+        providerApple: appleProvider,
       );
     } catch (e) {
       logger.warning('Firebase App Check activation failed', {'error': e});
