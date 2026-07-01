@@ -1,20 +1,16 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:hcs_app_lap/core/firebase/firebase_bootstrap.dart';
 import 'package:hcs_app_lap/core/services/sync_service.dart';
 import 'package:hcs_app_lap/core/config/feature_flags.dart';
-import 'package:hcs_app_lap/core/utils/app_logger.dart';
 import 'package:hcs_app_lap/services/food_database_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'package:hcs_app_lap/firebase_options.dart';
 import 'package:hcs_app_lap/app.dart'; // Asumiendo que HcsAppLap está definido en app.dart
 
 Future<void> _loadEnvIfAvailable() async {
@@ -44,28 +40,7 @@ Future<void> main() async {
 
   await _loadEnvIfAvailable();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Activar Firebase App Check (solo plataformas soportadas)
-  if (Platform.isAndroid || Platform.isIOS) {
-    try {
-      final AndroidAppCheckProvider androidProvider = kDebugMode
-          ? const AndroidDebugProvider()
-          : const AndroidPlayIntegrityProvider();
-      final AppleAppCheckProvider appleProvider = kDebugMode
-          ? const AppleDebugProvider()
-          : const AppleDeviceCheckProvider();
-
-      await FirebaseAppCheck.instance.activate(
-        providerAndroid: androidProvider,
-        providerApple: appleProvider,
-      );
-    } catch (e) {
-      logger.warning('Firebase App Check activation failed', {'error': e});
-    }
-  } else {
-    logger.info('Firebase App Check skipped for unsupported platform');
-  }
+  await bootstrapFirebase();
 
   await initializeDateFormatting('es');
   Intl.defaultLocale = 'es';
