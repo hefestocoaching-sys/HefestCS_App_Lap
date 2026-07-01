@@ -21,6 +21,7 @@ Archivos leidos en el repo local sincronizado con main:
 - [lib/main.dart](lib/main.dart#L6) y [lib/main.dart](lib/main.dart#L32) muestran el bootstrap actual.
 - [lib/core/firebase/firebase_bootstrap.dart](lib/core/firebase/firebase_bootstrap.dart#L8) concentra la inicializacion Firebase/App Check.
 - [lib/firebase_options.dart](lib/firebase_options.dart#L5) define la politica de opciones por plataforma; este archivo existia en disco pero no estaba versionado en HEAD antes de la correccion.
+- .gitignore lo excluía explicitamente, asi que hubo que versionarlo a proposito porque solo contiene FirebaseOptions cliente y no secretos.
 - [test/security/firebase_app_check_static_contract_test.dart](test/security/firebase_app_check_static_contract_test.dart#L12) contiene el canary actualizado.
 - [firebase.json](firebase.json#L1) solo aporta reglas e indexes de Firestore; no define App Check ni opciones Firebase por plataforma.
 - [pubspec.yaml](pubspec.yaml#L1) sigue declarando firebase_core y firebase_app_check como dependencias directas.
@@ -36,6 +37,8 @@ El contenido descomprimido de lib.zip reflejaba el estado previo al fix:
 - El reporte P1A estaba presente como evidencia documental del riesgo previo.
 
 Importante: `git show HEAD:lib/firebase_options.dart` devolvio error porque el archivo no estaba en HEAD, asi que la version nueva tuvo que introducirse explicitamente para que el repo quede coherente con main.dart.
+
+Ademas, `git check-ignore -v lib/firebase_options.dart` mostro que `.gitignore` lo excluia en la linea 48, por lo que el archivo debio forzarse al indice para poder dejarlo versionado.
 
 Para test.zip el estado era equivalente en el canary: el test de seguridad existia, pero no estaba alineado con la nueva politica de unsupported platforms ni con el bootstrap extraido.
 
