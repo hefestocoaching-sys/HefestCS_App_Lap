@@ -171,15 +171,14 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
     final snap = await query.get();
 
     return snap.docs.map((d) {
-      final data = d.data() as Map<String, dynamic>;
-      final ts = data['updatedAt'] as Timestamp?;
+      final data = asStringDynamicMap(d.data());
 
       return RemoteRecordSnapshot(
         dateKey: d.id,
-        payload: Map<String, dynamic>.from(data['payload'] ?? {}),
-        deleted: data['deleted'] == true,
-        schemaVersion: data['schemaVersion'] as int? ?? 1,
-        updatedAt: ts?.toDate() ?? DateTime.fromMillisecondsSinceEpoch(0),
+        payload: readPayload(data['payload']),
+        deleted: readDeleted(data['deleted']),
+        schemaVersion: readSchemaVersion(data['schemaVersion']),
+        updatedAt: readUpdatedAt(data['updatedAt']),
       );
     }).toList();
   }
@@ -226,3 +225,53 @@ class RecordFirestoreDataSource implements RecordRemoteDataSource {
   /// Helper: Convierte dateKey (yyyy-MM-dd) a DateTime.
   DateTime keyToDate(String dateKey) => _dateFormat.parse(dateKey);
 }
+
+Map<String, dynamic> asStringDynamicMap(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+
+  if (value is Map) {
+    final result = <String, dynamic>{};
+    for (final entry in value.entries) {
+      if (entry.key is String) {
+        result[entry.key as String] = entry.value;
+      }
+    }
+    return result;
+  }
+
+  return <String, dynamic>{};
+}
+
+Map<String, dynamic> readPayload(Object? value) {
+  final map = asStringDynamicMap(value);
+  if (value is Map && map.isEmpty && value.isNotEmpty) {
+    developer.log(
+      'Discarding malformed record payload with non-string keys or invalid shape',
+      name: 'RecordFirestoreDataSource',
+    );
+  } else if (value != null && value is! Map) {
+    developer.log(
+      'Discarding malformed record payload with invalid shape: ${value.runtimeType}',
+      name: 'RecordFirestoreDataSource',
+    );
+  }
+  return map;
+}
+
+DateTime readUpdatedAt(Object? value) {
+  if (value is Timestamp) {
+    return value.toDate();
+  }
+  return DateTime.fromMillisecondsSinceEpoch(0);
+}
+
+int readSchemaVersion(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  return 1;
+}
+
+bool readDeleted(Object? value) => value == true;

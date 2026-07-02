@@ -2,5 +2,5 @@
 
 import 'package:flutter_riverpod/legacy.dart' as legacy;
 
-final weeklyFeedbackProvider = legacy
-    .StateProvider<Map<String, Map<String, dynamic>>>((ref) => {});
+final weeklyFeedbackProvider =
+    legacy.StateProvider<Map<String, Map<String, dynamic>>>((ref) => {});

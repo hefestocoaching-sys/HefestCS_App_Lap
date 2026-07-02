@@ -5,13 +5,15 @@ import 'package:hcs_app_lap/features/main_shell/providers/client_derived_provide
 import 'package:hcs_app_lap/features/training_feature/providers/muscle_progression_tracker_provider.dart';
 import 'package:hcs_app_lap/features/training_feature/viewmodels/weekly_progression_viewmodel.dart';
 
-final weeklyProgressionViewModelProvider = legacy
-    .ChangeNotifierProvider.autoDispose<WeeklyProgressionViewModel>((ref) {
-  final client = ref.watch(activeClientProvider);
-  final userId = client?.id ?? '';
+final weeklyProgressionViewModelProvider =
+    legacy.ChangeNotifierProvider.autoDispose<WeeklyProgressionViewModel>((
+      ref,
+    ) {
+      final client = ref.watch(activeClientProvider);
+      final userId = client?.id ?? '';
 
-  return WeeklyProgressionViewModel(
-    service: ref.watch(weeklyProgressionServiceProvider),
-    userId: userId,
-  );
-});
+      return WeeklyProgressionViewModel(
+        service: ref.watch(weeklyProgressionServiceProvider),
+        userId: userId,
+      );
+    });

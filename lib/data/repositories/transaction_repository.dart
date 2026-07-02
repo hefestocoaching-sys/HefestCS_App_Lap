@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:developer' as developer;
 import 'package:hcs_app_lap/domain/entities/transaction.dart' as app;
 
 /// Repositorio para gestionar transacciones financieras
@@ -147,10 +148,20 @@ class TransactionRepository {
         .where('date', isLessThan: endOfMonth)
         .get();
 
-    return snapshot.docs.fold<double>(
-      0.0,
-      (total, doc) => total + (doc.data()['amount'] as num).toDouble(),
-    );
+    return snapshot.docs.fold<double>(0.0, (total, doc) {
+      final rawAmount = doc.data()['amount'];
+      final amount = readFiniteAmount(rawAmount);
+      if (amount == null) {
+        if (rawAmount != null) {
+          developer.log(
+            'Skipping invalid income amount for transaction ${doc.id}: ${rawAmount.runtimeType}',
+            name: 'TransactionRepository',
+          );
+        }
+        return total;
+      }
+      return total + amount;
+    });
   }
 
   /// Calcular total de gastos del mes
@@ -170,9 +181,26 @@ class TransactionRepository {
         .where('date', isLessThan: endOfMonth)
         .get();
 
-    return snapshot.docs.fold<double>(
-      0.0,
-      (total, doc) => total + (doc.data()['amount'] as num).toDouble(),
-    );
+    return snapshot.docs.fold<double>(0.0, (total, doc) {
+      final rawAmount = doc.data()['amount'];
+      final amount = readFiniteAmount(rawAmount);
+      if (amount == null) {
+        if (rawAmount != null) {
+          developer.log(
+            'Skipping invalid expense amount for transaction ${doc.id}: ${rawAmount.runtimeType}',
+            name: 'TransactionRepository',
+          );
+        }
+        return total;
+      }
+      return total + amount;
+    });
   }
+}
+
+double? readFiniteAmount(Object? raw) {
+  if (raw is num && raw.isFinite) {
+    return raw.toDouble();
+  }
+  return null;
 }
