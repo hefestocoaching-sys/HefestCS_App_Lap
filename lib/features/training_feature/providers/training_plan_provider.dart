@@ -12,7 +12,6 @@ import 'package:hcs_app_lap/domain/entities/client.dart';
 import 'package:hcs_app_lap/domain/exceptions/training_plan_blocked_exception.dart';
 import 'package:hcs_app_lap/domain/training/training_cycle.dart';
 import 'package:hcs_app_lap/domain/training/models/mev_table.dart';
-import 'package:hcs_app_lap/domain/training/models/muscle_priorities.dart';
 import 'package:hcs_app_lap/domain/training/validation/vop_validator.dart';
 import 'package:hcs_app_lap/domain/training/utils/frequency_inference.dart';
 // Legacy UI compatibility imports
@@ -27,9 +26,6 @@ import 'package:hcs_app_lap/utils/date_helpers.dart';
 // ✅ MOTOR V3 REAL - PIPELINE CIENTÍFICO COMPLETO
 import 'package:hcs_app_lap/domain/training_v3/orchestrator/training_orchestrator_v3.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/training_program_v3_result.dart';
-import 'package:hcs_app_lap/domain/training_v3/models/training_plan_config.dart'
-    as v3;
-import 'package:hcs_app_lap/domain/training_v3/models/training_week.dart' as v3;
 import 'package:hcs_app_lap/domain/training_v3/models/user_profile.dart';
 import 'package:hcs_app_lap/domain/training_v3/ml/strategies/rule_based_strategy.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/deload_trigger_engine.dart';
@@ -38,7 +34,6 @@ import 'package:hcs_app_lap/domain/training_v3/models/workout_log.dart';
 import 'package:hcs_app_lap/domain/training_v3/repositories/workout_log_repository.dart';
 import 'package:hcs_app_lap/domain/training_v3/engines/landmark_engine.dart';
 import 'package:hcs_app_lap/domain/training_v3/models/intensity_split.dart';
-import 'package:hcs_app_lap/domain/training_v3/services/motor_v3_orchestrator.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_evaluation_snapshot_v1.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_progression_state_v1.dart';
 import 'package:hcs_app_lap/domain/training_domain/training_plan_governor.dart';
@@ -210,6 +205,7 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     }
     return latest;
   }
+
   GeneratedPlan? _planFromRecord(Map<String, dynamic>? record) {
     if (record == null) return null;
     final rawPlan = record[TrainingExtraKeys.generatedPlan];
@@ -522,134 +518,9 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     required String clientId,
     required TrainingEvaluation evaluation,
   }) async {
-    final snapshot = TrainingEvaluationSnapshotV1.fromTrainingEvaluation(
-      clientId: clientId,
-      evaluation: evaluation,
-    );
-    await _saveEvaluationSnapshot(clientId: clientId, snapshot: snapshot);
-    await generatePlanFromActiveCycle(DateTime.now());
-
-    final client = await ref
-        .read(clientRepositoryProvider)
-        .getClientById(clientId);
-    final activeConfig = client != null
-        ? _findActivePlanConfigById(client)
-        : null;
-    if (activeConfig != null) {
-      return TrainingPlan(
-        id: activeConfig.id,
-        clientId: activeConfig.clientId,
-        name: activeConfig.name,
-        startDate: activeConfig.startDate,
-        weeks: const <v3.TrainingWeek>[],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        phase: activeConfig.phase.name,
-        split: activeConfig.splitId,
-        volumePerMuscle: activeConfig.volumePerMuscle,
-      );
-    }
     throw StateError(
-      'No se pudo materializar TrainingPlan legacy. Usa generatePlanFromActiveCycle.',
+      'generateTrainingPlan es legacy. Usa generatePlanFromActiveCycle.',
     );
-
-    try {
-      debugPrint(
-        '[TrainingPlanProvider] Generating plan for client: $clientId',
-      );
-
-      final priorities = evaluation.musclePriorities;
-      final client = await ref
-          .read(clientRepositoryProvider)
-          .getClientById(clientId);
-      final resolvedAge = _resolveAgeForGenerateTrainingPlan(client);
-
-      debugPrint('[TrainingPlanProvider] Muscle Priorities:');
-      for (final muscle in MusclePriorities.canonicalMuscles) {
-        debugPrint('  $muscle: ${priorities.get(muscle)}');
-      }
-
-      final now = DateTime.now();
-      final userProfile = UserProfile(
-        id: clientId,
-        name: 'client_$clientId',
-        email: 'unknown_$clientId@example.com',
-        age: resolvedAge,
-        gender: 'other',
-        heightCm: 170.0,
-        weightKg: 75.0,
-        yearsTraining: 1.0,
-        trainingLevel: evaluation.experienceLevel,
-        availableDays: evaluation.daysPerWeek,
-        sessionDuration: evaluation.sessionDurationMinutes,
-        primaryGoal: evaluation.mainGoal,
-        musclePriorities: priorities.values,
-        availableEquipment: evaluation.availableEquipment,
-        createdAt: now,
-        updatedAt: now,
-      );
-
-      final recentLogs = await WorkoutLogRepository.getLogsByUser(
-        userId: clientId,
-        startDate: now.subtract(const Duration(days: 14)),
-        endDate: now,
-        limit: 100,
-      );
-      const plannedPhase = 'accumulation';
-      final resolvedPhase = await _resolvePhase(
-        profile: userProfile,
-        recentLogs: recentLogs,
-        plannedPhase: plannedPhase,
-      );
-
-      final result = await MotorV3Orchestrator.generateProgram(
-        userProfile: userProfile,
-        phase: resolvedPhase,
-        durationWeeks: evaluation.planDurationInWeeks,
-        trainingDaysPerWeek: evaluation.daysPerWeek,
-        intensityProfilePercentSplit: _readIntensitySplitPercent(
-          client?.training.extra ?? const <String, dynamic>{},
-        ),
-      );
-
-      if (result['success'] != true) {
-        throw StateError(
-          '[TrainingPlanProvider] Motor V3 returned failure: ${result['errors']}',
-        );
-      }
-
-      final planConfig = result['planConfig'];
-      if (planConfig is! v3.TrainingPlanConfig) {
-        throw StateError('[TrainingPlanProvider] Missing planConfig result');
-      }
-
-      final weeks = planConfig.weeks.whereType<v3.TrainingWeek>().toList();
-      final plan = TrainingPlan(
-        id: planConfig.id,
-        clientId: planConfig.clientId,
-        name: 'Motor V3 ${planConfig.split ?? ''}'.trim(),
-        startDate: planConfig.startDate,
-        weeks: weeks,
-        createdAt: planConfig.createdAt,
-        updatedAt: DateTime.now(),
-        phase: planConfig.phase,
-        split: planConfig.split,
-        volumePerMuscle: planConfig.volumePerMuscle,
-      );
-
-      final snapshot = TrainingEvaluationSnapshotV1.fromTrainingEvaluation(
-        clientId: clientId,
-        evaluation: evaluation,
-      );
-
-      await _saveEvaluationSnapshot(clientId: clientId, snapshot: snapshot);
-
-      return plan;
-    } catch (e, stackTrace) {
-      debugPrint('[TrainingPlanProvider] Error generating plan: $e');
-      debugPrint('StackTrace: $stackTrace');
-      rethrow;
-    }
   }
 
   int _resolveAgeForGenerateTrainingPlan(Client? client) {
@@ -722,7 +593,6 @@ class TrainingPlanNotifier extends Notifier<TrainingPlanState> {
     final selectedDate = tryParseDateTime(activeDateIso) ?? DateTime.now();
     await generatePlanFromActiveCycle(selectedDate);
     return;
-
   }
 
   /// Helper: Construye snapshot canónico (int, claves internas).

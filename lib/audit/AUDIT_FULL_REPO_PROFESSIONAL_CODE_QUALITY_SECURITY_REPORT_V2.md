@@ -5,6 +5,7 @@
 La auditoría anterior era incompleta. Esta segunda pasada cerró mejor la trazabilidad porque ya no se limitó a hotspots aislados: se levantó inventario de rutas versionadas, se cruzaron búsquedas globales en lib/test, se releyeron las rutas de mayor riesgo y se revalidaron los hallazgos previos con evidencia directa.
 
 Lo que sí quedó cerrado en esta pasada:
+
 - Se confirmó el núcleo de seguridad Firebase/App Check y su separación en bootstrap.
 - Se revalidaron los hallazgos de persistencia remota y sincronización con snippets reales.
 - Se clasificó el repositorio por módulos y por superficie de riesgo.
@@ -12,6 +13,7 @@ Lo que sí quedó cerrado en esta pasada:
 - Se inventariaron assets, docs, audit packs y plataformas nativas presentes en el workspace.
 
 Conteos de inventario obtenidos desde el workspace y `git ls-files`:
+
 - `lib/**/*.dart`: 686 rutas encontradas.
 - `test/**/*.dart`: 92 rutas encontradas.
 - `assets/**/*`: 1480 rutas encontradas.
@@ -24,12 +26,14 @@ Conteos de inventario obtenidos desde el workspace y `git ls-files`:
 - `.github/**/*`: no hubo resultados en el workspace.
 
 Hallazgos confirmados por severidad en esta V2:
+
 - P0: 0
 - P1: 2
 - P2: 4
 - P3: 2
 
 Módulos con mayor riesgo real:
+
 - Persistencia remota Firestore y agenda/pagos.
 - Sync local/remoto y cola de outbox.
 - State management de clientes y entrenamiento.
@@ -55,6 +59,7 @@ Veredicto: FULL-REPO-AUDIT-P2: INCOMPLETO POR LIMITACIONES REALES
 Inventarié el workspace con el Explorer y búsquedas globales en el editor para evitar depender de un solo punto de entrada.
 
 Comandos y búsquedas ejecutadas en esta V2:
+
 - `git ls-files`
 - `grep_search` sobre patrones de riesgo en `lib/**/*.dart`
 - `grep_search` sobre patrones de riesgo en `test/**/*.dart`
@@ -64,6 +69,7 @@ Comandos y búsquedas ejecutadas en esta V2:
 - relectura de memorias del repo para evitar repetir errores ya resueltos
 
 Comandos no ejecutados en esta V2 por instrucción o por alcance del sprint:
+
 - suite completa de tests
 - navegación runtime/manual de pantallas
 - inspección visual de cada asset binario
@@ -71,10 +77,12 @@ Comandos no ejecutados en esta V2 por instrucción o por alcance del sprint:
 - cambios productivos de código
 
 Búsquedas obligatorias realizadas por patrón:
+
 - `TODO|FIXME|HACK|XXX|deprecated|@Deprecated|debugPrint|developer.log|print(|dynamic|Map<String, dynamic>|as |!|late |Timer|StreamSubscription|listen(|dispose(|mounted|context.|setState(|Firebase.initializeApp|FirebaseAppCheck|debugToken|localhost|useFirestoreEmulator|useAuthEmulator|useStorageEmulator|collection(|doc(|set(|update(|delete(|add(|DateTime.now(|Timestamp|fromJson|toJson|jsonDecode|jsonEncode|rootBundle.loadString|UnsupportedError|throw StateError|throw Exception|catch (e)|catch (_)`
 - búsquedas de UI legacy y material antiguo como `withOpacity`, `WillPopScope`, `RaisedButton`, `FlatButton`, `OutlineButton`, `MaterialStateProperty`, `RadioListTile.*groupValue`, `DropdownButton.*value`
 
 Limitaciones metodológicas reales que quedan:
+
 - no hubo lectura línea por línea de las 686 rutas Dart de lib ni de las 92 de test;
 - no hubo navegación runtime manual de todas las pantallas;
 - no se ejecutó la suite completa de tests;
@@ -425,11 +433,13 @@ Anthropometry, biochemistry y history clinic se consideran sensibles. La auditor
 La persistencia local usa SQLite con helper dedicado y la sincronización se reparte entre cola local, background sync y repositorios Firestore.
 
 Puntos confirmados:
+
 - `database_helper.dart` mantiene schema y migraciones.
 - `sync_service.dart` procesa cola y reintentos.
 - `record_firestore_datasource.dart` y `transaction_repository.dart` siguen siendo sensibles a payloads mal formados.
 
 Puntos a seguir en sprint:
+
 - contratos tolerantes de decoders;
 - trazabilidad más fuerte de fallos;
 - tests de outbox con casos corruptos.
@@ -439,6 +449,7 @@ Puntos a seguir en sprint:
 La separación domain/data/features/core existe, pero no siempre es estricta.
 
 Riesgos arquitectónicos confirmados:
+
 - providers grandes con side effects y compatibilidad temporal;
 - servicios singleton para sync;
 - helpers legacy todavía compilados;
@@ -449,6 +460,7 @@ Riesgos arquitectónicos confirmados:
 No hubo navegación runtime suficiente para cerrar overflow, anidación de scroll, mounted-checks o layout issues en toda la superficie.
 
 Riesgo técnico no confirmado:
+
 - pantallas grandes en training, macros, meal plan y clinic history.
 
 ## 15. Motor entrenamiento
@@ -458,6 +470,7 @@ Motor V3 sigue siendo el motor activo observado. Las rutas V1/V2 aparecen como c
 No se modificaron reglas científicas.
 
 Puntos confirmados:
+
 - motor V3 está presente y activo en la ruta principal.
 - hay wrappers y migraciones legacy alrededor del motor.
 - los tests V3 son abundantes y de tipo integración/regresión/forense.
@@ -467,6 +480,7 @@ Puntos confirmados:
 No se confirmó un bug concreto nuevo en esta pasada, pero sí una superficie amplia de cálculo/serialización.
 
 Riesgos observados:
+
 - cadenas de cálculo y validación repartidas entre engine, providers y helpers;
 - conversiones numéricas y JSON en tests y modelos;
 - mezcla de UI de macros con lógica de negocio.
@@ -507,6 +521,7 @@ El archivo crítico es [lib/data/repositories/transaction_repository.dart](lib/d
 ## 20. Assets
 
 Inventario de assets encontrado:
+
 - `assets/data/training_v3/catalog/` con catálogo, esquema, queue y archivos relacionados.
 - `assets/data/exercises/` con catálogos de ejercicios.
 - `assets/data/` con equivalentes, alimentos y cooking yields.
@@ -515,6 +530,7 @@ Inventario de assets encontrado:
 - `assets/entrenamiento/` con material gráfico por semana.
 
 Estado:
+
 - Hay assets declarados en `pubspec.yaml`.
 - Hay carpetas y binarios grandes que no se inspeccionaron visualmente uno por uno.
 - No se confirmó ruptura de rutas declaradas en esta pasada.
@@ -532,15 +548,18 @@ Estado:
 ## 22. Código muerto/no usado
 
 Confirmado o muy probable:
+
 - bloque legacy inalcanzable después de `throw` en `TrainingPlanProvider`.
 - wrapper legacy del loader de ejercicios.
 
 No confirmado:
+
 - código UI muerto en pantallas no navegadas runtime.
 
 ## 23. Código duplicado
 
 Confirmado:
+
 - helper legacy y helper productivo con lógica muy parecida en `clients_provider.dart`.
 - varias rutas de pruebas y validación repiten serialización/mapeo, pero eso es aceptable en tests de regresión.
 
@@ -549,6 +568,7 @@ Confirmado:
 `pubspec.yaml` declara dependencias relevantes para Firebase, Riverpod, SQLite, PDF, HTTP, shared_preferences, google_fonts y otras utilidades.
 
 Configuración presente y revisada:
+
 - `analysis_options.yaml`
 - `firebase.json`
 - `firestore.rules`
@@ -556,6 +576,7 @@ Configuración presente y revisada:
 - `pubspec.lock`
 
 Observación:
+
 - no se encontró un archivo de reglas de Storage en el workspace.
 
 ## 25. Revalidación de hallazgos V1
@@ -592,6 +613,7 @@ Observación:
 ## 28. Limitaciones restantes
 
 Las limitaciones que siguen siendo reales después de esta V2 son concretas:
+
 - no se ejecutó navegación manual de UI;
 - no se validó Firebase Console;
 - no se ejecutó suite completa;
